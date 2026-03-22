@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { FileText, Settings, Search, GitBranch, MessageSquare, Menu, BookOpen, Download } from 'lucide-react';
+import { FileText, Settings, Search, GitBranch, MessageSquare, BookOpen } from 'lucide-react';
+import { WorkflowPanel } from '@/components/WorkflowPanel.jsx';
 
 function App() {
   const [activeSidebarItem, setActiveSidebarItem] = useState('explorer');
+  const [bottomTab, setBottomTab] = useState('workflow');
 
   return (
     <div className="flex h-screen w-screen bg-vscode-bg text-vscode-text overflow-hidden">
@@ -98,20 +100,36 @@ function App() {
 
         {/* AI Assistant Panel (Bottom or Right - Let's put it on the right for now like Copilot Chat or a Terminal) */}
         <div className="h-1/3 border-t border-vscode-panel-border flex flex-col bg-vscode-panel-bg">
-             <div className="h-8 border-b border-vscode-panel-border flex items-center px-4 justify-between">
+             <div className="h-8 border-b border-vscode-panel-border flex items-center px-4 justify-between shrink-0">
                 <div className="flex gap-4 text-xs font-bold text-gray-400">
-                    <span className="cursor-pointer text-white border-b-2 border-white pb-1">AI Chat</span>
+                    <button
+                      type="button"
+                      className={`cursor-pointer pb-1 border-b-2 ${bottomTab === 'workflow' ? 'text-white border-white' : 'border-transparent hover:text-gray-200'}`}
+                      onClick={() => setBottomTab('workflow')}
+                    >
+                      Workflow
+                    </button>
+                    <button
+                      type="button"
+                      className={`cursor-pointer pb-1 border-b-2 ${bottomTab === 'chat' ? 'text-white border-white' : 'border-transparent hover:text-gray-200'}`}
+                      onClick={() => setBottomTab('chat')}
+                    >
+                      AI Chat
+                    </button>
                     <span className="cursor-pointer hover:text-gray-200">Terminal</span>
                     <span className="cursor-pointer hover:text-gray-200">Output</span>
                 </div>
              </div>
-             <div className="flex-1 p-4 overflow-y-auto">
-                 <div className="flex gap-2 mb-4">
+             <div className="flex-1 p-4 overflow-y-auto min-h-0">
+                 {bottomTab === 'workflow' && <WorkflowPanel />}
+                 {bottomTab === 'chat' && (
+                   <div className="flex gap-2 mb-4">
                      <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-xs">AI</div>
                      <div className="bg-vscode-active-item p-2 rounded max-w-[80%] text-sm">
-                         Hello! I'm your AI writing assistant. How can I help you with your novel today?
+                         Hello! I&apos;m your AI writing assistant. How can I help you with your novel today?
                      </div>
-                 </div>
+                   </div>
+                 )}
              </div>
              <div className="p-2 border-t border-vscode-panel-border">
                  <div className="flex gap-2 bg-vscode-sidebar border border-vscode-panel-border rounded p-1">

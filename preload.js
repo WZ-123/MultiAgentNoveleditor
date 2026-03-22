@@ -1,10 +1,9 @@
-window.addEventListener('DOMContentLoaded', () => {
-  const replaceText = (selector, text) => {
-    const element = document.getElementById(selector)
-    if (element) element.innerText = text
-  }
+const { contextBridge, ipcRenderer } = require('electron');
 
-  for (const type of ['chrome', 'node', 'electron']) {
-    replaceText(`${type}-version`, process.versions[type])
-  }
-})
+contextBridge.exposeInMainWorld('mana', {
+  /**
+   * OpenAI 兼容 Chat Completions（主进程 fetch，避免渲染进程 CORS）
+   * @param {{ url: string, headers: Record<string, string>, body: string }} payload
+   */
+  chatCompletions: (payload) => ipcRenderer.invoke('mana-chat-completions', payload),
+});

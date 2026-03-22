@@ -1,5 +1,23 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('node:path')
+
+function registerIpc() {
+  ipcMain.handle('mana-chat-completions', async (event, { url, headers, body }) => {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+      body,
+    })
+    const text = await res.text()
+    if (!res.ok) {
+      throw new Error(`Chat Completions ${res.status}: ${text}`)
+    }
+    return JSON.parse(text)
+  })
+}
 
 function createWindow () {
   const mainWindow = new BrowserWindow({
@@ -7,8 +25,8 @@ function createWindow () {
     height: 800,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: true,
-      contextIsolation: false // For ease of development, secure it for production later
+      nodeIntegration: false,
+      contextIsolation: true,
     }
   })
 
@@ -31,6 +49,7 @@ function createWindow () {
 }
 
 app.whenReady().then(() => {
+  registerIpc()
   createWindow()
 
   app.on('activate', function () {
