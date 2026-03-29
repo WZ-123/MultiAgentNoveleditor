@@ -35,10 +35,27 @@ function createWindow () {
   const isDev = process.env.NODE_ENV !== 'production' && !app.isPackaged;
   
   if (isDev) {
-    // Wait slightly for Vite to start
-    setTimeout(() => {
-        mainWindow.loadURL('http://localhost:5173');
+    // Wait slightly for Vite to start, then try common dev ports.
+    setTimeout(async () => {
+      const candidatePorts = [5173, 5174, 5175, 5176];
+      let loaded = false;
+
+      for (const port of candidatePorts) {
+        const url = `http://localhost:${port}`;
+        try {
+          await mainWindow.loadURL(url);
+          loaded = true;
+          break;
+        } catch {
+          // Try next candidate port.
+        }
+      }
+
+      if (!loaded) {
+        mainWindow.loadURL('data:text/html;charset=utf-8,<h2>Dev server not found</h2><p>Please run Vite and retry.</p>');
+      } else {
         mainWindow.webContents.openDevTools();
+      }
     }, 1000);
   } else {
     mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));

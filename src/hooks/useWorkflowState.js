@@ -115,7 +115,9 @@ export function useWorkflowState() {
   }, []);
 
   const saveStyle = useCallback(() => {
-    saveStyleMemory(styleMemoryDraft);
+    const result = saveStyleMemory(styleMemoryDraft);
+    if (!result.saved) return;
+    setStyleMemoryDraft(loadStyleMemory());
   }, [styleMemoryDraft]);
 
   const peekRewrite = useCallback(async (paragraphId) => {

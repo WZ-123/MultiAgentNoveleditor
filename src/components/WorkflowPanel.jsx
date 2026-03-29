@@ -3,6 +3,8 @@ import { useWorkflowState } from '@/hooks/useWorkflowState.js';
 import { AGENTS } from '@/agents/registry.js';
 import { OUTLINE_PHASE } from '@/domain/types.js';
 import { AgentApiSettings } from '@/components/AgentApiSettings.jsx';
+import { useI18n } from '@/i18n/LanguageContext.jsx';
+import { Button, TextArea, Input, RadioGroup, Radio } from '@heroui/react';
 
 function ParagraphBlock({
   p,
@@ -61,7 +63,7 @@ function ParagraphBlock({
   return (
     <div
       className={`mb-3 rounded border border-transparent p-2 ${
-        hasQuality ? 'border-red-500/40 bg-red-950/20' : ''
+        hasQuality ? 'border-danger-500/40 bg-danger-900/20' : ''
       }`}
     >
       <div className="text-xs text-gray-500 mb-1">段落 {p.id}</div>
@@ -71,31 +73,19 @@ function ParagraphBlock({
       {hasQuality && (
         <div className="mt-2 flex flex-wrap gap-2 text-xs">
           {qualityAnn.map((q) => (
-            <span key={q.id} className="text-red-300" title={q.note}>
+            <span key={q.id} className="text-danger-300" title={q.note}>
               {q.kind}: {q.note}
             </span>
           ))}
-          <button
-            type="button"
-            className="px-2 py-0.5 rounded bg-vscode-active-item hover:bg-[#2a2d2e]"
-            onClick={() => onQualityChoice(p.id, 'keep')}
-          >
+          <Button size="sm" onPress={() => onQualityChoice(p.id, 'keep')}>
             保留
-          </button>
-          <button
-            type="button"
-            className="px-2 py-0.5 rounded bg-vscode-active-item hover:bg-[#2a2d2e]"
-            onClick={() => onQualityChoice(p.id, 'rewrite')}
-          >
+          </Button>
+          <Button size="sm" color="warning" onPress={() => onQualityChoice(p.id, 'rewrite')}>
             重写
-          </button>
-          <button
-            type="button"
-            className="px-2 py-0.5 rounded bg-vscode-active-item hover:bg-[#2a2d2e]"
-            onClick={() => onPeekRewrite(p.id)}
-          >
+          </Button>
+          <Button size="sm" color="primary" onPress={() => onPeekRewrite(p.id)}>
             Peek 重写
-          </button>
+          </Button>
         </div>
       )}
       {showPeek && (
@@ -105,27 +95,15 @@ function ParagraphBlock({
             {peek.candidate || '（请求中…）'}
           </div>
           <div className="flex gap-2">
-            <button
-              type="button"
-              className="px-2 py-1 rounded bg-emerald-800/80"
-              onClick={() => onResolvePeek('accept')}
-            >
+            <Button size="sm" color="success" onPress={() => onResolvePeek('accept')}>
               接受
-            </button>
-            <button
-              type="button"
-              className="px-2 py-1 rounded bg-vscode-active-item"
-              onClick={() => onPeekRewrite(p.id)}
-            >
+            </Button>
+            <Button size="sm" onPress={() => onPeekRewrite(p.id)}>
               重写
-            </button>
-            <button
-              type="button"
-              className="px-2 py-1 rounded bg-vscode-active-item"
-              onClick={() => onResolvePeek('discard')}
-            >
+            </Button>
+            <Button size="sm" color="danger" onPress={() => onResolvePeek('discard')}>
               放弃
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -134,6 +112,7 @@ function ParagraphBlock({
 }
 
 export function WorkflowPanel() {
+  const { t } = useI18n();
   const wf = useWorkflowState();
   const [mode, setMode] = useState('plot_direction');
   const [userText, setUserText] = useState('主角在雨夜收到一封旧信，决定回到故乡。');
@@ -186,10 +165,10 @@ export function WorkflowPanel() {
 
       <section>
         <div className="text-xs font-bold text-gray-500 uppercase mb-2">
-          多 Agent 管线（工程骨架）
+          {t('workflow.title')}
         </div>
         <p className="text-xs text-gray-500 mb-2">
-          未填写 Key 或勾选 mock 时使用本地 mock。Agent 说明：
+          {t('workflow.hint')} Agent:
         </p>
         <ul className="text-xs text-gray-500 list-disc pl-4 space-y-1">
           {Object.values(AGENTS).map((a) => (
@@ -201,72 +180,64 @@ export function WorkflowPanel() {
       </section>
 
       <section className="border border-vscode-panel-border rounded p-3 bg-vscode-sidebar/40">
-        <div className="font-bold mb-2">1. 大纲阶段</div>
-        <div className="flex gap-4 mb-2 text-xs">
-          <label className="flex items-center gap-1 cursor-pointer">
-            <input
-              type="radio"
-              checked={mode === 'plot_direction'}
-              onChange={() => setMode('plot_direction')}
-            />
-            剧情走向
-          </label>
-          <label className="flex items-center gap-1 cursor-pointer">
-            <input
-              type="radio"
-              checked={mode === 'user_outline'}
-              onChange={() => setMode('user_outline')}
-            />
-            已有大纲
-          </label>
-        </div>
-        <textarea
-          className="w-full bg-vscode-editor-bg border border-vscode-panel-border rounded p-2 text-xs min-h-[72px] mb-2"
+        <div className="font-bold mb-3">{t('workflow.outlineStage')}</div>
+        <RadioGroup
+          orientation="horizontal"
+          value={mode}
+          onValueChange={setMode}
+          className="mb-3"
+          size="sm"
+        >
+          <Radio value="plot_direction">剧情走向</Radio>
+          <Radio value="user_outline">已有大纲</Radio>
+        </RadioGroup>
+        <TextArea
+          className="mb-3"
+          minRows={3}
           value={userText}
-          onChange={(e) => setUserText(e.target.value)}
+          onValueChange={setUserText}
         />
         <div className="flex flex-wrap gap-2 mb-2">
-          <button
-            type="button"
-            disabled={busy}
-            className="px-2 py-1 rounded bg-blue-900/80 text-xs disabled:opacity-50"
-            onClick={() => startInput(mode, userText)}
+          <Button
+            size="sm"
+            color="primary"
+            isDisabled={busy}
+            onPress={() => startInput(mode, userText)}
           >
             记录输入
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            className="px-2 py-1 rounded bg-blue-700/80 text-xs disabled:opacity-50"
-            onClick={() => runOutline()}
+          </Button>
+          <Button
+            size="sm"
+            color="secondary"
+            isDisabled={busy}
+            onPress={() => runOutline()}
           >
             运行 Agent1→2/3
-          </button>
-          <button
-            type="button"
-            className="px-2 py-1 rounded bg-vscode-active-item text-xs"
-            onClick={() => resolveIssues(outline.blockingIssues.map((i) => i.id))}
+          </Button>
+          <Button
+            size="sm"
+            onPress={() => resolveIssues(outline.blockingIssues.map((i) => i.id))}
           >
             一键消除阻塞项（演示）
-          </button>
-          <button
-            type="button"
-            className="px-2 py-1 rounded bg-vscode-active-item text-xs"
-            onClick={() => confirm()}
+          </Button>
+          <Button
+            size="sm"
+            color="success"
+            onPress={() => confirm()}
           >
             确认大纲
-          </button>
+          </Button>
         </div>
         <div className="text-xs text-gray-500">
           状态：<span className="text-gray-300">{outline.phase}</span>
           {outline.lastError && (
-            <span className="text-red-400 ml-2">{outline.lastError}</span>
+            <span className="text-danger-400 ml-2">{outline.lastError}</span>
           )}
         </div>
         {outline.blockingIssues.length > 0 && (
           <ul className="mt-2 text-xs space-y-1">
             {outline.blockingIssues.map((i) => (
-              <li key={i.id} className="text-amber-300/90">
+              <li key={i.id} className="text-warning-500">
                 [{i.sourceAgent}] {i.summary}
               </li>
             ))}
@@ -280,112 +251,105 @@ export function WorkflowPanel() {
       </section>
 
       <section className="border border-vscode-panel-border rounded p-3 bg-vscode-sidebar/40">
-        <div className="font-bold mb-2">2. 撰写阶段</div>
-        <div className="flex gap-2 mb-2">
-          <label className="text-xs flex items-center gap-1">
-            目标字数
-            <input
-              type="number"
-              className="w-24 bg-vscode-editor-bg border border-vscode-panel-border rounded px-1"
-              value={words}
-              onChange={(e) => setWords(Number(e.target.value))}
-            />
-          </label>
-          <label className="text-xs flex items-center gap-1">
-            章数
-            <input
-              type="number"
-              className="w-16 bg-vscode-editor-bg border border-vscode-panel-border rounded px-1"
-              min={1}
-              value={chapters}
-              onChange={(e) => setChapters(Number(e.target.value))}
-            />
-          </label>
-          <button
-            type="button"
-            className="px-2 py-1 rounded bg-vscode-active-item text-xs"
-            onClick={() => applyReq(words, chapters, '')}
-          >
-            应用字数/章节要求
-          </button>
-        </div>
-        <div className="mb-2">
-          <div className="text-xs text-gray-500 mb-1">文风记忆（localStorage）</div>
-          <textarea
-            className="w-full bg-vscode-editor-bg border border-vscode-panel-border rounded p-2 text-xs min-h-[56px]"
-            value={styleMemoryDraft}
-            onChange={(e) => setStyleMemoryDraft(e.target.value)}
+        <div className="font-bold mb-3">{t('workflow.writingStage')}</div>
+        <div className="flex gap-4 mb-3 items-end">
+          <Input
+            type="number"
+            label={t('workflow.targetWords')}
+            size="sm"
+            className="w-32"
+            value={words}
+            onValueChange={(v) => setWords(Number(v))}
           />
-          <button
-            type="button"
-            className="mt-1 px-2 py-0.5 rounded bg-vscode-active-item text-xs"
-            onClick={() => saveStyle()}
+          <Input
+            type="number"
+            label={t('workflow.chapterCount')}
+            size="sm"
+            className="w-24"
+            min={1}
+            value={chapters}
+            onValueChange={(v) => setChapters(Number(v))}
+          />
+          <Button
+            size="sm"
+            onPress={() => applyReq(words, chapters, '')}
+          >
+            {t('workflow.applyRequirements')}
+          </Button>
+        </div>
+        <div className="mb-3">
+          <TextArea
+            label="文风记忆（localStorage）"
+            size="sm"
+            minRows={2}
+            value={styleMemoryDraft}
+            onValueChange={setStyleMemoryDraft}
+          />
+          <Button
+            size="sm"
+            className="mt-2"
+            onPress={() => saveStyle()}
           >
             保存文风记忆
-          </button>
+          </Button>
         </div>
-        <div className="flex flex-wrap gap-2 mb-2">
-          <button
-            type="button"
-            disabled={busy || outline.phase !== OUTLINE_PHASE.CONFIRMED}
-            className="px-2 py-1 rounded bg-emerald-900/80 text-xs disabled:opacity-50"
-            onClick={() => genDraft()}
+        <div className="flex flex-wrap gap-2 mb-3">
+          <Button
+            size="sm"
+            color="success"
+            isDisabled={busy || outline.phase !== OUTLINE_PHASE.CONFIRMED}
+            onPress={() => genDraft()}
           >
             远程生成初稿
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            className="px-2 py-1 rounded bg-vscode-active-item text-xs disabled:opacity-50"
-            onClick={() => runAgent4()}
+          </Button>
+          <Button
+            size="sm"
+            isDisabled={busy}
+            onPress={() => runAgent4()}
           >
             Agent4 文风
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            className="px-2 py-1 rounded bg-vscode-active-item text-xs disabled:opacity-50"
-            onClick={() => runAgent5()}
+          </Button>
+          <Button
+            size="sm"
+            isDisabled={busy}
+            onPress={() => runAgent5()}
           >
             Agent5 质量
-          </button>
-          <button
-            type="button"
-            className="px-2 py-1 rounded bg-vscode-active-item text-xs"
-            onClick={() => bulkKeepAll()}
+          </Button>
+          <Button
+            size="sm"
+            onPress={() => bulkKeepAll()}
           >
             全部保留（质量）
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            className="px-2 py-1 rounded bg-vscode-active-item text-xs disabled:opacity-50"
-            onClick={() => bulkRewrite()}
+          </Button>
+          <Button
+            size="sm"
+            isDisabled={busy}
+            onPress={() => bulkRewrite()}
           >
             全部重写（质量，未决策段）
-          </button>
-          <button
-            type="button"
-            className="px-2 py-1 rounded bg-vscode-active-item text-xs"
-            onClick={() => markReadyToSave()}
+          </Button>
+          <Button
+            size="sm"
+            onPress={() => markReadyToSave()}
           >
             准备存档
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            className="px-2 py-1 rounded bg-purple-900/80 text-xs disabled:opacity-50"
-            onClick={() => runAgent6()}
+          </Button>
+          <Button
+            size="sm"
+            color="secondary"
+            isDisabled={busy}
+            onPress={() => runAgent6()}
           >
             本章存档 / Agent6
-          </button>
-          <button
-            type="button"
-            className="px-2 py-1 rounded bg-vscode-active-item text-xs"
-            onClick={() => finalizeChapter()}
+          </Button>
+          <Button
+            size="sm"
+            color="danger"
+            onPress={() => finalizeChapter()}
           >
             结束本章
-          </button>
+          </Button>
         </div>
         <div className="text-xs text-gray-500 mb-2">
           撰写状态：{writing.phase}

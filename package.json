@@ -4,6 +4,7 @@
   "description": "A multi-platform Electron application",
   "main": "main.js",
   "scripts": {
+    "dev": "npm run start",
     "start": "concurrently \"vite\" \"electron . --no-sandbox\"",
     "build": "vite build && electron-builder",
     "build:win": "electron-builder --win",
@@ -42,9 +43,11 @@
     }
   },
   "dependencies": {
+    "@heroui/react": "^3.0.1",
     "@tailwindcss/postcss": "^4.1.18",
     "autoprefixer": "^10.4.24",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.38.0",
     "lucide-react": "^0.563.0",
     "postcss": "^8.5.6",
     "react": "^19.2.4",
