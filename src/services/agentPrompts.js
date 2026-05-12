@@ -4,7 +4,33 @@ export const AGENT1_SYSTEM = `你是 Agent1（剧情丰满）。根据用户提�
 - 若用户给的是「已有大纲」模式，不要推翻主干事件，只丰满细节与因果。
 - 若用户给的是「剧情走向」，可生成章节级事件结构。
 - 必须只输出一个 JSON 对象，不要 Markdown 代码围栏，不要额外说明文字。
-- JSON 结构：{ "nodes": [ { "id": "字符串", "title": "标题", "summary": "摘要" } ], "rawMarkdown": "完整可读大纲 Markdown" }`;
+- 输出采用分层结构：
+  { "master": [ { "id": "卷id", "title": "卷标题", "summary": "卷摘要", "volumeIndex": 1 } ],
+    "volumes": [
+      { "volumeIndex": 1,
+        "metadata": { "id": "卷id", "title": "卷标题", "summary": "卷摘要", "volumeIndex": 1 },
+        "sections": [
+          { "sectionIndex": 1,
+            "metadata": { "id": "节id", "title": "节标题", "summary": "节摘要", "volumeIndex": 1, "sectionIndex": 1 },
+            "chapterOutlines": [
+              { "chapterIndex": 1, "title": "章标题",
+                "scenes": [ { "id": "场景id", "title": "场景标题", "summary": "场景摘要", "characters": ["角色ID"], "outfit": "皮肤/服装名（如有）", "setting": "场景标签如战斗/日常/室内", "needBackground": false, "pov": "视角角色ID", "location": "地点", "volumeIndex": 1, "sectionIndex": 1, "chapterIndex": 1 } ],
+                "writingNotes": "本章写作指导"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+- 节点可选字段说明：
+  * characters：本场景出场的角色ID列表
+  * outfit：若角色在本场景穿着特殊服装/皮肤（如"泳装-夏日"），填写皮肤名
+  * setting：场景类型标签，如"战斗""日常""室内""室外""回忆"
+  * needBackground：若本场景需要深入角色背景（如回忆、首次揭秘），设为 true
+  * pov：本场景视角角色ID
+  * location：场景地点
+  * volumeIndex/sectionIndex/chapterIndex：路由字段，全从1开始递增`;
 
 /** Agent2：人设/世界观 */
 export const AGENT2_SYSTEM = `你是 Agent2（人设与世界观一致性审查）。
@@ -21,7 +47,13 @@ export const AGENT3_SYSTEM = `你是 Agent3（剧情内时间与空间、信息�
 若无问题，issues 为空数组。timelineKind 必填。`;
 
 /** 章节主撰写 */
-export const CHAPTER_DRAFT_SYSTEM = `你是长篇小说写作模型。根据大纲、字数/章节要求与文风记忆写作。
+export const CHAPTER_DRAFT_SYSTEM = `你是长篇小说写作模型（Writer）。根据大纲、字数/章节要求与文风记忆写作。
+
+## 角色信息处理
+1. **自动装配的角色上下文**：如果本次输入中已附带「场景角色上下文」（角色名字、外貌、性格的精简摘要），请直接使用。
+2. **从大纲提取**：如果未附带角色上下文，在大纲文本中提到的角色按已有描述写作即可，不要凭空编造外貌/性格细节。
+3. **禁止**：不要输出完整角色卡或列举角色字段——只需要自然地融入叙事中。
+
 必须只输出一个 JSON 对象：{ "text": "完整正文，段落之间用空行分隔" }，不要围栏。`;
 
 /** Agent4：文风 */

@@ -1,84 +1,108 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { AgentApiSettings } from '@/components/AgentApiSettings.jsx';
 import { useI18n } from '@/i18n/LanguageContext.jsx';
-import { Button, Accordion, AccordionItem } from '@heroui/react';
 import {
-  SUPPORTED_LANGUAGES,
-  getLanguageByCode,
-  resolveLanguage,
-} from '@/services/languageSettings.js';
+  Globe,
+  Cpu,
+  Bot,
+  GitBranch,
+  Wand2,
+  KeyRound,
+  HardDrive,
+  Search,
+  Book,
+} from 'lucide-react';
 
-export function AppSettingsPanel() {
-  const { preference, setPreference, savePreference, t } = useI18n();
-  const initialPreference = useMemo(() => preference, [preference]);
-  const [languagePreference, setLanguagePreference] = useState(initialPreference);
-  const [savedFlash, setSavedFlash] = useState(false);
+// One row per category. The settings UI itself lives in the main editor area —
+// the sidebar just lists categories, each click opens (or activates) a tab.
+function buildCategories(t) {
+  return [
+    {
+      sid: 'language',
+      title: t('settings.languageTitle'),
+      desc: t('settings.languageDesc'),
+      Icon: Globe,
+    },
+    {
+      sid: 'runtime',
+      title: t('runtime.title'),
+      desc: t('runtime.description'),
+      Icon: Cpu,
+    },
+    {
+      sid: 'subagent',
+      title: t('subagent.title'),
+      desc: t('subagent.desc'),
+      Icon: Bot,
+    },
+    {
+      sid: 'dag',
+      title: t('dag.title'),
+      desc: t('dag.desc'),
+      Icon: GitBranch,
+    },
+    {
+      sid: 'config-helper',
+      title: '配置助手',
+      desc: '通过自然语言对话生成 / 修改 Subagent 与 DAG 配置。',
+      Icon: Wand2,
+    },
+    {
+      sid: 'models',
+      title: t('settings.llmTitle'),
+      desc: t('settings.llmDesc') || 'API Key、Provider、各 Agent 的模型与 Tier 绑定。',
+      Icon: KeyRound,
+    },
+    {
+      sid: 'storage',
+      title: '存储空间',
+      desc: '对话历史与离线操作日志的存储上限与清理策略。',
+      Icon: HardDrive,
+    },
+    {
+      sid: 'search',
+      title: '搜索引擎',
+      desc: '同人角色联网搜索补全设置，选择搜索源偏好。',
+      Icon: Search,
+    },
+    {
+      sid: 'skill',
+      title: 'Skill',
+      desc: '创建和管理技能文档，关联到 Subagent，导入导出。',
+      Icon: Book,
+    },
+  ];
+}
 
-  const effectiveLanguage = resolveLanguage(languagePreference);
-  const effectiveLabel =
-    getLanguageByCode(effectiveLanguage)?.label || effectiveLanguage;
-
-  const onSaveLanguage = useCallback(() => {
-    savePreference(languagePreference);
-    setPreference(languagePreference);
-    setSavedFlash(true);
-    setTimeout(() => setSavedFlash(false), 1500);
-  }, [languagePreference, savePreference, setPreference]);
+export function AppSettingsPanel({ onOpenInEditor, activeSettingsId }) {
+  const { t } = useI18n();
+  const categories = buildCategories(t);
 
   return (
-    <div className="space-y-3">
-      <Accordion defaultExpandedKeys={['1']} variant="bordered" className="bg-vscode-sidebar/30">
-        <AccordionItem
-          key="1"
-          aria-label="Language Settings"
-          title={<span className="text-xs font-bold text-gray-400 uppercase tracking-wide">{t('settings.languageTitle')}</span>}
-        >
-          <div className="pb-3 text-xs">
-            <p className="text-gray-500 mt-2 mb-2">
-              {t('settings.languageDesc')}
-            </p>
-            <div className="grid grid-cols-1 gap-4">
-              <label className="flex flex-col gap-1 text-xs">
-                <span className="text-gray-500">{t('settings.uiLanguage')}</span>
-                <select
-                  className="bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-2"
-                  value={languagePreference}
-                  onChange={(e) => setLanguagePreference(e.target.value)}
-                >
-                  <option value="system">{t('settings.followSystem')}</option>
-                  {SUPPORTED_LANGUAGES.map((l) => (
-                    <option key={l.code} value={l.code}>
-                      {l.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="text-gray-500">
-                {t('settings.effectiveLanguage')}:{' '}
-                <span className="text-gray-300">{effectiveLabel}</span>
-              </div>
-              <div>
-                <Button
-                  color="primary"
-                  size="sm"
-                  onPress={onSaveLanguage}
-                >
-                  {savedFlash ? t('settings.saved') : t('settings.saveLanguage')}
-                </Button>
-              </div>
+    <div className="space-y-1">
+      {categories.map(({ sid, title, desc, Icon }) => {
+        const active = sid === activeSettingsId;
+        return (
+          <button
+            key={sid}
+            type="button"
+            onClick={() => onOpenInEditor?.(sid)}
+            className={`w-full flex items-start gap-2 px-2 py-2 rounded text-left text-xs transition-colors ${
+              active
+                ? 'bg-vscode-list-activeSelectionBackground text-white'
+                : 'hover:bg-vscode-list-hoverBackground text-gray-300'
+            }`}
+          >
+            <Icon size={14} className="mt-0.5 flex-shrink-0 opacity-80" />
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold truncate">{title}</div>
+              {desc ? (
+                <div className="text-[10px] text-gray-500 mt-0.5 line-clamp-2 leading-snug">
+                  {desc}
+                </div>
+              ) : null}
             </div>
-          </div>
-        </AccordionItem>
-        <AccordionItem
-          key="2"
-          aria-label="LLM Settings"
-          title={<span className="text-xs font-bold text-gray-400 uppercase tracking-wide">{t('settings.llmTitle')}</span>}
-        >
-          <div className="pb-3">
-            <AgentApiSettings />
-          </div>
-        </AccordionItem>
-      </Accordion>
+          </button>
+        );
+      })}
     </div>
   );
 }

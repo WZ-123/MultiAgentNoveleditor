@@ -1,24 +1,43 @@
 /**
- * OpenAI 兼容 Chat Completions：POST {baseUrl}/chat/completions
- * 支持各厂商在「统一 baseUrl + /chat/completions」下的兼容实现。
+ * Front-end remote AI client.
+ *
+ * Phase 1 strategy (transitional):
+ *   1. If `window.mana.runtime` is available AND user has a usable active preset
+ *      with an api key for the agent's tier — route to the provider-agnostic
+ *      runtime via runSubagent.
+ *   2. Else if the legacy per-agent config has `useMock: true` or no apiKey —
+ *      return canned mock responses (kept for offline/dev use).
+ *   3. Else fall back to the legacy OpenAI-compat `chatCompletions` IPC.
  */
 
 import { getAgentConfig } from '@/services/agentApiConfig.js';
 
-/**
- * @param {string} baseUrl
- */
+/** Old agentId -> new builtin subagentId */
+const LEGACY_AGENT_TO_SUBAGENT = {
+  agent1: 'sa-outline-drafter',
+  agent2: 'sa-character-reviewer',
+  agent3: 'sa-timeline-guardian',
+  agent4: 'sa-style-checker',
+  agent5: 'sa-prose-quality',
+  agent6: 'sa-lore-updater',
+  chapter_draft: 'sa-writer',
+};
+
+const LEGACY_AGENT_TO_TIER = {
+  agent1: 'opus',
+  agent2: 'opus',
+  agent3: 'opus',
+  agent4: 'haiku',
+  agent5: 'haiku',
+  agent6: 'opus',
+  chapter_draft: 'sonnet',
+};
+
 function chatCompletionsUrl(baseUrl) {
   const b = baseUrl.replace(/\/$/, '');
   return `${b}/chat/completions`;
 }
 
-/**
- * @param {string} baseUrl
- * @param {string} apiKey
- * @param {string} model
- * @param {object} body
- */
 async function postChatCompletions(baseUrl, apiKey, model, body) {
   const url = chatCompletionsUrl(baseUrl);
   const payload = { model, ...body };
@@ -26,19 +45,11 @@ async function postChatCompletions(baseUrl, apiKey, model, body) {
   const headers = { Authorization: `Bearer ${apiKey}` };
 
   if (typeof window !== 'undefined' && window.mana?.chatCompletions) {
-    return window.mana.chatCompletions({
-      url,
-      headers,
-      body: bodyStr,
-    });
+    return window.mana.chatCompletions({ url, headers, body: bodyStr });
   }
-
   const res = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body: bodyStr,
   });
   if (!res.ok) {
@@ -48,22 +59,79 @@ async function postChatCompletions(baseUrl, apiKey, model, body) {
   return res.json();
 }
 
-/**
- * @param {unknown} data
- */
 function extractText(data) {
   const c = data?.choices?.[0]?.message?.content;
   return typeof c === 'string' ? c : '';
 }
 
-/**
- * @typedef {Object} RemoteAIClient
- * @property {(agentId: string, messages: {role: string, content: string}[], options?: { expectJson?: boolean }) => Promise<string>} completeForAgent
- */
+let cachedActivePreset = null;
+let cachedActivePresetAt = 0;
+const PRESET_CACHE_MS = 1500;
 
-/**
- * @returns {RemoteAIClient}
- */
+async function getActivePresetCached() {
+  if (typeof window === 'undefined' || !window.mana?.config) return null;
+  const now = Date.now();
+  if (cachedActivePreset && now - cachedActivePresetAt < PRESET_CACHE_MS) {
+    return cachedActivePreset;
+  }
+  try {
+    const cfg = await window.mana.config.getApp();
+    if (!cfg?.activePresetId) return null;
+    const preset = await window.mana.config.getPreset(cfg.activePresetId);
+    if (preset) {
+      cachedActivePreset = preset;
+      cachedActivePresetAt = now;
+    }
+    return preset;
+  } catch {
+    return null;
+  }
+}
+
+export function invalidateActivePresetCache() {
+  cachedActivePreset = null;
+  cachedActivePresetAt = 0;
+}
+
+function tierHasApiKey(preset, tierName) {
+  const slot = preset?.tiers?.[tierName];
+  if (!slot) return false;
+  return !!slot.apiKeyRef;
+}
+
+function lastUserContent(messages) {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    if (messages[i]?.role === 'user') {
+      const c = messages[i].content;
+      return typeof c === 'string' ? c : JSON.stringify(c);
+    }
+  }
+  return '';
+}
+
+async function tryRuntimeRoute(agentId, messages, options) {
+  if (typeof window === 'undefined' || !window.mana?.runtime) return null;
+  const preset = await getActivePresetCached();
+  if (!preset) return null;
+  const tier = LEGACY_AGENT_TO_TIER[agentId];
+  if (!tierHasApiKey(preset, tier)) return null;
+  const subagentId = LEGACY_AGENT_TO_SUBAGENT[agentId];
+  if (!subagentId) return null;
+  const userText = lastUserContent(messages);
+  try {
+    const result = await window.mana.runtime.runSubagent({
+      subagentId,
+      input: userText,
+      tierOverride: tier,
+      userLang: 'zh-CN',
+    });
+    return typeof result?.output === 'string' ? result.output : '';
+  } catch (err) {
+    console.error('[remoteAI] runSubagent failed; falling back', err);
+    return null;
+  }
+}
+
 export function createRemoteAIClient() {
   return {
     /**
@@ -72,32 +140,23 @@ export function createRemoteAIClient() {
      * @param {{ expectJson?: boolean }} [options]
      */
     async completeForAgent(agentId, messages, options = {}) {
+      const runtimeAnswer = await tryRuntimeRoute(agentId, messages, options);
+      if (runtimeAnswer != null) return runtimeAnswer;
+
       const cfg = getAgentConfig(agentId);
       if (cfg.useMock || !cfg.apiKey?.trim()) {
         return mockComplete(agentId, messages, options);
       }
       const body = {
         messages,
-        ...(options.expectJson
-          ? { response_format: { type: 'json_object' } }
-          : {}),
+        ...(options.expectJson ? { response_format: { type: 'json_object' } } : {}),
       };
-      const data = await postChatCompletions(
-        cfg.baseUrl,
-        cfg.apiKey.trim(),
-        cfg.model,
-        body
-      );
+      const data = await postChatCompletions(cfg.baseUrl, cfg.apiKey.trim(), cfg.model, body);
       return extractText(data);
     },
   };
 }
 
-/**
- * @param {string} agentId
- * @param {{role: string, content: string}[]} messages
- * @param {{ expectJson?: boolean }} options
- */
 async function mockComplete(agentId, messages, options) {
   await new Promise((r) => setTimeout(r, 120));
   if (!options.expectJson) {
@@ -124,22 +183,13 @@ async function mockComplete(agentId, messages, options) {
     case 'agent4':
       return JSON.stringify({
         annotations: [
-          {
-            paragraphId: 'p-0',
-            start: 0,
-            end: 8,
-            reason: '（mock）文风标注示例',
-          },
+          { paragraphId: 'p-0', start: 0, end: 8, reason: '（mock）文风标注示例' },
         ],
       });
     case 'agent5':
       return JSON.stringify({
         annotations: [
-          {
-            paragraphId: 'p-0',
-            kind: 'choppy',
-            note: '（mock）质量标注示例',
-          },
+          { paragraphId: 'p-0', kind: 'choppy', note: '（mock）质量标注示例' },
         ],
       });
     case 'agent6':

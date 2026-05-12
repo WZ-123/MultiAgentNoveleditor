@@ -1,0 +1,260 @@
+'use strict';
+
+/**
+ * runSubagent — provider-agnostic agent loop.
+ *
+ * Phase 1 minimum: no tools / no MCP. Single-turn (or multi-turn but model is
+ * never given tools so it cannot call them). This is enough to migrate the old
+ * 6 hard-coded agents while we build out Phase 2.
+ *
+ * runSubagent({
+ *   subagentId, input, novelContext?, presetOverride?, tierOverride?,
+ *   abortSignal?, runId?, pipelineRunId?, nodeId?, userLang?, mcpTools?
+ * }) -> { runId, output, transcript }
+ */
+
+const eventBus = require('./eventBus');
+const anthropic = require('./providers/anthropic');
+const openaiCompat = require('./providers/openaiCompat');
+const providerManager = require('../providerManager');
+const modelAliases = require('../modelAliases');
+const subagentsStore = require('../store/subagents');
+
+function pickProvider(type) {
+  if (type === 'anthropic') return anthropic;
+  if (type === 'openai-compat') return openaiCompat;
+  throw new Error(`Unknown provider type: ${type}`);
+}
+
+async function resolveTier({ subagent, tierOverride }) {
+  const tierName = tierOverride || subagent.tier || 'sonnet';
+  const alias = await modelAliases.getAlias(tierName);
+  const providerId = alias?.providerId || null;
+  const provider = providerId
+    ? await providerManager.getProvider(providerId)
+    : await providerManager.getActiveProvider();
+  if (!provider) throw new Error(`没有可用的 AI 服务商，无法执行 subagent「${subagent.displayName || subagent.id}」`);
+  if (!provider.apiKey) throw new Error(`AI 服务商 API Key 未设置`);
+  const modelId = alias?.modelId || provider.models?.[0]?.id || '';
+  if (!modelId) throw new Error(`没有配置 AI 模型`);
+  return {
+    tierName,
+    type: provider.type || 'anthropic',
+    baseUrl: provider.baseUrl || '',
+    model: modelId,
+    apiKey: provider.apiKey,
+    extra: provider.extra || {},
+  };
+}
+
+function applySystemTemplate(systemPrompt, { userLang }) {
+  return String(systemPrompt || '').replace(/\{\{userLang\}\}/g, userLang || 'zh-CN');
+}
+
+function inputToMessages(input) {
+  if (typeof input === 'string') {
+    return [{ role: 'user', content: [{ type: 'text', text: input }] }];
+  }
+  if (Array.isArray(input)) return input;
+  if (input && typeof input === 'object' && Array.isArray(input.messages)) return input.messages;
+  if (input && typeof input === 'object' && typeof input.text === 'string') {
+    return [{ role: 'user', content: [{ type: 'text', text: input.text }] }];
+  }
+  return [{ role: 'user', content: [{ type: 'text', text: '' }] }];
+}
+
+function extractText(content) {
+  if (!Array.isArray(content)) return '';
+  return content.filter((b) => b?.type === 'text').map((b) => b.text || '').join('');
+}
+
+function findToolUses(content) {
+  if (!Array.isArray(content)) return [];
+  return content.filter((b) => b?.type === 'tool_use');
+}
+
+async function runSubagent(opts = {}) {
+  const {
+    subagentId,
+    input,
+    tierOverride,
+    systemPromptOverride,
+    abortSignal,
+    runId: providedRunId,
+    pipelineRunId,
+    nodeId,
+    userLang,
+    mcpClient,
+  } = opts;
+
+  const runId = eventBus.ensureRunId(providedRunId);
+
+  const subagent = await subagentsStore.getSubagent(subagentId);
+  if (!subagent) {
+    const e = new Error(`subagent not found: ${subagentId}`);
+    await eventBus.emit({ runId, pipelineRunId, nodeId, subagentId, kind: 'error', data: { message: e.message } });
+    throw e;
+  }
+
+  await eventBus.emit({ runId, pipelineRunId, nodeId, subagentId, kind: 'queued', data: { tier: tierOverride || subagent.tier } });
+
+  const tier = await resolveTier({ subagent, tierOverride });
+  const provider = pickProvider(tier.type);
+  let systemPrompt = systemPromptOverride
+    ? applySystemTemplate(systemPromptOverride, { userLang })
+    : applySystemTemplate(subagent.systemPrompt, { userLang });
+
+  // Inject assigned skills into system prompt
+  try {
+    const skillsStore = require('../store/skills');
+    const allSkills = await skillsStore.listSkills();
+    const assigned = allSkills.filter(s => (s.assignedSubagentIds || []).includes(subagent.id));
+    if (assigned.length > 0) {
+      const skillBlocks = [];
+      for (const s of assigned) {
+        const full = await skillsStore.getSkill(s.id);
+        if (full?.content) {
+          skillBlocks.push('## References: ' + full.name + '\n\n' + full.content);
+        }
+      }
+      if (skillBlocks.length > 0) {
+        systemPrompt += '\n\n---\n' + skillBlocks.join('\n\n---\n');
+      }
+    }
+  } catch (err) {
+    console.error('[runSubagent] skill injection failed:', err.message);
+  }
+  const messages = inputToMessages(input);
+
+  let tools;
+  if (mcpClient && Array.isArray(subagent.allowedTools) && subagent.allowedTools.length) {
+    try {
+      const all = await mcpClient.listTools();
+      tools = all.filter((t) => subagent.allowedTools.includes(t.name));
+    } catch (err) {
+      console.error('[runSubagent] mcp.listTools failed', err);
+    }
+  }
+
+  const transcript = [...messages];
+  let lastTextOutput = '';
+  const maxTurns = subagent.runtimeHints?.maxTurns || 4;
+  let turnIdx = 0;
+
+  await eventBus.emit({ runId, pipelineRunId, nodeId, subagentId, kind: 'running', data: { tier: tier.tierName, model: tier.model } });
+
+  while (turnIdx < maxTurns) {
+    if (abortSignal?.aborted) {
+      await eventBus.emit({ runId, pipelineRunId, nodeId, subagentId, kind: 'error', data: { message: 'aborted' } });
+      throw new DOMException('aborted', 'AbortError');
+    }
+
+    let result;
+    try {
+      result = await provider.sendMessage({
+        system: systemPrompt,
+        messages: transcript,
+        tools,
+        tier,
+        abortSignal,
+        runId,
+        nodeId,
+        subagentId,
+        onEvent: (ev) => eventBus.emit({ runId, pipelineRunId, ...ev }),
+      });
+    } catch (err) {
+      await eventBus.emit({
+        runId, pipelineRunId, nodeId, subagentId, kind: 'error',
+        data: { message: err.message || String(err) },
+      });
+      throw err;
+    }
+
+    const assistantMsg = { role: 'assistant', content: result.content || [] };
+    transcript.push(assistantMsg);
+    const tx = extractText(result.content);
+    if (tx) lastTextOutput = tx;
+
+    const toolUses = findToolUses(result.content);
+    if (result.stopReason !== 'tool_use' || !toolUses.length) {
+      break;
+    }
+    if (!mcpClient) {
+      await eventBus.emit({
+        runId, pipelineRunId, nodeId, subagentId, kind: 'error',
+        data: { message: 'tool_use produced but no MCP client available' },
+      });
+      break;
+    }
+
+    const toolResults = [];
+    for (const use of toolUses) {
+      let toolResult;
+      try {
+        toolResult = await mcpClient.callTool({
+          name: use.name,
+          arguments: use.input || {},
+          subagentId,
+          runId,
+          nodeId,
+          toolUseId: use.id,
+          autoConfirm: true,
+        });
+      } catch (err) {
+        toolResult = { isError: true, content: [{ type: 'text', text: err.message || String(err) }] };
+      }
+      const content = Array.isArray(toolResult?.content)
+        ? toolResult.content.map((c) => (c.type === 'text' ? c.text : JSON.stringify(c))).join('\n')
+        : (typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult ?? ''));
+      toolResults.push({
+        type: 'tool_result',
+        tool_use_id: use.id,
+        content,
+        is_error: !!toolResult?.isError,
+      });
+      await eventBus.emit({
+        runId, pipelineRunId, nodeId, subagentId, kind: 'tool_result',
+        data: { tool_use_id: use.id, name: use.name, content, isError: !!toolResult?.isError },
+      });
+    }
+    transcript.push({ role: 'user', content: toolResults });
+    turnIdx += 1;
+  }
+
+  await eventBus.emit({
+    runId, pipelineRunId, nodeId, subagentId, kind: 'output',
+    data: { text: lastTextOutput },
+  });
+  await eventBus.emit({
+    runId, pipelineRunId, nodeId, subagentId, kind: 'done',
+    data: { turns: turnIdx + 1 },
+  });
+
+  return { runId, output: lastTextOutput, transcript };
+}
+
+const activeRuns = new Map();
+
+function registerActiveRun(runId, controller) {
+  activeRuns.set(runId, controller);
+}
+function unregisterActiveRun(runId) {
+  activeRuns.delete(runId);
+}
+function cancel(runId) {
+  const c = activeRuns.get(runId);
+  if (c) c.abort();
+}
+
+async function runSubagentManaged(opts = {}) {
+  const ac = new AbortController();
+  const runId = eventBus.ensureRunId(opts.runId);
+  registerActiveRun(runId, ac);
+  try {
+    return await runSubagent({ ...opts, runId, abortSignal: opts.abortSignal || ac.signal });
+  } finally {
+    unregisterActiveRun(runId);
+  }
+}
+
+module.exports = { runSubagent: runSubagentManaged, cancel };

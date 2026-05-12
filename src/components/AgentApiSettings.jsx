@@ -84,7 +84,7 @@ export function AgentApiSettings() {
                   label={t('settings.modelId')}
                   size="sm"
                   value={row.model}
-                  onValueChange={(val) => updateAgent(key, { model: val })}
+                  onChange={(e) => updateAgent(key, { model: e.target.value })}
                 />
                 <div className="sm:col-span-2">
                   <Input
@@ -92,7 +92,7 @@ export function AgentApiSettings() {
                     size="sm"
                     className="font-mono"
                     value={row.baseUrl}
-                    onValueChange={(val) => updateAgent(key, { baseUrl: val })}
+                    onChange={(e) => updateAgent(key, { baseUrl: e.target.value })}
                     placeholder="https://api.openai.com/v1"
                   />
                 </div>
@@ -103,7 +103,7 @@ export function AgentApiSettings() {
                     size="sm"
                     className="font-mono"
                     value={row.apiKey}
-                    onValueChange={(val) => updateAgent(key, { apiKey: val })}
+                    onChange={(e) => updateAgent(key, { apiKey: e.target.value })}
                     placeholder="sk-… 或各厂商密钥"
                   />
                 </div>

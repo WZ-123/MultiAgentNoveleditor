@@ -14,6 +14,13 @@
 /** @type {ProviderPreset[]} */
 export const PROVIDER_PRESETS = [
   {
+    id: 'anthropic',
+    label: 'Anthropic（原生 Messages API）',
+    baseUrl: 'https://api.anthropic.com',
+    defaultModel: 'claude-sonnet-4-6',
+    docsUrl: 'https://docs.anthropic.com/en/api/messages',
+  },
+  {
     id: 'openai',
     label: 'OpenAI',
     baseUrl: 'https://api.openai.com/v1',

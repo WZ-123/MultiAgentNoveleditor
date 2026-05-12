@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useWorkflowState } from '@/hooks/useWorkflowState.js';
 import { AGENTS } from '@/agents/registry.js';
 import { OUTLINE_PHASE } from '@/domain/types.js';
-import { AgentApiSettings } from '@/components/AgentApiSettings.jsx';
 import { useI18n } from '@/i18n/LanguageContext.jsx';
 import { Button, TextArea, Input, RadioGroup, Radio } from '@heroui/react';
 
@@ -37,14 +36,14 @@ function ParagraphBlock({
           key={`s-${a.id}`}
           className="bg-blue-900/60 underline decoration-blue-400 cursor-pointer"
           title={a.reason}
-          onClick={() => {
-            const action = window.prompt(
+          onClick={async () => {
+            const action = await window.mana.prompt.show(
               '文风：输入 unify | memory | pass',
               'pass'
             );
             if (action === 'unify') onStyleAction(a.id, 'unify_style');
             else if (action === 'memory') {
-              const patch = window.prompt('记忆补丁', '');
+              const patch = await window.mana.prompt.show('记忆补丁', '');
               onStyleAction(a.id, 'update_style_memory', patch ?? '');
             } else if (action === 'pass') onStyleAction(a.id, 'pass');
           }}
@@ -153,16 +152,6 @@ export function WorkflowPanel() {
 
   return (
     <div className="flex flex-col gap-4 text-sm text-gray-300 h-full overflow-y-auto pr-1">
-      <details className="group border border-vscode-panel-border rounded bg-vscode-sidebar/30">
-        <summary className="cursor-pointer list-none px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wide flex items-center justify-between">
-          <span>每 Agent API（OpenAI 兼容 · 多服务商）</span>
-          <span className="text-gray-600 group-open:rotate-0">▼</span>
-        </summary>
-        <div className="px-3 pb-3 border-t border-vscode-panel-border">
-          <AgentApiSettings />
-        </div>
-      </details>
-
       <section>
         <div className="text-xs font-bold text-gray-500 uppercase mb-2">
           {t('workflow.title')}
@@ -193,9 +182,10 @@ export function WorkflowPanel() {
         </RadioGroup>
         <TextArea
           className="mb-3"
-          minRows={3}
+          rows={3}
+          aria-label="用户输入"
           value={userText}
-          onValueChange={setUserText}
+          onChange={(e) => setUserText(e.target.value)}
         />
         <div className="flex flex-wrap gap-2 mb-2">
           <Button
@@ -210,7 +200,10 @@ export function WorkflowPanel() {
             size="sm"
             color="secondary"
             isDisabled={busy}
-            onPress={() => runOutline()}
+            onPress={() => {
+              const mana = typeof window !== 'undefined' ? window.mana : null;
+              runOutline(mana?.novel?.readCharacter ? async (id) => mana.novel.readCharacter(id) : undefined);
+            }}
           >
             运行 Agent1→2/3
           </Button>
@@ -259,7 +252,7 @@ export function WorkflowPanel() {
             size="sm"
             className="w-32"
             value={words}
-            onValueChange={(v) => setWords(Number(v))}
+            onChange={(e) => setWords(Number(e.target.value))}
           />
           <Input
             type="number"
@@ -268,7 +261,7 @@ export function WorkflowPanel() {
             className="w-24"
             min={1}
             value={chapters}
-            onValueChange={(v) => setChapters(Number(v))}
+            onChange={(e) => setChapters(Number(e.target.value))}
           />
           <Button
             size="sm"
@@ -281,9 +274,9 @@ export function WorkflowPanel() {
           <TextArea
             label="文风记忆（localStorage）"
             size="sm"
-            minRows={2}
+            rows={2}
             value={styleMemoryDraft}
-            onValueChange={setStyleMemoryDraft}
+            onChange={(e) => setStyleMemoryDraft(e.target.value)}
           />
           <Button
             size="sm"

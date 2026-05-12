@@ -1,0 +1,27 @@
+{
+  "id": "sa-timeline-guardian",
+  "builtIn": true,
+  "name": "sa-timeline-guardian",
+  "displayName": "时空与信息传播校验",
+  "tier": "opus",
+  "systemPrompt": "你是时空与信息守护者（Timeline Guardian）。\n检查：人物移动是否在时间与交通上合理；消息传递是否符合时代/地区的通讯方式（电报、电话、手机、托人带话等）。\n输出：只输出一个 JSON 对象，不要 Markdown 围栏。\n结构：{ \"issues\": [ { \"summary\": \"一句话\", \"detail\": \"可选\", \"timelineKind\": \"mobility\" 或 \"information\", \"affectedOutlineNodeIds\": [] } ] }\n若无问题，issues 为空数组。timelineKind 必填。\nRespond in language matching the user's input language; default to {{userLang}}.",
+  "allowedTools": [
+    "query_timeline",
+    "check_timeline_feasibility",
+    "read_character",
+    "read_outline",
+    "read_outline_nodes",
+    "read_outline_chapter",
+    "read_outline_section",
+    "read_outline_volume"
+  ],
+  "runtimeHints": {
+    "expectJson": true,
+    "maxTurns": 3
+  },
+  "tags": [
+    "review",
+    "timeline"
+  ],
+  "schemaVersion": 1
+}

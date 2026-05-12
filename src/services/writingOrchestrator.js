@@ -23,6 +23,8 @@ import { appendStyleMemory, loadStyleMemory } from '@/services/styleMemoryStore.
  * @property {import('@/domain/types.js').WritingPhase} phase
  * @property {WritingRequirements | null} requirements
  * @property {string} outlineMarkdown
+ * @property {import('@/domain/types.js').HierarchicalWritingContext|null} hierarchicalContext
+ * @property {string|null} characterContext - 自动装配的角色上下文 JSON 字符串（AB混用的A方案）
  * @property {string} draftText
  * @property {ParagraphRef[]} paragraphs
  * @property {StyleAnnotation[]} styleAnnotations
@@ -38,11 +40,44 @@ import { appendStyleMemory, loadStyleMemory } from '@/services/styleMemoryStore.
  * @param {string} outlineMarkdown
  * @returns {WritingSessionState}
  */
-export function createWritingSession(outlineMarkdown) {
+/**
+ * @param {string} outlineMarkdown - 大纲 Markdown 文本
+ * @param {import('@/domain/types.js').HierarchicalWritingContext} [hierarchicalContext] - 层级大纲上下文（可选）
+ * @returns {WritingSessionState}
+ */
+export function createWritingSession(outlineMarkdown, hierarchicalContext, characterContext) {
   return {
     phase: WRITING_PHASE.IDLE,
     requirements: null,
     outlineMarkdown,
+    hierarchicalContext: hierarchicalContext || null,
+    characterContext: characterContext || null,
+    draftText: '',
+    paragraphs: [],
+    styleAnnotations: [],
+    qualityAnnotations: [],
+    qualityResolvedIds: new Set(),
+    peek: null,
+    agent6Summary: null,
+    agent6Supplement: null,
+    lastError: null,
+  };
+}
+
+/**
+ * 从层级大纲读取指定章的大纲 Markdown 创建写作会话。
+ * 注意：需调用方（UI/WorkflowPanel）通过 IPC 读取章大纲文件后传入 outlineMarkdown。
+ * @param {string} chapterOutlineMarkdown - 章大纲 Markdown（从 outlines/volume-XXX/section-YYY/chapter-ZZZ.md 读取）
+ * @param {HierarchicalWritingContext} context - 层级定位信息
+ * @returns {WritingSessionState}
+ */
+export function createWritingSessionFromChapter(chapterOutlineMarkdown, context, characterContext) {
+  return {
+    phase: WRITING_PHASE.IDLE,
+    requirements: null,
+    outlineMarkdown: chapterOutlineMarkdown,
+    hierarchicalContext: context,
+    characterContext: characterContext || null,
     draftText: '',
     paragraphs: [],
     styleAnnotations: [],
@@ -70,18 +105,20 @@ export async function generateRemoteDraft(state) {
   const client = createRemoteAIClient();
   const style = loadStyleMemory();
   try {
+    const userMsg = {
+      outline: state.outlineMarkdown,
+      requirements: state.requirements,
+      styleMemory: style,
+    };
+    // 注入自动装配的角色上下文（AB混用A方案）
+    if (state.characterContext) {
+      userMsg.characterContext = state.characterContext;
+    }
     const json = await client.completeForAgent(
       'chapter_draft',
       [
         { role: 'system', content: CHAPTER_DRAFT_SYSTEM },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            outline: state.outlineMarkdown,
-            requirements: state.requirements,
-            styleMemory: style,
-          }),
-        },
+        { role: 'user', content: JSON.stringify(userMsg) },
       ],
       { expectJson: true }
     );
@@ -462,4 +499,47 @@ export async function runAgent6ChapterSave(state) {
  */
 export function finalizeChapter(state) {
   return { ...state, phase: WRITING_PHASE.DONE };
+}
+
+/**
+ * 从 OutlineArtifact 的大纲节点中收集所有出现的角色ID，
+ * 逐一读取角色卡，构建精简的角色上下文摘要字符串。
+ * 这是 AB 混用中 A 方案（自动装配）的实现。
+ * @param {import('@/domain/types.js').OutlineArtifact} artifact
+ * @param {(id: string) => Promise<import('@/domain/types.js').Character|null>} readCharacter - 读取角色卡的异步函数（通过 IPC 调用 main process）
+ * @returns {Promise<string|null>} JSON 字符串或 null
+ */
+export async function buildCharacterContextFromArtifact(artifact, readCharacter) {
+  if (!artifact?.nodes?.length) return null;
+  const ids = new Set();
+  for (const n of artifact.nodes) {
+    if (Array.isArray(n.characters)) {
+      for (const cid of n.characters) ids.add(cid);
+    }
+  }
+  if (ids.size === 0) return null;
+
+  const profiles = [];
+  for (const id of ids) {
+    try {
+      const ch = await readCharacter(id);
+      if (!ch) continue;
+      const p = {
+        id: ch.id,
+        name: ch.name,
+        role: ch.role,
+        faction: ch.faction,
+        appearance: ch.appearance ? (ch.appearance.length > 300 ? ch.appearance.slice(0, 300) + '…' : ch.appearance) : undefined,
+        personality: ch.personality ? (ch.personality.length > 200 ? ch.personality.slice(0, 200) + '…' : ch.personality) : undefined,
+        hairColor: ch.hairColor,
+        eyeColor: ch.eyeColor,
+        height: ch.height,
+        moeTraits: ch.moeTraits,
+        quotes: ch.quotes,
+      };
+      profiles.push(p);
+    } catch { /* skip unreadable */ }
+  }
+  if (profiles.length === 0) return null;
+  return JSON.stringify(profiles, null, 2);
 }

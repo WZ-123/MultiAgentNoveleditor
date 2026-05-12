@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "dev": "npm run start",
-    "start": "concurrently \"vite\" \"electron . --no-sandbox\"",
+    "start": "concurrently \"vite\" \"unset ELECTRON_RUN_AS_NODE && electron . --no-sandbox\"",
     "build": "vite build && electron-builder",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
@@ -21,15 +21,32 @@
   "author": "GitHub",
   "license": "CC0-1.0",
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.1.4",
+    "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.2.1",
     "electron": "^28.0.0",
     "electron-builder": "^24.9.0",
-    "vite": "^7.3.1"
+    "vite": "^5.4.14"
   },
   "build": {
     "appId": "com.mana.app",
     "productName": "MultiAgentNovelAssistant",
+    "files": [
+      "main.js",
+      "preload.js",
+      "mcp-server-entry.js",
+      "src/main/**/*",
+      "dist/**/*",
+      "package.json",
+      "!node_modules/.cache",
+      "!**/*.md",
+      "!**/*.test.js"
+    ],
+    "asarUnpack": [
+      "mcp-server-entry.js",
+      "src/main/mcp/**",
+      "src/main/store/**",
+      "src/main/runtime/providers/claudeCli.js"
+    ],
     "win": {
       "target": "nsis"
     },
@@ -44,12 +61,18 @@
   },
   "dependencies": {
     "@heroui/react": "^3.0.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@tailwindcss/postcss": "^4.1.18",
+    "@xyflow/react": "^12.10.2",
     "autoprefixer": "^10.4.24",
     "clsx": "^2.1.1",
+    "diff-match-patch": "^1.0.5",
+    "epub": "^2.1.1",
+    "fast-glob": "^3.3.3",
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.563.0",
     "postcss": "^8.5.6",
+    "proper-lockfile": "^4.1.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "tailwind-merge": "^3.4.0",

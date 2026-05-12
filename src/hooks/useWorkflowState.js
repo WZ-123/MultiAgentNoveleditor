@@ -7,6 +7,7 @@ import {
   startOutlineInput,
 } from '@/services/outlineOrchestrator.js';
 import {
+  buildCharacterContextFromArtifact,
   bulkRewriteUnresolved,
   createWritingSession,
   finalizeChapter,
@@ -47,13 +48,18 @@ export function useWorkflowState() {
     setOutline((s) => startOutlineInput(s, { mode, userText }));
   }, []);
 
-  const runOutline = useCallback(async () => {
+  const runOutline = useCallback(async (readCharacter) => {
     setBusy(true);
     try {
       const next = await runOutlinePipeline(outlineRef.current);
       setOutline(next);
       if (next.artifact) {
-        setWriting(createWritingSession(next.artifact.rawMarkdown));
+        // 如果有 readCharacter 回调，自动装配角色上下文（AB混用A方案）
+        let charCtx = null;
+        if (typeof readCharacter === 'function') {
+          charCtx = await buildCharacterContextFromArtifact(next.artifact, readCharacter);
+        }
+        setWriting(createWritingSession(next.artifact.rawMarkdown, null, charCtx));
       }
     } finally {
       setBusy(false);
