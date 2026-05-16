@@ -22,14 +22,38 @@ import { ImportNovelPanel } from '@/components/ImportNovelPanel.jsx';
 import { ImportMergePanel } from '@/components/ImportMergePanel.jsx';
 import { NovelDataBrowser } from '@/components/NovelDataBrowser.jsx';
 import { DataTabContent } from '@/components/DataTabContent.jsx';
+import { countMeaningfulCharacters } from '@/domain/text.js';
 import { useI18n } from '@/i18n/LanguageContext.jsx';
 
 const TAB_PREFIX = 'chapter:';
 const BLUEPRINT_PREFIX = 'blueprint:';
 const SETTINGS_PREFIX = 'settings:';
 const DATA_PREFIX = 'data:'; // character, world, outline, timeline, style
+const DEFAULT_RIGHT_PANEL_WIDTH = 448;
+const MIN_RIGHT_PANEL_WIDTH = 320;
+const RIGHT_PANEL_WIDTH_STORAGE_KEY = 'mana-right-panel-width-v1';
 const makeId = (prefix) =>
   `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+function clampRightPanelWidth(width) {
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1440;
+  const maxWidth = Math.max(480, Math.floor(viewportWidth * 0.7));
+  return Math.min(Math.max(width, MIN_RIGHT_PANEL_WIDTH), maxWidth);
+}
+
+function readInitialRightPanelWidth() {
+  if (typeof window === 'undefined') return DEFAULT_RIGHT_PANEL_WIDTH;
+  try {
+    const rawWidth = window.localStorage.getItem(RIGHT_PANEL_WIDTH_STORAGE_KEY);
+    const parsedWidth = Number.parseInt(rawWidth || '', 10);
+    if (Number.isFinite(parsedWidth)) {
+      return clampRightPanelWidth(parsedWidth);
+    }
+  } catch {
+    /* ignore storage read failures */
+  }
+  return clampRightPanelWidth(DEFAULT_RIGHT_PANEL_WIDTH);
+}
 
 const CN_NUMS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 const toChineseNum = (n) => {
@@ -56,10 +80,15 @@ function parseMarkdownOutline(content) {
   return headings;
 }
 
+function getChapterWordCount(content) {
+  return countMeaningfulCharacters(content);
+}
+
 function App() {
   const { t } = useI18n();
   const [activeSidebarItem, setActiveSidebarItem] = useState('explorer');
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [rightPanelWidth, setRightPanelWidth] = useState(() => readInitialRightPanelWidth());
   const [novel, setNovel] = useState({ volumes: [] });
   const [openChapterIds, setOpenChapterIds] = useState([]);
   const [openBlueprintIds, setOpenBlueprintIds] = useState([]);
@@ -741,6 +770,59 @@ function App() {
   const [editorSelection, setEditorSelection] = useState({ text: '', start: 0, end: 0 });
   const [editorHasFocus, setEditorHasFocus] = useState(false);
   const [editorScroll, setEditorScroll] = useState({ top: 0, left: 0 });
+  const isResizingRightPanelRef = useRef(false);
+  const [isRightPanelResizeHover, setIsRightPanelResizeHover] = useState(false);
+  const [isRightPanelResizing, setIsRightPanelResizing] = useState(false);
+
+  useEffect(() => {
+    const handlePointerMove = (event) => {
+      if (!isResizingRightPanelRef.current) return;
+      setRightPanelWidth(clampRightPanelWidth(window.innerWidth - event.clientX));
+    };
+
+    const stopResize = () => {
+      if (!isResizingRightPanelRef.current) return;
+      isResizingRightPanelRef.current = false;
+      setIsRightPanelResizing(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', stopResize);
+    window.addEventListener('pointercancel', stopResize);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', stopResize);
+      window.removeEventListener('pointercancel', stopResize);
+      stopResize();
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setRightPanelWidth((currentWidth) => clampRightPanelWidth(currentWidth));
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(RIGHT_PANEL_WIDTH_STORAGE_KEY, String(rightPanelWidth));
+    } catch {
+      /* ignore storage write failures */
+    }
+  }, [rightPanelWidth]);
+
+  const startResizeRightPanel = useCallback((event) => {
+    event.preventDefault();
+    isResizingRightPanelRef.current = true;
+    setIsRightPanelResizing(true);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
   const editorTextareaRef = useRef(null);
   const pendingEditorSelectionRef = useRef(null);
 
@@ -1008,6 +1090,8 @@ function App() {
         ...base,
         type: 'chapter',
         title: activeChapter.fileName,
+        chapterFileName: activeChapter.fileName,
+        chapterDisplayName: activeChapter.displayName || activeChapter.fileName,
         content: activeChapter.content,
         chapterId: activeChapterId,
         selectionStart: editorSelection.start,
@@ -1413,6 +1497,7 @@ function App() {
                     <span className="text-[10px] text-green-400">已保存到磁盘</span>
                   ) : null}
                   <div className="flex-1" />
+                  <span className="text-[10px] text-gray-500">字数 {getChapterWordCount(activeEditor.content)}</span>
                   <span className="text-[9px] text-gray-600">自动保存至项目文件</span>
                 </div>
               </div>
@@ -1441,8 +1526,25 @@ function App() {
 
           {/* Right AI Chat Panel */}
           <div
-            className={`border-l border-vscode-panel-border flex flex-col bg-vscode-panel-bg transition-all duration-200 overflow-hidden ${rightPanelOpen ? 'w-80' : 'w-0'}`}
+            className={`relative border-l border-vscode-panel-border flex flex-col bg-vscode-panel-bg transition-[width] duration-200 overflow-hidden ${rightPanelOpen ? 'shrink-0' : 'w-0'}`}
+            style={rightPanelOpen ? { width: `${rightPanelWidth}px` } : undefined}
           >
+            {rightPanelOpen && (
+              <div
+                className="absolute inset-y-0 left-0 z-20 flex w-3 -translate-x-1/2 cursor-col-resize items-center justify-center touch-none"
+                onPointerDown={startResizeRightPanel}
+                onPointerEnter={() => setIsRightPanelResizeHover(true)}
+                onPointerLeave={() => setIsRightPanelResizeHover(false)}
+                title="拖拽调整宽度"
+              >
+                <div
+                  className={`h-full w-px transition-all duration-150 ${isRightPanelResizing ? 'bg-blue-300 shadow-[0_0_0_1px_rgba(147,197,253,0.45)]' : isRightPanelResizeHover ? 'bg-blue-400/80 shadow-[0_0_0_1px_rgba(96,165,250,0.25)]' : 'bg-vscode-panel-border/80'}`}
+                />
+                <div
+                  className={`pointer-events-none absolute left-1/2 top-1/2 h-12 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-150 ${isRightPanelResizing ? 'bg-blue-400/70 shadow-[0_0_12px_rgba(96,165,250,0.35)]' : isRightPanelResizeHover ? 'bg-blue-400/45' : 'bg-transparent'}`}
+                />
+              </div>
+            )}
             <div className="h-8 border-b border-vscode-panel-border flex items-center px-3 justify-between shrink-0">
               <span className="text-xs font-bold text-gray-400">{t('app.aiChat')}</span>
               <button

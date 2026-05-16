@@ -33,3 +33,13 @@ export function replaceParagraph(paragraphs, paragraphId, newText) {
 export function joinParagraphs(paragraphs) {
   return paragraphs.map((p) => p.text).join('\n\n');
 }
+
+/**
+ * Count visible content characters, excluding whitespace, punctuation and symbols.
+ * @param {string} text
+ * @returns {number}
+ */
+export function countMeaningfulCharacters(text) {
+  if (!text) return 0;
+  return Array.from(String(text)).filter((char) => !/[\p{P}\p{S}\s]/u.test(char)).length;
+}

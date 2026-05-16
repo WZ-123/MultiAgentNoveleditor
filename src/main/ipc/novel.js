@@ -13,6 +13,18 @@ const characterEnricher = require('../import/characterEnricher');
 const { extractCharacters } = require('../import/analyzer');
 const eventBus = require('../runtime/eventBus');
 
+function notifyChapterChanged(name, action, title) {
+  if (!name) return;
+  try {
+    const { webContents } = require('electron');
+    for (const wc of webContents.getAllWebContents()) {
+      try { wc.send('mana:chapter:changed', { name, action, title: title || null }); } catch {}
+    }
+  } catch {
+    // ignore renderer sync failures
+  }
+}
+
 function safeIpc(handler) {
   return async (event, ...args) => {
     try { return { ok: true, value: await handler(event, ...args) }; }
@@ -107,7 +119,16 @@ function registerNovelIpc() {
       if (m) finalMeta.title = m[1].trim();
     }
     const result = await novelData.writeChapterWithMeta(np.root, name, content, finalMeta);
+    notifyChapterChanged(result.name || name, 'updated', finalMeta.title || existing?.metadata?.title || null);
     await maybeLogOffline({ type: 'chapter', action: 'update', targetId: name, targetName: name, payload: { name, content: content?.slice(0, 500) }, novelId: id });
+    return result;
+  }));
+
+  ipcMain.handle('mana:novel:deleteChapter', safeIpc(async (_e, { id, name }) => {
+    const np = await novelsStore.pathsFor(id);
+    const result = await novelData.deleteChapter(np.root, name);
+    notifyChapterChanged(result.name || name, 'deleted', null);
+    await maybeLogOffline({ type: 'chapter', action: 'delete', targetId: name, targetName: name, payload: { name }, novelId: id });
     return result;
   }));
 

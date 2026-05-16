@@ -1,0 +1,13 @@
+{
+  "name": "feedback-relay-server",
+  "version": "1.0.0",
+  "description": "Feedback relay server for safe Feishu credential isolation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

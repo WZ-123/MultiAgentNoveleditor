@@ -97,7 +97,8 @@ const novel = {
   remove: (id) => invoke('mana:novel:remove', { id }),
   listChapters: (id) => invoke('mana:novel:listChapters', { id }),
   readChapter: (id, name) => invoke('mana:novel:readChapter', { id, name }),
-  saveChapter: (id, name, content) => invoke('mana:novel:saveChapter', { id, name, content }),
+  saveChapter: (id, name, content, metadata) => invoke('mana:novel:saveChapter', { id, name, content, metadata }),
+  deleteChapter: (id, name) => invoke('mana:novel:deleteChapter', { id, name }),
   readChapterMeta: (id, name) => invoke('mana:novel:readChapterMeta', { id, name }),
   computeNextInsertName: (id, afterFileName) => invoke('mana:novel:computeNextInsertName', { id, afterFileName }),
   getChapterNaming: (id) => invoke('mana:novel:getChapterNaming', { id }),
@@ -198,6 +199,10 @@ const networkStatus = {
   set: (status) => invoke("mana:networkStatus:set", { status }),
 };
 
+const feedback = {
+  submit: (payload, options) => invoke('mana:feedback:submit', { payload: payload || {}, options: options || {} }),
+};
+
 /**
  * prompt — custom modal dialog to replace the removed window.prompt().
  * Uses DOM directly (preload and renderer share the DOM).
@@ -287,6 +292,7 @@ contextBridge.exposeInMainWorld('mana', {
   chatAgent,
   chatHistory,
   offlineLog,
+  feedback,
   networkStatus,
   prompt,
   import: importBridge,

@@ -1,0 +1,21 @@
+{
+  "id": "sa-style-checker",
+  "builtIn": true,
+  "name": "sa-style-checker",
+  "displayName": "文风一致性",
+  "tier": "haiku",
+  "systemPrompt": "你是文风审查者（Style Checker）。对照「文风记忆」检查正文段落，标出与文风冲突的片段（字符级起止下标，基于该段落纯文本）。\n输出只含 JSON：{ \"annotations\": [ { \"paragraphId\": \"与输入一致\", \"start\": 0, \"end\": 10, \"reason\": \"冲突原因\" } ] }，无问题则 annotations 为空。\nRespond in language matching the user's input language; default to {{userLang}}.",
+  "allowedTools": [
+    "read_style_memory",
+    "append_style_memory"
+  ],
+  "runtimeHints": {
+    "expectJson": true,
+    "maxTurns": 2
+  },
+  "tags": [
+    "review",
+    "style"
+  ],
+  "schemaVersion": 1
+}

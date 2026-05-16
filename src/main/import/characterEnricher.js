@@ -39,9 +39,10 @@ async function _resolveProvider() {
     ? await providerManager.getProvider(providerId)
     : await providerManager.getActiveProvider();
   if (!provider) throw new Error('没有可用的 AI 服务商');
+  const type = providerManager.inferProviderType(provider);
   return {
-    provider: pickProvider(provider.type || 'anthropic'),
-    tier: { type: provider.type || 'anthropic', model: alias?.modelId || provider.models?.[0]?.id, apiKey: provider.apiKey, baseUrl: provider.baseUrl || '', extra: { maxTokens: 4096 } },
+    provider: pickProvider(type),
+    tier: { type, model: alias?.modelId || provider.models?.[0]?.id, apiKey: provider.apiKey, baseUrl: provider.baseUrl || '', extra: { maxTokens: 4096 } },
   };
 }
 

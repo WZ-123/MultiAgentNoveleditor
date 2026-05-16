@@ -61,8 +61,22 @@ const BUILTIN_SUBAGENTS = [
 检查：人物移动是否在时间与交通上合理；消息传递是否符合时代/地区的通讯方式（电报、电话、手机、托人带话等）。
 输出：只输出一个 JSON 对象，不要 Markdown 围栏。
 结构：{ "issues": [ { "summary": "一句话", "detail": "可选", "timelineKind": "mobility" 或 "information", "affectedOutlineNodeIds": [] } ] }
-若无问题，issues 为空数组。timelineKind 必填。` + COMMON_TAIL,
-    allowedTools: ['query_timeline', 'check_timeline_feasibility', 'read_character', 'read_outline', 'read_outline_nodes', 'read_outline_chapter', 'read_outline_section', 'read_outline_volume'],
+若无问题，issues 为空数组。timelineKind 必填。
+
+在大纲草拟阶段（没有已保存的时间线事件时）：
+- 使用 check_outline_scene_feasibility 工具校验角色移动可行性
+- 从输入中的 scenes 数组提取场景节点（如无 scenes 字段则自己从 outline 嵌套结构中提取）
+- 场景节点含 characters[] / location / chapterIndex 字段，但无绝对时间戳
+- 根据设定（武侠/奇幻/历史/现代）调整 transport 和 hoursPerChapter 参数
+  * 武侠/奇幻小说 → transport="magic" 或 "horse", hoursPerChapter=12
+  * 历史/徒步 → transport="walk" 或 "horse", hoursPerChapter=24
+  * 现代/都市 → transport="car" 或 "train", hoursPerChapter=3
+- 若某个角色在同章内出现在相距遥远的两个地点，应判断为不可行
+- 若两章间隔不足以为该交通方式提供足够旅行时间，应标记为 issue
+- 只报告中大型不可行移动（几公里内不标记）
+
+有已保存的时间线事件时：照常使用 query_timeline 和 check_timeline_feasibility。` + COMMON_TAIL,
+    allowedTools: ['query_timeline', 'check_timeline_feasibility', 'check_outline_scene_feasibility', 'read_character', 'read_outline', 'read_outline_nodes', 'read_outline_chapter', 'read_outline_section', 'read_outline_volume'],
     runtimeHints: { expectJson: true, maxTurns: 3 },
     tags: ['review', 'timeline'],
     schemaVersion: SCHEMA_VERSION,

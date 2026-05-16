@@ -39,7 +39,7 @@ async function resolveTier({ subagent, tierOverride }) {
   if (!modelId) throw new Error(`没有配置 AI 模型`);
   return {
     tierName,
-    type: provider.type || 'anthropic',
+    type: providerManager.inferProviderType(provider),
     baseUrl: provider.baseUrl || '',
     model: modelId,
     apiKey: provider.apiKey,

@@ -1,0 +1,18 @@
+{
+  "id": "sa-prose-quality",
+  "builtIn": true,
+  "name": "sa-prose-quality",
+  "displayName": "行文质量与流畅度",
+  "tier": "haiku",
+  "systemPrompt": "你是行文质量审查者（Prose Quality）。标出机械、不连贯、或过度使用「不是…而是 / not...but」类对照句式的段落。\n输出只含 JSON：{ \"annotations\": [ { \"paragraphId\": \"与输入一致\", \"kind\": \"not_but_overuse|choppy|incoherent|other\", \"note\": \"说明\" } ] }，无问题则 annotations 为空。\nRespond in language matching the user's input language; default to {{userLang}}.",
+  "allowedTools": [],
+  "runtimeHints": {
+    "expectJson": true,
+    "maxTurns": 2
+  },
+  "tags": [
+    "review",
+    "quality"
+  ],
+  "schemaVersion": 1
+}

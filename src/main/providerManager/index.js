@@ -29,10 +29,22 @@ function _normalizeId(name) {
   return String(name).trim().toLowerCase().replace(/\s+/g, '-');
 }
 
+function inferProviderType(provider) {
+  const baseUrl = String(provider?.baseUrl || '').trim().toLowerCase().replace(/\/$/, '');
+  const id = String(provider?.id || '').trim().toLowerCase();
+  const name = String(provider?.name || '').trim().toLowerCase();
+  if (id === 'anthropic' || name === 'anthropic') return 'anthropic';
+  if (!baseUrl) return 'openai-compat';
+  if (baseUrl.includes('/anthropic')) return 'anthropic';
+  if (baseUrl.includes('api.anthropic.com')) return 'anthropic';
+  return 'openai-compat';
+}
+
 function _builtinAnthropic() {
   return {
     id: 'anthropic',
     name: 'Anthropic',
+    type: 'anthropic',
     baseUrl: '',
     apiKey: '',
     isBuiltin: true,
@@ -54,6 +66,9 @@ function _defaultState() {
 
 function _upgradeProvider(p) {
   if (!p) return p;
+  if (!p.type) {
+    p.type = inferProviderType(p);
+  }
   if (!Array.isArray(p.models)) {
     // Soft migration: seed with a single default model derived from provider name
     const modelId = p.id === 'anthropic' ? 'claude-sonnet-4-6' : _normalizeId(p.name);
@@ -69,25 +84,38 @@ async function _loadState() {
   if (providersCache) return providersCache;
   const file = _providersFile();
   let state = await readJson(file, null);
+  let changed = false;
 
   if (!state || typeof state !== 'object') {
     state = await _tryMigrateFromCcs();
+    if (state) changed = true;
   }
 
   if (!state || typeof state !== 'object') {
     state = _defaultState();
+    changed = true;
   }
 
   state.schemaVersion = SCHEMA_VERSION;
   if (!Array.isArray(state.providers)) state.providers = [];
   if (!state.providers.find((p) => p.id === 'anthropic')) {
     state.providers.unshift(_builtinAnthropic());
+    changed = true;
   }
   state.providers.forEach((p) => {
     if (p.id === 'anthropic') p.isBuiltin = true;
+    const beforeType = p.type;
     _upgradeProvider(p);
+    if (beforeType !== p.type) changed = true;
   });
-  if (!state.activeProviderId) state.activeProviderId = 'anthropic';
+  if (!state.activeProviderId) {
+    state.activeProviderId = 'anthropic';
+    changed = true;
+  }
+
+  if (changed) {
+    await writeJson(file, state);
+  }
 
   providersCache = state;
   return state;
@@ -110,6 +138,7 @@ async function _tryMigrateFromCcs() {
       providers.push({
         id,
         name,
+        type: inferProviderType({ id, name, baseUrl: cfg.base_url || '' }),
         baseUrl: cfg.base_url || '',
         apiKey: cfg.api_key || '',
         isBuiltin: false,
@@ -174,7 +203,9 @@ function detect() {
 async function list() {
   const state = await _loadState();
   return state.providers.map((p) => ({
+    id: p.id,
     name: p.name,
+    type: p.type,
     baseUrl: p.baseUrl,
     active: p.id === state.activeProviderId,
     models: p.models || [],
@@ -186,12 +217,13 @@ async function current() {
   const state = await _loadState();
   const p = state.providers.find((p) => p.id === state.activeProviderId);
   if (!p) return null;
-  return { name: p.name, baseUrl: p.baseUrl, models: p.models || [] };
+  return { id: p.id, name: p.name, type: p.type, baseUrl: p.baseUrl, models: p.models || [] };
 }
 
 async function getProvider(id) {
   const state = await _loadState();
-  return state.providers.find((p) => p.id === id) || null;
+  const normalizedId = _normalizeId(id || '');
+  return state.providers.find((p) => p.id === normalizedId) || null;
 }
 
 async function getActiveProvider() {
@@ -213,7 +245,7 @@ async function use(name) {
   return { ok: true, env: getActiveEnv() };
 }
 
-async function add({ name, baseUrl, apiKey } = {}) {
+async function add({ name, type, baseUrl, apiKey } = {}) {
   if (!name || typeof name !== 'string') throw new Error('add: name required');
   const state = await _loadState();
   const id = _normalizeId(name);
@@ -223,6 +255,7 @@ async function add({ name, baseUrl, apiKey } = {}) {
   state.providers.push({
     id,
     name: name.trim(),
+    type: type || inferProviderType({ id, name, baseUrl }),
     baseUrl: (baseUrl || '').trim(),
     apiKey: (apiKey || '').trim(),
     isBuiltin: false,
@@ -327,4 +360,5 @@ module.exports = {
   removeModel,
   discoverModels,
   getActiveEnv,
+  inferProviderType,
 };

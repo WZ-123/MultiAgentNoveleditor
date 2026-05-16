@@ -6,6 +6,11 @@
   "scripts": {
     "dev": "npm run start",
     "start": "concurrently \"vite\" \"unset ELECTRON_RUN_AS_NODE && electron . --no-sandbox\"",
+    "feishu:show-config": "node scripts/feishu-debug.js --action=show-config",
+    "feishu:configure": "node scripts/feishu-debug.js --action=configure",
+    "feishu:verify": "node scripts/feishu-debug.js --action=verify",
+    "feishu:list-fields": "node scripts/feishu-debug.js --action=list-fields",
+    "feishu:smoke": "node scripts/feishu-debug.js --action=smoke",
     "build": "vite build && electron-builder",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",

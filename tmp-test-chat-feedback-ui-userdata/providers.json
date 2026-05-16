@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 2,
+  "providers": [
+    {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "type": "anthropic",
+      "baseUrl": "",
+      "apiKey": "",
+      "isBuiltin": true,
+      "models": [
+        {
+          "id": "claude-opus-4-7",
+          "name": "Claude Opus 4.7",
+          "contextWindow": 200000
+        },
+        {
+          "id": "claude-sonnet-4-6",
+          "name": "Claude Sonnet 4.6",
+          "contextWindow": 200000
+        },
+        {
+          "id": "claude-haiku-4-5-20251001",
+          "name": "Claude Haiku 4.5",
+          "contextWindow": 200000
+        }
+      ]
+    },
+    {
+      "id": "kimi-k2.6",
+      "name": "kimi-k2.6",
+      "type": "openai-compat",
+      "baseUrl": "https://api.kimi.com/coding/",
+      "apiKey": "sk-kimi-5Fmt0tBlEmwzzX2mRaSDFQqvuFORaCn3ij2T7cw8WL6ytyrAjuXqZj6jcPMrClu1",
+      "isBuiltin": false,
+      "models": [
+        {
+          "id": "kimi-k2.6",
+          "name": "kimi-k2.6",
+          "contextWindow": 200000
+        }
+      ]
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "name": "deepseek-v4-pro",
+      "type": "anthropic",
+      "baseUrl": "https://api.deepseek.com/anthropic",
+      "apiKey": "sk-a62c88def6c6441b891b8d888db0adb7",
+      "isBuiltin": false,
+      "models": [
+        {
+          "id": "deepseek-v4-pro",
+          "name": "deepseek-v4-pro",
+          "contextWindow": 200000
+        }
+      ]
+    },
+    {
+      "id": "deepseek-v4-flash",
+      "name": "deepseek-v4-flash",
+      "type": "anthropic",
+      "baseUrl": "https://api.deepseek.com/anthropic",
+      "apiKey": "sk-a62c88def6c6441b891b8d888db0adb7",
+      "isBuiltin": false,
+      "models": [
+        {
+          "id": "deepseek-v4-flash",
+          "name": "deepseek-v4-flash",
+          "contextWindow": 200000
+        }
+      ]
+    }
+  ],
+  "activeProviderId": "deepseek-v4-pro"
+}

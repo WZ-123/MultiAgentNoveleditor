@@ -23,8 +23,12 @@ const { registerChatAgentIpc } = require('./ipc/chatAgent');
 const { registerChatHistoryIpc } = require('./ipc/chatHistory');
 const { registerOfflineLogIpc } = require('./ipc/offlineLog');
 const { registerImportIpc } = require('./ipc/import');
+const { registerFeedbackIpc } = require('./ipc/feedback');
+const { registerFeedbackSyncIpc } = require('./ipc/feedbackSync');
+const { FeedbackSyncWorker } = require('./sync/feedbackSyncWorker');
 const chatHistory = require('./store/chatHistory');
 const offlineLog = require('./store/offlineLog');
+const recentLogBuffer = require('./store/recentLogBuffer');
 const stagingProject = require('./import/stagingProject');
 
 const SKILL_SEED = `# Multi-Agent Novel Assistant — Skill Reference
@@ -138,6 +142,11 @@ When a novel references multiple original works:
 `;
 
 let initialized = false;
+let feedbackSyncWorker = null;
+
+function getFeedbackSyncWorker() {
+  return feedbackSyncWorker;
+}
 
 async function ensureSkillSeed() {
   const file = paths().skillsMain;
@@ -157,6 +166,7 @@ async function ensureSkillSeed() {
 async function initBackend() {
   if (initialized) return;
   initialized = true;
+  recentLogBuffer.installConsoleCapture();
   ensureLayout();
   await ensureSkillSeed();
   await subagentsStore.ensureBuiltinSeeds();
@@ -197,7 +207,23 @@ async function initBackend() {
   registerChatHistoryIpc();
   registerOfflineLogIpc();
   registerImportIpc();
+  registerFeedbackIpc();
+  registerFeedbackSyncIpc();
   registerLegacyChatCompletionsIpc();
+
+  // Initialize feedback sync worker
+  try {
+    const cfg = await appConfig.load();
+    if (cfg?.feishuSync) {
+      feedbackSyncWorker = new FeedbackSyncWorker();
+      feedbackSyncWorker.setConfig(cfg.feishuSync);
+      if (cfg.feishuSync.enabled) {
+        feedbackSyncWorker.start();
+      }
+    }
+  } catch (err) {
+    console.error('[main] feedback sync worker init failed', err);
+  }
 
   // Cleanup expired import staging projects on startup
   try {
@@ -232,4 +258,4 @@ function registerLegacyChatCompletionsIpc() {
   });
 }
 
-module.exports = { initBackend, attachWindow };
+module.exports = { initBackend, attachWindow, getFeedbackSyncWorker };

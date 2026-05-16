@@ -7,10 +7,11 @@
  */
 
 const path = require('node:path');
+const providerManager = require('../providerManager');
 const { readJson, writeJson } = require('../store/jsonStore');
 const { paths: appPaths } = require('../store/paths');
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 let cache = null;
 
@@ -66,11 +67,62 @@ function _defaultState() {
   };
 }
 
+function _defaultAliasById(id) {
+  return _defaultAliases().find((alias) => alias.id === id) || null;
+}
+
+async function _normalizeAlias(alias) {
+  if (!alias || typeof alias !== 'object' || !alias.id) return null;
+  const defaults = _defaultAliasById(alias.id);
+  const normalized = {
+    ...(defaults || {}),
+    ...alias,
+  };
+
+  if (typeof normalized.providerId === 'string' && normalized.providerId.trim()) {
+    const provider = await providerManager.getProvider(normalized.providerId);
+    normalized.providerId = provider?.id || normalized.providerId.trim();
+  } else if (defaults?.providerId) {
+    normalized.providerId = defaults.providerId;
+  }
+
+  if (!normalized.displayName && defaults?.displayName) normalized.displayName = defaults.displayName;
+  if (!normalized.modelId && defaults?.modelId) normalized.modelId = defaults.modelId;
+  if (normalized.contextWindow == null && defaults?.contextWindow != null) normalized.contextWindow = defaults.contextWindow;
+  if (normalized.maxOutputTokens == null && defaults?.maxOutputTokens != null) normalized.maxOutputTokens = defaults.maxOutputTokens;
+  if (normalized.thinking == null && defaults?.thinking != null) normalized.thinking = defaults.thinking;
+  if (normalized.thinkingBudget == null && defaults?.thinkingBudget != null) normalized.thinkingBudget = defaults.thinkingBudget;
+  if (normalized.temperature == null && defaults?.temperature != null) normalized.temperature = defaults.temperature;
+  if (!normalized.effortLevel && defaults?.effortLevel) normalized.effortLevel = defaults.effortLevel;
+
+  return normalized;
+}
+
 async function _load() {
   if (cache) return cache;
-  const state = await readJson(_file(), null) || _defaultState();
-  if (!Array.isArray(state.aliases)) state.aliases = [];
+  const file = _file();
+  const savedState = await readJson(file, null);
+  const state = savedState || _defaultState();
+  let changed = !savedState || savedState.schemaVersion !== SCHEMA_VERSION;
+  if (!Array.isArray(state.aliases)) {
+    state.aliases = [];
+    changed = true;
+  }
+  const normalizedAliases = [];
+  for (const alias of state.aliases) {
+    const normalized = await _normalizeAlias(alias);
+    if (!normalized) {
+      changed = true;
+      continue;
+    }
+    if (JSON.stringify(normalized) !== JSON.stringify(alias)) changed = true;
+    normalizedAliases.push(normalized);
+  }
+  state.aliases = normalizedAliases;
   state.schemaVersion = SCHEMA_VERSION;
+  if (changed) {
+    await writeJson(file, state);
+  }
   cache = state;
   return state;
 }
@@ -95,11 +147,13 @@ async function getAlias(id) {
 async function saveAlias(alias) {
   if (!alias || !alias.id) throw new Error('saveAlias: alias.id required');
   const state = await _load();
+  const normalizedAlias = await _normalizeAlias(alias);
+  if (!normalizedAlias) throw new Error('saveAlias: alias.id required');
   const idx = state.aliases.findIndex((a) => a.id === alias.id);
   if (idx >= 0) {
-    state.aliases[idx] = { ...state.aliases[idx], ...alias };
+    state.aliases[idx] = { ...state.aliases[idx], ...normalizedAlias };
   } else {
-    state.aliases.push(alias);
+    state.aliases.push(normalizedAlias);
   }
   await _save(state);
   return { ok: true };

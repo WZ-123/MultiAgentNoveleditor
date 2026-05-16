@@ -1,0 +1,18 @@
+name = "feedback-relay"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Non-sensitive vars can be set here.
+# Sensitive vars (appSecret, relayApiKey) must be set via:
+#   wrangler secret put FEISHU_APP_ID
+#   wrangler secret put FEISHU_APP_SECRET
+#   wrangler secret put FEISHU_APP_TOKEN
+#   wrangler secret put FEISHU_TABLE_ID
+#   wrangler secret put RELAY_API_KEY
+#
+# For local dev, create a .dev.vars file:
+#   FEISHU_APP_ID=cli_xxx
+#   FEISHU_APP_SECRET=xxx
+#   FEISHU_APP_TOKEN=xxx
+#   FEISHU_TABLE_ID=xxx
+#   RELAY_API_KEY=your-relay-api-key

@@ -1,0 +1,39 @@
+{
+  "id": "thread-mp2edinh-unurw8",
+  "title": "聊天自动转大纲回归",
+  "novelId": "novel-mp2edine-pjlxou",
+  "createdAt": "2026-05-12T08:57:26.189Z",
+  "updatedAt": "2026-05-12T08:57:26.275Z",
+  "messages": [
+    {
+      "id": "msg-1778576246271",
+      "role": "assistant",
+      "text": "普通聊天回复。",
+      "timestamp": 1778576246271,
+      "isStreaming": false,
+      "edited": false,
+      "toolCalls": null
+    },
+    {
+      "id": "msg-1778576246274",
+      "role": "assistant",
+      "text": "普通聊天回复。",
+      "timestamp": 1778576246274,
+      "isStreaming": false,
+      "edited": false,
+      "toolCalls": null,
+      "parentId": "msg-1778576246271"
+    },
+    {
+      "id": "msg-1778576246275",
+      "role": "assistant",
+      "text": "普通聊天回复。",
+      "timestamp": 1778576246275,
+      "isStreaming": false,
+      "edited": false,
+      "toolCalls": null,
+      "parentId": "msg-1778576246274"
+    }
+  ],
+  "currentNodeId": "msg-1778576246275"
+}

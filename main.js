@@ -24,6 +24,9 @@ const isRealChatTest = process.argv.includes('--test-real-chat');
 const isRealFullChainTest = process.argv.includes('--test-real-full-chain');
 const isChatTimelineRegressionTest = process.argv.includes('--test-chat-timeline-regression');
 const isChatReplaceRegressionTest = process.argv.includes('--test-chat-replace-regression');
+const isChatOutlineUiRegressionTest = process.argv.includes('--test-chat-outline-ui-regression');
+const isChatFeedbackUiRegressionTest = process.argv.includes('--test-chat-feedback-ui-regression');
+const isChatFeedbackFeishuE2ETest = process.argv.includes('--test-chat-feedback-feishu-e2e');
 const isUserE2ETest = process.argv.includes('--test-user-e2e');
 const isCharacterCardUiTest = process.argv.includes('--test-character-card-ui');
 const isDataTabEditUiTest = process.argv.includes('--test-datatab-edit-ui');
@@ -32,7 +35,7 @@ async function createWindow () {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    show: isRealChatTest || isUserE2ETest || isCharacterCardUiTest || isDataTabEditUiTest || (!isUiTest && !isChatTest && !isFlowTest && !isDiagTest && !isRealFullChainTest && !isChatTimelineRegressionTest),
+    show: isRealChatTest || isUserE2ETest || isCharacterCardUiTest || isDataTabEditUiTest || (!isUiTest && !isChatTest && !isFlowTest && !isDiagTest && !isRealFullChainTest && !isChatTimelineRegressionTest && !isChatOutlineUiRegressionTest && !isChatFeedbackUiRegressionTest && !isChatFeedbackFeishuE2ETest),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -196,6 +199,66 @@ async function createWindow () {
         try {
           const { runChatReplaceSelectionRegressionTest } = require('./test/chat-replace-selection-regression.test.js');
           const results = await runChatReplaceSelectionRegressionTest(mainWindow);
+          process.exit(results.failed > 0 ? 1 : 0);
+        } catch (err) {
+          console.error('TEST_FAIL harness_error:', err.message || String(err));
+          process.exit(1);
+        }
+      });
+      mainWindow.webContents.once('did-fail-load', (_e, code, desc) => {
+        clearTimeout(timeout);
+        reject(new Error(`Page load failed: ${code} ${desc}`));
+      });
+      mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+    });
+  } else if (isChatOutlineUiRegressionTest) {
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Page load timeout')), 15000);
+      mainWindow.webContents.once('did-finish-load', async () => {
+        clearTimeout(timeout);
+        try {
+          const { runChatOutlineUiRegressionTest } = require('./test/chat-outline-ui-e2e.js');
+          const results = await runChatOutlineUiRegressionTest(mainWindow);
+          process.exit(results.failed > 0 ? 1 : 0);
+        } catch (err) {
+          console.error('TEST_FAIL harness_error:', err.message || String(err));
+          process.exit(1);
+        }
+      });
+      mainWindow.webContents.once('did-fail-load', (_e, code, desc) => {
+        clearTimeout(timeout);
+        reject(new Error(`Page load failed: ${code} ${desc}`));
+      });
+      mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+    });
+  } else if (isChatFeedbackUiRegressionTest) {
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Page load timeout')), 15000);
+      mainWindow.webContents.once('did-finish-load', async () => {
+        clearTimeout(timeout);
+        try {
+          const { runChatFeedbackUiRegressionTest } = require('./test/chat-feedback-ui-e2e.js');
+          const results = await runChatFeedbackUiRegressionTest(mainWindow);
+          process.exit(results.failed > 0 ? 1 : 0);
+        } catch (err) {
+          console.error('TEST_FAIL harness_error:', err.message || String(err));
+          process.exit(1);
+        }
+      });
+      mainWindow.webContents.once('did-fail-load', (_e, code, desc) => {
+        clearTimeout(timeout);
+        reject(new Error(`Page load failed: ${code} ${desc}`));
+      });
+      mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+    });
+  } else if (isChatFeedbackFeishuE2ETest) {
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Page load timeout')), 15000);
+      mainWindow.webContents.once('did-finish-load', async () => {
+        clearTimeout(timeout);
+        try {
+          const { runChatFeedbackFeishuE2E } = require('./test/chat-feedback-feishu-e2e.js');
+          const results = await runChatFeedbackFeishuE2E(mainWindow);
           process.exit(results.failed > 0 ? 1 : 0);
         } catch (err) {
           console.error('TEST_FAIL harness_error:', err.message || String(err));

@@ -16,7 +16,7 @@ const fs = require('node:fs').promises;
 const novelData = require('../store/novelData');
 const { paths: globalPaths } = require('../store/paths');
 const { readJson } = require('../store/jsonStore');
-const { checkFeasibility } = require('./feasibility');
+const { checkFeasibility, placesToMap, distanceBetweenPlaceNames, SPEED_KMH } = require('./feasibility');
 const characterEnricher = require('../import/characterEnricher');
 const stagingProject = require('../import/stagingProject');
 
@@ -361,6 +361,128 @@ const TOOLS = [
         }
       }
       return textResult({ characterId: args.characterId, issues, sampled: events.length });
+    },
+  },
+  {
+    name: 'check_outline_scene_feasibility',
+    description: '基于大纲场景节点校验角色移动可行性（大纲阶段专用）。分析角色在连续场景间的位置变化，用地名坐标估算距离，用章节序号估算时间窗，判断移动是否合理。不会查询或修改已保存的时间线事件。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        scenes: {
+          type: 'array',
+          description: '扁平场景节点数组。每条必须包含 id, characters, location, chapterIndex，可选 volumeIndex/sectionIndex。从 outline.volumes[].sections[].chapterOutlines[].scenes 构建。',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: '场景ID' },
+              title: { type: 'string', description: '场景标题' },
+              characters: { type: 'array', items: { type: 'string' }, description: '出场角色 ID 列表' },
+              location: { type: 'string', description: '地点名称，应与 places.json 中的 name 匹配' },
+              chapterIndex: { type: 'number', description: '章索引（从1开始）' },
+              volumeIndex: { type: 'number', description: '卷索引（从1开始）' },
+              sectionIndex: { type: 'number', description: '节索引（从1开始）' },
+            },
+            required: ['id', 'characters', 'location', 'chapterIndex'],
+          },
+        },
+        transport: {
+          type: 'string',
+          description: '默认交通方式：walk(5km/h) | run(15) | horse(30) | car(60) | train(200) | plane(800) | magic(instant)。默认 walk',
+          default: 'walk',
+        },
+        hoursPerChapter: {
+          type: 'number',
+          description: '每章估算时长（小时），默认 6。用于将 chapterIndex 差值估算为可用时间窗。古代徒步一章约12h，现代交通一章约3h，奇幻传送阵可用 magic+1h',
+          default: 6,
+        },
+      },
+      required: ['scenes'],
+    },
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      const world = await novelData.readWorld(dir);
+      const placesMap = placesToMap(world.places || []);
+      const scenes = args.scenes || [];
+      const transport = args.transport || 'walk';
+      const speed = SPEED_KMH[transport] ?? SPEED_KMH.walk;
+      const hpChapter = (typeof args.hoursPerChapter === 'number') ? args.hoursPerChapter : 6;
+
+      // 1. Group scenes by character
+      const charScenes = {};
+      for (const scene of scenes) {
+        for (const charId of (scene.characters || [])) {
+          if (!charScenes[charId]) charScenes[charId] = [];
+          charScenes[charId].push(scene);
+        }
+      }
+
+      // 2. Per character: sort by hierarchical index
+      const characterPairs = [];
+      for (const [charId, rawList] of Object.entries(charScenes)) {
+        const sorted = [...rawList].sort((a, b) => {
+          const va = a.volumeIndex || 0;
+          const vb = b.volumeIndex || 0;
+          if (va !== vb) return va - vb;
+          const sa = a.sectionIndex || 0;
+          const sb = b.sectionIndex || 0;
+          if (sa !== sb) return sa - sb;
+          return (a.chapterIndex || 0) - (b.chapterIndex || 0);
+        });
+
+        const issues = [];
+        let checkedCount = 0;
+        for (let i = 1; i < sorted.length; i++) {
+          const from = sorted[i - 1];
+          const to = sorted[i];
+          const dist = distanceBetweenPlaceNames(from.location, to.location, placesMap);
+          if (dist == null) continue;
+
+          checkedCount++;
+          if (dist === 0) continue;
+
+          const chapterDiff = (to.chapterIndex || 0) - (from.chapterIndex || 0);
+          const elapsedHours = Math.max(chapterDiff * hpChapter, 0.5);
+          const neededHours = dist / speed;
+
+          if (neededHours > elapsedHours + 1e-6) {
+            issues.push({
+              characterId: charId,
+              fromSceneId: from.id,
+              fromSceneTitle: from.title || '',
+              fromLocation: from.location,
+              fromChapterIndex: from.chapterIndex,
+              toSceneId: to.id,
+              toSceneTitle: to.title || '',
+              toLocation: to.location,
+              toChapterIndex: to.chapterIndex,
+              chapterGap: chapterDiff,
+              distanceKm: Math.round(dist * 10) / 10,
+              elapsedHours: Math.round(elapsedHours * 10) / 10,
+              neededHours: Math.round(neededHours * 10) / 10,
+              transport,
+              feasible: false,
+              reason: `从【${from.location}】到【${to.location}】直线距离约${Math.round(dist)}km，${transport}需要约${Math.round(neededHours)}h，场景间隔${chapterDiff}章（约${Math.round(elapsedHours)}h），无法到达。`,
+            });
+          }
+        }
+
+        characterPairs.push({ characterId: charId, checkedPairs: checkedCount, issues });
+      }
+
+      const knownPlaces = Object.keys(placesMap);
+
+      return textResult({
+        tool: 'check_outline_scene_feasibility',
+        checksPerformed: true,
+        charactersChecked: Object.keys(charScenes).length,
+        totalScenePairsChecked: characterPairs.reduce((s, c) => s + c.checkedPairs, 0),
+        knownPlacesCount: knownPlaces.length,
+        defaultTransport: transport,
+        hoursPerChapter: hpChapter,
+        characterPairs: characterPairs.filter(c => c.issues.length > 0 || c.checkedPairs > 0),
+        issues: characterPairs.flatMap(c => c.issues),
+      });
     },
   },
   {
