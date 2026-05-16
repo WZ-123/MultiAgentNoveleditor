@@ -49,6 +49,31 @@ function distanceBetween(eventA, eventB) {
 /**
  * Returns { feasible: boolean, reason: string, hours: number, neededHours: number, distanceKm }.
  */
+/**
+ * Build a place-name -> {lat, lng} lookup from the world's places array.
+ */
+function placesToMap(places) {
+  const map = {};
+  for (const p of (places || [])) {
+    if (p.name && typeof p.lat === 'number' && typeof p.lng === 'number') {
+      map[p.name] = { lat: p.lat, lng: p.lng };
+    }
+  }
+  return map;
+}
+
+/**
+ * Compute haversine distance between two place names using a pre-built places map.
+ * Returns null if either name is unknown.
+ */
+function distanceBetweenPlaceNames(placeA, placeB, placesMap) {
+  if (placeA === placeB) return 0;
+  const a = placesMap[placeA];
+  const b = placesMap[placeB];
+  if (!a || !b) return null;
+  return haversineKm(a, b);
+}
+
 function checkFeasibility(eventA, eventB, { transport = 'walk' } = {}) {
   const speed = SPEED_KMH[transport] ?? SPEED_KMH.walk;
   const tA = eventA?.when ? new Date(eventA.when).getTime() : null;
@@ -72,4 +97,4 @@ function checkFeasibility(eventA, eventB, { transport = 'walk' } = {}) {
   return { feasible: true, reason: 'within transport time budget', hours, neededHours, distanceKm: dist };
 }
 
-module.exports = { checkFeasibility, SPEED_KMH };
+module.exports = { checkFeasibility, SPEED_KMH, placesToMap, distanceBetweenPlaceNames };

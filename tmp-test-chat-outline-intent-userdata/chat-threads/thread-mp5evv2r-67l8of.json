@@ -1,0 +1,38 @@
+{
+  "id": "thread-mp5evv2r-67l8of",
+  "title": "如上请执行确认回归",
+  "novelId": "novel-mp5evv2b-oijqui",
+  "createdAt": "2026-05-14T11:35:00.627Z",
+  "updatedAt": "2026-05-14T11:35:00.630Z",
+  "messages": [
+    {
+      "id": "msg-1778758500628",
+      "role": "assistant",
+      "text": "我已按专用大纲流程生成了一版草案，先不写入项目。\n\n# 总大纲\n\n## 第一卷：回港\n\n### 第一节：雾城来信",
+      "timestamp": 1778758500628,
+      "isStreaming": false,
+      "edited": false,
+      "toolCalls": null
+    },
+    {
+      "id": "msg-1778758500630",
+      "role": "assistant",
+      "text": "已将当前大纲写入项目，并切换到写作阶段。",
+      "timestamp": 1778758500630,
+      "isStreaming": false,
+      "edited": false,
+      "toolCalls": [
+        {
+          "id": "confirm-outline-auto",
+          "name": "confirm_outline",
+          "input": {},
+          "status": "done",
+          "result": "Outline confirmed and saved. Switched to writing phase.",
+          "isError": false
+        }
+      ],
+      "parentId": "msg-1778758500628"
+    }
+  ],
+  "currentNodeId": "msg-1778758500630"
+}

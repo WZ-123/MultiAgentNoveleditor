@@ -22,6 +22,8 @@ const workflowOrchestrator = require('./workflowOrchestrator');
 const eventBus = require('./eventBus');
 const skillsStore = require('../store/skills');
 const chatHistoryStore = require('../store/chatHistory');
+const { generateOutlineDraft } = require('./outlineDraftService');
+const { detectOutlineChatIntent, detectOutlineConfirmIntent } = require('./outlineIntent');
 const { webContents } = require('electron');
 
 // ---------- provider resolution ----------
@@ -196,6 +198,8 @@ function createSession({ editorContext, messages, threadId }) {
     messages: [],
     abortController: null,
     pendingFrontendAction: null, // { actionId, resolve, reject }
+    pendingOutlineDraft: null,
+    pendingOutlineIssues: [],
   };
   // Pre-populate from thread history so the AI has conversation context
   session.messages = sessionMessagesFromHistory(messages);
@@ -276,9 +280,10 @@ function generatePhaseRules(phase) {
       return [
         '## Rules (Outline Phase)',
         '1. Start by calling `read_outline_nodes` to check if an outline already exists.',
-        '2. If no outline exists, propose a complete outline with volumes/sections/chapters.',
-        '3. Present your outline clearly and wait for the user to review and confirm it.',
-        '4. When the user confirms, call `confirm_outline` with the nodes array to save and transition to writing phase.',
+        '2. If a pending outline draft already exists in session, treat that draft as the current source of truth until the user discards or confirms it.',
+        '3. If no outline exists, propose a complete outline with volumes/sections/chapters.',
+        '4. Present your outline clearly and wait for the user to review and confirm it.',
+        '5. When the user confirms, call `confirm_outline`. If a pending outline draft exists in session, you may call it without reconstructing nodes from memory.',
         '5. Level field in outline nodes: level=1 for volume, level=2 for section, level=3 for chapter.',
         '6. DO NOT write chapter content in this phase. Only outline planning.',
         '7. Always use tools to inspect state before making changes. Do not guess.',
@@ -323,7 +328,7 @@ function generatePhaseRules(phase) {
   }
 }
 
-async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, workflowPhase) {
+async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, workflowPhase, pendingOutlineDraft, pendingOutlineIssues) {
   const ctx = editorContext || {};
   const phase = workflowPhase || 'idle';
   const lines = [
@@ -339,6 +344,10 @@ async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, w
   }
   if (ctx.selectedText) {
     lines.push('- User selected text: """' + ctx.selectedText + '"""');
+    if (typeof ctx.selectionStart === 'number' && typeof ctx.selectionEnd === 'number' && ctx.selectionEnd >= ctx.selectionStart) {
+      lines.push('- Selection range: ' + ctx.selectionStart + '-' + ctx.selectionEnd);
+    }
+    lines.push('- Selection context: This selected text comes from the live editor state captured by the app. Treat it as the current user selection, even if chat input currently has focus. Do not claim that you cannot see the selection marker just because you lack direct visual access to the editor.');
   }
   if (ctx.novelTitle) {
     lines.push('- Project: ' + ctx.novelTitle);
@@ -352,6 +361,23 @@ async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, w
   }
   lines.push('- Workflow phase: ' + phase);
   lines.push('');
+
+  if (pendingOutlineDraft?.rawMarkdown) {
+    lines.push('## Pending Outline Draft');
+    lines.push('A session-local outline draft exists but has NOT been saved yet. Treat it as the current working draft for review, revision, and confirmation.');
+    lines.push('If the user asks to revise the outline, revise this draft instead of inventing a new one from scratch.');
+    lines.push('If the user confirms saving, call `confirm_outline` and let the app use the pending draft nodes.');
+    lines.push('');
+    lines.push(pendingOutlineDraft.rawMarkdown);
+    if (Array.isArray(pendingOutlineIssues) && pendingOutlineIssues.length) {
+      lines.push('');
+      lines.push('Pending draft review notes:');
+      for (const issue of pendingOutlineIssues) {
+        lines.push(`- [${issue.sourceAgent === 'timeline' ? 'timeline' : 'character_world'}] ${issue.summary}`);
+      }
+    }
+    lines.push('');
+  }
 
   // Phase-specific rules
   const phaseRules = generatePhaseRules(phase);
@@ -382,6 +408,7 @@ async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, w
   lines.push('4. Web search: use `enrich_character` first. Only use WebFetch/WebSearch as fallback.');
   lines.push('5. Be systematic: break complex requests into steps, use tools to gather facts, then act.');
   lines.push('6. If the user asks to clean up historical duplicate timeline events, use `dedupe_timeline` instead of manually rewriting files.');
+  lines.push('7. If Current Editor State includes `User selected text`, that selection metadata is authoritative. Do not tell the user that you cannot see the editor highlight or selection marker.');
 
   // Inject phase-relevant skills
   const skillBlock = await loadPhaseSkills(phase);
@@ -418,6 +445,97 @@ function toolResultContent(toolUseId, resultText, isError) {
     tool_use_id: toolUseId,
     content: resultText,
     is_error: !!isError,
+  };
+}
+
+function clearPendingOutlineDraft(session) {
+  session.pendingOutlineDraft = null;
+  session.pendingOutlineIssues = [];
+}
+
+function storePendingOutlineDraft(session, draft, issues) {
+  session.pendingOutlineDraft = draft;
+  session.pendingOutlineIssues = Array.isArray(issues) ? issues : [];
+  session.workflowPhase = 'outline';
+}
+
+async function persistAssistantTurn(session, result) {
+  if (!session.threadId || (!result?.text && !(Array.isArray(result?.toolCalls) && result.toolCalls.length > 0))) {
+    return;
+  }
+  try {
+    await chatHistoryStore.appendMessage(session.threadId, {
+      id: `msg-${Date.now()}`,
+      role: 'assistant',
+      text: result.text || '',
+      timestamp: Date.now(),
+      isStreaming: false,
+      edited: false,
+      toolCalls: Array.isArray(result.toolCalls) && result.toolCalls.length > 0 ? result.toolCalls : null,
+    });
+  } catch {
+    // best-effort
+  }
+}
+
+async function maybeHandleOutlineAutomation(session, userText, abortSignal) {
+  const activeNovelId = session.editorContext?.novelId || mcpClient.getActiveNovel();
+  if (!activeNovelId) return null;
+
+  if (detectOutlineConfirmIntent(userText, session)) {
+    const incompleteReviewLabels = Array.isArray(session.pendingOutlineIssues)
+      ? session.pendingOutlineIssues
+          .filter((issue) => issue.reviewIncomplete)
+          .map((issue) => (issue.sourceAgent === 'timeline' ? '时空校验' : '人设校验'))
+      : [];
+    if (incompleteReviewLabels.length) {
+      return {
+        text: `当前大纲还有未完成的审查：${Array.from(new Set(incompleteReviewLabels)).join('、')}。\n\n我先不建议直接写入。请回复“重新审查一下大纲”，或先继续调整草案。`,
+        turns: 1,
+        toolCalls: [],
+      };
+    }
+    const nodes = session.pendingOutlineDraft?.nodes;
+    if (!Array.isArray(nodes) || !nodes.length) {
+      return {
+        text: '当前没有可确认写入的大纲草案。',
+        turns: 1,
+        toolCalls: [],
+      };
+    }
+    await callMcpTool('write_outline_nodes', { nodes });
+    clearPendingOutlineDraft(session);
+    session.workflowPhase = 'writing';
+    return {
+      text: '已将当前大纲写入项目，并切换到写作阶段。',
+      turns: 1,
+      toolCalls: [
+        {
+          id: 'confirm-outline-auto',
+          name: 'confirm_outline',
+          input: {},
+          status: 'done',
+          result: 'Outline confirmed and saved. Switched to writing phase.',
+          isError: false,
+        },
+      ],
+    };
+  }
+
+  const intent = detectOutlineChatIntent(userText, session);
+  if (!intent.shouldRoute) return null;
+
+  const generated = await generateOutlineDraft({
+    mode: intent.mode,
+    userText,
+    pendingOutlineDraft: session.pendingOutlineDraft,
+    abortSignal,
+  });
+  storePendingOutlineDraft(session, generated.draft, generated.blockingIssues);
+  return {
+    text: generated.assistantText,
+    turns: 1,
+    toolCalls: [],
   };
 }
 
@@ -585,12 +703,21 @@ async function _runTurnViaProvider(session, sessionId, system, userText, abortSi
         if (use.name === 'set_workflow_phase') {
           const phase = use.input?.phase;
           if (phase) { session.workflowPhase = phase; }
+          if (phase && phase !== 'outline') clearPendingOutlineDraft(session);
           toolResult = { text: `Workflow phase changed to "${session.workflowPhase}".`, isError: false };
         } else if (use.name === 'confirm_outline') {
-          const nodes = use.input?.nodes;
+          const incompleteReview = Array.isArray(session.pendingOutlineIssues)
+            && session.pendingOutlineIssues.some((issue) => issue.reviewIncomplete);
+          if (incompleteReview) {
+            throw new Error('Outline review is incomplete. Re-run review before confirmation.');
+          }
+          const nodes = Array.isArray(use.input?.nodes) && use.input.nodes.length
+            ? use.input.nodes
+            : session.pendingOutlineDraft?.nodes;
           if (Array.isArray(nodes) && nodes.length) {
             await callMcpTool('write_outline_nodes', { nodes });
           }
+          clearPendingOutlineDraft(session);
           session.workflowPhase = 'writing';
           toolResult = { text: 'Outline confirmed and saved. Switched to writing phase.', isError: false };
         } else if (isFrontendTool(use.name)) {
@@ -750,13 +877,29 @@ async function runTurn(sessionId, userText) {
   let driverId = null;
   try { driverId = await workflowOrchestrator.getActiveDriverId(); } catch { /* ignore */ }
   const useDriver = !!driverId && driverId !== 'direct-api';
-  const system = await buildSystemPrompt(session.editorContext, useDriver, mcpClient.getActiveNovel(), session.workflowPhase);
 
   session.messages.push(textContent(userText));
 
   emitEvent(sessionId, 'turn_start', { userText });
 
   try {
+    const automated = await maybeHandleOutlineAutomation(session, userText, abortSignal);
+    if (automated) {
+      session.messages.push(assistantContent([{ type: 'text', text: automated.text || '' }]));
+      emitEvent(sessionId, 'turn_done', { text: automated.text, turns: automated.turns });
+      await persistAssistantTurn(session, automated);
+      return;
+    }
+
+    const system = await buildSystemPrompt(
+      session.editorContext,
+      useDriver,
+      mcpClient.getActiveNovel(),
+      session.workflowPhase,
+      session.pendingOutlineDraft,
+      session.pendingOutlineIssues
+    );
+
     let result;
     if (useDriver) {
       // Driver path: agent runs through Claude Code with WebFetch/WebSearch built-in tools.
@@ -771,22 +914,7 @@ async function runTurn(sessionId, userText) {
     }
 
     emitEvent(sessionId, 'turn_done', { text: result.text, turns: result.turns });
-
-    // Persist to chat history from main process (await — ensure on disk
-    // before this turn completes, so panel remounts always find the data).
-    if (session.threadId && (result.text || (Array.isArray(result.toolCalls) && result.toolCalls.length > 0))) {
-      try {
-        await chatHistoryStore.appendMessage(session.threadId, {
-          id: `msg-${Date.now()}`,
-          role: 'assistant',
-          text: result.text || '',
-          timestamp: Date.now(),
-          isStreaming: false,
-          edited: false,
-          toolCalls: Array.isArray(result.toolCalls) && result.toolCalls.length > 0 ? result.toolCalls : null,
-        });
-      } catch { /* best-effort */ }
-    }
+    await persistAssistantTurn(session, result);
   } catch (err) {
     const msg = err?.message || String(err);
     emitEvent(sessionId, 'error', { message: msg });

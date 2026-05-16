@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "aliases": [
+    {
+      "id": "opus",
+      "displayName": "Opus",
+      "providerId": "anthropic",
+      "modelId": "claude-opus-4-7",
+      "contextWindow": 200000,
+      "maxOutputTokens": 8192,
+      "thinking": true,
+      "thinkingBudget": 32000,
+      "temperature": 0.7,
+      "effortLevel": "max"
+    },
+    {
+      "id": "sonnet",
+      "displayName": "Sonnet",
+      "providerId": "anthropic",
+      "modelId": "claude-sonnet-4-6",
+      "contextWindow": 200000,
+      "maxOutputTokens": 8192,
+      "thinking": false,
+      "thinkingBudget": 0,
+      "temperature": 0.7,
+      "effortLevel": "high"
+    },
+    {
+      "id": "haiku",
+      "displayName": "Haiku",
+      "providerId": "anthropic",
+      "modelId": "claude-haiku-4-5-20251001",
+      "contextWindow": 200000,
+      "maxOutputTokens": 4096,
+      "thinking": false,
+      "thinkingBudget": 0,
+      "temperature": 0.9,
+      "effortLevel": "low"
+    }
+  ]
+}

@@ -23,6 +23,91 @@ function endpoint(baseUrl) {
   return `${b}/v1/messages`;
 }
 
+function endpointLabel(baseUrl) {
+  const url = endpoint(baseUrl);
+  if ((baseUrl || '').includes('api.anthropic.com')) return 'Anthropic API';
+  return `Anthropic-compatible endpoint (${url})`;
+}
+
+function isPlainObject(value) {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function sanitizeSchemaNode(node, isRoot = false) {
+  if (typeof node === 'boolean') return node;
+  if (!isPlainObject(node)) {
+    return isRoot ? { type: 'object', properties: {} } : {};
+  }
+
+  const out = {};
+  for (const [key, value] of Object.entries(node)) {
+    if (value == null) continue;
+
+    if (key === 'properties') {
+      if (!isPlainObject(value)) continue;
+      const props = {};
+      for (const [propName, propSchema] of Object.entries(value)) {
+        if (propSchema == null) continue;
+        props[propName] = sanitizeSchemaNode(propSchema);
+      }
+      out.properties = props;
+      continue;
+    }
+
+    if (key === 'additionalProperties') {
+      if (typeof value === 'boolean') out.additionalProperties = value;
+      else if (isPlainObject(value)) out.additionalProperties = sanitizeSchemaNode(value);
+      continue;
+    }
+
+    if (key === 'items') {
+      out.items = typeof value === 'boolean' ? value : sanitizeSchemaNode(value);
+      continue;
+    }
+
+    if (key === 'oneOf' || key === 'anyOf' || key === 'allOf') {
+      if (!Array.isArray(value)) continue;
+      const branches = value
+        .filter((entry) => entry != null)
+        .map((entry) => (typeof entry === 'boolean' ? entry : sanitizeSchemaNode(entry)));
+      if (branches.length) out[key] = branches;
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      out[key] = value
+        .filter((entry) => entry != null)
+        .map((entry) => (isPlainObject(entry) ? sanitizeSchemaNode(entry) : entry));
+      continue;
+    }
+
+    if (isPlainObject(value)) {
+      out[key] = sanitizeSchemaNode(value);
+      continue;
+    }
+
+    out[key] = value;
+  }
+
+  if (out.type === 'object' && !isPlainObject(out.properties)) {
+    out.properties = {};
+  }
+  if (out.type === 'array' && !Object.prototype.hasOwnProperty.call(out, 'items')) {
+    out.items = {};
+  }
+
+  return out;
+}
+
+function normalizeTools(tools) {
+  if (!Array.isArray(tools) || !tools.length) return undefined;
+  return tools.map((tool) => ({
+    name: tool.name,
+    description: tool.description || '',
+    input_schema: sanitizeSchemaNode(tool.input_schema || tool.inputSchema || { type: 'object', properties: {} }, true),
+  }));
+}
+
 function buildBody({ system, messages, tools, model, maxTokens, extra, stream, thinking }) {
   const body = {
     model,
@@ -31,7 +116,8 @@ function buildBody({ system, messages, tools, model, maxTokens, extra, stream, t
     stream: !!stream,
   };
   if (system) body.system = system;
-  if (Array.isArray(tools) && tools.length) body.tools = tools;
+  const normalizedTools = normalizeTools(tools);
+  if (normalizedTools) body.tools = normalizedTools;
   if (extra && typeof extra === 'object') Object.assign(body, extra);
   if (thinking && typeof thinking === 'object') body.thinking = thinking;
   return body;
@@ -106,7 +192,7 @@ async function sendMessageStreaming(opts) {
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`Anthropic ${res.status}: ${text.slice(0, 500)}`);
+    throw new Error(`${endpointLabel(tier.baseUrl)} ${res.status}: ${text.slice(0, 500)}`);
   }
 
   const blocks = [];
@@ -194,7 +280,7 @@ async function sendMessageNonStreaming(opts) {
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`Anthropic ${res.status}: ${text.slice(0, 500)}`);
+    throw new Error(`${endpointLabel(tier.baseUrl)} ${res.status}: ${text.slice(0, 500)}`);
   }
   const data = await res.json();
   return { stopReason: data.stop_reason || 'end_turn', content: data.content || [] };

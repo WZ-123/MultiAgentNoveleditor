@@ -3,7 +3,7 @@
 const { paths } = require('./paths');
 const { readJson, writeJson } = require('./jsonStore');
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 const DEFAULT_DRIVERS = {
   'claude-code-vscode': {
@@ -48,6 +48,18 @@ const DEFAULT_APP_CONFIG = {
   searchEngine: 'auto',
   enrichmentConcurrency: 10,
   enrichmentMode: 'traditional',
+  feishuSync: {
+    enabled: false,
+    endpointProfile: 'dev',
+    appId: '',
+    appSecret: '',
+    appToken: '',
+    tableId: '',
+    // Relay mode: client talks to a relay server instead of Feishu directly.
+    // When relayUrl is set, appId/appSecret/appToken/tableId are not used client-side.
+    relayUrl: '',
+    relayApiKey: '',
+  },
 };
 
 function mergeDrivers(saved) {
@@ -67,15 +79,58 @@ function mergeDrivers(saved) {
   return out;
 }
 
+function normalizeDrivers(saved) {
+  const merged = mergeDrivers(saved);
+  let changed = false;
+
+  for (const id of Object.keys(merged)) {
+    const next = { ...merged[id] };
+    if (next.kind !== id) {
+      next.kind = id;
+      changed = true;
+    }
+    if (!saved || !saved[id]) {
+      changed = true;
+    }
+    merged[id] = next;
+  }
+
+  return { drivers: merged, changed };
+}
+
 async function load() {
   const file = paths().appConfig;
   const data = await readJson(file, null);
-  if (!data || typeof data !== 'object') return { ...DEFAULT_APP_CONFIG, drivers: { ...DEFAULT_DRIVERS } };
-  return {
+  let changed = false;
+  if (!data || typeof data !== 'object') {
+    const next = { ...DEFAULT_APP_CONFIG, drivers: { ...DEFAULT_DRIVERS } };
+    await writeJson(file, next);
+    return next;
+  }
+  const { drivers, changed: driversChanged } = normalizeDrivers(data.drivers);
+  const next = {
     ...DEFAULT_APP_CONFIG,
     ...data,
-    drivers: mergeDrivers(data.drivers),
+    feishuSync: { ...DEFAULT_APP_CONFIG.feishuSync, ...(data.feishuSync || {}) },
+    drivers,
   };
+  if (next.schemaVersion !== SCHEMA_VERSION) {
+    next.schemaVersion = SCHEMA_VERSION;
+    changed = true;
+  }
+  if (!next.activeDriverId || !next.drivers[next.activeDriverId]) {
+    next.activeDriverId = 'direct-api';
+    changed = true;
+  }
+  changed = changed || driversChanged;
+  if (JSON.stringify(next.drivers) !== JSON.stringify(data.drivers || {})) changed = true;
+  if (JSON.stringify(next) !== JSON.stringify(data)) {
+    changed = true;
+  }
+  if (changed) {
+    await writeJson(file, next);
+  }
+  return next;
 }
 
 async function save(patch) {
@@ -87,6 +142,12 @@ async function save(patch) {
     next.drivers = mergeDrivers({ ...current.drivers, ...patch.drivers });
   } else {
     next.drivers = current.drivers;
+  }
+  // Deep-merge feishuSync so partial patches don't drop sibling fields.
+  if (patch && patch.feishuSync) {
+    next.feishuSync = { ...current.feishuSync, ...patch.feishuSync };
+  } else {
+    next.feishuSync = current.feishuSync;
   }
   await writeJson(paths().appConfig, next);
   return next;

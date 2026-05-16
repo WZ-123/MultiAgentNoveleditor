@@ -1,0 +1,78 @@
+{
+  "feedbackId": "fb-mp6tr6oi-6q1tzx",
+  "createdAt": "2026-05-15T11:19:02.802Z",
+  "status": "pending",
+  "transport": "local-outbox",
+  "payload": {
+    "feedbackId": "fb-mp6tr6oi-6q1tzx",
+    "createdAt": "2026-05-15T11:19:02.802Z",
+    "channel": "quick-feedback",
+    "userInput": {
+      "issueTitle": "反馈截图回归",
+      "actualBehavior": "用于验证反馈是否附带窗口截图和日志摘要。",
+      "expectedBehavior": "",
+      "reproductionSteps": [],
+      "reproducibility": "unknown",
+      "severity": "medium",
+      "feedbackMode": "context-with-logs"
+    },
+    "environment": {
+      "platform": "MacIntel",
+      "locale": "zh-CN",
+      "isOnline": true,
+      "activeRuntimeDriver": "direct-api",
+      "activeProviderType": "anthropic",
+      "activeModel": "claude-sonnet-4-6",
+      "appVersion": "1.0.0"
+    },
+    "novelContext": {
+      "activeNovelId": "",
+      "isBlankProject": true
+    },
+    "editorContext": {
+      "editorType": "none",
+      "activeChapterId": "",
+      "activeChapterName": "",
+      "activeChapterTitle": "",
+      "selectionText": "",
+      "selectionStart": null,
+      "selectionEnd": null,
+      "contentExcerpt": ""
+    },
+    "chatContext": {
+      "activeThread": null,
+      "currentSessionId": "",
+      "currentSessionStatus": "idle",
+      "lastUserPrompt": "",
+      "recentMessages": [],
+      "recentToolCalls": []
+    },
+    "changeContext": {
+      "latestCheckpoint": null,
+      "latestChangedFiles": []
+    },
+    "recentLogs": {
+      "renderer": [],
+      "mainProcess": [],
+      "chatAgent": []
+    },
+    "errors": {
+      "latestUiError": "",
+      "latestRendererError": null,
+      "latestToolFailure": null,
+      "latestMainProcessError": null,
+      "latestChatAgentError": null
+    },
+    "attachments": [
+      {
+        "kind": "window-screenshot",
+        "label": "当前窗口截图",
+        "mimeType": "image/png",
+        "fileName": "screenshot.png",
+        "localPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/tmp-test-chat-feedback-ui-userdata/feedback-outbox/fb-mp6tr6oi-6q1tzx-screenshot.png",
+        "size": 324000,
+        "createdAt": "2026-05-15T11:19:02.943Z"
+      }
+    ]
+  }
+}

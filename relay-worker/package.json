@@ -1,0 +1,16 @@
+{
+  "name": "feedback-relay-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker for feedback relay to Feishu Bitable",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node scripts/test-relay.js",
+    "tail": "wrangler tail",
+    "init": "node scripts/init.js"
+  },
+  "devDependencies": {
+    "wrangler": "^3.100.0"
+  }
+}

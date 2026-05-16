@@ -24,7 +24,7 @@ export function ProviderSettingsPanel() {
   const [busyAction, setBusyAction] = useState('');
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', baseUrl: '', apiKey: '' });
+  const [addForm, setAddForm] = useState({ name: '', type: 'openai-compat', baseUrl: '', apiKey: '' });
 
   const [expandedProviders, setExpandedProviders] = useState(new Set());
   const [modelForm, setModelForm] = useState({ providerId: '', id: '', name: '', contextWindow: 200000 });
@@ -89,7 +89,7 @@ export function ProviderSettingsPanel() {
   }, [mana, refresh]);
 
   const handleAdd = useCallback(async () => {
-    const { name, baseUrl, apiKey } = addForm;
+    const { name, type, baseUrl, apiKey } = addForm;
     if (!name.trim()) {
       setError('请填写供应商名称');
       return;
@@ -99,10 +99,11 @@ export function ProviderSettingsPanel() {
     try {
       await mana.ccs.add({
         name: name.trim(),
+        type,
         baseUrl: baseUrl.trim() || undefined,
         apiKey: apiKey.trim() || undefined,
       });
-      setAddForm({ name: '', baseUrl: '', apiKey: '' });
+      setAddForm({ name: '', type: 'openai-compat', baseUrl: '', apiKey: '' });
       setShowAddForm(false);
       await refresh();
     } catch (err) {
@@ -220,7 +221,7 @@ export function ProviderSettingsPanel() {
   }, [mana, refresh]);
 
   const providerOptions = useMemo(() => {
-    return providers.map((p) => ({ id: p.name, name: p.name, models: p.models || [] }));
+    return providers.map((p) => ({ id: p.id || p.name, name: p.name, models: p.models || [] }));
   }, [providers]);
 
   const renderProviderRow = (p) => {
@@ -231,6 +232,7 @@ export function ProviderSettingsPanel() {
     const displayUrl = !p.baseUrl || p.baseUrl.startsWith('(')
       ? '默认 https://api.anthropic.com'
       : p.baseUrl;
+    const displayType = p.type === 'anthropic' ? 'Anthropic-compatible' : 'OpenAI-compatible';
 
     return (
       <div key={p.name}>
@@ -255,6 +257,7 @@ export function ProviderSettingsPanel() {
           <div className="flex-1 min-w-0">
             <div className="text-sm text-gray-200 font-medium truncate">{p.name}</div>
             <div className="text-[11px] text-gray-500 truncate font-mono">{displayUrl}</div>
+            <div className="text-[10px] text-gray-600 truncate">协议: {displayType}</div>
           </div>
           {isActive ? (
             <span className="text-[10px] uppercase tracking-wide text-primary-400 shrink-0">使用中</span>
@@ -318,23 +321,23 @@ export function ProviderSettingsPanel() {
                 size="sm"
                 placeholder="模型 ID"
                 className="text-[11px] font-mono"
-                value={modelForm.providerId === p.name ? modelForm.id : ''}
-                onChange={(e) => setModelForm({ providerId: p.name, id: e.target.value, name: modelForm.name, contextWindow: modelForm.contextWindow })}
+                value={modelForm.providerId === (p.id || p.name) ? modelForm.id : ''}
+                onChange={(e) => setModelForm({ providerId: p.id || p.name, id: e.target.value, name: modelForm.name, contextWindow: modelForm.contextWindow })}
               />
               <Input
                 size="sm"
                 placeholder="显示名称"
                 className="text-[11px]"
-                value={modelForm.providerId === p.name ? modelForm.name : ''}
-                onChange={(e) => setModelForm((s) => ({ ...s, providerId: p.name, name: e.target.value }))}
+                value={modelForm.providerId === (p.id || p.name) ? modelForm.name : ''}
+                onChange={(e) => setModelForm((s) => ({ ...s, providerId: p.id || p.name, name: e.target.value }))}
               />
               <Input
                 size="sm"
                 type="number"
                 placeholder="上下文"
                 className="text-[11px] w-20"
-                value={modelForm.providerId === p.name ? modelForm.contextWindow : 200000}
-                onChange={(e) => setModelForm((s) => ({ ...s, providerId: p.name, contextWindow: Number(e.target.value) }))}
+                value={modelForm.providerId === (p.id || p.name) ? modelForm.contextWindow : 200000}
+                onChange={(e) => setModelForm((s) => ({ ...s, providerId: p.id || p.name, contextWindow: Number(e.target.value) }))}
               />
               <Button
                 size="sm"
@@ -388,6 +391,17 @@ export function ProviderSettingsPanel() {
         value={addForm.name}
         onChange={(e) => setAddForm((s) => ({ ...s, name: e.target.value }))}
       />
+      <label className="text-xs text-gray-400 block">
+        协议类型
+        <select
+          className="mt-1 w-full rounded border border-vscode-panel-border bg-vscode-sidebar px-2 py-1.5 text-sm text-gray-200"
+          value={addForm.type}
+          onChange={(e) => setAddForm((s) => ({ ...s, type: e.target.value }))}
+        >
+          <option value="openai-compat">OpenAI-compatible</option>
+          <option value="anthropic">Anthropic-compatible</option>
+        </select>
+      </label>
       <Input
         size="sm"
         label="Base URL"
@@ -567,6 +581,9 @@ export function ProviderSettingsPanel() {
                     {current ? (
                       <div className="text-[11px] text-gray-500 mt-0.5">
                         当前：<span className="text-gray-300">{current.name}</span>
+                        {current.type ? (
+                          <span> · {current.type === 'anthropic' ? 'Anthropic-compatible' : 'OpenAI-compatible'}</span>
+                        ) : null}
                         {current.baseUrl ? (
                           <span className="font-mono"> · {current.baseUrl}</span>
                         ) : null}

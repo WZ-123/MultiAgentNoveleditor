@@ -128,6 +128,10 @@ async function main() {
     }
     if (ctx.selectedText) {
       lines.push(`- User selected text: """${ctx.selectedText}"""`);
+      if (typeof ctx.selectionStart === 'number' && typeof ctx.selectionEnd === 'number' && ctx.selectionEnd >= ctx.selectionStart) {
+        lines.push(`- Selection range: ${ctx.selectionStart}-${ctx.selectionEnd}`);
+      }
+      lines.push('- Selection context: This selected text comes from the live editor state captured by the app. Treat it as the current user selection, even if chat input currently has focus. Do not claim that you cannot see the selection marker just because you lack direct visual access to the editor.');
     }
     if (ctx.novelId) {
       lines.push(`- Novel ID: ${ctx.novelId}`);
@@ -155,6 +159,7 @@ async function main() {
     lines.push('6. When the user asks about characters, first call `list_characters` to get an overview, then call `read_character` for details on a specific character.');
     lines.push('7. To enrich character info from the web for a fanwork character, call `enrich_character` with the character id.');
     lines.push('8. Respond in the same language as the user.');
+    lines.push('9. If Current Editor State includes `User selected text`, that selection metadata is authoritative. Do not tell the user that you cannot see the editor highlight or selection marker.');
     return lines.join('\n');
   }
 
@@ -177,6 +182,21 @@ async function main() {
   else fail('system prompt: character query guidance', 'missing');
   if (promptWithNovel.includes('call `enrich_character`')) ok('system prompt: enrichment guidance');
   else fail('system prompt: enrichment guidance', 'missing');
+
+  const promptWithSelection = buildSystemPrompt({
+    type: 'chapter',
+    title: 'chapter-001.md',
+    novelId: activeNovel.id,
+    selectedText: '她忽然停住了脚步',
+    selectionStart: 12,
+    selectionEnd: 20,
+  });
+  if (promptWithSelection.includes('Selection range: 12-20')) ok('system prompt: includes selection range');
+  else fail('system prompt: selection range', 'missing');
+  if (promptWithSelection.includes('Treat it as the current user selection')) ok('system prompt: selection context guidance');
+  else fail('system prompt: selection context guidance', 'missing');
+  if (promptWithSelection.includes('Do not tell the user that you cannot see the editor highlight or selection marker')) ok('system prompt: forbids claiming selection is invisible');
+  else fail('system prompt: selection visibility guidance', 'missing');
 
   // Driver mode should show WebFetch/WebSearch; direct mode should not
   const promptWithDriver = buildSystemPrompt({ novelId: 'test', type: 'none', title: '', selectedText: '' }, true);

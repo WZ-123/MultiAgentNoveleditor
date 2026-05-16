@@ -33,6 +33,8 @@ function paths() {
   return {
     root,
     appConfig: path.join(root, 'app-config.json'),
+    feedbackOutbox: path.join(root, 'feedback-outbox'),
+    feedbackIndex: path.join(root, 'feedback-outbox', 'index.json'),
     secrets: path.join(root, 'secrets.json'),
     subagents: path.join(root, 'subagents'),
     subagentsBuiltin: path.join(root, 'subagents', 'builtin'),
@@ -85,6 +87,7 @@ function novelPaths(novelDir) {
 function ensureLayout() {
   const p = paths();
   ensureDirSync(p.root);
+  ensureDirSync(p.feedbackOutbox);
   ensureDirSync(p.subagentsBuiltin);
   ensureDirSync(p.subagentsUser);
   ensureDirSync(p.pipelinesBuiltin);

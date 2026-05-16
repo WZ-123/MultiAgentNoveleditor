@@ -9,6 +9,8 @@
 - `progress.md`：开发进展与里程碑
 - `vibe-coding-dialogues.md`：vibe coding 关键对话与决策记录
 - `handover-checklist.md`：跨设备续接时的快速检查清单
+- `quick-feedback-design.md`：用户快速反馈功能设计（字段、快照、脱敏、发送策略）
+- `feishu-feedback-sync-design.md`：飞书多维表格反馈同步设计（outbox、同步层、附件、重试、联调）
 
 ## 建议更新节奏
 

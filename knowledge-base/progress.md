@@ -1,6 +1,6 @@
 # 开发进度追踪
 
-最后更新：2026-05-02
+最后更新：2026-05-16
 
 ## 当前阶段
 
@@ -8,6 +8,79 @@
 - 状态：**Phase 0–7 全部完成**（7 已通过 fake-claude E2E 烟测 + auto-detect IPC 烟测，UI 端的端到端联调待真 Claude Code 安装环境手动验证）。下一步是 Phase 8（claude-code-cli driver）。
 
 ## 里程碑
+
+### 2026-05-16 — 飞书多维表格反馈同步实现完成（Phase 1–4）
+
+#### 输出
+
+- 设计文档 [feishu-feedback-sync-design.md](../knowledge-base/feishu-feedback-sync-design.md) 已更新为"已实现"状态
+
+#### 实现内容
+
+| 文件 | 职责 |
+|---|---|
+| `src/main/store/feedbackOutbox.js` | 扩展同步元数据；新增 `updateSyncMeta` / `listPendingForSync` / `recoverStuckSyncing` |
+| `src/main/sync/syncLock.js` | 内存锁（feedbackId 粒度） |
+| `src/main/sync/feedbackSyncWorker.js` | Worker：扫描、状态机、指数退避、附件补偿、崩溃恢复 |
+| `src/main/feishu/feishuAdapter.js` | 飞书 OpenAPI：token 缓存、创建/更新记录、上传附件、查表字段、错误归一化 |
+| `src/main/feishu/fieldMapper.js` | Payload → Bitable 字段映射 |
+| `src/main/ipc/feedbackSync.js` | IPC：`listOutbox` / `getRecord` / `retrySync` / `triggerSync` |
+| `src/main/ipc/feedback.js` | 提交后 2s 自动触发同步 |
+| `src/main/store/appConfig.js` | 新增 `feishuSync` 配置块 |
+| `src/main/index.js` | 启动时初始化 worker |
+| `scripts/feishu-debug.js` | 调试脚本：`verify` / `list-fields` / `playout` |
+| `test/feedback-sync.test.js` | 10 个单元测试 |
+
+#### 关键设计选择
+
+- **产品运行时不依赖飞书 CLI**：用 Node.js 内置 `https` 模块直接调 OpenAPI；CLI（`@larksuite/cli@1.0.17`）仅用于开发调试
+- **本地优先**：用户提交成功以 outbox 落盘为准，飞书同步是异步后台任务
+- **状态机**：`pending → syncing → sent/retryable_failed/failed_terminal`；启动时自动恢复 `syncing` 为 `pending`
+- **附件补偿**：截图上传成功但记录创建失败时，复用已上传的 `file_token`；记录已创建但附件未绑定时，下次只做附件补挂
+- **指数退避**：`30s × 2^retryCount`，上限 1h，最大 10 次后转 `failed_terminal`
+- **错误归一化**：飞书 API 错误统一映射为 `network_error` / `rate_limited` / `auth_failed` / `permission_denied` / `table_not_found` / `field_not_found` / `invalid_schema`
+
+#### 验证结果
+
+- `test/feedback-sync.test.js`：**10/10 通过**
+- `test/feedback-outbox-attachments.test.js`：**2/2 通过**（回归）
+- `test/chat-feedback-payload.test.js`：**2/2 通过**（回归）
+
+#### 安全状态
+
+- 默认配置全空值 + `enabled: false`，打包无风险
+- 运行时凭证从用户本地目录读取，不在 `.app` 包内
+- `appSecret` 目前与常规配置混存在 `app-config.json` 中；`paths.js` 已预留 `secrets.json`，建议后续迁移实现敏感/常规配置分离
+
+#### 待手动验证（需真实飞书应用 + 多维表格）
+
+1. 填入 `appId`/`appSecret`/`appToken`/`tableId` → `npm run start` → 提交一条反馈
+2. 2s 后 Worker 自动扫描 → 飞书表中出现记录，摘要字段正确
+3. 截图正常显示在附件列
+4. 断开网络 → 提交反馈 → 恢复网络 → 自动重试成功
+5. `node scripts/feishu-debug.js --action=verify ...` 校验权限和字段
+
+## 里程碑
+
+### 2026-05-16 — 飞书多维表格反馈同步设计完成
+
+#### 输出
+
+- 新增 [feishu-feedback-sync-design.md](../knowledge-base/feishu-feedback-sync-design.md)
+
+#### 设计结论
+
+- 保留现有本地 feedback-outbox 作为唯一提交成功边界，飞书写入由异步同步层完成
+- 飞书多维表格采用“摘要字段 + 截图附件 + 原始 payload”三层结构，不做全量字段平铺
+- 同步层第一阶段放在 Electron 主进程，通过 worker 扫描 pending / retryable_failed 记录并回写 sent / failed 状态
+- 飞书 CLI 仅用于开发期验权、联调、样本回放与故障诊断，不进入客户运行链路
+- 附件同步需要显式补偿策略，处理“截图已上传但记录未创建”与“记录已创建但附件未挂载”的部分成功场景
+
+#### 下一步建议
+
+1. 扩展 [src/main/store/feedbackOutbox.js](../src/main/store/feedbackOutbox.js) 的同步元数据字段：syncStatus、retryCount、lastSendAttemptAt、lastError、remoteRecordId、remoteAttachmentTokens
+2. 新增主进程 feedback sync worker 与 Feishu adapter，先打通纯文本记录创建，再补截图附件上传与补偿
+3. 增加状态机与字段映射的 Node 级回归测试，确保 opinion-only 与 context-with-logs 不会越权同步
 
 ### 2026-05-02 — Phase 7 完成（Claude Code VSCode driver）
 
@@ -278,6 +351,19 @@
 |---|---|
 | [src/components/ImportNovelPanel.jsx](../src/components/ImportNovelPanel.jsx) | 新增 `fanwork-check` 和 `character-review` 步骤；状态机改造；批量标记 UI |
 | [src/main/ipc/import.js](../src/main/ipc/import.js) | 新增 `getStagingCharacters` / `saveStagingCharacters` / `enrichStagingCharacters` handler |
+
+## 2026-05-15 — 用户快速反馈功能设计沉淀
+
+### 输出
+
+- 新增 [quick-feedback-design.md](../knowledge-base/quick-feedback-design.md)
+
+### 设计结论
+
+- 快速反馈应采用“一键触发 + 自动采集现场快照 + 用户补最少描述”的交互模式
+- 反馈包必须覆盖项目、章节、线程、选区、最近 prompt、最近工具调用、最近检查点、最近变更摘要与错误片段
+- 默认不上传整本正文或全量聊天历史，改为局部 excerpt、截断日志与可选附件
+- 发送链路建议采用“本地 feedback-outbox 持久化 + 异步发送 + 失败重试”
 | [src/main/import/analyzer.js](../src/main/import/analyzer.js) | 删除 `finalizeAnalyses` 中的自动 enrichCharacters 调用；修改 `TASK_PROMPTS.world` 增加 `isFanwork` / `referencedWorks` |
 | [src/main/import/stagingProject.js](../src/main/import/stagingProject.js) | 支持在 `novel.json` 中持久化 `fanwork` 元数据 |
 | [preload.js](../preload.js) | 暴露 3 个新的 import IPC 方法 |

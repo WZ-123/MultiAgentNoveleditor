@@ -74,6 +74,8 @@ run_ui_case "--test-ui" "ui" "/tmp/mana-ui-e2e.log"
 run_ui_case "--test-datatab-edit-ui" "datatab-ui" "/tmp/mana-datatab-ui-e2e.log"
 run_ui_case "--test-chat-timeline-regression" "chat-timeline" "/tmp/mana-chat-timeline-regression.log"
 run_ui_case "--test-chat-replace-regression" "chat-replace" "/tmp/mana-chat-replace-regression.log"
+run_ui_case "--test-chat-outline-ui-regression" "chat-outline" "/tmp/mana-chat-outline-ui-e2e.log"
+run_ui_case "--test-chat-feedback-ui-regression" "chat-feedback" "/tmp/mana-chat-feedback-ui-e2e.log"
 
 # -- 4. Cleanup --
 rm -rf "$TEST_USERDATA"

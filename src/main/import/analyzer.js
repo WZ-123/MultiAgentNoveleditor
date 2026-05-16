@@ -44,7 +44,7 @@ async function resolveProvider() {
   if (!apiKey) throw new Error('AI 服务商 API Key 未设置。请先在设置中配置。');
   const modelId = alias?.modelId || provider.models?.[0]?.id || '';
   if (!modelId) throw new Error('没有配置 AI 模型。请先在设置中配置模型。');
-  const type = provider.type || 'anthropic';
+  const type = providerManager.inferProviderType(provider);
   return {
     provider: pickProvider(type),
     tier: { type, model: modelId, apiKey, baseUrl: provider.baseUrl || '', extra: { maxTokens: 16384 } },

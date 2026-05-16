@@ -5,6 +5,8 @@ import {
   ChevronRight, MoreVertical, Save, Wifi, WifiOff
 } from 'lucide-react';
 import { appendToolUseMessage, applyToolResultMessage } from '@/components/chatToolState.mjs';
+import { buildQuickFeedbackPayload } from '@/components/chatFeedbackPayload.mjs';
+import { getRecentRendererLogs, installRecentRendererLogCapture } from '@/components/recentRendererLogs.mjs';
 
 export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTextNearCursor, onInsertTextAtCursor }) {
   const mana = typeof window !== 'undefined' ? window.mana : null;
@@ -43,7 +45,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   // ---- Thread management ----
   const [threads, setThreads] = useState([]);
   const [activeThreadId, setActiveThreadId] = useState(null);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false);
 
   // ---- Message state ----
   const [messages, setMessages] = useState([]);
@@ -67,6 +69,13 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
   // ---- Tool result expand/collapse ----
   const [expandedResults, setExpandedResults] = useState({});
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackTitle, setFeedbackTitle] = useState('');
+  const [feedbackDescription, setFeedbackDescription] = useState('');
+  const [feedbackIncludeLogs, setFeedbackIncludeLogs] = useState(true);
+  const [feedbackIncludeScreenshot, setFeedbackIncludeScreenshot] = useState(false);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [feedbackNotice, setFeedbackNotice] = useState(null);
 
   // ---- Refs for values that change independently (avoid stale closures) ----
   const onReplaceRef = useRef(onReplaceSelectedText);
@@ -83,6 +92,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
   // ====== Load threads on mount ======
   useEffect(() => {
+    installRecentRendererLogCapture();
     loadThreads();
     const onOnline = () => setIsOnline(true);
     const onOffline = () => setIsOnline(false);
@@ -525,6 +535,83 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   const isBusy = status === 'thinking' || status === 'streaming';
   const activeThread = threads.find((t) => t.id === activeThreadId);
 
+  function openFeedbackModal() {
+    setFeedbackTitle(activeThread?.title ? `AI 聊天反馈：${activeThread.title}` : 'AI 聊天问题反馈');
+    setFeedbackDescription('');
+    setFeedbackIncludeLogs(true);
+    setFeedbackIncludeScreenshot(false);
+    setShowFeedbackModal(true);
+  }
+
+  function closeFeedbackModal() {
+    if (feedbackSubmitting) return;
+    setShowFeedbackModal(false);
+  }
+
+  async function submitQuickFeedback() {
+    if (!mana?.feedback?.submit) {
+      setError('当前环境未启用反馈提交功能');
+      return;
+    }
+
+    const issueTitle = (feedbackTitle || '').trim() || 'AI 聊天问题反馈';
+    const actualBehavior = (feedbackDescription || '').trim();
+    setFeedbackSubmitting(true);
+    try {
+      let runtimeDriver = '';
+      let model = '';
+      let providerType = '';
+      try { runtimeDriver = await mana.runtime?.getActiveDriver?.(); } catch {}
+      try {
+        const alias = await mana.modelAliases?.getAlias?.('sonnet');
+        model = alias?.modelId || '';
+      } catch {}
+      try {
+        const currentProvider = await mana.ccs?.current?.();
+        providerType = currentProvider?.type || currentProvider?.id || '';
+      } catch {}
+
+      const payload = buildQuickFeedbackPayload({
+        issueTitle,
+        actualBehavior,
+        expectedBehavior: '',
+        reproductionSteps: [],
+        reproMode: 'unknown',
+        severity: 'medium',
+        includeLogs: feedbackIncludeLogs,
+        currentNovelId: editorContextRef.current?.novelId || editorContext?.novelId || '',
+        editorContext: editorContextRef.current || editorContext,
+        activeThread,
+        sessionId,
+        messages,
+        status,
+        uiError: error,
+        runtimeDriver,
+        providerType,
+        model,
+        recentRendererLogs: getRecentRendererLogs(20),
+        includeScreenshot: feedbackIncludeScreenshot,
+      });
+
+      const result = await mana.feedback.submit(payload, {
+        includeScreenshot: feedbackIncludeScreenshot,
+      });
+      setFeedbackNotice({
+        type: 'success',
+        text: feedbackIncludeLogs
+          ? `反馈已保存，后续上传时会附带必要聊天上下文${feedbackIncludeScreenshot ? '与截图' : ''}。ID: ${result.feedbackId}`
+          : `反馈已保存为仅意见模式${feedbackIncludeScreenshot ? '，并附带当前截图' : ''}。ID: ${result.feedbackId}`,
+      });
+      setShowFeedbackModal(false);
+    } catch (err) {
+      const msg = err?.message || String(err);
+      setFeedbackNotice({ type: 'error', text: `反馈提交失败：${msg}` });
+      setError(msg);
+    } finally {
+      setFeedbackSubmitting(false);
+    }
+  }
+
   return (
     <div className="flex h-full">
       {/* Sidebar — thread list */}
@@ -813,6 +900,33 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
         {/* Input */}
         <div className="p-2 border-t border-vscode-panel-border shrink-0">
+          {feedbackNotice && (
+            <div className={`mb-2 rounded border px-2 py-1.5 text-[11px] ${feedbackNotice.type === 'error' ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'}`}>
+              <div className="flex items-center gap-1.5">
+                <AlertCircle size={12} />
+                <span className="flex-1">{feedbackNotice.text}</span>
+                <button
+                  type="button"
+                  className="text-current/80 hover:text-current"
+                  onClick={() => setFeedbackNotice(null)}
+                >
+                  清除
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="mb-2 rounded border border-emerald-500/30 bg-emerald-500/10 p-2">
+            <button
+              type="button"
+              className="w-full rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
+              onClick={openFeedbackModal}
+            >
+              一键反馈问题
+            </button>
+            <div className="mt-1 text-[11px] text-emerald-200/90">
+              遇到 AI 聊天问题时，点击即可快速提交反馈。
+            </div>
+          </div>
           <div className="flex gap-2 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1.5">
             <input
               type="text"
@@ -843,6 +957,99 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
           </div>
         </div>
       </div>
+
+      {showFeedbackModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => { if (e.target === e.currentTarget) closeFeedbackModal(); }}
+        >
+          <div className="mx-4 w-full max-w-lg rounded border border-vscode-panel-border bg-vscode-sidebar shadow-xl">
+            <div className="border-b border-vscode-panel-border/60 px-4 py-3">
+              <div className="text-sm font-semibold text-emerald-300">提交快速反馈</div>
+            </div>
+            <div className="space-y-3 px-4 py-3 text-sm text-gray-300">
+              <div className="rounded border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[12px] text-amber-100">
+                本次反馈可用于改善软件表现。你可以选择允许附带必要的聊天信息与上下文，或仅提交意见，不上传日志与聊天片段。
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs text-gray-400">反馈标题</label>
+                <input
+                  type="text"
+                  className="w-full rounded border border-vscode-panel-border bg-vscode-bg/60 px-3 py-2 text-sm text-gray-200 outline-none focus:border-emerald-500"
+                  value={feedbackTitle}
+                  onChange={(e) => setFeedbackTitle(e.target.value)}
+                  placeholder="例如：AI 改错了选中的句子"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs text-gray-400">问题描述（可选，但建议填写）</label>
+                <textarea
+                  rows={4}
+                  className="w-full rounded border border-vscode-panel-border bg-vscode-bg/60 px-3 py-2 text-sm text-gray-200 outline-none focus:border-emerald-500"
+                  value={feedbackDescription}
+                  onChange={(e) => setFeedbackDescription(e.target.value)}
+                  placeholder="简单描述你刚遇到的问题，例如：我明明只选中一句，但 AI 改了整段。"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-xs text-gray-400">上传方式</div>
+                <button
+                  type="button"
+                  className={`w-full rounded border px-3 py-2 text-left text-sm ${feedbackIncludeLogs ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-100' : 'border-vscode-panel-border bg-vscode-bg/40 text-gray-300 hover:bg-vscode-active-item'}`}
+                  onClick={() => setFeedbackIncludeLogs(true)}
+                >
+                  <div className="font-medium">允许上传必要聊天信息与上下文</div>
+                  <div className="mt-1 text-[11px] opacity-80">会附带当前线程摘要、最近工具调用、最近错误信息、当前编辑上下文，以及最近渲染器/主进程日志摘要，便于快速复现问题。</div>
+                </button>
+                <button
+                  type="button"
+                  className={`w-full rounded border px-3 py-2 text-left text-sm ${!feedbackIncludeLogs ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-100' : 'border-vscode-panel-border bg-vscode-bg/40 text-gray-300 hover:bg-vscode-active-item'}`}
+                  onClick={() => setFeedbackIncludeLogs(false)}
+                >
+                  <div className="font-medium">仅反馈意见</div>
+                  <div className="mt-1 text-[11px] opacity-80">只提交你填写的标题与描述，不附带聊天记录片段、变更摘要和错误上下文。</div>
+                </button>
+              </div>
+
+              <label className="flex items-start gap-2 rounded border border-vscode-panel-border bg-vscode-bg/40 px-3 py-2 text-sm text-gray-300">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={feedbackIncludeScreenshot}
+                  onChange={(e) => setFeedbackIncludeScreenshot(e.target.checked)}
+                />
+                <span>
+                  <span className="font-medium text-gray-200">附带当前窗口截图</span>
+                  <span className="mt-1 block text-[11px] opacity-80">用于复现布局错乱、卡片显示异常、弹窗阻塞等纯 UI 问题。截图会和反馈一起保存到本地反馈箱。</span>
+                </span>
+              </label>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-vscode-panel-border/60 px-4 py-3">
+              <button
+                type="button"
+                className="rounded border border-vscode-panel-border bg-vscode-bg/60 px-3 py-1.5 text-xs text-gray-200 hover:bg-vscode-active-item"
+                onClick={closeFeedbackModal}
+                disabled={feedbackSubmitting}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
+                onClick={submitQuickFeedback}
+                disabled={feedbackSubmitting}
+              >
+                {feedbackSubmitting ? '正在保存反馈…' : '提交一键反馈'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
