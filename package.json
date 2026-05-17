@@ -1,6 +1,6 @@
 {
   "name": "multi-agent-novel-assistant",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "A multi-platform Electron application",
   "main": "main.js",
   "scripts": {
@@ -12,6 +12,7 @@
     "feishu:list-fields": "node scripts/feishu-debug.js --action=list-fields",
     "feishu:smoke": "node scripts/feishu-debug.js --action=smoke",
     "build": "vite build && electron-builder",
+    "build:beta": "node scripts/build-beta.js",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
     "build:linux": "electron-builder --linux"

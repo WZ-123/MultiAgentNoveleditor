@@ -60,6 +60,16 @@ const DEFAULT_APP_CONFIG = {
     relayUrl: '',
     relayApiKey: '',
   },
+  license: {
+    authCode: '',
+    verifiedUntil: '',
+    deviceId: '',
+  },
+  updater: {
+    skipVersion: '',
+    autoDownload: false,
+    lastCheckAt: '',
+  },
 };
 
 function mergeDrivers(saved) {
@@ -108,10 +118,47 @@ async function load() {
     return next;
   }
   const { drivers, changed: driversChanged } = normalizeDrivers(data.drivers);
+
+  // Merge feishuSync: saved non-empty values take precedence over defaults,
+  // but empty strings do NOT override pre-seeded defaults (for beta builds).
+  const savedFeishu = data.feishuSync || {};
+  const feishuSync = { ...DEFAULT_APP_CONFIG.feishuSync };
+  for (const key of Object.keys(DEFAULT_APP_CONFIG.feishuSync)) {
+    const saved = savedFeishu[key];
+    const hasSavedValue = saved !== undefined && saved !== null && saved !== '';
+    if (hasSavedValue) {
+      feishuSync[key] = saved;
+    }
+  }
+
+  // Merge license: same rules as feishuSync
+  const savedLicense = data.license || {};
+  const license = { ...DEFAULT_APP_CONFIG.license };
+  for (const key of Object.keys(DEFAULT_APP_CONFIG.license)) {
+    const saved = savedLicense[key];
+    const hasSavedValue = saved !== undefined && saved !== null && saved !== '';
+    if (hasSavedValue) {
+      license[key] = saved;
+    }
+  }
+
+  // Merge updater: same rules as feishuSync
+  const savedUpdater = data.updater || {};
+  const updater = { ...DEFAULT_APP_CONFIG.updater };
+  for (const key of Object.keys(DEFAULT_APP_CONFIG.updater)) {
+    const saved = savedUpdater[key];
+    const hasSavedValue = saved !== undefined && saved !== null && saved !== '';
+    if (hasSavedValue) {
+      updater[key] = saved;
+    }
+  }
+
   const next = {
     ...DEFAULT_APP_CONFIG,
     ...data,
-    feishuSync: { ...DEFAULT_APP_CONFIG.feishuSync, ...(data.feishuSync || {}) },
+    feishuSync,
+    license,
+    updater,
     drivers,
   };
   if (next.schemaVersion !== SCHEMA_VERSION) {
@@ -148,6 +195,18 @@ async function save(patch) {
     next.feishuSync = { ...current.feishuSync, ...patch.feishuSync };
   } else {
     next.feishuSync = current.feishuSync;
+  }
+  // Deep-merge license so partial patches don't drop sibling fields.
+  if (patch && patch.license) {
+    next.license = { ...current.license, ...patch.license };
+  } else {
+    next.license = current.license;
+  }
+  // Deep-merge updater so partial patches don't drop sibling fields.
+  if (patch && patch.updater) {
+    next.updater = { ...current.updater, ...patch.updater };
+  } else {
+    next.updater = current.updater;
   }
   await writeJson(paths().appConfig, next);
   return next;

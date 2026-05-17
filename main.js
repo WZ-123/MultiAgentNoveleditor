@@ -15,6 +15,7 @@ if (process.env.ELECTRON_RUN_AS_NODE) {
 const { app, BrowserWindow } = require('electron')
 const path = require('node:path')
 const backend = require('./src/main/index.js')
+const { verifyLicense } = require('./src/main/license/authVerifier.js')
 
 const isUiTest = process.argv.includes('--test-ui');
 const isChatTest = process.argv.includes('--test-chat');
@@ -353,6 +354,27 @@ if (isFlowTest) {
     } catch (err) {
       console.error('[main] backend init failed', err);
     }
+
+    // License verification
+    try {
+      const result = await verifyLicense();
+      if (!result.valid) {
+        console.error('[main] license verification failed:', result.reason);
+        app.quit();
+        return;
+      }
+    } catch (err) {
+      console.error('[main] license verification error:', err);
+    }
+
+    // Check for updates (delay to avoid blocking startup)
+    const { checkForUpdates } = require('./src/main/updater/versionChecker');
+    setTimeout(() => {
+      checkForUpdates({ silent: true }).catch((err) => {
+        console.error('[main] update check failed:', err.message);
+      });
+    }, 5000);
+
     await createWindow();
 
     app.on('activate', async function () {

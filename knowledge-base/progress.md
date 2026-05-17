@@ -1,13 +1,84 @@
 # 开发进度追踪
 
-最后更新：2026-05-16
+最后更新：2026-05-17
 
 ## 当前阶段
 
 - 阶段：AgentRuntimeDriver 抽象层重构（按 `/Users/potablewater/.claude/plans/spicy-napping-book.md` 推进）
 - 状态：**Phase 0–7 全部完成**（7 已通过 fake-claude E2E 烟测 + auto-detect IPC 烟测，UI 端的端到端联调待真 Claude Code 安装环境手动验证）。下一步是 Phase 8（claude-code-cli driver）。
+- **反馈同步 relay 已完成腾讯云 SCF 部署**，端到端验证通过（health / upload / submit 全链路）。
+
 
 ## 里程碑
+
+### 2026-05-17 — 反馈同步腾讯云 SCF 中继部署完成（Cloudflare Workers 迁移）
+
+#### 背景
+
+原 Cloudflare Workers 中继（`*.workers.dev`）因 GFW 阻断无法在中国大陆访问，遂迁移至**腾讯云 SCF（Serverless Cloud Function）**。
+
+#### 目标
+
+为内测安全隔离飞书凭证：客户端不再持有 `appId/appSecret/appToken/tableId`，只通过 SCF 中继转发反馈数据。
+
+#### SCF 部署信息
+
+| 项 | 值 |
+|---|---|
+| 服务 | 腾讯云 SCF（Web Function，Node.js 18.15） |
+| 入口文件 | `app.js`（HTTP Server 模式，`http.createServer`） |
+| 函数 URL | `https://1301861337-iyb2r0f8lz.ap-guangzhou.tencentscf.com` |
+| 环境变量 | `FEISHU_APP_ID` / `FEISHU_APP_SECRET` / `FEISHU_APP_TOKEN` / `FEISHU_TABLE_ID` / `RELAY_API_KEY` |
+| 客户端 API Key | `mana-relay-7c5d98a5787f415a62c89277cdeec1fb` |
+
+#### SCF 文件
+
+| 文件 | 职责 |
+|---|---|
+| `relay-worker/scf-app-final.js` | 最终版 SCF HTTP Server 入口（本地备份），含 health / upload / submit 三路由 |
+| `relay-worker/scf-http-app.js` | 中间版本（已废弃） |
+| `relay-worker/scf-online-index.js` | 早期 `main_handler` 事件版本（已废弃，SCF Web Function 要求 HTTP Server） |
+| `relay-worker/src/scf-entry.cjs` | API Gateway 事件适配版（CJS 格式，未使用） |
+
+#### 修改文件
+
+| 文件 | 改动 |
+|---|---|
+| `src/main/store/appConfig.js` | 新增 `relayUrl` / `relayApiKey`；`load()` 合并逻辑修复：**空字符串不覆盖预置默认值**；`save()` 深合并 `feishuSync` |
+| `src/main/sync/feedbackSyncWorker.js` | 双模式切换：`_useRelay()` / `_hasValidConfig()`；`_processRecord` 根据配置自动选择 `relayClient` 或 `feishuAdapter` |
+| `src/main/sync/relayClient.js` | 本地 HTTP 客户端：multipart 上传附件 + JSON submit（协议与 SCF 对齐） |
+
+#### 关键设计选择
+
+- **凭证完全隔离**：飞书 `appId/appSecret/appToken/tableId` 仅存在于 SCF 环境变量中；客户端只持有 `relayUrl` + `relayApiKey`
+- **协议对齐**：relayClient 与 SCF 保持相同 API：`POST /api/v1/feedback/upload`（multipart）+ `POST /api/v1/feedback/submit`（JSON）
+- **SCF 无状态 token 策略**：每次请求重新获取飞书 tenant_access_token（内测低频场景，不引入缓存）
+- **HTTP Server 模式**：SCF Web Function 要求启动 `http.createServer` 监听 `process.env.PORT`，而非 `exports.main_handler`
+
+#### 端到端验证结果
+
+| 端点 | 结果 |
+|---|---|
+| `GET /api/v1/health` | ✅ `{"ok":true,"mode":"scf-web-function"}` |
+| `POST /api/v1/feedback/upload` | ✅ 返回 `fileToken`（附件上传成功） |
+| `POST /api/v1/feedback/submit`（纯文本） | ✅ 创建记录 `recvjS3h2OB2uv` |
+| `POST /api/v1/feedback/submit`（带附件） | ✅ 创建记录 `recvjS3te22GOu`，附件绑定 screenshot 列 |
+
+#### 遗留文件（Cloudflare Workers 版本，不再使用）
+
+| 文件 | 状态 |
+|---|---|
+| `relay-worker/src/index.js` | Cloudflare Worker ESM 入口（已废弃） |
+| `relay-worker/wrangler.toml` | Wrangler 配置（已废弃） |
+| `relay-worker/package.json` | 依赖（已废弃） |
+| `relay-worker/scripts/init.js` | 初始化脚本（已废弃） |
+| `relay-worker/scripts/test-relay.js` | 测试脚本（已废弃） |
+| `relay-worker/DEPLOY.md` | 部署文档（已废弃） |
+| `.github/workflows/deploy-relay.yml` | GitHub Actions（已废弃） |
+
+> 废弃原因：`*.workers.dev` 域名被 GFW 阻断，中国大陆无法访问。
+
+---
 
 ### 2026-05-16 — 飞书多维表格反馈同步实现完成（Phase 1–4）
 

@@ -25,6 +25,7 @@ const { registerOfflineLogIpc } = require('./ipc/offlineLog');
 const { registerImportIpc } = require('./ipc/import');
 const { registerFeedbackIpc } = require('./ipc/feedback');
 const { registerFeedbackSyncIpc } = require('./ipc/feedbackSync');
+const { registerUpdaterIpc } = require('./ipc/updater');
 const { FeedbackSyncWorker } = require('./sync/feedbackSyncWorker');
 const chatHistory = require('./store/chatHistory');
 const offlineLog = require('./store/offlineLog');
@@ -209,6 +210,7 @@ async function initBackend() {
   registerImportIpc();
   registerFeedbackIpc();
   registerFeedbackSyncIpc();
+  registerUpdaterIpc();
   registerLegacyChatCompletionsIpc();
 
   // Initialize feedback sync worker
