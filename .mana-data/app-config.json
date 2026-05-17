@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 2,
+  "language": "system",
+  "recents": [],
+  "lastNovelId": null,
+  "lastNovelDir": null,
+  "activeDriverId": "direct-api",
+  "drivers": {
+    "claude-code-vscode": {
+      "kind": "claude-code-vscode",
+      "binPath": "",
+      "autoDetectedPath": "",
+      "env": {},
+      "cwd": "",
+      "extra": {
+        "permissionMode": "default",
+        "allowedToolPrefixes": [
+          "mcp__novel-tools__"
+        ]
+      }
+    },
+    "claude-code-cli": {
+      "kind": "claude-code-cli",
+      "binPath": "",
+      "env": {},
+      "cwd": "",
+      "extra": {}
+    },
+    "codex": {
+      "kind": "codex",
+      "binPath": "",
+      "env": {},
+      "cwd": "",
+      "extra": {}
+    },
+    "direct-api": {
+      "kind": "direct-api"
+    }
+  },
+  "storageQuota": {
+    "chatHistoryMaxMB": 200,
+    "offlineLogMaxMB": 100
+  },
+  "searchEngine": "auto",
+  "enrichmentConcurrency": 10,
+  "enrichmentMode": "traditional",
+  "feishuSync": {
+    "enabled": true,
+    "endpointProfile": "prod",
+    "appId": "",
+    "appSecret": "",
+    "appToken": "",
+    "tableId": "",
+    "relayUrl": "https://1301861337-iyb2r0f8lz.ap-guangzhou.tencentscf.com",
+    "relayApiKey": "mana-relay-7c5d98a5787f415a62c89277cdeec1fb"
+  },
+  "license": {
+    "authCode": "",
+    "verifiedUntil": "",
+    "deviceId": ""
+  }
+}

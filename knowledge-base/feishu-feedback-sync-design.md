@@ -22,7 +22,9 @@
 
 ### 使用方法简述
 - 配置好app-config.json中的feishuSync（appId、appSecret、appToken、tableId、enabled）。
-- 可用脚本 `node scripts/feishu-debug.js --action=smoke` 或 `--action=playout --feedbackId=xxx` 进行手动同步。
+- 也可用中继模式（不持飞书凭证）：`node scripts/feishu-debug.js --action=configure --relayUrl=https://xxx.tencentscf.com --relayApiKey=xxx --enabled=true`
+- 可用脚本 `node scripts/feishu-debug.js --action=smoke` 或 `--action=playout --feedbackId=xxx` 进行手动同步；smoke 也支持 `--feedbackId=xxx` 重放已有记录。
+- 可用 `node scripts/feishu-debug.js --action=ensure-schema` 自动检查并补齐表格字段。
 - 也可在主程序内通过feedbackSyncWorker.triggerSync()触发全量同步。
 
 ### 结论
@@ -30,9 +32,9 @@
 如需具体命令或配置模板，可随时补充。
 # 飞书多维表格反馈同步设计
 
-**状态：已实现（Phase 1–4 全部完成）**
+**状态：已实现（Phase 1–5 全部完成，已部署到腾讯云 SCF）**
 
-最后更新：2026-05-16
+最后更新：2026-05-17
 
 ## 目标
 
@@ -204,7 +206,7 @@ worker 需要具备单实例互斥能力，避免同一条 feedback 被重复上
 已上传附件的远端引用标识，用于补偿和复用
 
 11. endpointProfile  
-当前写入目标环境，例如 dev、staging、prod
+当前写入目标环境，例如 dev、staging、prod。**注意：此字段仅保存在本地 outbox，未映射到飞书 Bitable 字段**，如需在飞书按环境筛选，需手动在 fieldMapper 中添加映射。
 
 12. transportMeta  
 可选，用于保存 adapter 返回的额外信息，如 tenant、base、请求耗时
@@ -288,16 +290,19 @@ worker 只负责调度和状态回写，不直接拼 HTTP 请求。
 8. platform
 9. activeRuntimeDriver
 10. activeProviderType
-11. activeNovelId
-12. activeChapterName
-13. activeThreadId
-14. currentSessionId
-15. latestUiError
-16. latestMainProcessError
-17. latestChatAgentError
-18. syncStatus
-19. screenshot
-20. payloadJson
+11. **activeModel** — 当前使用的模型名称
+12. activeNovelId
+13. activeChapterName
+14. **activeChapterTitle** — 章节标题（区别于章节名）
+15. activeThreadId
+16. currentSessionId
+17. **currentSessionStatus** — 当前会话状态（idle / running / error 等）
+18. latestUiError
+19. latestMainProcessError
+20. latestChatAgentError
+21. syncStatus
+22. screenshot
+23. payloadJson
 
 如果飞书的大文本承载体验不理想，可以把完整 payload 改成 JSON 文件附件，同时保留一列 payloadSummary。
 
@@ -312,11 +317,11 @@ worker 只负责调度和状态回写，不直接拼 HTTP 请求。
 3. 严重度
 4. 反馈模式
 5. 项目 id
-6. 章节名
+6. 章节名 / 章节标题
 7. 线程 id
-8. 会话 id
+8. 会话 id / 会话状态
 9. 主要错误摘要
-10. 平台、版本、driver、provider
+10. 平台、版本、driver、provider、model
 
 ### 不建议摊平的字段
 
@@ -400,9 +405,10 @@ worker 只负责调度和状态回写，不直接拼 HTTP 请求。
 
 1. 校验飞书应用权限是否齐全
 2. 检查目标多维表格字段是否与映射一致
-3. 回放一条 outbox 样本到测试表
-4. 诊断写入失败是 token、字段、权限还是附件问题
-5. 初始化和维护测试环境
+3. **自动补齐缺失字段**（`--action=ensure-schema`，支持 `--dryRun` 仅检查）
+4. 回放一条 outbox 样本到测试表（`--action=playout` 或 `--action=smoke --feedbackId=xxx`）
+5. 诊断写入失败是 token、字段、权限还是附件问题
+6. 初始化和维护测试环境
 
 因此 CLI 是“开发者工具”，不是“产品依赖”。
 
@@ -465,12 +471,31 @@ worker 只负责调度和状态回写，不直接拼 HTTP 请求。
 2. failed_terminal 分类
 3. 手动重试和单条回放
 
-### Phase 5：视需求评估中转服务
+### Phase 5：腾讯云 SCF 中转服务（已部署）
 
 目标：
 
-1. 如果需要集中权限管理、跨设备汇聚或审计，再把 adapter 挪到服务端
-2. 保持 outbox 协议不变，降低迁移成本
+1. 集中权限管理：飞书凭证由 SCF 环境变量持有，客户端不接触
+2. 跨设备汇聚：多台内测设备共用同一中继，反馈汇聚到同一张表格
+3. 内测零配置：构建时通过 `BETA_RELAY_URL` / `BETA_RELAY_API_KEY` 环境变量预置，用户装完即用
+4. 保持 outbox 协议不变，降低迁移成本
+
+实现：
+
+- `relay-worker/scf-app-final.js`：SCF HTTP Server 入口（本地备份），接收反馈/附件，内部调飞书 OpenAPI
+- `src/main/sync/relayClient.js`：本地客户端，HTTP multipart 上传 + JSON submit
+- `scripts/build-beta.js`：打包时注入预置配置，打完包自动恢复原代码
+- 设置面板不暴露反馈同步入口，内测用户不应感知此功能存在
+
+部署方式（腾讯云 SCF）：
+
+1. 创建 SCF 函数（Web Function，Node.js 18.15）
+2. 在在线编辑器中粘贴 `scf-app-final.js` 内容到 `app.js`
+3. 配置环境变量：`FEISHU_APP_ID` / `FEISHU_APP_SECRET` / `FEISHU_APP_TOKEN` / `FEISHU_TABLE_ID` / `RELAY_API_KEY`
+4. 创建函数 URL（公网访问，参数兼容模式）
+5. 保存并部署
+
+> 原 Cloudflare Workers 版本（`relay-worker/src/index.js`）因 `*.workers.dev` 被 GFW 阻断已废弃，迁移至腾讯云 SCF。
 
 ## 验证方案
 
@@ -508,7 +533,7 @@ worker 只负责调度和状态回写，不直接拼 HTTP 请求。
 
 ## 实现结果
 
-Phase 1–4 全部完成，代码已合入主干。
+Phase 1–5 全部完成，代码已合入主干。
 
 ### 实际文件清单
 
@@ -523,8 +548,15 @@ Phase 1–4 全部完成，代码已合入主干。
 | `src/main/ipc/feedback.js` | 提交反馈后 2s 自动触发 worker 扫描 |
 | `src/main/store/appConfig.js` | 新增 `feishuSync` 配置块（默认空值 + enabled:false） |
 | `src/main/index.js` | 启动时加载配置、初始化 worker、崩溃恢复 |
-| `scripts/feishu-debug.js` | 开发调试脚本：`verify` / `list-fields` / `playout` |
+| `scripts/feishu-debug.js` | 开发调试脚本：`verify` / `list-fields` / `ensure-schema` / `playout` / `smoke` |
 | `test/feedback-sync.test.js` | 10 个单元测试（状态机/退避/错误分类/字段映射/锁） |
+| `src/main/sync/relayClient.js` | 中继客户端：HTTP multipart 上传附件 + JSON submit，与 SCF API 对齐 |
+| `relay-worker/scf-app-final.js` | 腾讯云 SCF HTTP Server 入口：接收反馈/附件，内部调飞书 OpenAPI |
+| `scripts/build-beta.js` | 构建时注入 `BETA_RELAY_URL` / `BETA_RELAY_API_KEY` 到 `DEFAULT_APP_CONFIG` |
+| `test/relay-client.test.js` | relayClient 单元测试（5 个：auth、错误分类、create/update） |
+| `test/relay-e2e.test.js` | 端到端测试（3 个：完整 upload→create→update 链路） |
+
+> 原 Cloudflare Workers 相关文件（`relay-worker/src/index.js`、`wrangler.toml`、`scripts/init.js` 等）因 `*.workers.dev` 被 GFW 阻断已废弃，SCF 版本为当前部署目标。
 
 ### 与设计的差异
 
@@ -532,12 +564,16 @@ Phase 1–4 全部完成，代码已合入主干。
 2. **附件上传用 `drive/v1/medias/upload_all`**：实际使用 media 上传 API（而非早期设想的附件专用 API），返回的 `file_token` 直接绑定到 Bitable 附件列
 3. **token 缓存是模块级单例**：`feishuAdapter.js` 内部维护 `tokenCache`，worker 不感知缓存逻辑
 4. **使用 Node.js 内置 `https` 模块**：未引入 axios/node-fetch，零新增依赖
+5. **Schema 比早期设计多了 3 个字段**：实际映射包含 `activeModel`、`activeChapterTitle`、`currentSessionStatus`，便于按模型和会话状态筛选
+6. **syncStatus 列的取值固定为创建时的状态**：`fieldMapper` 在创建记录时把 `record.syncStatus`（通常为 `pending`）写入飞书，但同步成功后不会回写更新。这意味着飞书表格中的 `syncStatus` 列反映的是"收到时的状态"，而非"当前同步状态"。如需追踪真实同步状态，应以本地 outbox 为准。
 
 ### 验证结果
 
 - `test/feedback-sync.test.js`：**10/10 通过**
 - `test/feedback-outbox-attachments.test.js`：**2/2 通过**（回归）
 - `test/chat-feedback-payload.test.js`：**2/2 通过**（回归）
+- `test/relay-client.test.js`：**5/5 通过**
+- `test/relay-e2e.test.js`：**3/3 通过**
 
 ### 安全考量
 
@@ -545,13 +581,21 @@ Phase 1–4 全部完成，代码已合入主干。
 
 **运行时凭证位置**：`app-config.json` 位于用户本地目录（`~/Library/Application Support/.../`），不在 `.app` 包内，不会随分发泄露。
 
-**待加固**：`appSecret` 目前与普通配置混存在 `app-config.json` 中。项目 `paths.js` 已预留 `secrets.json`，建议后续把 `appSecret` 迁移过去，实现"敏感凭证 / 普通配置"分离。
+**中继模式安全（Phase 5）**：
+- 客户端不再持有飞书 `appId/appSecret/appToken/tableId`
+- 飞书凭证仅存于腾讯云 SCF 环境变量中
+- 客户端只持有 `relayUrl` + `relayApiKey`，且通过 `build-beta.js` 在打包时注入 `DEFAULT_APP_CONFIG`
+- 内测安装包中不暴露任何飞书相关凭证
+
+**待实现**：`appSecret` 目前与普通配置混存在直连模式的 `app-config.json` 中。项目 `paths.js` 已预留 `secrets.json`，但尚未接入使用。后续需要把 `appSecret`（以及 relayApiKey）迁移到 `secrets.json`，实现"敏感凭证 / 普通配置"分离。
 
 ## 关键决策结论
 
-1. 一键反馈的“提交成功”只以本地 outbox 成功为准，不以飞书写入成功为准
+1. 一键反馈的”提交成功”只以本地 outbox 成功为准，不以飞书写入成功为准
 2. 飞书多维表格是集中收集目标，不是用户提交入口
 3. 飞书 CLI 只用于开发联调，不进入客户运行链路
 4. 第一阶段同步层留在主进程，不急着上服务端
-5. 多维表格采用“摘要字段 + 截图附件 + 原始 payload”三层结构
+5. 多维表格采用”摘要字段 + 截图附件 + 原始 payload”三层结构
 6. 完整 payload 不做全量平铺，避免表结构脆弱和维护失控
+7. **Phase 5 中转服务采用腾讯云 SCF**：国内可访问、低运维成本；客户端凭证完全隔离
+8. **内测包零配置**：`build-beta.js` 构建时注入预置配置，用户装完即用，设置面板不暴露反馈同步入口

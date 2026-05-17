@@ -296,6 +296,9 @@ contextBridge.exposeInMainWorld('mana', {
   networkStatus,
   prompt,
   import: importBridge,
+  updater: {
+    checkNow: () => invoke('mana:updater:checkNow'),
+  },
   // Legacy bridge (kept for old WorkflowPanel until Phase 2 migration is complete).
   chatCompletions: (payload) => ipcRenderer.invoke('mana-chat-completions', payload),
 });
