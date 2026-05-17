@@ -1,6 +1,6 @@
 # Vibe Coding 对话沉淀
 
-最后更新：2026-03-29
+最后更新：2026-05-17
 
 > 目的：记录开发期间的关键对话、决策与上下文，便于跨设备快速续接。
 
@@ -42,3 +42,66 @@
 - 未完成事项：后续会话需按模板持续追加
 - 下一步：修复当前开发环境依赖问题后，继续功能迭代并同步记录
 - 涉及文件：`knowledge-base/README.md`、`knowledge-base/goals.md`、`knowledge-base/system-overview.md`、`knowledge-base/progress.md`、`knowledge-base/vibe-coding-dialogues.md`、`knowledge-base/handover-checklist.md`
+
+### [2026-05-17] GitHub Actions 多平台自动打包 + 自动更新器上线
+
+- 背景：内测版本需要自动打包分发能力，此前仅支持本地手动 `npm run build`
+- 用户目标：
+  1. 打 Tag 自动触发 GitHub Actions 多平台打包
+  2. 打包产物发布到 GitHub Releases
+  3. 客户端启动时检测新版本，弹窗提示用户
+  4. 弹窗提供"手动下载"和"自动下载"两种选项
+  5. 无代码签名证书
+- 关键讨论：
+  - 不使用 `electron-updater`（需代码签名），改为直接调 GitHub Releases API
+  - 弹窗用 `dialog.showMessageBox()` + checkbox 控制自动下载偏好
+  - 自动下载后 macOS/Linux 提示手动运行，Windows 直接 `spawn` 安装程序
+  - PAT token 需要 `contents:write` + `workflows:read/write` 权限才能推送 `.github/workflows/release.yml`
+- 决策结论：
+  - 版本检测走 `api.github.com/repos/.../releases/latest`，semver 比较
+  - 产物映射：macOS→*.dmg / Windows→*.exe / Linux→*.AppImage
+  - 配置存储在 `appConfig.updater`（skipVersion / autoDownload / lastCheckAt）
+- 实施结果：
+  - Workflow 文件 `.github/workflows/release.yml` 已推送
+  - Tag `v0.0.1` 触发首次构建，三平台全部成功
+  - Release 已发布：`https://github.com/WZ-123/MultiAgentNovelAssistant/releases/tag/v0.0.1`
+  - 客户端代码：`src/main/updater/versionChecker.js` + `downloadManager.js` + `ipc/updater.js`
+- 未完成事项：
+  - 自动更新器在真实打包后的客户端中尚未实际验证（dev 模式 `app.isPackaged` 为 false，跳过检测）
+  - 需要下载一个 Release 安装包实际运行，确认弹窗、下载、安装流程
+- 下一步：
+  - 下载 macOS dmg 安装并测试版本检测弹窗
+  - 或修改 dev 模式临时强制启用检测逻辑做冒烟测试
+- 涉及文件：`.github/workflows/release.yml`、`src/main/updater/versionChecker.js`、`src/main/updater/downloadManager.js`、`src/main/ipc/updater.js`、`src/main/store/appConfig.js`、`main.js`、`preload.js`、`knowledge-base/progress.md`
+
+### [2026-05-17] 远程设备授权系统（Feishu Bitable + SCF）
+
+- 背景：内测需要设备级授权，避免授权码无限扩散
+- 用户目标：
+  1. 无授权码或授权码过期 = 应用启动即阻断
+  2. 支持多设备（最多 5 台）
+  3. 授权码有效期管理
+  4. 凭证不保存在客户端
+- 关键讨论：
+  - 从 Cloudflare Workers 迁移到腾讯云 SCF（GFW 阻断 `*.workers.dev`）
+  - 设备标识符用 `os.hostname() + os.userInfo().username` 做 SHA256，Windows 兼容（`os.userInfo()` 可能抛异常）
+  - Feishu Bitable filter v1 API 有兼容性问题，改为 `listBitableRecords` 全量获取后 JS 端过滤
+  - Bitable 日期字段要求秒级时间戳，不能传毫秒或字符串
+  - `app-config.json` 中的空字符串不应覆盖预置默认值（用于 beta 构建预填 relay URL）
+- 决策结论：
+  - SCF Web Function 模式（HTTP Server），路由 `/api/v1/auth/verify`
+  - 设备列表用逗号分隔的字符串存储在 Bitable Text 字段中（max 5）
+  - dev 模式（`!app.isPackaged`）跳过验证，方便开发
+  - 客户端唯一持有 `relayUrl` + `relayApiKey`，飞书凭证隔离在 SCF 环境变量
+- 实施结果：
+  - SCF 函数已部署：`https://1301861337-iyb2r0f8lz.ap-guangzhou.tencentscf.com`
+  - 客户端 `src/main/license/authVerifier.js` 已实现
+  - `main.js` 启动流程已插入 `verifyLicense()` 调用
+  - 授权码已在 Feishu Bitable 中配置多条测试记录
+- 未完成事项：
+  - 真实打包客户端中未验证授权拦截流程
+  - 设备数量达到上限时的 UX（当前仅返回 `valid:false`，无"注销其他设备"选项）
+- 下一步：
+  - 打包测试版验证授权流程
+  - 如需支持"踢出旧设备"，在 SCF 端增加注销接口 + 客户端 UI
+- 涉及文件：`relay-worker/scf-app-final.js`、`src/main/license/authVerifier.js`、`src/main/store/appConfig.js`、`main.js`
