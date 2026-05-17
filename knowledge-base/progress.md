@@ -7,9 +7,71 @@
 - 阶段：AgentRuntimeDriver 抽象层重构（按 `/Users/potablewater/.claude/plans/spicy-napping-book.md` 推进）
 - 状态：**Phase 0–7 全部完成**（7 已通过 fake-claude E2E 烟测 + auto-detect IPC 烟测，UI 端的端到端联调待真 Claude Code 安装环境手动验证）。下一步是 Phase 8（claude-code-cli driver）。
 - **反馈同步 relay 已完成腾讯云 SCF 部署**，端到端验证通过（health / upload / submit 全链路）。
+- **GitHub Actions 多平台自动打包 + 自动更新器已上线**，打 Tag 自动构建 Release，客户端启动时检测新版本。
 
 
 ## 里程碑
+
+### 2026-05-17 — GitHub Actions 多平台自动打包 + 自动更新器
+
+#### 背景
+
+内测版本需要自动打包分发能力。此前仅支持本地手动 `npm run build` 打包，无 CI/CD。
+
+#### 实现内容
+
+**GitHub Actions Workflow**（`.github/workflows/release.yml`）
+
+- 触发条件：`push` 匹配 `v*` tag
+- Matrix：macOS / Windows / Ubuntu 三平台并行
+- 步骤：checkout → Node.js 18 → `npm ci` → `vite build` → `electron-builder --publish=never` → 创建 Release → 上传产物
+- 产物：
+  - macOS arm64 → `*.dmg`
+  - Windows → `*.exe`
+  - Linux → `*.AppImage`
+
+**版本检测**（`src/main/updater/versionChecker.js`）
+
+- 直接查询 GitHub Releases API（不依赖 `electron-updater`，无需代码签名）
+- semver 比较当前版本 vs 最新版本
+- 启动后延迟 5s 静默检测（`silent: true`），有更新才弹窗
+- 支持"跳过此版本"写入 `appConfig.updater.skipVersion`
+
+**自动下载**（`src/main/updater/downloadManager.js`）
+
+- 从 Release assets 匹配当前平台文件名
+- Node.js `https` 模块下载到 `<userData>/updates/`
+- 下载完成后弹窗提示安装（macOS/Linux 手动运行；Windows `spawn` 启动安装程序）
+
+**更新弹窗交互**
+
+- `dialog.showMessageBox()` 三按钮："前往下载" / "稍后提醒" / "跳过此版本"
+- Checkbox"自动下载并安装更新"（默认未勾选）
+- 勾选后后台下载，完成后二次确认安装
+
+**配置存储**（`src/main/store/appConfig.js`）
+
+- 新增 `updater` 配置块：`skipVersion` / `autoDownload` / `lastCheckAt`
+- `load()` / `save()` 深合并，空字符串不覆盖默认值
+
+**IPC 暴露**
+
+- `preload.js`：`mana.updater.checkNow()`
+- `src/main/ipc/updater.js`：`mana:updater:checkNow` handler
+- `main.js`：启动时 `setTimeout(() => checkForUpdates({silent:true}), 5000)`
+
+#### 首次发布验证
+
+| 平台 | 产物 | 大小 | 状态 |
+|---|---|---|---|
+| macOS (arm64) | `MultiAgentNovelAssistant-0.0.1-arm64.dmg` | 199 MB | ✅ |
+| Windows | `MultiAgentNovelAssistant.Setup.0.0.1.exe` | 162 MB | ✅ |
+| Linux | `MultiAgentNovelAssistant-0.0.1.AppImage` | 223 MB | ✅ |
+
+Release 页面：`https://github.com/WZ-123/MultiAgentNovelAssistant/releases/tag/v0.0.1`
+Workflow Run：`https://github.com/WZ-123/MultiAgentNovelAssistant/actions/runs/25991255629`
+
+---
 
 ### 2026-05-17 — 反馈同步腾讯云 SCF 中继部署完成（Cloudflare Workers 迁移）
 

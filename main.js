@@ -16,6 +16,7 @@ const { app, BrowserWindow } = require('electron')
 const path = require('node:path')
 const backend = require('./src/main/index.js')
 const { verifyLicense } = require('./src/main/license/authVerifier.js')
+const { showAuthDialog } = require('./src/main/license/authDialog.js')
 
 const isUiTest = process.argv.includes('--test-ui');
 const isChatTest = process.argv.includes('--test-chat');
@@ -357,11 +358,16 @@ if (isFlowTest) {
 
     // License verification
     try {
-      const result = await verifyLicense();
+      let result = await verifyLicense();
       if (!result.valid) {
         console.error('[main] license verification failed:', result.reason);
-        app.quit();
-        return;
+        try {
+          result = await showAuthDialog();
+        } catch (dialogErr) {
+          console.error('[main] auth dialog closed/quited:', dialogErr.message);
+          app.quit();
+          return;
+        }
       }
     } catch (err) {
       console.error('[main] license verification error:', err);
