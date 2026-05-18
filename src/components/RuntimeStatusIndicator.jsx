@@ -46,7 +46,7 @@ export function RuntimeStatusIndicator({ onOpenSettings }) {
   const inner = (
     <span className="inline-flex items-center gap-1.5">
       <span className={`inline-block w-2 h-2 rounded-full ${dotClass}`} />
-      <span className="text-white">{displayName}</span>
+      <span className="text-white whitespace-nowrap">{displayName}</span>
     </span>
   );
 

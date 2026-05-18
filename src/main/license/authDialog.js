@@ -112,6 +112,7 @@ function createAuthDialog() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
+      sandbox: false,
     },
   });
   win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(DIALOG_HTML));

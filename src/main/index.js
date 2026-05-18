@@ -219,9 +219,7 @@ async function initBackend() {
     if (cfg?.feishuSync) {
       feedbackSyncWorker = new FeedbackSyncWorker();
       feedbackSyncWorker.setConfig(cfg.feishuSync);
-      if (cfg.feishuSync.enabled) {
-        feedbackSyncWorker.start();
-      }
+      feedbackSyncWorker.start();
     }
   } catch (err) {
     console.error('[main] feedback sync worker init failed', err);

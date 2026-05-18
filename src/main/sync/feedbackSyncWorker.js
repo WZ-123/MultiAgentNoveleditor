@@ -94,7 +94,6 @@ class FeedbackSyncWorker {
 
   _hasValidConfig() {
     const c = this._config;
-    if (!c?.enabled) return false;
     if (c.relayUrl && c.relayApiKey) return true;
     if (c.appId && c.appSecret && c.appToken && c.tableId) return true;
     return false;

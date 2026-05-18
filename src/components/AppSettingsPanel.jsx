@@ -21,36 +21,40 @@ function buildCategories(t) {
       desc: t('settings.languageDesc'),
       Icon: Globe,
     },
-    {
-      sid: 'runtime',
-      title: t('runtime.title'),
-      desc: t('runtime.description'),
-      Icon: Cpu,
-    },
+    // NOTE: 以下设置项功能尚未完成，暂时隐藏
+    // {
+    //   sid: 'runtime',
+    //   title: t('runtime.title'),
+    //   desc: t('runtime.description'),
+    //   Icon: Cpu,
+    // },
     {
       sid: 'subagent',
       title: t('subagent.title'),
       desc: t('subagent.desc'),
       Icon: Bot,
     },
-    {
-      sid: 'dag',
-      title: t('dag.title'),
-      desc: t('dag.desc'),
-      Icon: GitBranch,
-    },
-    {
-      sid: 'config-helper',
-      title: '配置助手',
-      desc: '通过自然语言对话生成 / 修改 Subagent 与 DAG 配置。',
-      Icon: Wand2,
-    },
-    {
-      sid: 'models',
-      title: t('settings.llmTitle'),
-      desc: t('settings.llmDesc') || 'API Key、Provider、各 Agent 的模型与 Tier 绑定。',
-      Icon: KeyRound,
-    },
+    // NOTE: Pipeline(DAG) 功能尚未完成，暂时隐藏
+    // {
+    //   sid: 'dag',
+    //   title: t('dag.title'),
+    //   desc: t('dag.desc'),
+    //   Icon: GitBranch,
+    // },
+    // NOTE: 配置助手功能尚未完成，暂时隐藏
+    // {
+    //   sid: 'config-helper',
+    //   title: '配置助手',
+    //   desc: '通过自然语言对话生成 / 修改 Subagent 与 DAG 配置。',
+    //   Icon: Wand2,
+    // },
+    // NOTE: 大语言模型配置已移至 ActivityBar 独立入口，此处隐藏避免重复
+    // {
+    //   sid: 'models',
+    //   title: t('settings.llmTitle'),
+    //   desc: t('settings.llmDesc') || 'API Key、Provider、各 Agent 的模型与 Tier 绑定。',
+    //   Icon: KeyRound,
+    // },
     {
       sid: 'storage',
       title: '存储空间',

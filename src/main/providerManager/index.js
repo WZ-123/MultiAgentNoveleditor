@@ -1,10 +1,9 @@
 'use strict';
 
 /**
- * In-app provider manager — replaces the external `ccs` (claude-code-switch)
- * CLI wrapper. Zero external dependencies; reads/writes provider config
- * directly under <userData>/providers.json and active env to
- * ~/.ccs/current-env.json (format kept compatible with shell ccs).
+ * In-app provider manager for Direct API mode.
+ * Reads/writes provider config directly under <userData>/providers.json.
+ * No longer manages external Claude Code environment variables.
  */
 
 const fs = require('node:fs');
@@ -176,24 +175,6 @@ function _readCurrentEnvSync() {
   return null;
 }
 
-function _writeCurrentEnvSync(provider) {
-  const env = {
-    ANTHROPIC_BASE_URL: provider.baseUrl || '',
-    ANTHROPIC_AUTH_TOKEN: provider.apiKey || '',
-    ANTHROPIC_API_KEY: provider.apiKey || '',
-    ANTHROPIC_MODEL: provider.models?.[0]?.id || '',
-    CLAUDE_CODE_EFFORT_LEVEL: 'max',
-  };
-  try {
-    fs.mkdirSync(path.dirname(CURRENT_ENV_FILE), { recursive: true });
-    fs.writeFileSync(CURRENT_ENV_FILE, JSON.stringify(env, null, 2), 'utf8');
-    cachedEnv = null;
-    cachedEnvMtimeMs = 0;
-  } catch (err) {
-    throw new Error(`Failed to write current-env.json: ${err.message}`);
-  }
-}
-
 // ---------- Public API ----------
 
 function detect() {
@@ -238,11 +219,10 @@ async function use(name) {
   const provider = state.providers.find((p) => p.id === id);
   if (!provider) throw new Error(`Provider '${name}' not found`);
 
-  _writeCurrentEnvSync(provider);
   state.activeProviderId = id;
   await _saveState(state);
 
-  return { ok: true, env: getActiveEnv() };
+  return { ok: true };
 }
 
 async function add({ name, type, baseUrl, apiKey } = {}) {
@@ -277,8 +257,6 @@ async function remove(name) {
   state.providers.splice(idx, 1);
   if (state.activeProviderId === id) {
     state.activeProviderId = 'anthropic';
-    const anthropic = state.providers.find((p) => p.id === 'anthropic');
-    if (anthropic) _writeCurrentEnvSync(anthropic);
   }
   await _saveState(state);
   return { ok: true };

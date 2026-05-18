@@ -23,19 +23,44 @@ async function ensureBuiltinSeeds() {
 }
 
 async function listSubagents() {
-  const out = [];
-  for (const dir of [paths().subagentsBuiltin, paths().subagentsUser]) {
-    const files = await listJsonFiles(dir);
-    for (const f of files) {
-      const obj = await readJson(f, null);
-      if (obj && obj.id) out.push(obj);
+  const builtinFiles = await listJsonFiles(paths().subagentsBuiltin);
+  const userFiles = await listJsonFiles(paths().subagentsUser);
+
+  const builtinMap = new Map();
+  for (const f of builtinFiles) {
+    const obj = await readJson(f, null);
+    if (obj && obj.id) builtinMap.set(obj.id, obj);
+  }
+
+  const userMap = new Map();
+  for (const f of userFiles) {
+    const obj = await readJson(f, null);
+    if (obj && obj.id) userMap.set(obj.id, obj);
+  }
+
+  const result = [];
+  for (const [id, sa] of builtinMap) {
+    if (userMap.has(id)) {
+      // User has overridden this builtin — return the overridden data
+      result.push({
+        ...userMap.get(id),
+        builtIn: true,
+        isOverridden: true,
+      });
+    } else {
+      result.push({
+        ...sa,
+        isOverridden: false,
+      });
     }
   }
-  const seen = new Map();
-  for (const sa of out) {
-    if (!seen.has(sa.id) || sa.builtIn === false) seen.set(sa.id, sa);
+  for (const [id, sa] of userMap) {
+    if (!builtinMap.has(id)) {
+      result.push({ ...sa, isOverridden: false });
+    }
   }
-  return Array.from(seen.values());
+
+  return result;
 }
 
 async function getSubagent(id) {
@@ -45,15 +70,16 @@ async function getSubagent(id) {
 
 async function saveSubagent(sa) {
   if (!sa || !sa.id) throw new Error('subagent.id required');
-  if (sa.builtIn) {
-    throw new Error('Cannot overwrite builtin subagent; clone first.');
-  }
-  const next = { ...sa, builtIn: false, schemaVersion: SCHEMA_VERSION };
+  const next = { ...sa, schemaVersion: SCHEMA_VERSION };
   await writeJson(userFile(sa.id), next);
   return next;
 }
 
 async function deleteSubagent(id) {
+  await deleteFile(userFile(id));
+}
+
+async function resetSubagent(id) {
   await deleteFile(userFile(id));
 }
 
@@ -83,6 +109,7 @@ module.exports = {
   getSubagent,
   saveSubagent,
   deleteSubagent,
+  resetSubagent,
   cloneBuiltin,
   getSubagentByLegacyAgentId,
   SCHEMA_VERSION,
