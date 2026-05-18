@@ -1129,24 +1129,26 @@ function App() {
             onClick={() => setActiveSidebarItem('explorer')} 
             label={t('app.explorer')}
           />
-          <ActivityBarItem 
-            icon={<Search size={24} />} 
-            active={activeSidebarItem === 'search'} 
-            onClick={() => setActiveSidebarItem('search')} 
+          <ActivityBarItem
+            icon={<Search size={24} />}
+            active={activeSidebarItem === 'search'}
+            onClick={() => setActiveSidebarItem('search')}
             label={t('app.search')}
           />
-          <ActivityBarItem
+          {/* NOTE: 源代码管理功能尚未完成，暂时隐藏 */}
+          {/* <ActivityBarItem
             icon={<GitBranch size={24} />}
             active={activeSidebarItem === 'source-control'}
             onClick={() => setActiveSidebarItem('source-control')}
             label={t('app.sourceControl')}
-          />
-          <ActivityBarItem
+          /> */}
+          {/* NOTE: Pipeline 功能尚未完成，暂时隐藏 */}
+          {/* <ActivityBarItem
             icon={<Play size={24} />}
             active={activeSidebarItem === 'pipeline'}
             onClick={() => setActiveSidebarItem('pipeline')}
             label="Pipeline"
-          />
+          /> */}
         </div>
         <div className="flex flex-col gap-2 w-full mb-2">
           <ActivityBarItem
@@ -1216,6 +1218,8 @@ function App() {
                     );
                   })
                 )}
+                {/* NOTE: 写作流程 / Pipeline 编排功能尚未完成，暂时隐藏 */}
+                {/*
                 <div className="font-bold mt-4 mb-2 px-2 text-gray-400 flex items-center justify-between gap-2">
                   <span>写作流程</span>
                   <button
@@ -1229,6 +1233,7 @@ function App() {
                 <div className="px-2 py-1 text-gray-500 text-xs mb-2">
                   拖拽节点编排Agent执行顺序
                 </div>
+                */}
 
                 {!activeNovelId ? (
                   <div className="px-2 py-3 text-gray-500 text-xs text-center">
@@ -1236,6 +1241,25 @@ function App() {
                     <div className="mt-1 text-gray-600 text-[10px]">
                       点击顶部「小说」按钮选择项目<br/>或点击「导入」导入外部小说
                     </div>
+                    <button
+                      type="button"
+                      className="mt-2 px-3 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-[11px]"
+                      onClick={async () => {
+                        const mana = window.mana;
+                        if (!mana?.fs) return;
+                        try {
+                          const dir = await mana.fs.pickDirectory({ title: '选择项目目录' });
+                          if (!dir) return;
+                          const title = dir.split(/[/\\]/).pop() || 'Untitled';
+                          const r = await mana.novel.create({ title, dir });
+                          if (r?.id) await mana.novel.open(r.id);
+                        } catch (err) {
+                          console.error('Create novel failed:', err);
+                        }
+                      }}
+                    >
+                      创建新项目
+                    </button>
                   </div>
                 ) : novel.volumes.length === 0 ? (
                   <div className="px-2 py-2 text-gray-500 text-xs text-center">
@@ -1399,7 +1423,7 @@ function App() {
       <div className="flex-1 flex flex-col bg-vscode-editor-bg min-w-0">
         
         {/* Tabs */}
-        <div className="flex bg-vscode-sidebar border-b border-vscode-panel-border overflow-x-auto h-9">
+        <div className="flex bg-vscode-sidebar border-b border-vscode-panel-border overflow-x-auto min-h-9">
             {editorTabs.map((tab) => (
               <TabItem
                 key={tab.id}
@@ -1415,13 +1439,17 @@ function App() {
               </div>
             )}
             <div className="flex-1" />
-            <div className="px-2 flex items-center gap-3 text-xs border-l border-vscode-panel-border">
-              <WorkspaceSwitcher onImportExternal={() => { loadExistingNovels(); setShowImportPanel(true); }} />
-              <RuntimeStatusIndicator />
+            <div className="px-2 flex items-center gap-3 text-xs border-l border-vscode-panel-border shrink-0">
+              <div className="shrink-0">
+                <WorkspaceSwitcher onImportExternal={() => { loadExistingNovels(); setShowImportPanel(true); }} />
+              </div>
+              <div className="shrink-0 whitespace-nowrap">
+                <RuntimeStatusIndicator />
+              </div>
             </div>
             <button
               type="button"
-              className={`px-3 text-xs flex items-center gap-1 border-l border-vscode-panel-border ${rightPanelOpen ? 'text-white bg-vscode-active-item' : 'text-gray-400 hover:text-gray-200'}`}
+              className={`px-3 text-xs flex items-center gap-1 border-l border-vscode-panel-border shrink-0 ${rightPanelOpen ? 'text-white bg-vscode-active-item' : 'text-gray-400 hover:text-gray-200'}`}
               onClick={() => setRightPanelOpen((v) => !v)}
               title={t('app.aiChat')}
             >

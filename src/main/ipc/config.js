@@ -27,6 +27,7 @@ function registerConfigIpc() {
   ipcMain.handle('mana:config:cloneBuiltinSubagent', safeIpc(async (_e, { id, newId }) =>
     subagentsStore.cloneBuiltin(id, newId)
   ));
+  ipcMain.handle('mana:config:resetSubagentToBuiltin', safeIpc(async (_e, { id }) => subagentsStore.resetSubagent(id)));
 
   // DAGs (pipelines)
   ipcMain.handle('mana:config:listDags', safeIpc(async () => dagsStore.listDags()));

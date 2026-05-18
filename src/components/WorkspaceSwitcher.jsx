@@ -11,6 +11,7 @@ export function WorkspaceSwitcher({ onImportExternal }) {
   const [busy, setBusy] = useState(false);
   const [createTitle, setCreateTitle] = useState('');
   const [opened, setOpened] = useState(false);
+  const [menuPos, setMenuPos] = useState(null);
   const popRef = useRef(null);
   const triggerRef = useRef(null);
 
@@ -28,6 +29,23 @@ export function WorkspaceSwitcher({ onImportExternal }) {
       document.removeEventListener('mousedown', onDoc);
       document.removeEventListener('keydown', onKey);
     };
+  }, [opened]);
+
+  useEffect(() => {
+    if (!opened || !triggerRef.current) return undefined;
+    const updatePos = () => {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
+      const menuWidth = 420;
+      let left = Math.max(8, rect.left);
+      if (left + menuWidth > vw) {
+        left = Math.max(8, vw - menuWidth - 8);
+      }
+      setMenuPos({ top: rect.bottom + 4, left });
+    };
+    updatePos();
+    window.addEventListener('resize', updatePos);
+    return () => window.removeEventListener('resize', updatePos);
   }, [opened]);
 
   const onCreate = useCallback(async () => {
@@ -109,13 +127,13 @@ export function WorkspaceSwitcher({ onImportExternal }) {
         <BookOpen size={12} />
         <span className="truncate max-w-[200px]">{label}</span>
       </button>
-      {opened && triggerRef.current && createPortal(
+      {opened && menuPos && createPortal(
         <div
           ref={popRef}
           style={{
             position: 'fixed',
-            top: triggerRef.current.getBoundingClientRect().bottom + 4,
-            left: Math.max(8, triggerRef.current.getBoundingClientRect().left),
+            top: menuPos.top,
+            left: menuPos.left,
             zIndex: 9999,
             width: '420px',
           }}

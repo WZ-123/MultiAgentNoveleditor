@@ -4,6 +4,8 @@ const { ipcMain } = require('electron');
 const feedbackOutbox = require('../store/feedbackOutbox');
 const recentLogBuffer = require('../store/recentLogBuffer');
 const { getFeedbackSyncWorker } = require('../index');
+const appConfig = require('../store/appConfig');
+const providerManager = require('../providerManager');
 
 async function hideUiOverlaysForScreenshot(webContents) {
   if (!webContents?.executeJavaScript) return [];
@@ -41,6 +43,56 @@ async function restoreUiOverlaysAfterScreenshot(webContents, hiddenEntries) {
       }
     })()
   `);
+}
+
+const SENSITIVE_KEY_PATTERNS = [
+  'apiKey', 'api_key', 'apiKeyRef', 'appSecret', 'relayApiKey',
+  'authCode', 'authToken', 'AUTH_TOKEN', 'ANTHROPIC_AUTH_TOKEN',
+  'password', 'secret', 'token',
+];
+
+function isSensitiveKey(key) {
+  const lower = String(key).toLowerCase();
+  return SENSITIVE_KEY_PATTERNS.some((p) => lower.includes(p.toLowerCase()));
+}
+
+function redactSensitive(obj) {
+  if (obj == null) return obj;
+  if (Array.isArray(obj)) return obj.map(redactSensitive);
+  if (typeof obj !== 'object') return obj;
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (isSensitiveKey(k)) {
+      out[k] = v ? '[REDACTED]' : '';
+    } else if (typeof v === 'object' && v !== null) {
+      out[k] = redactSensitive(v);
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
+async function collectSanitizedSettings() {
+  try {
+    const cfg = await appConfig.load();
+    const providers = await providerManager.list();
+    return redactSensitive({
+      language: cfg.language,
+      activeDriverId: cfg.activeDriverId,
+      drivers: cfg.drivers,
+      storageQuota: cfg.storageQuota,
+      searchEngine: cfg.searchEngine,
+      enrichmentConcurrency: cfg.enrichmentConcurrency,
+      enrichmentMode: cfg.enrichmentMode,
+      feishuSync: cfg.feishuSync,
+      license: cfg.license,
+      updater: cfg.updater,
+      providers,
+    });
+  } catch {
+    return null;
+  }
 }
 
 function safeIpc(handler) {
@@ -98,6 +150,12 @@ function registerFeedbackIpc() {
           // Ignore restore failures; they should not block feedback submission.
         }
       }
+    }
+
+    // Attach sanitized app settings (excluding API keys and secrets)
+    const settings = await collectSanitizedSettings();
+    if (settings) {
+      nextPayload.appSettings = settings;
     }
 
     const result = await feedbackOutbox.submitFeedback(nextPayload, { attachments: attachmentFiles });

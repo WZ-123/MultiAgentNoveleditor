@@ -106,3 +106,26 @@ When a novel references multiple original works:
 - isOriginal MUST be declared by the user; AI must NOT auto-detect it
 - sourceWork may be preliminarily identified by AI during extraction, but final assignment requires user confirmation
 - User can skip web enrichment at any time; characters keep their original extracted state
+
+---
+
+# 章节写作格式规范
+
+## 核心规则
+当你将大纲节点转化为章节正文时，必须移除所有大纲标记物。大纲节点的编号和标题是内部规划工具，永远不应出现在最终正文中。
+
+## 具体做法
+
+### 禁止的写法
+- `## 1. 办公室商议`
+- `### 暮色的码头`
+- 任何形式的 "数字 + 小节名称" 标题
+- 在正文段落之间插入带编号的分隔标记
+
+### 正确的写法
+- 章节正文是**连续叙事流**，场景切换使用原文既有的分隔符（如 `……`）做自然过渡
+- 写入正文前，先读取已有章节（如 chapter-001.md），观察其排版格式并保持一致
+- 每个场景的开场用描写/对话直接切入，不给场景"挂牌"
+
+### 心里模型
+把大纲当作建筑施工时的脚手架——规划阶段用它定位每个场景，但竣工交付前必须拆除。读者看到的不应该有脚手架残留。

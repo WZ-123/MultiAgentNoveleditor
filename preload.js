@@ -36,6 +36,7 @@ const config = {
   saveSubagent: (subagent) => invoke('mana:config:saveSubagent', { subagent }),
   deleteSubagent: (id) => invoke('mana:config:deleteSubagent', { id }),
   cloneBuiltinSubagent: (id, newId) => invoke('mana:config:cloneBuiltinSubagent', { id, newId }),
+  resetSubagentToBuiltin: (id) => invoke('mana:config:resetSubagentToBuiltin', { id }),
   listDags: () => invoke('mana:config:listDags'),
   listDagsByStage: (stage) => invoke('mana:config:listDagsByStage', { stage }),
   getDag: (id) => invoke('mana:config:getDag', { id }),

@@ -149,7 +149,7 @@ async function sendMessageStreaming(opts) {
   if (tier.extra?.responseFormat) body.response_format = tier.extra.responseFormat;
   if (tier.extra && typeof tier.extra === 'object') {
     for (const [k, v] of Object.entries(tier.extra)) {
-      if (k === 'streaming' || k === 'responseFormat') continue;
+      if (k === 'streaming' || k === 'responseFormat' || k === 'thinking') continue;
       body[k] = v;
     }
   }
@@ -228,6 +228,12 @@ async function sendMessageNonStreaming(opts) {
   const cvtTools = convertTools(tools);
   if (cvtTools) body.tools = cvtTools;
   if (tier.extra?.responseFormat) body.response_format = tier.extra.responseFormat;
+  if (tier.extra && typeof tier.extra === 'object') {
+    for (const [k, v] of Object.entries(tier.extra)) {
+      if (k === 'streaming' || k === 'responseFormat' || k === 'thinking') continue;
+      body[k] = v;
+    }
+  }
   const res = await fetch(url, {
     method: 'POST',
     headers: authHeader(apiKey),

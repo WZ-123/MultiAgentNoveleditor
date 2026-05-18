@@ -49,7 +49,7 @@ const DEFAULT_APP_CONFIG = {
   enrichmentConcurrency: 10,
   enrichmentMode: 'traditional',
   feishuSync: {
-    enabled: false,
+    enabled: true,
     endpointProfile: 'dev',
     appId: '',
     appSecret: '',

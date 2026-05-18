@@ -108,10 +108,6 @@ export function SubagentEditor() {
 
   const onSave = useCallback(async () => {
     if (!mana?.config || !draft) return;
-    if (draft.builtIn) {
-      alert(t('subagent.cannotEditBuiltin'));
-      return;
-    }
     const next = {
       ...draft,
       runtimeHints: { ...(draft.runtimeHints || {}), maxTurns: Number(draft.runtimeHints?.maxTurns) || 4 },
@@ -120,7 +116,18 @@ export function SubagentEditor() {
     await mana.config.saveSubagent(next);
     flashSaved();
     await refresh();
-  }, [mana, draft, t, flashSaved, refresh]);
+  }, [mana, draft, flashSaved, refresh]);
+
+  const onReset = useCallback(async () => {
+    if (!mana?.config || !draft?.builtIn) return;
+    const msg = t('subagent.resetConfirm');
+    const confirmText = msg && msg !== 'subagent.resetConfirm'
+      ? msg.replace('{name}', draft.displayName || draft.id)
+      : `确定将 "${draft.displayName || draft.id}" 还原为默认配置吗？`;
+    if (!confirm(confirmText)) return;
+    await mana.config.resetSubagentToBuiltin(draft.id);
+    await refresh();
+  }, [mana, draft, t, refresh]);
 
   const onClone = useCallback(async () => {
     if (!mana?.config || !draft) return;
@@ -151,15 +158,13 @@ export function SubagentEditor() {
 
   const onDelete = useCallback(async () => {
     if (!mana?.config || !draft) return;
-    if (draft.builtIn) { alert(t('subagent.cannotEditBuiltin')); return; }
+    if (draft.builtIn) { alert('内置 Subagent 不能删除，可使用「还原默认」恢复初始配置'); return; }
     if (!confirm(t('subagent.deleteConfirm').replace('{name}', draft.displayName || draft.id))) return;
     await mana.config.deleteSubagent(draft.id);
     setSelectedId(null);
     setDraft(null);
     await refresh();
   }, [mana, draft, t, refresh]);
-
-  const isReadOnly = !!draft?.builtIn;
 
   if (loadError) {
     return <div className="p-3 text-xs text-red-400">{loadError}</div>;
@@ -190,7 +195,9 @@ export function SubagentEditor() {
               <div className="flex items-center gap-2">
                 <span className="truncate flex-1">{sa.displayName || sa.id}</span>
                 {sa.builtIn && (
-                  <Chip size="sm" variant="flat" color="default">{t('subagent.builtin')}</Chip>
+                  <Chip size="sm" variant="flat" color={sa.isOverridden ? 'warning' : 'default'}>
+                    {sa.isOverridden ? '内置·改' : t('subagent.builtin')}
+                  </Chip>
                 )}
               </div>
               <div className="text-[10px] text-gray-500 truncate">{sa.id} · tier={sa.tier}</div>
@@ -209,7 +216,11 @@ export function SubagentEditor() {
             <div className="space-y-3">
               <div className="flex items-center gap-2 flex-wrap">
                 {draft.builtIn ? (
-                  <Chip size="sm" color="warning" variant="flat">{t('subagent.builtinReadOnly')}</Chip>
+                  draft.isOverridden ? (
+                    <Chip size="sm" color="warning" variant="flat">内置（已修改）</Chip>
+                  ) : (
+                    <Chip size="sm" color="default" variant="flat">内置</Chip>
+                  )
                 ) : (
                   <Chip size="sm" color="success" variant="flat">{t('subagent.userEditable')}</Chip>
                 )}
@@ -221,7 +232,6 @@ export function SubagentEditor() {
                 label={t('subagent.displayName')}
                 value={draft.displayName || ''}
                 onChange={(e) => updateDraft({ displayName: e.target.value })}
-                readOnly={isReadOnly}
               />
 
               <Input
@@ -229,7 +239,6 @@ export function SubagentEditor() {
                 label={t('subagent.name')}
                 value={draft.name || ''}
                 onChange={(e) => updateDraft({ name: e.target.value })}
-                readOnly={isReadOnly}
               />
 
               <label className="flex flex-col gap-1 text-xs">
@@ -238,7 +247,6 @@ export function SubagentEditor() {
                   className="bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-2 text-xs"
                   value={draft.tier || 'sonnet'}
                   onChange={(e) => updateDraft({ tier: e.target.value })}
-                  disabled={isReadOnly}
                 >
                   {TIER_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
@@ -251,7 +259,6 @@ export function SubagentEditor() {
                   rows={10}
                   value={draft.systemPrompt || ''}
                   onChange={(e) => updateDraft({ systemPrompt: e.target.value })}
-                  readOnly={isReadOnly}
                 />
               </label>
 
@@ -261,7 +268,6 @@ export function SubagentEditor() {
                 type="number"
                 value={String(draft.runtimeHints?.maxTurns ?? 4)}
                 onChange={(e) => updateDraft({ runtimeHints: { ...(draft.runtimeHints || {}), maxTurns: Number(e.target.value) || 4 } })}
-                readOnly={isReadOnly}
               />
 
               <div>
@@ -282,7 +288,6 @@ export function SubagentEditor() {
                               type="checkbox"
                               checked={checked}
                               onChange={() => toggleTool(tool)}
-                              disabled={isReadOnly}
                             />
                             <span className={checked ? 'text-gray-200' : 'text-gray-500'}>{tool}</span>
                           </label>
@@ -297,12 +302,19 @@ export function SubagentEditor() {
                 <Button size="sm" variant="flat" onPress={onClone}>
                   {draft.builtIn ? t('subagent.cloneToCustomize') : t('subagent.duplicate')}
                 </Button>
-                <Button size="sm" color="primary" onPress={onSave} isDisabled={isReadOnly}>
+                <Button size="sm" color="primary" onPress={onSave}>
                   {savedFlash ? t('subagent.saved') : t('subagent.save')}
                 </Button>
-                <Button size="sm" variant="flat" color="danger" onPress={onDelete} isDisabled={isReadOnly}>
-                  {t('subagent.delete')}
-                </Button>
+                {draft.builtIn && (
+                  <Button size="sm" variant="flat" color="warning" onPress={onReset}>
+                    还原默认
+                  </Button>
+                )}
+                {!draft.builtIn && (
+                  <Button size="sm" variant="flat" color="danger" onPress={onDelete}>
+                    {t('subagent.delete')}
+                  </Button>
+                )}
               </div>
             </div>
           )}

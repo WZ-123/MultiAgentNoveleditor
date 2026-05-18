@@ -237,7 +237,7 @@ export function ProviderSettingsPanel() {
     return (
       <div key={p.name}>
         <div
-          className={`flex items-center gap-3 px-3 py-2 rounded border cursor-pointer ${
+          className={`flex items-center gap-3 px-3 py-2 rounded border cursor-pointer overflow-hidden ${
             isActive
               ? 'border-primary-500 bg-primary-500/10'
               : 'border-vscode-panel-border bg-vscode-sidebar/30'
@@ -265,6 +265,7 @@ export function ProviderSettingsPanel() {
             <Button
               size="sm"
               variant="flat"
+              className="shrink-0"
               onClick={(e) => { e.stopPropagation(); handleUse(p.name); }}
               isDisabled={!!busyAction}
               isLoading={isBusyUse}
@@ -277,6 +278,7 @@ export function ProviderSettingsPanel() {
             variant="light"
             color="danger"
             isIconOnly
+            className="shrink-0"
             onClick={(e) => { e.stopPropagation(); handleRemove(p.name); }}
             isDisabled={!!busyAction || p.isBuiltin}
             isLoading={isBusyRemove}
@@ -575,11 +577,11 @@ export function ProviderSettingsPanel() {
           ) : (
             <>
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-bold text-gray-300">Claude Code 模型供应商</div>
+                <div className="flex items-center justify-between gap-2 overflow-hidden">
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-gray-300 truncate">Direct API 模型供应商</div>
                     {current ? (
-                      <div className="text-[11px] text-gray-500 mt-0.5">
+                      <div className="text-[11px] text-gray-500 mt-0.5 truncate">
                         当前：<span className="text-gray-300">{current.name}</span>
                         {current.type ? (
                           <span> · {current.type === 'anthropic' ? 'Anthropic-compatible' : 'OpenAI-compatible'}</span>
@@ -592,7 +594,7 @@ export function ProviderSettingsPanel() {
                       <div className="text-[11px] text-gray-500 mt-0.5">尚未选择供应商</div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Button
                       size="sm"
                       variant="flat"
@@ -631,9 +633,14 @@ export function ProviderSettingsPanel() {
 
               {/* Alias Configuration */}
               <div className="border-t border-vscode-panel-border pt-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-bold text-gray-300">Alias 配置</div>
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-gray-300">Alias 配置</div>
+                    <div className="text-[11px] text-gray-500 mt-0.5 truncate">
+                      兼容 Anthropic Messages API 格式，仅在 Direct API 模式下生效
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
                     <Button
                       size="sm"
                       variant="light"
@@ -669,9 +676,6 @@ export function ProviderSettingsPanel() {
               </div>
 
               <div className="text-[11px] text-gray-500 leading-relaxed border-t border-vscode-panel-border pt-3 space-y-1">
-                <p>
-                  ℹ 供应商配置保存在应用数据目录，环境变量写入 <span className="font-mono">~/.ccs/current-env.json</span> 以供 Claude Code 读取。
-                </p>
                 <p>
                   如需为单个 Subagent 配置不同的模型 / Tier，请在上方 Alias 区域调整对应 tier 的映射。
                 </p>
