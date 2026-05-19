@@ -69,9 +69,13 @@ function subscribe(listener) {
 
 // ---------- thread CRUD ----------
 
-async function listThreads() {
+async function listThreads(novelId) {
   const idx = await _readIndex();
-  return (idx.threads || []).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  let threads = idx.threads || [];
+  if (novelId !== undefined) {
+    threads = threads.filter((t) => t.novelId === novelId || (!t.novelId && !novelId));
+  }
+  return threads.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 }
 
 async function createThread({ title, novelId, maxBytes } = {}) {

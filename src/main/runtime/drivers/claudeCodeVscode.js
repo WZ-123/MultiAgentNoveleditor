@@ -25,11 +25,9 @@
  *
  * Limitations (Phase 7 first-ship; tracked in spicy-napping-book.md risk #5):
  *   - tool confirmation: the MCP server child spawned by Claude Code has no
- *     parent IPC channel back to our main process. Write tools that require
- *     confirmation will auto-reject with "no parent IPC channel". A TCP relay
- *     for confirmation round-trip is the planned next step. Read-only tools
- *     work fine, and the built-in DAGs use only reads + auto-write tools, so
- *     this gap doesn't block the happy path.
+ *     parent IPC channel back to our main process. In that path the MCP server
+ *     uses a localhost TCP relay back to the main process so confirmation
+ *     prompts can still flow through the normal UI.
  *   - human-in-loop: not supported (single CLI invocation).
  */
 
@@ -47,6 +45,7 @@ const subagentsStore = require('../../store/subagents');
 const appConfig = require('../../store/appConfig');
 const providerManager = require('../../providerManager');
 const modelAliases = require('../../modelAliases');
+const mcpClient = require('../../mcp/mcpClientStdio');
 
 const { writeAgentsDir } = require('./shared/agentMdWriter');
 const { writeConfig: writeMcpConfig } = require('./shared/mcpConfigGen');
@@ -59,6 +58,8 @@ const { createStreamParser } = require('./shared/streamJsonParser');
 const id = 'claude-code-vscode';
 const displayName = 'Claude Code (VSCode Extension)';
 const description = 'Run workflows through the Claude Code extension bundled with VSCode / Cursor / VSCode Insiders.';
+const PREAPPROVED_TOOLS = ['WebSearch', 'WebFetch', 'Read', 'Grep', 'Glob', 'Write', 'Edit', 'MultiEdit'];
+const DEFAULT_ALLOWED_TOOLS = ['mcp__novel-tools__*', 'Task', 'Agent', ...PREAPPROVED_TOOLS];
 
 // ---------- binPath auto-detection ----------
 
@@ -172,7 +173,7 @@ function capabilities() {
     supportsMcp: true,
     supportsStreamingTokens: true,
     supportsHumanInLoop: false,
-    supportsToolConfirmation: false, // Phase 7 first-ship — see file header.
+    supportsToolConfirmation: true,
     workflowExecution: 'autonomous',
     requires: ['claude>=1.5'],
   };
@@ -249,25 +250,32 @@ async function prepare(spec) {
     userLang: spec.userLang || 'zh-CN',
   });
 
-  // 4. Write .claude/settings.json — pre-approve web tools so Claude Code
-  //    doesn't block them with interactive permission prompts (unanswerable
-  //    in headless --print mode).
+  // 4. Write .claude/settings.json — pre-approve the non-interactive built-in
+  //    tools we rely on so Claude Code doesn't stop on permission prompts in
+  //    headless --print mode.
   const settingsPath = path.join(tmpdir, '.claude', 'settings.json');
   await fs.mkdir(path.dirname(settingsPath), { recursive: true });
   await fs.writeFile(settingsPath, JSON.stringify({
-    permissions: { allow: ['WebSearch', 'WebFetch', 'Read', 'Grep'] },
+    permissions: { allow: PREAPPROVED_TOOLS },
   }, null, 2), 'utf8');
 
   // 5. Write mcp-config.json
   const mcpConfigPath = path.join(tmpdir, 'mcp-config.json');
   const novelId = spec.novelContext?.novelId || null;
   const novelDir = spec.novelContext?.novelDir || null;
+  let mainPort = null;
+  try {
+    const relay = await mcpClient.ensureConfirmationRelay?.();
+    mainPort = relay?.port || null;
+  } catch (err) {
+    console.error('[claudeCodeVscode] confirmation relay unavailable', err);
+  }
   await writeMcpConfig(mcpConfigPath, {
     runId,
     novelId,
     novelDir,
     userDataRoot: ud.root,
-    // mainPort intentionally omitted (Phase 7 first-ship; see file header).
+    mainPort,
   });
 
   // 6. Subagent-mode per-alias env injection.
@@ -320,7 +328,7 @@ async function prepare(spec) {
   // 8. Compose handle
   // Allow both `Task` (Claude Code v1.x) and `Agent` (v2.x renamed it) so the
   // sub-agent dispatcher isn't blocked across versions.
-  const allowedTools = ['mcp__novel-tools__*', 'Task', 'Agent', 'Read', 'Grep', 'WebSearch', 'WebFetch'];
+  const allowedTools = DEFAULT_ALLOWED_TOOLS;
   return {
     driverId: id,
     runId,
@@ -494,6 +502,8 @@ module.exports = {
   id,
   displayName,
   description,
+  PREAPPROVED_TOOLS,
+  DEFAULT_ALLOWED_TOOLS,
   availability,
   capabilities,
   prepare,

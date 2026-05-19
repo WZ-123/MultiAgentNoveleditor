@@ -1,5 +1,7 @@
 'use strict';
 
+const net = require('node:net');
+
 /**
  * Stdio MCP server. Runs as a forked child of the main process (Phase 6
  * directApi driver) or as a spawned subprocess of an external driver
@@ -21,8 +23,9 @@
  *   { type: 'error', message }
  *
  * For external-driver scenarios where there is no parent IPC channel,
- * confirmation requests fail-closed (auto-reject). Phase 7 adds a TCP fallback
- * via MANA_MAIN_PORT.
+ * confirmation requests are forwarded over a localhost TCP relay when
+ * MANA_MAIN_PORT is set. If the relay is unavailable, the server falls back
+ * to auto-confirm so headless runs do not hang.
  */
 
 const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
@@ -65,11 +68,66 @@ function sendToParent(msg) {
   }
 }
 
-function awaitConfirmation(payload) {
+function _normalizeDecision(msg) {
+  return {
+    accept: !!msg?.accept,
+    patch: (msg?.patch && typeof msg.patch === 'object') ? msg.patch : null,
+    reason: msg?.reason || null,
+  };
+}
+
+function awaitTcpConfirmation(payload) {
+  const port = Number(process.env.MANA_MAIN_PORT || 0);
+  if (!port) return Promise.resolve(null);
+
+  const id = nextConfirmId();
+  return new Promise((resolve) => {
+    let settled = false;
+    let buffer = '';
+    const socket = net.createConnection({ host: '127.0.0.1', port });
+
+    function finish(decision) {
+      if (settled) return;
+      settled = true;
+      try { socket.destroy(); } catch { /* ignore */ }
+      resolve(decision);
+    }
+
+    socket.setEncoding('utf8');
+    socket.setTimeout(600000);
+    socket.on('connect', () => {
+      socket.write(JSON.stringify({ type: 'confirm-request', id, ...payload }) + '\n');
+    });
+    socket.on('data', (chunk) => {
+      buffer += chunk;
+      while (true) {
+        const newlineIndex = buffer.indexOf('\n');
+        if (newlineIndex < 0) break;
+        const line = buffer.slice(0, newlineIndex).trim();
+        buffer = buffer.slice(newlineIndex + 1);
+        if (!line) continue;
+        let msg;
+        try {
+          msg = JSON.parse(line);
+        } catch {
+          continue;
+        }
+        if (msg.type === 'confirm-response' && msg.id === id) {
+          finish(_normalizeDecision(msg));
+          return;
+        }
+      }
+    });
+    socket.on('timeout', () => finish(null));
+    socket.on('error', () => finish(null));
+    socket.on('close', () => finish(null));
+  });
+}
+
+async function awaitConfirmation(payload) {
   if (!ipcAvailable()) {
-    // No IPC parent (driver path with external Claude Code process).
-    // Auto-confirm write tools — same behavior as direct-API's autoConfirm:true.
-    return Promise.resolve({ accept: true, reason: 'auto-confirmed (no IPC parent)' });
+    const tcpDecision = await awaitTcpConfirmation(payload);
+    return tcpDecision || { accept: true, reason: 'auto-confirmed (no IPC parent)' };
   }
   const id = nextConfirmId();
   return new Promise((resolve) => {
@@ -90,11 +148,7 @@ if (ipcAvailable()) {
         const r = pendingConfirmations.get(msg.id);
         if (r) {
           pendingConfirmations.delete(msg.id);
-          r({
-            accept: !!msg.accept,
-            patch: (msg.patch && typeof msg.patch === 'object') ? msg.patch : null,
-            reason: msg.reason || null,
-          });
+          r(_normalizeDecision(msg));
         }
         break;
       }

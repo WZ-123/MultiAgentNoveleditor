@@ -41,6 +41,9 @@ module.exports = {
   getActiveNovelContext: backend.getActiveNovelContext
     ? (...a) => backend.getActiveNovelContext(...a)
     : () => ({ id: backend.getActiveNovel() || null, dir: null }),
+  ensureConfirmationRelay: backend.ensureConfirmationRelay
+    ? (...a) => backend.ensureConfirmationRelay(...a)
+    : async () => null,
   resolveConfirmation: (...a) => backend.resolveConfirmation(...a),
   listPendingConfirmations: (...a) => backend.listPendingConfirmations(...a),
   dispose: backend.dispose ? (...a) => backend.dispose(...a) : async () => {},

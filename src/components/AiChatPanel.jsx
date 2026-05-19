@@ -93,7 +93,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   // ====== Load threads on mount ======
   useEffect(() => {
     installRecentRendererLogCapture();
-    loadThreads();
+    loadThreads(currentNovelId);
     const onOnline = () => setIsOnline(true);
     const onOffline = () => setIsOnline(false);
     window.addEventListener('online', onOnline);
@@ -102,7 +102,41 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ====== Auto-switch threads when novel changes ======
+  const currentNovelId = editorContext?.novelId || null;
+  useEffect(() => {
+    if (!mana?.chatHistory) return;
+    const run = async () => {
+      const list = await mana.chatHistory.listThreads(currentNovelId);
+      setThreads(list || []);
+      // If active thread belongs to current novel, keep it; otherwise switch to first available
+      const activeBelongs = activeThreadId && list?.some((t) => t.id === activeThreadId);
+      if (!activeBelongs) {
+        if (list?.length > 0) {
+          switchThread(list[0].id);
+        } else {
+          // No threads for this novel — close current session and clear UI
+          if (sessionId && mana?.chatAgent) {
+            try { await mana.chatAgent.closeSession(sessionId); } catch { /* ignore */ }
+          }
+          if (offEventRef.current) {
+            try { offEventRef.current(); } catch { /* ignore */ }
+          }
+          setActiveThreadId(null);
+          setMessages([]);
+          setError('');
+          setThinkingText('');
+          setEditingId(null);
+          setSessionId(null);
+        }
+      }
+    };
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentNovelId]);
 
   // ====== Sync editorContext to backend session when it changes ======
   const prevCtxRef = useRef(null);
@@ -135,10 +169,10 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, [activeThreadId, mana]);
 
-  async function loadThreads() {
+  async function loadThreads(novelId) {
     if (!mana?.chatHistory) return;
     try {
-      const list = await mana.chatHistory.listThreads();
+      const list = await mana.chatHistory.listThreads(novelId);
       setThreads(list || []);
     } catch (err) {
       console.error('[AiChatPanel] loadThreads failed', err);
@@ -464,8 +498,10 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
   const handleKeyDown = useCallback(
     (e) => {
-      // isComposing: IME 输入法内回车确认拼音时不发送
-      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+      if (e.key !== 'Enter' || e.isComposing) return;
+      const isMac = navigator.platform.toLowerCase().includes('mac');
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+      if (modifier) {
         e.preventDefault();
         sendMessage();
       }
@@ -527,9 +563,13 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
   // ====== Auto-scroll ======
   useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
+    const el = containerRef.current;
+    if (!el) return;
+    // Delay scroll until browser has finished layout so scrollHeight is accurate
+    const raf = requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+    });
+    return () => cancelAnimationFrame(raf);
   }, [messages, thinkingText]);
 
   const isBusy = status === 'thinking' || status === 'streaming';
@@ -596,16 +636,18 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
       const result = await mana.feedback.submit(payload, {
         includeScreenshot: feedbackIncludeScreenshot,
       });
+      const parts = [];
+      if (feedbackIncludeLogs) parts.push('含聊天上下文');
+      if (feedbackIncludeScreenshot) parts.push('截图');
+      const scope = parts.length ? `（${parts.join('、')}）` : '（仅意见）';
       setFeedbackNotice({
         type: 'success',
-        text: feedbackIncludeLogs
-          ? `反馈已保存，后续上传时会附带必要聊天上下文${feedbackIncludeScreenshot ? '与截图' : ''}。ID: ${result.feedbackId}`
-          : `反馈已保存为仅意见模式${feedbackIncludeScreenshot ? '，并附带当前截图' : ''}。ID: ${result.feedbackId}`,
+        text: `反馈提交成功${scope}。ID: ${result.feedbackId}`,
       });
       setShowFeedbackModal(false);
     } catch (err) {
       const msg = err?.message || String(err);
-      setFeedbackNotice({ type: 'error', text: `反馈提交失败：${msg}` });
+      setFeedbackNotice({ type: 'error', text: `网络异常，反馈失败：${msg}` });
       setError(msg);
     } finally {
       setFeedbackSubmitting(false);
@@ -796,16 +838,20 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
                     <Bot size={14} className="text-white" />
                   )}
                 </div>
-                <div className={`group relative p-2 rounded max-w-[85%] text-sm whitespace-pre-wrap ${
+                <div className={`group relative p-2 rounded text-sm whitespace-pre-wrap ${
+                  isEditing
+                    ? 'w-[95%]'
+                    : 'max-w-[85%]'
+                } ${
                   m.role === 'user'
                     ? 'bg-primary-600/20 text-gray-200'
                     : 'bg-vscode-active-item text-gray-200'
                 }`}>
                   {isEditing ? (
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-2">
                       <textarea
-                        className="bg-vscode-sidebar border border-vscode-panel-border rounded p-1 text-sm text-gray-200 w-full resize-none"
-                        rows={Math.min(10, editText.split("\\n").length + 2)}
+                        className="bg-vscode-sidebar border border-vscode-panel-border rounded p-2 text-sm text-gray-200 w-full resize-y min-h-[200px]"
+                        rows={Math.min(20, editText.split("\\n").length + 3)}
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
                         autoFocus

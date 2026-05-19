@@ -16,7 +16,7 @@ function safeIpc(handler) {
 }
 
 function registerChatHistoryIpc() {
-  ipcMain.handle('mana:chatHistory:listThreads', safeIpc(async () => chatHistory.listThreads()));
+  ipcMain.handle('mana:chatHistory:listThreads', safeIpc(async (_e, { novelId }) => chatHistory.listThreads(novelId)));
 
   ipcMain.handle('mana:chatHistory:createThread', safeIpc(async (_e, payload) => {
     const { title, novelId } = payload || {};

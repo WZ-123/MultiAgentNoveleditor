@@ -174,7 +174,7 @@ const chatAgent = {
 
 
 const chatHistory = {
-  listThreads: () => invoke("mana:chatHistory:listThreads"),
+  listThreads: (novelId) => invoke("mana:chatHistory:listThreads", { novelId }),
   createThread: (payload) => invoke("mana:chatHistory:createThread", payload || {}),
   getThread: (threadId) => invoke("mana:chatHistory:getThread", { threadId }),
   deleteThread: (threadId) => invoke("mana:chatHistory:deleteThread", { threadId }),

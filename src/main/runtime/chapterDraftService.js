@@ -4,6 +4,7 @@ const { randomUUID } = require('node:crypto');
 const mcpClient = require('../mcp/mcpClientStdio');
 const subagentsStore = require('../store/subagents');
 const workflowOrchestrator = require('./workflowOrchestrator');
+const { getActiveNovelContext } = require('./activeNovelContext');
 const { runSubagent } = require('./runSubagent');
 
 function parseJsonFromText(text) {
@@ -194,10 +195,7 @@ async function runDraftViaWorkflow(input, draftSystemPrompt, abortSignal) {
     systemPromptOverride: draftSystemPrompt,
     input,
     userLang: 'zh-CN',
-    novelContext: (() => {
-      const ctx = mcpClient.getActiveNovelContext();
-      return ctx?.id ? { novelId: ctx.id, novelDir: ctx.dir } : undefined;
-    })(),
+    novelContext: getActiveNovelContext(mcpClient),
     abortSignal,
   });
   return result.output || '';
@@ -223,6 +221,7 @@ async function runReviewerViaWorkflow(subagentId, input, sourceAgent, systemProm
     input,
     userLang: 'zh-CN',
     systemPromptOverride,
+    novelContext: getActiveNovelContext(mcpClient),
     abortSignal,
   });
   const parsed = parseJsonFromText(result.output || '');
