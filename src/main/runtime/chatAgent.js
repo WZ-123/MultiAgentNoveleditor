@@ -20,6 +20,7 @@ const modelAliases = require('../modelAliases');
 const mcpClient = require('../mcp/mcpClientStdio');
 const workflowOrchestrator = require('./workflowOrchestrator');
 const eventBus = require('./eventBus');
+const { getActiveNovelContext } = require('./activeNovelContext');
 const skillsStore = require('../store/skills');
 const chatHistoryStore = require('../store/chatHistory');
 const { generateOutlineDraft } = require('./outlineDraftService');
@@ -67,6 +68,56 @@ async function resolveChatProvider() {
 
 // ---------- tool lists ----------
 
+const BUILTIN_BACKEND_TOOLS = [
+  {
+    name: 'set_workflow_phase',
+    description: 'Change the current workflow phase for this chat session.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        phase: {
+          type: 'string',
+          description: 'The next workflow phase',
+          enum: ['idle', 'outline', 'writing', 'editing'],
+        },
+      },
+      required: ['phase'],
+    },
+  },
+  {
+    name: 'confirm_outline',
+    description: 'Confirm the current outline draft, save it, and switch the workflow to writing.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        nodes: {
+          type: 'array',
+          description: 'Optional outline nodes to save. Omit to use the pending outline draft stored in the session.',
+          items: {
+            type: 'object',
+            additionalProperties: true,
+          },
+        },
+      },
+    },
+  },
+  {
+    name: 'spawn_subagent',
+    description: 'Delegate a heavier task to a configured subagent and return its output.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        subagentId: { type: 'string', description: 'The configured subagent identifier to run' },
+        input: { type: 'string', description: 'The instruction or context passed to the subagent' },
+      },
+      required: ['subagentId'],
+    },
+  },
+];
+
+// Only renderer-executed editor actions belong here.
+// isFrontendTool() uses this list to decide routing, so backend-only tools
+// must stay in BUILTIN_BACKEND_TOOLS instead of being added here.
 const FRONTEND_TOOLS = [
   {
     name: 'replace_selected_text',
@@ -103,41 +154,9 @@ const FRONTEND_TOOLS = [
     description: 'Get the full content of the currently open editor document.',
     input_schema: { type: 'object', properties: {} },
   },
-  {
-    name: 'spawn_subagent',
-    description: 'Delegate a task to a specialized subagent (e.g. sa-writer, sa-character-reviewer). The subagent runs with the active runtime driver and returns its output.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        subagentId: { type: 'string', description: 'Subagent ID, e.g. sa-writer' },
-        input: { type: 'string', description: 'Task description to pass to the subagent' },
-      },
-      required: ['subagentId', 'input'],
-    },
-  },
-  {
-    name: 'set_workflow_phase',
-    description: 'Set the current workflow phase. Phases: idle (no project), outline (planning/confirming outline), writing (writing chapters based on confirmed outline), editing (revising existing chapters).',
-    input_schema: {
-      type: 'object',
-      properties: {
-        phase: { type: 'string', enum: ['idle', 'outline', 'writing', 'editing'] },
-        reason: { type: 'string', description: 'Why this phase change' },
-      },
-      required: ['phase'],
-    },
-  },
-  {
-    name: 'confirm_outline',
-    description: 'Save the current outline as confirmed and transition to writing phase. Call this AFTER the user has reviewed and confirmed the outline. Saves outline nodes via write_outline_nodes MCP tool.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        nodes: { type: 'array', description: 'The outline nodes to save and confirm' },
-      },
-    },
-  },
 ];
+
+const BUILTIN_CHAT_TOOLS = [...BUILTIN_BACKEND_TOOLS, ...FRONTEND_TOOLS];
 
 function isFrontendTool(name) {
   return FRONTEND_TOOLS.some((t) => t.name === name);
@@ -590,10 +609,7 @@ async function handleSpawnSubagent(input, session) {
     mode: 'subagent',
     subagentId,
     input: subagentInput || '',
-    novelContext: (() => {
-      const ctx = mcpClient.getActiveNovelContext();
-      return ctx?.id ? { novelId: ctx.id, novelDir: ctx.dir } : undefined;
-    })(),
+    novelContext: getActiveNovelContext(mcpClient),
   });
   return { text: result.output || '', isError: false };
 }
@@ -623,9 +639,9 @@ async function _runTurnViaProvider(session, sessionId, system, userText, abortSi
       if (!activeNovelId) {
         const allowed = ["read_skill", "create_novel", "list_novels"];
         const filtered = mcpTools.filter((t) => allowed.includes(t.name));
-        tools = [...filtered, ...FRONTEND_TOOLS];
+        tools = [...filtered, ...BUILTIN_CHAT_TOOLS];
       } else {
-        tools = [...mcpTools, ...FRONTEND_TOOLS];
+        tools = [...mcpTools, ...BUILTIN_CHAT_TOOLS];
       }
       break; // success
     } catch (err) {
@@ -634,7 +650,7 @@ async function _runTurnViaProvider(session, sessionId, system, userText, abortSi
         await new Promise((r) => setTimeout(r, 500));
       } else {
         console.error('[chatAgent] mcp.listTools failed after retry', err);
-        tools = [...FRONTEND_TOOLS];
+        tools = [...BUILTIN_CHAT_TOOLS];
       }
     }
   }
@@ -831,10 +847,7 @@ async function _runTurnViaDriver(session, sessionId, system, userText, abortSign
       systemPromptOverride: system,
       input: conversationInput,
       runId,
-      novelContext: (() => {
-        const ctx = mcpClient.getActiveNovelContext();
-        return ctx?.id ? { novelId: ctx.id, novelDir: ctx.dir } : undefined;
-      })(),
+      novelContext: getActiveNovelContext(mcpClient),
     });
 
     lastText = safeStr(result?.output) || lastText;

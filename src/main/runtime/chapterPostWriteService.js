@@ -2,6 +2,7 @@
 
 const mcpClient = require('../mcp/mcpClientStdio');
 const workflowOrchestrator = require('./workflowOrchestrator');
+const { getActiveNovelContext } = require('./activeNovelContext');
 const { runSubagent } = require('./runSubagent');
 
 function parseJsonFromText(text) {
@@ -159,10 +160,7 @@ async function runAnalysis(input, systemPrompt, abortSignal) {
       userLang: 'zh-CN',
       systemPromptOverride: systemPrompt,
       abortSignal,
-      novelContext: (() => {
-        const ctx = mcpClient.getActiveNovelContext();
-        return ctx?.id ? { novelId: ctx.id, novelDir: ctx.dir } : undefined;
-      })(),
+      novelContext: getActiveNovelContext(mcpClient),
     });
     return result.output || '';
   }

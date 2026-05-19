@@ -106,6 +106,7 @@ function App() {
   const [mergePanel, setMergePanel] = useState(null);
   const [activeNovelId, setActiveNovelId] = useState('');
   const [saveStatus, setSaveStatus] = useState(null); // null | 'saving' | 'saved' | 'save-failed'
+  const [saveToast, setSaveToast] = useState(null); // { type: 'success' | 'error', message: string } | null
 
   // Track active novel ID for data tabs and sync chapter tree.
   // When the active novel is closed (newId becomes ''), clear everything
@@ -826,6 +827,36 @@ function App() {
   const editorTextareaRef = useRef(null);
   const pendingEditorSelectionRef = useRef(null);
 
+  const showSaveToast = useCallback((type, message) => {
+    setSaveToast({ type, message });
+    setTimeout(() => setSaveToast(null), 3000);
+  }, []);
+
+  const manualSave = useCallback(async () => {
+    if (!activeChapterId || !activeNovelId) return;
+    const entry = chapterMap.get(activeChapterId);
+    if (!entry?.chapter?.fileName) return;
+    const name = entry.chapter.fileName;
+    const content = activeChapter?.content || '';
+    if (!window.mana?.novel?.saveChapter) return;
+    const key = `_save_${name}`;
+    clearTimeout(window[key]);
+    setSaveStatus('saving');
+    try {
+      const titleMatch = content.match(/^#\s+(.+)/);
+      const chapTitle = titleMatch ? titleMatch[1].trim() : (entry.chapter._title || '');
+      await window.mana.novel.saveChapter(activeNovelId, name, content, { title: chapTitle });
+      setSaveStatus('saved');
+      showSaveToast('success', '已保存到磁盘');
+      setTimeout(() => setSaveStatus(null), 2000);
+    } catch (err) {
+      setSaveStatus('save-failed');
+      const reason = err?.message || String(err);
+      showSaveToast('error', `保存失败：${reason}`);
+      console.error('[editor-save]', reason);
+    }
+  }, [activeChapterId, activeNovelId, activeChapter, chapterMap, showSaveToast]);
+
   const updateActiveChapterContent = (content) => {
     if (!activeChapterId) return;
     setNovel((n) => ({
@@ -1491,6 +1522,14 @@ function App() {
                     onSelect={handleTextSelect}
                     onClick={handleTextSelect}
                     onKeyUp={handleTextSelect}
+                    onKeyDown={(e) => {
+                      const isMac = navigator.platform.toLowerCase().includes('mac');
+                      const modifier = isMac ? e.metaKey : e.ctrlKey;
+                      if (modifier && e.key === 's') {
+                        e.preventDefault();
+                        manualSave();
+                      }
+                    }}
                     onFocus={() => setEditorHasFocus(true)}
                     onBlur={() => setEditorHasFocus(false)}
                     onScroll={(e) => setEditorScroll({ top: e.target.scrollTop, left: e.target.scrollLeft })}
@@ -1646,6 +1685,19 @@ function App() {
           novelId={mergePanel.novelId}
           onClose={() => setMergePanel(null)}
         />
+      )}
+
+      {/* Save toast notification */}
+      {saveToast && (
+        <div className="fixed bottom-4 right-4 z-[9999] animate-fade-in-up">
+          <div className={`rounded px-3 py-2 text-xs shadow-lg border ${
+            saveToast.type === 'success'
+              ? 'border-emerald-500/30 bg-emerald-900/80 text-emerald-200'
+              : 'border-rose-500/30 bg-rose-900/80 text-rose-200'
+          }`}>
+            {saveToast.message}
+          </div>
+        </div>
       )}
 
     </div>

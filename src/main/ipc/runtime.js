@@ -5,6 +5,7 @@ const path = require('node:path');
 const { paths } = require('../store/paths');
 const { readJsonl, listJsonFiles } = require('../store/jsonStore');
 const orchestrator = require('../runtime/workflowOrchestrator');
+const { withActiveNovelContext } = require('../runtime/activeNovelContext');
 // Phase 6: stdio MCP server (forked child) by default; the adapter falls back
 // to in-process client when MANA_USE_STDIO_MCP=0 for rollback safety.
 const mcpClient = require('../mcp/mcpClientStdio');
@@ -19,26 +20,10 @@ function safeIpc(handler) {
 function registerRuntimeIpc() {
   // ---------- Workflow execution (routed through orchestrator → active driver) ----------
 
-  // Inject the active novel context (id+dir) so MCP tools spawned by autonomous
-  // drivers can read the novel data store. The renderer doesn't track these —
-  // they live in the main-process MCP server manager.
-  function withNovelContext(payload = {}) {
-    if (payload.novelContext && (payload.novelContext.novelId || payload.novelContext.novelDir)) {
-      return payload;
-    }
-    let ctx = null;
-    try { ctx = mcpClient.getActiveNovelContext?.() || null; } catch { /* ignore */ }
-    if (!ctx || (!ctx.id && !ctx.dir)) return payload;
-    return {
-      ...payload,
-      novelContext: { novelId: ctx.id || null, novelDir: ctx.dir || null },
-    };
-  }
-
   ipcMain.handle('mana:runtime:runSubagent', safeIpc(async (_e, payload) => {
     const result = await orchestrator.runWorkflow({
       mode: 'subagent',
-      ...withNovelContext(payload),
+      ...withActiveNovelContext(payload, mcpClient),
     });
     return { runId: result.runId, output: result.output };
   }));
@@ -82,7 +67,7 @@ function registerRuntimeIpc() {
   ipcMain.handle('mana:runtime:runPipeline', safeIpc(async (_e, payload) => {
     const result = await orchestrator.runWorkflow({
       mode: 'pipeline',
-      ...withNovelContext(payload),
+      ...withActiveNovelContext(payload, mcpClient),
     });
     return {
       pipelineRunId: result.pipelineRunId || result.runId,

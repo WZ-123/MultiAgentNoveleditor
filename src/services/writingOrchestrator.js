@@ -356,7 +356,7 @@ export async function requestPeekRewrite(state, paragraphId) {
     const text = await client.completeForAgent(
       'agent5',
       [
-        { role: 'system', content: '重写下列段落，保持剧情，提升流畅度。只输出改写后的正文，不要解释。' },
+        { role: 'system', content: '重写下列段落，保持剧情，提升流畅度。避免「不是……，也不是……，而是……」与「不是……，不是……，是」这类 AI 套句；也不要写成「然后她笑了。」「然后他沉默了。」这种独立短反应句，更不要下一句再用「那是一个……」「那是一种……」去解释。能直叙就直叙，若确实需要保留转折，可改成「并非……抑或……而是……」。只输出改写后的正文，不要解释。' },
         { role: 'user', content: para.text },
       ],
       { expectJson: false }

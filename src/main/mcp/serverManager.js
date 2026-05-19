@@ -18,6 +18,7 @@
  */
 
 const path = require('node:path');
+const net = require('node:net');
 const { fork } = require('node:child_process');
 const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
 const { ForkChildTransport } = require('./forkChildTransport');
@@ -66,6 +67,178 @@ function _notifyChapterMutation(name, args, result) {
 const pendingByToolUseId = new Map();
 // pending[serverConfirmId] = { runId, toolUseId, name, arguments, subagentId, nodeId, ts }
 const pendingByServerId = new Map();
+
+let confirmationRelayServer = null;
+let confirmationRelayPort = null;
+let confirmationRelayStarting = null;
+
+function _confirmationKey(runId, toolUseId) {
+  return `${runId || ''}:${toolUseId}`;
+}
+
+function _removePendingConfirmation(serverId) {
+  const payload = pendingByServerId.get(serverId);
+  if (!payload) return null;
+  pendingByServerId.delete(serverId);
+  pendingByToolUseId.delete(_confirmationKey(payload.runId, payload.toolUseId));
+  return payload;
+}
+
+async function _emitAwaitingConfirmation(payload) {
+  try {
+    await eventBus.emit({
+      runId: payload.runId,
+      subagentId: payload.subagentId,
+      nodeId: payload.nodeId,
+      kind: 'awaiting_confirmation',
+      data: {
+        toolUseId: payload.toolUseId,
+        tool: payload.name,
+        arguments: payload.arguments,
+        subagentId: payload.subagentId,
+        nodeId: payload.nodeId,
+      },
+    });
+  } catch (err) {
+    console.error('[mcp/serverManager] failed to emit awaiting_confirmation', err);
+  }
+}
+
+async function _registerPendingConfirmation({ id, name, arguments: args, runId, subagentId, nodeId, toolUseId, respond }) {
+  const resolvedToolUseId = toolUseId || `tu-stdio-${id}`;
+  const payload = {
+    runId,
+    toolUseId: resolvedToolUseId,
+    name,
+    arguments: args,
+    subagentId,
+    nodeId,
+    ts: Date.now(),
+    respond,
+  };
+  pendingByServerId.set(id, payload);
+  pendingByToolUseId.set(_confirmationKey(runId, resolvedToolUseId), id);
+  await _emitAwaitingConfirmation(payload);
+  return payload;
+}
+
+function _writeSocketMessage(socket, message) {
+  socket.write(JSON.stringify(message) + '\n');
+}
+
+function _handleConfirmationRelaySocket(socket) {
+  socket.setEncoding('utf8');
+  let buffer = '';
+  let pendingServerId = null;
+
+  const clearPending = () => {
+    if (!pendingServerId) return;
+    _removePendingConfirmation(pendingServerId);
+    pendingServerId = null;
+  };
+
+  socket.on('data', (chunk) => {
+    buffer += chunk;
+    while (true) {
+      const newlineIndex = buffer.indexOf('\n');
+      if (newlineIndex < 0) break;
+      const line = buffer.slice(0, newlineIndex).trim();
+      buffer = buffer.slice(newlineIndex + 1);
+      if (!line) continue;
+
+      let msg;
+      try {
+        msg = JSON.parse(line);
+      } catch {
+        _writeSocketMessage(socket, { type: 'error', message: 'invalid JSON' });
+        socket.end();
+        clearPending();
+        return;
+      }
+
+      if (msg.type !== 'confirm-request' || !msg.id) {
+        _writeSocketMessage(socket, { type: 'error', message: 'invalid confirmation request' });
+        socket.end();
+        clearPending();
+        return;
+      }
+
+      pendingServerId = msg.id;
+      _registerPendingConfirmation({
+        id: msg.id,
+        name: msg.name,
+        arguments: msg.arguments,
+        runId: msg.runId,
+        subagentId: msg.subagentId,
+        nodeId: msg.nodeId,
+        toolUseId: msg.toolUseId,
+        respond: (decision) => {
+          _writeSocketMessage(socket, {
+            type: 'confirm-response',
+            id: msg.id,
+            accept: !!decision?.accept,
+            patch: (decision?.patch && typeof decision.patch === 'object') ? decision.patch : null,
+            reason: decision?.reason || null,
+          });
+          socket.end();
+          pendingServerId = null;
+        },
+      }).catch((err) => {
+        console.error('[mcp/serverManager] relay confirm registration failed', err);
+        _writeSocketMessage(socket, { type: 'error', message: err?.message || String(err) });
+        socket.end();
+        clearPending();
+      });
+    }
+  });
+
+  socket.on('close', () => {
+    clearPending();
+  });
+  socket.on('error', () => {
+    clearPending();
+  });
+}
+
+async function ensureConfirmationRelay() {
+  if (confirmationRelayServer && confirmationRelayPort) {
+    return { port: confirmationRelayPort };
+  }
+  if (confirmationRelayStarting) return confirmationRelayStarting;
+
+  confirmationRelayStarting = new Promise((resolve, reject) => {
+    const server = net.createServer((socket) => {
+      _handleConfirmationRelaySocket(socket);
+    });
+    const onError = (err) => {
+      server.off('listening', onListening);
+      confirmationRelayStarting = null;
+      if (confirmationRelayServer === server) {
+        confirmationRelayServer = null;
+        confirmationRelayPort = null;
+      }
+      reject(err);
+    };
+    const onListening = () => {
+      server.off('error', onError);
+      confirmationRelayServer = server;
+      confirmationRelayPort = server.address()?.port || null;
+      confirmationRelayStarting = null;
+      server.on('close', () => {
+        if (confirmationRelayServer === server) {
+          confirmationRelayServer = null;
+          confirmationRelayPort = null;
+        }
+      });
+      resolve({ port: confirmationRelayPort });
+    };
+    server.once('error', onError);
+    server.once('listening', onListening);
+    server.listen(0, '127.0.0.1');
+  });
+
+  return confirmationRelayStarting;
+}
 
 function _resolveEntryScript() {
   // Prefer the asar-unpacked root entry (same file external drivers will use).
@@ -150,21 +323,25 @@ async function _handleChildMessage(msg) {
       break;
     case 'confirm-request': {
       const { id, name, arguments: args, runId, subagentId, nodeId, toolUseId } = msg;
-      const tuid = toolUseId || `tu-stdio-${id}`;
-      const key = `${runId || ''}:${tuid}`;
-      pendingByServerId.set(id, { runId, toolUseId: tuid, name, arguments: args, subagentId, nodeId, ts: Date.now() });
-      pendingByToolUseId.set(key, id);
-      try {
-        await eventBus.emit({
-          runId,
-          subagentId,
-          nodeId,
-          kind: 'awaiting_confirmation',
-          data: { toolUseId: tuid, tool: name, arguments: args, subagentId, nodeId },
-        });
-      } catch (err) {
-        console.error('[mcp/serverManager] failed to emit awaiting_confirmation', err);
-      }
+      await _registerPendingConfirmation({
+        id,
+        name,
+        arguments: args,
+        runId,
+        subagentId,
+        nodeId,
+        toolUseId,
+        respond: (decision) => {
+          if (!child || child.killed) throw new Error('MCP child unavailable');
+          child.send({
+            type: 'confirm-response',
+            id,
+            accept: !!decision?.accept,
+            patch: decision?.patch || null,
+            reason: decision?.reason || null,
+          });
+        },
+      });
       break;
     }
     case 'log':
@@ -304,17 +481,13 @@ async function callTool({ name, arguments: args, runId, toolUseId, subagentId, n
 }
 
 function resolveConfirmation(runId, toolUseId, decision) {
-  const key = `${runId || ''}:${toolUseId}`;
+  const key = _confirmationKey(runId, toolUseId);
   const serverId = pendingByToolUseId.get(key);
   if (!serverId) return false;
-  const payload = pendingByServerId.get(serverId);
-  pendingByToolUseId.delete(key);
-  pendingByServerId.delete(serverId);
-  if (!child || child.killed) return false;
+  const payload = _removePendingConfirmation(serverId);
+  if (!payload?.respond) return false;
   try {
-    child.send({
-      type: 'confirm-response',
-      id: serverId,
+    payload.respond({
       accept: !!decision?.accept,
       patch: decision?.patch || null,
       reason: decision?.reason || null,
@@ -323,7 +496,6 @@ function resolveConfirmation(runId, toolUseId, decision) {
   } catch (err) {
     console.error('[mcp/serverManager] resolveConfirmation send failed', err);
     if (payload) {
-      // Re-queue so UI can retry; but more importantly, log it.
       pendingByServerId.set(serverId, payload);
       pendingByToolUseId.set(key, serverId);
     }
@@ -345,6 +517,15 @@ function listPendingConfirmations() {
 }
 
 async function dispose() {
+  if (confirmationRelayServer) {
+    const relay = confirmationRelayServer;
+    confirmationRelayServer = null;
+    confirmationRelayPort = null;
+    confirmationRelayStarting = null;
+    await new Promise((resolve) => {
+      try { relay.close(() => resolve()); } catch { resolve(); }
+    });
+  }
   // Best-effort graceful shutdown of the child.
   if (!child) return;
   try { child.send({ type: 'shutdown' }); } catch { /* ignore */ }
@@ -362,6 +543,7 @@ async function dispose() {
 
 module.exports = {
   ensureServer,
+  ensureConfirmationRelay,
   setActiveNovel,
   getActiveNovel,
   getActiveNovelContext,
