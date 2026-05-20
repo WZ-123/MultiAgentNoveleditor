@@ -3,10 +3,10 @@
 const appConfig = require('../store/appConfig');
 
 function getDevAuthRelayDefaults() {
-  const port = Number(process.env.MANA_DEV_AUTH_RELAY_PORT || 8789);
+  const port = Number(process.env.MANA_DEV_AUTH_RELAY_PORT || 8787);
   return {
     relayUrl: process.env.MANA_DEV_AUTH_RELAY_URL || `http://127.0.0.1:${port}`,
-    relayApiKey: process.env.MANA_DEV_AUTH_RELAY_API_KEY || 'mana-dev-relay-key',
+    relayApiKey: process.env.MANA_DEV_AUTH_RELAY_API_KEY || process.env.RELAY_API_KEY || 'mana-dev-relay-key',
   };
 }
 
