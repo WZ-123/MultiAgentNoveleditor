@@ -17,6 +17,7 @@ const path = require('node:path')
 const backend = require('./src/main/index.js')
 const { verifyLicense } = require('./src/main/license/authVerifier.js')
 const { showAuthDialog } = require('./src/main/license/authDialog.js')
+const { ensureDevAuthRelayConfig } = require('./src/main/license/devAuthBootstrap.js')
 
 const isUiTest = process.argv.includes('--test-ui');
 const isChatTest = process.argv.includes('--test-chat');
@@ -354,6 +355,12 @@ if (isFlowTest) {
       await backend.initBackend();
     } catch (err) {
       console.error('[main] backend init failed', err);
+    }
+
+    try {
+      await ensureDevAuthRelayConfig();
+    } catch (err) {
+      console.error('[main] dev auth bootstrap failed', err);
     }
 
     // License verification
