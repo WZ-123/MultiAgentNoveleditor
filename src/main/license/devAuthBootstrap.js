@@ -12,9 +12,8 @@ function getDevAuthRelayDefaults() {
 
 async function ensureDevAuthRelayConfig() {
   const forceAuth = process.env.MANA_FORCE_AUTH === '1';
-  const isDev = process.env.NODE_ENV !== 'production';
-  if (!forceAuth || !isDev) {
-    return { skipped: true, reason: 'not_dev_force_auth' };
+  if (!forceAuth) {
+    return { skipped: true, reason: 'not_force_auth' };
   }
 
   const defaults = getDevAuthRelayDefaults();
