@@ -74,12 +74,13 @@ async function promptConfig() {
   const appId = await ask('Feishu App ID (cli_xxx): ');
   const appSecret = await ask('Feishu App Secret: ');
   const appToken = await ask('Feishu App Token (base_xxx): ');
-  const tableId = await ask('Feishu Table ID (tbl_xxx): ');
+  const tableId = await ask('Feishu Feedback Table ID (tbl_xxx): ');
+  const authTableId = await ask('Feishu Auth Table ID (tbl_xxx): ');
 
   console.log('\n=== Relay Security ===');
   const relayApiKey = await ask('Relay API Key (for client auth): ') || `relay-${Date.now().toString(36)}`;
 
-  return { appId, appSecret, appToken, tableId, relayApiKey };
+  return { appId, appSecret, appToken, tableId, authTableId, relayApiKey };
 }
 
 async function createDevVars(cfg) {
@@ -89,6 +90,7 @@ async function createDevVars(cfg) {
     `FEISHU_APP_SECRET=${cfg.appSecret}`,
     `FEISHU_APP_TOKEN=${cfg.appToken}`,
     `FEISHU_TABLE_ID=${cfg.tableId}`,
+    `FEISHU_AUTH_TABLE_ID=${cfg.authTableId}`,
     `RELAY_API_KEY=${cfg.relayApiKey}`,
   ].join('\n') + '\n';
 
@@ -109,6 +111,7 @@ async function setSecrets(cfg) {
     { name: 'FEISHU_APP_SECRET', value: cfg.appSecret },
     { name: 'FEISHU_APP_TOKEN', value: cfg.appToken },
     { name: 'FEISHU_TABLE_ID', value: cfg.tableId },
+    { name: 'FEISHU_AUTH_TABLE_ID', value: cfg.authTableId },
     { name: 'RELAY_API_KEY', value: cfg.relayApiKey },
   ];
 

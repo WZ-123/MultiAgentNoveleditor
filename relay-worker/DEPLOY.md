@@ -24,6 +24,7 @@ FEISHU_APP_ID=cli_xxx
 FEISHU_APP_SECRET=xxx
 FEISHU_APP_TOKEN=xxx
 FEISHU_TABLE_ID=xxx
+FEISHU_AUTH_TABLE_ID=xxx
 RELAY_API_KEY=your-relay-api-key
 EOF
 ```
@@ -46,6 +47,7 @@ wrangler secret put FEISHU_APP_ID
 wrangler secret put FEISHU_APP_SECRET
 wrangler secret put FEISHU_APP_TOKEN
 wrangler secret put FEISHU_TABLE_ID
+wrangler secret put FEISHU_AUTH_TABLE_ID
 wrangler secret put RELAY_API_KEY
 ```
 
