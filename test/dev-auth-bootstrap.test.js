@@ -15,7 +15,7 @@ async function runDevAuthBootstrapTest() {
 
   try {
     process.env.MANA_FORCE_AUTH = '1';
-    process.env.NODE_ENV = 'development';
+    process.env.NODE_ENV = 'production';
     process.env.MANA_DEV_AUTH_RELAY_URL = 'http://127.0.0.1:8789';
     process.env.MANA_DEV_AUTH_RELAY_API_KEY = 'mana-dev-relay-key';
 
