@@ -26,11 +26,12 @@ async function verifyLicense(options = {}) {
   const cfg = await appConfig.load();
   const license = cfg.license || {};
 
-  // Development mode: skip license verification
+  // Development mode: skip license verification (unless MANA_FORCE_AUTH=1)
   const isDev = process.env.NODE_ENV !== 'production';
+  const forceAuth = process.env.MANA_FORCE_AUTH === '1';
   try {
     const { app } = require('electron');
-    if (isDev && app && !app.isPackaged) {
+    if (!forceAuth && isDev && app && !app.isPackaged) {
       return { valid: true, skipped: true, reason: 'dev_mode' };
     }
   } catch {
@@ -41,6 +42,13 @@ async function verifyLicense(options = {}) {
   const relayUrl = cfg.feishuSync?.relayUrl;
   const relayApiKey = cfg.feishuSync?.relayApiKey;
   if (!relayUrl || !relayApiKey) {
+    if (forceAuth) {
+      const message = '未配置认证服务（relayUrl / relayApiKey）。请先配置后再进行授权码验证。';
+      if (!silent) {
+        dialog.showErrorBox('授权验证失败', message);
+      }
+      return { valid: false, reason: 'missing_relay_config', message };
+    }
     return { valid: true, skipped: true, reason: 'no_relay_config' };
   }
 
