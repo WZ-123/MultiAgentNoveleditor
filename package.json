@@ -5,6 +5,8 @@
   "main": "main.js",
   "scripts": {
     "dev": "npm run start",
+    "dev:auth": "MANA_FORCE_AUTH=1 concurrently \"vite\" \"unset ELECTRON_RUN_AS_NODE && electron . --no-sandbox\"",
+    "dev:auth:fresh": "rm -rf \"$PWD/tmp-test-auth-required-userdata\" && MANA_USER_DATA_ROOT=\"$PWD/tmp-test-auth-required-userdata\" MANA_FORCE_AUTH=1 concurrently \"vite\" \"unset ELECTRON_RUN_AS_NODE && electron . --no-sandbox\"",
     "start": "concurrently \"vite\" \"unset ELECTRON_RUN_AS_NODE && electron . --no-sandbox\"",
     "feishu:show-config": "node scripts/feishu-debug.js --action=show-config",
     "feishu:configure": "node scripts/feishu-debug.js --action=configure",
