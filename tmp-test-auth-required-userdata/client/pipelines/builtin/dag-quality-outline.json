@@ -1,0 +1,92 @@
+{
+  "id": "dag-quality-outline",
+  "builtIn": true,
+  "name": "写作质量最优 · 大纲",
+  "stage": "outline",
+  "schemaVersion": 1,
+  "entryNodeIds": [
+    "n_drafter"
+  ],
+  "nodes": [
+    {
+      "id": "n_drafter",
+      "kind": "subagent",
+      "subagentId": "sa-outline-drafter",
+      "label": "大纲草拟 (opus)"
+    },
+    {
+      "id": "n_parallel_review",
+      "kind": "parallel",
+      "children": [
+        "n_char",
+        "n_time"
+      ],
+      "label": "并行审查"
+    },
+    {
+      "id": "n_char",
+      "kind": "subagent",
+      "subagentId": "sa-character-reviewer",
+      "label": "人设审查 (opus)"
+    },
+    {
+      "id": "n_time",
+      "kind": "subagent",
+      "subagentId": "sa-timeline-guardian",
+      "label": "时空校验 (opus)"
+    },
+    {
+      "id": "n_gate",
+      "kind": "gate",
+      "expr": "no_issues",
+      "label": "若无 issues 则放行"
+    },
+    {
+      "id": "n_revise",
+      "kind": "subagent",
+      "subagentId": "sa-outline-drafter",
+      "label": "修订大纲 (opus)"
+    },
+    {
+      "id": "n_human",
+      "kind": "human",
+      "label": "人工审阅"
+    },
+    {
+      "id": "n_out",
+      "kind": "output",
+      "label": "输出大纲"
+    }
+  ],
+  "edges": [
+    {
+      "from": "n_drafter",
+      "to": "n_parallel_review"
+    },
+    {
+      "from": "n_parallel_review",
+      "to": "n_gate"
+    },
+    {
+      "from": "n_gate",
+      "to": "n_human",
+      "when": "pass"
+    },
+    {
+      "from": "n_gate",
+      "to": "n_revise",
+      "when": "block"
+    },
+    {
+      "from": "n_revise",
+      "to": "n_parallel_review"
+    },
+    {
+      "from": "n_human",
+      "to": "n_out"
+    }
+  ],
+  "config": {
+    "maxRevisions": 3
+  }
+}

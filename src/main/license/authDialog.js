@@ -128,7 +128,7 @@ function showAuthDialog() {
 
     const win = createAuthDialog();
 
-    ipcMain.handle('auth:verify', async (_event, code) => {
+    async function submitAuthCode(code) {
       // Save the auth code first
       try {
         const cfg = await appConfig.load();
@@ -146,6 +146,10 @@ function showAuthDialog() {
         resolve(result);
       }
       return result;
+    }
+
+    ipcMain.handle('auth:verify', async (_event, code) => {
+      return submitAuthCode(code);
     });
 
     ipcMain.once('auth:quit', () => {
