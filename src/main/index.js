@@ -144,6 +144,7 @@ When a novel references multiple original works:
 
 let initialized = false;
 let feedbackSyncWorker = null;
+let deferredStartupPromise = null;
 
 function getFeedbackSyncWorker() {
   return feedbackSyncWorker;
@@ -164,15 +165,7 @@ async function ensureSkillSeed() {
   }
 }
 
-async function initBackend() {
-  if (initialized) return;
-  initialized = true;
-  recentLogBuffer.installConsoleCapture();
-  ensureLayout();
-  await ensureSkillSeed();
-  await subagentsStore.ensureBuiltinSeeds();
-  await dagsStore.ensureBuiltinSeeds();
-  // Restore last active novel, if still valid
+async function restoreLastActiveNovel() {
   try {
     const cfg = await appConfig.load();
     if (cfg?.lastNovelId) {
@@ -183,18 +176,56 @@ async function initBackend() {
   } catch (err) {
     console.error('[main] restore last novel failed', err);
   }
-  // Enforce storage quotas on startup
-  try {
-    const cfg = await appConfig.load();
-    if (cfg?.storageQuota?.chatHistoryMaxMB) {
-      await chatHistory.enforceQuota(cfg.storageQuota.chatHistoryMaxMB * 1024 * 1024);
+}
+
+async function startDeferredStartup() {
+  if (deferredStartupPromise) return deferredStartupPromise;
+
+  deferredStartupPromise = (async () => {
+    await Promise.allSettled([
+      ensureSkillSeed(),
+      subagentsStore.ensureBuiltinSeeds(),
+      dagsStore.ensureBuiltinSeeds(),
+    ]);
+
+    try {
+      const cfg = await appConfig.load();
+      const quotaTasks = [];
+      if (cfg?.storageQuota?.chatHistoryMaxMB) {
+        quotaTasks.push(chatHistory.enforceQuota(cfg.storageQuota.chatHistoryMaxMB * 1024 * 1024));
+      }
+      if (cfg?.storageQuota?.offlineLogMaxMB) {
+        quotaTasks.push(offlineLog.enforceQuota(cfg.storageQuota.offlineLogMaxMB * 1024 * 1024));
+      }
+      if (quotaTasks.length) {
+        await Promise.allSettled(quotaTasks);
+      }
+
+      if (cfg?.feishuSync && !feedbackSyncWorker) {
+        feedbackSyncWorker = new FeedbackSyncWorker();
+        feedbackSyncWorker.setConfig(cfg.feishuSync);
+        feedbackSyncWorker.start();
+      }
+    } catch (err) {
+      console.error('[main] deferred startup failed', err);
     }
-    if (cfg?.storageQuota?.offlineLogMaxMB) {
-      await offlineLog.enforceQuota(cfg.storageQuota.offlineLogMaxMB * 1024 * 1024);
+
+    try {
+      await stagingProject.cleanupExpiredProjects();
+    } catch (err) {
+      console.error('[main] staging cleanup failed', err);
     }
-  } catch (err) {
-    console.error('[main] quota enforcement failed', err);
-  }
+  })();
+
+  return deferredStartupPromise;
+}
+
+async function initBackend() {
+  if (initialized) return;
+  initialized = true;
+  recentLogBuffer.installConsoleCapture();
+  ensureLayout();
+  await restoreLastActiveNovel();
   registerFsIpc();
   registerConfigIpc();
   workflowOrchestrator.bootstrap();
@@ -212,25 +243,6 @@ async function initBackend() {
   registerFeedbackSyncIpc();
   registerUpdaterIpc();
   registerLegacyChatCompletionsIpc();
-
-  // Initialize feedback sync worker
-  try {
-    const cfg = await appConfig.load();
-    if (cfg?.feishuSync) {
-      feedbackSyncWorker = new FeedbackSyncWorker();
-      feedbackSyncWorker.setConfig(cfg.feishuSync);
-      feedbackSyncWorker.start();
-    }
-  } catch (err) {
-    console.error('[main] feedback sync worker init failed', err);
-  }
-
-  // Cleanup expired import staging projects on startup
-  try {
-    await stagingProject.cleanupExpiredProjects();
-  } catch (err) {
-    console.error('[main] staging cleanup failed', err);
-  }
 }
 
 function attachWindow(win) {
@@ -258,4 +270,4 @@ function registerLegacyChatCompletionsIpc() {
   });
 }
 
-module.exports = { initBackend, attachWindow, getFeedbackSyncWorker };
+module.exports = { initBackend, startDeferredStartup, attachWindow, getFeedbackSyncWorker };

@@ -141,7 +141,7 @@ async function main() {
     lines.push('You can call tools to read/write novel data and manipulate the editor:');
     lines.push('- Character tools: list_characters, read_character (read character cards), enrich_character (web enrichment for fanwork characters)');
     lines.push('- Novel data: read_outline, read_chapter, query_world, query_timeline, list_assets, read_asset, read_style_memory, read_skill, search_index');
-    lines.push('- Auto-write: grant_asset, revoke_asset, append_timeline, append_summary, append_style_memory');
+    lines.push('- Auto-write: grant_asset, revoke_asset, apply_asset_patch, append_timeline, append_summary, append_style_memory');
     lines.push('- Write (requires confirmation): create_character, update_character, update_world');
     lines.push('- Editor: replace_selected_text, insert_text_at_cursor, get_full_editor_content');
     lines.push('- Delegate: spawn_subagent');
@@ -347,7 +347,7 @@ async function main() {
   }
 
   // Check that main process persists after turn_done
-  if (chatAgentCode.includes('chatHistory.appendMessage(session.threadId')) {
+  if (/appendMessage\(session\.threadId\s*,/.test(chatAgentCode)) {
     ok('chatAgent persistence: saves to chat history after turn');
   } else {
     fail('chatAgent persistence', 'missing appendMessage call');

@@ -401,6 +401,9 @@ if (isFlowTest) {
     }, 5000);
 
     await createWindow();
+    backend.startDeferredStartup?.().catch((err) => {
+      console.error('[main] deferred startup scheduling failed', err);
+    });
 
     app.on('activate', async function () {
       if (BrowserWindow.getAllWindows().length === 0) await createWindow();

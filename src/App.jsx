@@ -23,6 +23,7 @@ import { ImportMergePanel } from '@/components/ImportMergePanel.jsx';
 import { NovelDataBrowser } from '@/components/NovelDataBrowser.jsx';
 import { DataTabContent } from '@/components/DataTabContent.jsx';
 import { countMeaningfulCharacters } from '@/domain/text.js';
+import { collectPreferredTextMatches } from '@/domain/textMatch.js';
 import { useI18n } from '@/i18n/LanguageContext.jsx';
 
 const TAB_PREFIX = 'chapter:';
@@ -107,45 +108,18 @@ function App() {
   const [activeNovelId, setActiveNovelId] = useState('');
   const [saveStatus, setSaveStatus] = useState(null); // null | 'saving' | 'saved' | 'save-failed'
   const [saveToast, setSaveToast] = useState(null); // { type: 'success' | 'error', message: string } | null
+  const hasInitializedActiveNovelRef = useRef(false);
 
-  // Track active novel ID for data tabs and sync chapter tree.
-  // When the active novel is closed (newId becomes ''), clear everything
-  // so the UI never shows a ghost chapter tree.
-  useEffect(() => {
-    if (!window.mana?.novel?.active) return;
-    let cancelled = false;
-    const check = async () => {
-      try {
-        const a = await window.mana.novel.active();
-        if (!cancelled) {
-          const newId = a?.id || '';
-          if (newId !== activeNovelId) {
-            setActiveNovelId(newId);
-            if (newId) {
-              // Clear previous novel's sidebar state before loading new one
-              setNovel({ volumes: [] });
-              setOpenChapterIds([]);
-              setOpenBlueprintIds([]);
-              setOpenSettingsIds([]);
-              setActiveEditorTab('');
-              syncNovelTreeFromDisk(a);
-            } else {
-              // Novel closed — clear in-memory tree and localStorage cache
-              setNovel({ volumes: [] });
-              setOpenChapterIds([]);
-              setOpenBlueprintIds([]);
-              setOpenSettingsIds([]);
-              setActiveEditorTab('');
-              try { localStorage.removeItem('mana-chapters-v1'); } catch { /* ignore */ }
-            }
-          }
-        }
-      } catch { /* ignore */ }
-    };
-    check();
-    const iv = setInterval(check, 3000);
-    return () => { cancelled = true; clearInterval(iv); };
-  }, [activeNovelId]);
+  const resetNovelUiState = useCallback((clearCache = false) => {
+    setNovel({ volumes: [] });
+    setOpenChapterIds([]);
+    setOpenBlueprintIds([]);
+    setOpenSettingsIds([]);
+    setActiveEditorTab('');
+    if (clearCache) {
+      try { localStorage.removeItem('mana-chapters-v1'); } catch { /* ignore */ }
+    }
+  }, []);
 
   // Sync the novel tree (volumes/sections/chapters) from the project directory on disk
   async function syncNovelTreeFromDisk(novelEntry) {
@@ -161,53 +135,48 @@ function App() {
 
       // List chapter files from the novel's chapters/ dir
       const files = await window.mana.novel.listChapters(novelEntry.id);
-      const chapters = [];
-      for (let i = 0; i < (files || []).length; i++) {
-        const f = files[i];
-        const name = typeof f === 'string' ? f : f.name || f.fileName || '';
-        if (!name.endsWith('.md')) continue;
+      const chapterMetaEntries = await Promise.all((files || []).map(async (file) => {
+        const name = typeof file === 'string' ? file : file.name || file.fileName || '';
+        if (!name.endsWith('.md')) return null;
         try {
-          // Read frontmatter metadata (fast, first 2KB)
-          let title = name;
-          let volume = null;
-          let section = null;
           const meta = await window.mana.novel.readChapterMeta(novelEntry.id, name);
-          if (meta?.metadata) {
-            if (meta.metadata.title) title = meta.metadata.title;
-            if (meta.metadata.volume != null) volume = meta.metadata.volume;
-            if (meta.metadata.section != null) section = meta.metadata.section;
-          }
-          // Read full content (frontmatter stripped automatically)
-          const content = await window.mana.novel.readChapter(novelEntry.id, name);
-          // Fallback: extract # Title from content for legacy files w/o frontmatter
-          if (!meta?.metadata?.title) {
-            const m = (content || '').match(/^#\s+(.+)/);
-            if (m) title = m[1].trim();
-          }
-          // Compute display name: e.g., "第一章：苟利国家生死以"
-          const seq = i + 1;
-          let displayName = namingRule.replace('{n}', seq).replace('{cn}', toChineseNum(seq));
-          if (title) displayName += namingSep + title;
-          chapters.push({
-            id: `ch-${name}-${Date.now()}`,
+          return {
             fileName: name,
-            content: content || '',
-            _title: title,
+            title: meta?.metadata?.title || meta?.headingTitle || '',
+            volume: meta?.metadata?.volume ?? null,
+            section: meta?.metadata?.section ?? null,
+          };
+        } catch {
+          return null;
+        }
+      }));
+
+      const chapters = chapterMetaEntries
+        .filter(Boolean)
+        .sort((a, b) => a.fileName.localeCompare(b.fileName))
+        .map((chapterMeta, index) => {
+          const titleForDisplay = chapterMeta.title || chapterMeta.fileName;
+          let displayName = namingRule.replace('{n}', index + 1).replace('{cn}', toChineseNum(index + 1));
+          if (titleForDisplay) displayName += namingSep + titleForDisplay;
+          return {
+            id: `ch-${chapterMeta.fileName}-${Date.now()}-${index}`,
+            fileName: chapterMeta.fileName,
+            content: '',
+            isContentLoaded: false,
+            isDirty: false,
+            _title: chapterMeta.title || '',
             displayName,
-            volume,
-            section,
-          });
-        } catch { /* skip broken file */ }
-      }
-      // Sort by filename
-      chapters.sort((a, b) => a.fileName.localeCompare(b.fileName));
+            volume: chapterMeta.volume,
+            section: chapterMeta.section,
+          };
+        });
+
       if (chapters.length > 0) {
         // Restore volume/section structure from novel.json
         let structure = null;
         try {
-          const active = await window.mana.novel.active();
-          if (active?.dir) {
-            const raw = await window.mana.fs.readFile(active.dir + '/novel.json', 'utf8');
+          if (novelEntry?.dir) {
+            const raw = await window.mana.fs.readFile(novelEntry.dir + '/novel.json', 'utf8');
             const parsed = JSON.parse(raw);
             if (parsed?.structure?.volumes) structure = parsed.structure;
           }
@@ -235,6 +204,45 @@ function App() {
       console.error('[App] syncNovelTree failed:', err);
     }
   }
+
+  const refreshActiveNovelState = useCallback(async (novelEntry) => {
+    if (!window.mana?.novel?.active) return null;
+    try {
+      const activeEntry = novelEntry === undefined
+        ? await window.mana.novel.active()
+        : novelEntry;
+      const nextId = activeEntry?.id || '';
+      if (nextId === activeNovelId) {
+        return activeEntry || null;
+      }
+
+      setActiveNovelId(nextId);
+      if (!nextId) {
+        resetNovelUiState(true);
+        return null;
+      }
+
+      resetNovelUiState(false);
+      await syncNovelTreeFromDisk(activeEntry);
+      return activeEntry;
+    } catch (err) {
+      console.error('[App] refresh active novel failed', err);
+      return null;
+    }
+  }, [activeNovelId, resetNovelUiState]);
+
+  // Detect active novel once on startup/login. Subsequent changes are pushed
+  // explicitly by create/open/close/import flows instead of polling every 3s.
+  useEffect(() => {
+    if (hasInitializedActiveNovelRef.current) return undefined;
+    hasInitializedActiveNovelRef.current = true;
+    let cancelled = false;
+    (async () => {
+      const activeEntry = await refreshActiveNovelState();
+      if (cancelled || !activeEntry) return;
+    })();
+    return () => { cancelled = true; };
+  }, [refreshActiveNovelState]);
 
   async function loadExistingNovels() {
     if (!window.mana?.novel?.list) return;
@@ -316,6 +324,46 @@ function App() {
     return m;
   }, [chapterEntries]);
 
+  const ensureChapterContentLoaded = useCallback(async (chapterId) => {
+    const entry = chapterMap.get(chapterId);
+    if (!entry?.chapter?.fileName) return '';
+    if (entry.chapter.isContentLoaded) return entry.chapter.content || '';
+    if (!activeNovelId || !window.mana?.novel?.readChapter) return entry.chapter.content || '';
+
+    const content = await window.mana.novel.readChapter(activeNovelId, entry.chapter.fileName);
+    const headingMatch = (content || '').match(/^#\s+(.+)/m);
+    const headingTitle = headingMatch ? headingMatch[1].trim() : '';
+
+    setNovel((currentNovel) => ({
+      ...currentNovel,
+      volumes: currentNovel.volumes.map((volume) => ({
+        ...volume,
+        sections: volume.sections.map((section) => ({
+          ...section,
+          chapters: section.chapters.map((chapter) => {
+            if (chapter.id !== chapterId) return chapter;
+            const nextTitle = chapter._title || headingTitle || '';
+            let nextDisplayName = chapter.displayName || chapter.fileName;
+            if (nextTitle) {
+              if (/[:：]/.test(nextDisplayName)) nextDisplayName = nextDisplayName.replace(/[:：].*$/, `：${nextTitle}`);
+              else if (nextDisplayName !== nextTitle) nextDisplayName = `${nextDisplayName}：${nextTitle}`;
+            }
+            return {
+              ...chapter,
+              content: content || '',
+              isContentLoaded: true,
+              isDirty: false,
+              _title: nextTitle,
+              displayName: nextDisplayName,
+            };
+          }),
+        })),
+      })),
+    }));
+
+    return content || '';
+  }, [activeNovelId, chapterMap]);
+
   // Listen for chapter changes from main process (MCP write_chapter, etc.)
   useEffect(() => {
     const mana = window.mana;
@@ -349,6 +397,8 @@ function App() {
           id: existing?.chapter?.id || `ch-${data.name}-${Date.now()}`,
           fileName: data.name,
           content: content || '',
+          isContentLoaded: true,
+          isDirty: false,
           _title: title,
           displayName,
           volume: meta?.metadata?.volume || null,
@@ -450,8 +500,9 @@ function App() {
     ? activeEditorTab.slice(SETTINGS_PREFIX.length)
     : '';
 
-  const openChapterInEditor = (chapterId) => {
+  const openChapterInEditor = async (chapterId) => {
     if (!chapterMap.get(chapterId)) return;
+    await ensureChapterContentLoaded(chapterId);
     setOpenChapterIds((ids) => (ids.includes(chapterId) ? ids : [...ids, chapterId]));
     setActiveEditorTab(`${TAB_PREFIX}${chapterId}`);
   };
@@ -529,6 +580,8 @@ function App() {
       id: makeId('chapter'),
       fileName,
       content: '',
+      isContentLoaded: true,
+      isDirty: false,
     };
 
     setNovel((n) => ({
@@ -560,10 +613,12 @@ function App() {
       const chapterEntry = chapterMap.get(chapterId);
       if (chapterEntry?.chapter?.fileName && activeNovelId && window.mana?.novel?.saveChapter) {
         const ch = chapterEntry.chapter;
-        const titleMatch = (ch.content || '').match(/^#\s+(.+)/);
-        const chapTitle = titleMatch ? titleMatch[1].trim() : (ch._title || '');
-        window.mana.novel.saveChapter(activeNovelId, ch.fileName, ch.content, { title: chapTitle })
-          .catch(() => {});
+        if (ch.isContentLoaded && ch.isDirty) {
+          const titleMatch = (ch.content || '').match(/^#\s+(.+)/);
+          const chapTitle = titleMatch ? titleMatch[1].trim() : (ch._title || '');
+          window.mana.novel.saveChapter(activeNovelId, ch.fileName, ch.content, { title: chapTitle })
+            .catch(() => {});
+        }
       }
       setOpenChapterIds((ids) => {
         if (!ids.includes(chapterId)) return ids;
@@ -731,8 +786,13 @@ function App() {
     }));
     // Persist to disk (update frontmatter)
     if (activeNovelId) {
-      window.mana?.novel?.saveChapter(activeNovelId, chapter.fileName, chapter.content, { title: raw })
-        .catch(() => {});
+      try {
+        const content = await ensureChapterContentLoaded(chapterId);
+        window.mana?.novel?.saveChapter(activeNovelId, chapter.fileName, content, { title: raw })
+          .catch(() => {});
+      } catch {
+        // ignore eager title persistence failures
+      }
     }
   };
 
@@ -836,6 +896,10 @@ function App() {
     if (!activeChapterId || !activeNovelId) return;
     const entry = chapterMap.get(activeChapterId);
     if (!entry?.chapter?.fileName) return;
+    if (!entry.chapter.isContentLoaded || !entry.chapter.isDirty) {
+      if (!silent) setSaveStatus(null);
+      return;
+    }
     const name = entry.chapter.fileName;
     const content = activeChapter?.content || '';
     if (!window.mana?.novel?.saveChapter) return;
@@ -846,6 +910,18 @@ function App() {
       const titleMatch = content.match(/^#\s+(.+)/);
       const chapTitle = titleMatch ? titleMatch[1].trim() : (entry.chapter._title || '');
       await window.mana.novel.saveChapter(activeNovelId, name, content, { title: chapTitle });
+      setNovel((currentNovel) => ({
+        ...currentNovel,
+        volumes: currentNovel.volumes.map((volume) => ({
+          ...volume,
+          sections: volume.sections.map((section) => ({
+            ...section,
+            chapters: section.chapters.map((chapter) => (
+              chapter.id === activeChapterId ? { ...chapter, isDirty: false } : chapter
+            )),
+          })),
+        })),
+      }));
       if (!silent) {
         setSaveStatus('saved');
         showSaveToast('success', '已保存到磁盘');
@@ -879,7 +955,7 @@ function App() {
         sections: v.sections.map((s) => ({
           ...s,
           chapters: s.chapters.map((c) =>
-            c.id === activeChapterId ? { ...c, content } : c
+            c.id === activeChapterId ? { ...c, content, isContentLoaded: true, isDirty: true } : c
           ),
         })),
       })),
@@ -894,6 +970,18 @@ function App() {
         if (window.mana?.novel?.saveChapter) {
           try {
             await window.mana.novel.saveChapter(activeNovelId, name, content);
+            setNovel((currentNovel) => ({
+              ...currentNovel,
+              volumes: currentNovel.volumes.map((volume) => ({
+                ...volume,
+                sections: volume.sections.map((section) => ({
+                  ...section,
+                  chapters: section.chapters.map((chapter) => (
+                    chapter.id === activeChapterId ? { ...chapter, isDirty: false } : chapter
+                  )),
+                })),
+              })),
+            }));
             setSaveStatus(null);
           } catch {
             setSaveStatus('save-failed');
@@ -912,11 +1000,26 @@ function App() {
       if (!activeNovelId || !activeChapterId) return;
       const chapterEntry = chapterMap.get(activeChapterId);
       if (!chapterEntry?.chapter?.fileName) return;
+      if (!chapterEntry.chapter.isContentLoaded || !chapterEntry.chapter.isDirty) return;
       const name = chapterEntry.chapter.fileName;
       const content = saveContentRef.current;
       if (!content) return;
       window.mana?.novel?.saveChapter(activeNovelId, name, content)
-        .then(() => setSaveStatus(null))
+        .then(() => {
+          setNovel((currentNovel) => ({
+            ...currentNovel,
+            volumes: currentNovel.volumes.map((volume) => ({
+              ...volume,
+              sections: volume.sections.map((section) => ({
+                ...section,
+                chapters: section.chapters.map((chapter) => (
+                  chapter.id === activeChapterId ? { ...chapter, isDirty: false } : chapter
+                )),
+              })),
+            })),
+          }));
+          setSaveStatus(null);
+        })
         .catch(() => setSaveStatus('save-failed'));
     };
     document.addEventListener('visibilitychange', onVisibility);
@@ -1028,11 +1131,20 @@ function App() {
     const needle = String(targetText || '');
     if (!needle) throw new Error('targetText 不能为空');
 
+    const selectionCoversTarget = (selectedText) => {
+      const text = String(selectedText || '');
+      if (!text) return false;
+      const preferred = collectPreferredTextMatches(text, needle);
+      return preferred.matches.length === 1
+        && preferred.matches[0].start === 0
+        && preferred.matches[0].end === text.length;
+    };
+
     const textarea = editorTextareaRef.current;
     const domStart = textarea && typeof textarea.selectionStart === 'number' ? textarea.selectionStart : null;
     const domEnd = textarea && typeof textarea.selectionEnd === 'number' ? textarea.selectionEnd : null;
     const selectedFromDom = domStart != null && domEnd != null ? current.substring(domStart, domEnd) : '';
-    if (domStart != null && domEnd != null && domEnd > domStart && selectedFromDom === needle) {
+    if (domStart != null && domEnd != null && domEnd > domStart && selectionCoversTarget(selectedFromDom)) {
       return replaceSelectedText(replacement);
     }
 
@@ -1040,7 +1152,7 @@ function App() {
     const cachedText = String(cached.text || '');
     if (typeof cached.start === 'number' && typeof cached.end === 'number' && cached.end > cached.start) {
       const slice = current.substring(cached.start, cached.end);
-      if (slice === cachedText && cachedText === needle) {
+      if (slice === cachedText && selectionCoversTarget(cachedText)) {
         const before = current.substring(0, cached.start);
         const after = current.substring(cached.end);
         const nextContent = before + replacement + after;
@@ -1052,14 +1164,7 @@ function App() {
       }
     }
 
-    const matches = [];
-    let cursor = 0;
-    while (cursor <= current.length) {
-      const index = current.indexOf(needle, cursor);
-      if (index < 0) break;
-      matches.push({ start: index, end: index + needle.length });
-      cursor = index + needle.length;
-    }
+    const matches = collectPreferredTextMatches(current, needle).matches;
     if (!matches.length) {
       throw new Error('当前章节中找不到目标文本，请重新读取后再试');
     }
@@ -1296,7 +1401,10 @@ function App() {
                           if (!dir) return;
                           const title = dir.split(/[/\\]/).pop() || 'Untitled';
                           const r = await mana.novel.create({ title, dir });
-                          if (r?.id) await mana.novel.open(r.id);
+                          if (r?.id) {
+                            await mana.novel.open(r.id);
+                            await refreshActiveNovelState();
+                          }
                         } catch (err) {
                           console.error('Create novel failed:', err);
                         }
@@ -1485,7 +1593,7 @@ function App() {
             <div className="flex-1" />
             <div className="px-2 flex items-center gap-3 text-xs border-l border-vscode-panel-border shrink-0">
               <div className="shrink-0">
-                <WorkspaceSwitcher onImportExternal={() => { loadExistingNovels(); setShowImportPanel(true); }} />
+                <WorkspaceSwitcher onImportExternal={() => { loadExistingNovels(); setShowImportPanel(true); }} onActiveNovelChanged={refreshActiveNovelState} />
               </div>
               <div className="shrink-0 whitespace-nowrap">
                 <RuntimeStatusIndicator />
@@ -1664,8 +1772,12 @@ function App() {
           onClose={() => setShowImportPanel(false)}
           existingNovels={existingNovels}
           activeNovelId={''}
-          onImportComplete={(result) => {
+          onImportComplete={async (result) => {
             console.log('[App] import complete', result);
+            if (result?.id) {
+              await refreshActiveNovelState();
+              return;
+            }
             if (result?.chapters?.length > 0) {
               const chapters = result.chapters.map((ch, i) => ({
                 id: `chapter-imported-${i}-${Date.now()}`,

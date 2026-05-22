@@ -316,7 +316,7 @@ function generatePhaseRules(phase) {
         '3. Call `suggest_next_chapter_name` to get the next filename and display name.',
         '4. Call `list_chapters` to see existing chapters.',
         '5. Read character context via `read_outline_nodes`, then `read_character` only for needed characters.',
-        '6. Call `write_chapter({name:"...", content:"...", title:"..."})` to write the chapter.',
+        '6. Call `write_chapter({name:"...", content:"...", title:"..."})` to write the chapter. If you are rewriting an existing chapter after reading it, include `baseContent` from the latest `read_chapter` result so stale drafts do not overwrite newer text.',
         '7. NEVER use write_outline_nodes for chapter content.',
         '8. AFTER writing each chapter, you MUST do the following in order:',
         '   a. For new timeline events, call `append_timeline`; if you are correcting an existing event by id, call `update_timeline` instead of appending a duplicate.',
@@ -338,9 +338,11 @@ function generatePhaseRules(phase) {
         '5. Use `replace_text_near_cursor` only after the user has manually moved the cursor near the intended occurrence.',
         '6. If you need multiple non-overlapping fixes in the same chapter, prefer `apply_chapter_patch` so every edit is resolved against one shared snapshot and written once.',
         '7. For review-style requests, do not batch many overlapping `replace_chapter_text` calls immediately after the audit. Review first; if multiple fixes are needed, prefer scoped selected-text edits, `apply_chapter_patch`, or one consolidated rewrite.',
-        '8. For bulk rewrites, use `write_chapter` to update the full file.',
-        '9. Always use tools to inspect state before making changes.',
-        '10. Respond in the same language as the user.',
+        '8. For bulk rewrites, use `write_chapter` to update the full file, and include `baseContent` when rewriting an existing chapter from a prior read.',
+        '9. For partial world-building changes, prefer `apply_world_patch`; use `update_world` only when replacing the whole lore block or the whole places array.',
+        '10. For multiple asset grant/revoke changes, prefer `apply_asset_patch` so all authorization updates are resolved against one shared asset snapshot and written once. When working from a prior `read_asset`, include `baseGrantedTo` for that asset.',
+        '11. Always use tools to inspect state before making changes.',
+        '12. Respond in the same language as the user.',
       ];
     default:
       return [
@@ -411,11 +413,11 @@ async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, w
   lines.push('## Available Tools');
   lines.push('You can call tools to read/write novel data and manipulate the editor:');
   lines.push('- Character tools: list_characters, read_character, enrich_character');
-  lines.push('- Novel data: read_outline, read_outline_nodes, list_chapters, read_chapter, write_chapter, replace_chapter_text, apply_chapter_patch, query_world, query_timeline, list_assets, read_asset, read_style_memory, read_skill, list_skills, read_skill_content, search_index');
+  lines.push('- Novel data: read_outline, read_outline_nodes, list_chapters, read_chapter, write_chapter, replace_chapter_text, apply_chapter_patch, query_world, apply_world_patch, query_timeline, list_assets, read_asset, read_style_memory, read_skill, list_skills, read_skill_content, search_index');
   lines.push('- Review: review_character_consistency (inspect chapter paragraphs against character cards and report paragraph-level conflicts without editing)');
   lines.push('- Rewrite: de_ai_ify (rewrite a Chinese fiction passage to remove AI-ish cliches while preserving meaning)');
-  lines.push('- Auto-write: grant_asset, revoke_asset, append_timeline, update_timeline, dedupe_timeline, append_summary, append_style_memory');
-  lines.push('- Write (requires confirmation): create_character, update_character, update_world, write_chapter, replace_chapter_text, apply_chapter_patch');
+  lines.push('- Auto-write: grant_asset, revoke_asset, apply_asset_patch, append_timeline, update_timeline, dedupe_timeline, append_summary, append_style_memory');
+  lines.push('- Write (requires confirmation): create_character, update_character, update_world, apply_world_patch, write_chapter, replace_chapter_text, apply_chapter_patch');
   lines.push('- Editor: replace_selected_text, replace_text_near_cursor, insert_text_at_cursor, get_full_editor_content');
   lines.push('- Workflow: set_workflow_phase (change current phase), confirm_outline (save outline and enter writing phase)');
   lines.push('- Delegate: spawn_subagent');
@@ -435,6 +437,8 @@ async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, w
   lines.push('6. If the user asks to clean up historical duplicate timeline events, use `dedupe_timeline` instead of manually rewriting files.');
   lines.push('7. If Current Editor State includes `User selected text`, that selection metadata is authoritative. Do not tell the user that you cannot see the editor highlight or selection marker.');
   lines.push('8. For chapter-wide review requests, prefer explicit review tools first; do not jump straight into many sequential `replace_chapter_text` calls against overlapping snippets. If multiple concrete fixes are already known, prefer one `apply_chapter_patch` over many independent replaces.');
+  lines.push('9. For world lore or place-table tweaks, prefer `apply_world_patch` over `update_world` unless you are intentionally replacing the whole world block.');
+  lines.push('10. For multi-step asset handoff changes, prefer `apply_asset_patch` over many separate `grant_asset`/`revoke_asset` calls. When editing from a prior asset read, include that asset\'s `baseGrantedTo` snapshot.');
 
   // Inject phase-relevant skills
   const skillBlock = await loadPhaseSkills(phase);
