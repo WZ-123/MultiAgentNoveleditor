@@ -144,7 +144,7 @@ async function callTool(opts) {
     if (!result?.isError && name === 'write_chapter') {
       _notifyChapterChanged(payload.name || finalArgs?.name, 'created', finalArgs?.title || payload.title || null);
     }
-    if (!result?.isError && name === 'replace_chapter_text') {
+    if (!result?.isError && (name === 'replace_chapter_text' || name === 'apply_chapter_patch')) {
       _notifyChapterChanged(payload.name || finalArgs?.name, 'updated', finalArgs?.title || payload.title || null);
     }
     return result;

@@ -74,6 +74,14 @@ const DE_AI_REACTION_BLOCK = [
   '- 后审要求：生成后如果出现这种结构，优先删掉独立短句，改为并回上文或直接直叙。',
 ].join('\n');
 
+const DE_AI_CROSS_PARAGRAPH_BLOCK = [
+  '### AI 审稿补充：跨段拆开的套句也要算',
+  '- 审稿时必须逐段看，但不能只看单段。每一段都要连同前后相邻段一起判断。',
+  '- 如果上一段是「然后她笑了。」、下一段才是「那是一个……」，仍然算同一组 AI 套句，不能因为分段而漏掉。',
+  '- 如果上一段还停在「不是……/也不是……」，下一段才出现「而是……/更像是……」，也仍然算同一组对照骨架。',
+  '- 处理原则：把涉及到的两段一起标出来，再改写成连续的具体直叙。',
+].join('\n');
+
 function buildSeedContent(seedId, skillSeedMd) {
   if (seedId === 'writing-reference' && skillSeedMd) {
     const sepIdx = skillSeedMd.indexOf('\n\n---\n\n');
@@ -123,6 +131,8 @@ function buildSeedContent(seedId, skillSeedMd) {
       DE_AI_UPDATED_BLOCK,
       '',
       DE_AI_REACTION_BLOCK,
+      '',
+      DE_AI_CROSS_PARAGRAPH_BLOCK,
       '',
       '### 4. 避免模糊限定词',
       '- 仿佛、似乎、好像、略显、有些、某种、几乎、大概',
@@ -214,6 +224,9 @@ function maybeRefreshSeedContent(seedId, currentContent, skillSeedMd) {
   }
   if (nextContent.includes('# 去 AI 味写作指南') && !nextContent.includes('绝对避免「然后她笑了」式独立短反应句')) {
     nextContent = `${nextContent.trim()}\n\n${DE_AI_REACTION_BLOCK}\n`;
+  }
+  if (nextContent.includes('# 去 AI 味写作指南') && !nextContent.includes('跨段拆开的套句也要算')) {
+    nextContent = `${nextContent.trim()}\n\n${DE_AI_CROSS_PARAGRAPH_BLOCK}\n`;
   }
   return nextContent;
 }

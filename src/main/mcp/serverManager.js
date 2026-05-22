@@ -58,7 +58,7 @@ function _notifyChapterMutation(name, args, result) {
   if (name === 'write_chapter') {
     _notifyChapterChanged(payload.name || args?.name, 'created', args?.title || payload.title || null);
   }
-  if (name === 'replace_chapter_text') {
+  if (name === 'replace_chapter_text' || name === 'apply_chapter_patch') {
     _notifyChapterChanged(payload.name || args?.name, 'updated', args?.title || payload.title || null);
   }
 }

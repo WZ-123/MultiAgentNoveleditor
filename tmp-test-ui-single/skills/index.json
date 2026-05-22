@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "skills": [
+    {
+      "id": "writing-reference",
+      "name": "写作参考手册",
+      "description": "Multi-Agent Novel Assistant 产品概述、内置 Agent/DAG 列表、成本质量权衡建议。",
+      "tags": [
+        "reference",
+        "config"
+      ],
+      "assignedSubagentIds": [
+        "sa-config-helper",
+        "sa-chat",
+        "sa-outline-drafter"
+      ],
+      "schemaVersion": 1
+    },
+    {
+      "id": "outline-cleanup",
+      "name": "章节写作：大纲标记物清除",
+      "description": "从大纲节点生成章节正文时，必须移除大纲编号/标题标记物，保留连续叙事流。",
+      "tags": [
+        "writing",
+        "outline",
+        "format"
+      ],
+      "assignedSubagentIds": [
+        "sa-writer",
+        "sa-chat"
+      ],
+      "schemaVersion": 1
+    },
+    {
+      "id": "character-search",
+      "name": "角色网络搜索策略",
+      "description": "同人角色联网搜索的文化圈路由、查询格式、回退策略与合并规则。",
+      "tags": [
+        "search",
+        "character"
+      ],
+      "assignedSubagentIds": [
+        "sa-import-orchestrator",
+        "sa-chat"
+      ],
+      "schemaVersion": 1
+    },
+    {
+      "id": "de-ai-ify",
+      "name": "去 AI 味写作指南",
+      "description": "避免 AI 生成文本常见痕迹的写作规则，保持人类风格。",
+      "tags": [
+        "writing",
+        "style"
+      ],
+      "assignedSubagentIds": [
+        "sa-chat",
+        "sa-writer"
+      ],
+      "schemaVersion": 1
+    }
+  ]
+}

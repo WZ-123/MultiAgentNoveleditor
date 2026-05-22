@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 2,
+  "language": "system",
+  "recents": [],
+  "lastNovelId": "novel-mpft20ve-lxzuv8",
+  "lastNovelDir": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/tmp-test-chat-replace-regression/novel-1779386964458",
+  "activeDriverId": "direct-api",
+  "drivers": {
+    "claude-code-vscode": {
+      "kind": "claude-code-vscode",
+      "binPath": "",
+      "autoDetectedPath": "/Users/potablewater/.vscode/extensions/anthropic.claude-code-2.1.145-darwin-arm64/resources/native-binary/claude",
+      "env": {},
+      "cwd": "",
+      "extra": {
+        "permissionMode": "default",
+        "allowedToolPrefixes": [
+          "mcp__novel-tools__"
+        ]
+      }
+    },
+    "claude-code-cli": {
+      "kind": "claude-code-cli",
+      "binPath": "",
+      "env": {},
+      "cwd": "",
+      "extra": {}
+    },
+    "codex": {
+      "kind": "codex",
+      "binPath": "",
+      "env": {},
+      "cwd": "",
+      "extra": {}
+    },
+    "direct-api": {
+      "kind": "direct-api"
+    }
+  },
+  "storageQuota": {
+    "chatHistoryMaxMB": 200,
+    "offlineLogMaxMB": 100
+  },
+  "searchEngine": "auto",
+  "enrichmentConcurrency": 10,
+  "enrichmentMode": "traditional",
+  "feishuSync": {
+    "enabled": true,
+    "endpointProfile": "dev",
+    "appId": "",
+    "appSecret": "",
+    "appToken": "",
+    "tableId": "",
+    "relayUrl": "",
+    "relayApiKey": ""
+  },
+  "license": {
+    "authCode": "",
+    "verifiedUntil": "",
+    "deviceId": ""
+  },
+  "updater": {
+    "skipVersion": "",
+    "autoDownload": false,
+    "lastCheckAt": "2026-05-21T18:09:30.448Z"
+  }
+}

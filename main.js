@@ -365,7 +365,7 @@ if (isFlowTest) {
 
     // License verification
     try {
-      let result = await verifyLicense();
+      let result = await verifyLicense({ silent: true });
       if (!result.valid) {
         console.error('[main] license verification failed:', result.reason);
         try {
@@ -379,6 +379,18 @@ if (isFlowTest) {
     } catch (err) {
       console.error('[main] license verification error:', err);
     }
+
+    // Re-verify in background on every launch so saved auth codes are
+    // periodically checked online without blocking startup UX.
+    setTimeout(() => {
+      verifyLicense({ silent: true, forceOnline: true }).then((result) => {
+        if (!result.valid) {
+          console.warn('[main] background license verify failed:', result.reason);
+        }
+      }).catch((err) => {
+        console.error('[main] background license verify error:', err.message || String(err));
+      });
+    }, 1500);
 
     // Check for updates (delay to avoid blocking startup)
     const { checkForUpdates } = require('./src/main/updater/versionChecker');

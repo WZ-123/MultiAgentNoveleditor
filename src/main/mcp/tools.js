@@ -19,6 +19,11 @@ const { readJson } = require('../store/jsonStore');
 const { checkFeasibility, placesToMap, distanceBetweenPlaceNames, SPEED_KMH } = require('./feasibility');
 const characterEnricher = require('../import/characterEnricher');
 const stagingProject = require('../import/stagingProject');
+const {
+  buildCharacterConsistencyReviewPayload,
+  enrichCharacterConsistencyAnnotations,
+  resolveTargetCharacters,
+} = require('../runtime/chapterCharacterReview');
 
 function textResult(obj) {
   const text = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
@@ -91,6 +96,31 @@ function _coerceRelationships(value) {
     }
   }
   return out.length ? out : undefined;
+}
+
+function _parseJsonText(text, fallback = null) {
+  if (typeof text !== 'string' || !text.trim()) return fallback;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return fallback;
+  }
+}
+
+function _coerceChapterPatchArgs(args) {
+  const payload = args && typeof args === 'object' ? { ...args } : {};
+  const parsedEdits = Array.isArray(payload.edits)
+    ? payload.edits
+    : _parseJsonText(payload.edits, null);
+  payload.edits = Array.isArray(parsedEdits) ? parsedEdits : [];
+  payload.baseContent = typeof payload.baseContent === 'string' ? payload.baseContent : '';
+  if (!_cleanText(payload.name)) {
+    throw new Error('apply_chapter_patch requires a valid chapter name');
+  }
+  if (!payload.edits.length) {
+    throw new Error('apply_chapter_patch requires a non-empty edits array');
+  }
+  return payload;
 }
 
 function _coerceCreateCharacterArgs(args) {
@@ -533,7 +563,7 @@ const TOOLS = [
   },
   {
     name: 'replace_chapter_text',
-    description: '在指定章节中按精确原文片段替换正文内容。默认要求 targetText 只命中 1 处；若命中多处会失败并要求提供更长的唯一片段。',
+    description: '在指定章节中替换正文内容。优先按精确原文片段匹配；如果提供 beforeContext/afterContext，会像 IDE patch 一样结合上下文锚点和规范化匹配（兼容 CRLF、全角/半角、不可见空白）来定位目标。默认要求只命中 1 处。',
     inputSchema: {
       type: 'object',
       properties: {
@@ -541,6 +571,8 @@ const TOOLS = [
         targetText: { type: 'string', description: '要被替换的原始正文片段，建议提供足够长的唯一片段' },
         replacement: { type: 'string', description: '替换后的新文本' },
         expectedMatchCount: { type: 'number', description: '预期命中次数。默认 1；若与实际不符则失败。' },
+        beforeContext: { type: 'string', description: '可选。targetText 前方附近的一小段原文上下文，用于像 IDE patch 一样锚定目标位置。' },
+        afterContext: { type: 'string', description: '可选。targetText 后方附近的一小段原文上下文，用于像 IDE patch 一样锚定目标位置。' },
       },
       required: ['name', 'targetText', 'replacement'],
     },
@@ -549,10 +581,56 @@ const TOOLS = [
       const dir = requireNovel(ctx);
       const result = await novelData.replaceChapterText(dir, args.name, args.targetText, args.replacement, {
         expectedMatchCount: Number.isInteger(args.expectedMatchCount) ? args.expectedMatchCount : 1,
+        beforeContext: typeof args.beforeContext === 'string' ? args.beforeContext : '',
+        afterContext: typeof args.afterContext === 'string' ? args.afterContext : '',
       });
       const title = result.metadata?.title || null;
       notifyChapterChanged(result.name, 'updated', title);
-      return textResult({ ok: true, name: result.name, replacedCount: result.replacedCount, matchCount: result.matchCount });
+      return textResult({ ok: true, name: result.name, replacedCount: result.replacedCount, matchCount: result.matchCount, matchStrategy: result.matchStrategy });
+    },
+  },
+  {
+    name: 'apply_chapter_patch',
+    description: '在同一章节快照上一次性应用多处正文修改。每条 edit 都支持 targetText/replacement 以及 beforeContext/afterContext 锚点；工具会先检测重叠冲突，再只写盘一次，避免连续 replace_chapter_text 彼此打坏。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: '章节文件名，如 "chapter-002.md"' },
+        baseContent: { type: 'string', description: '可选。最近一次 read_chapter 得到的整章正文。若当前文件已变更，工具会拒绝应用，避免把旧快照 patch 打到新内容上。' },
+        edits: {
+          type: 'array',
+          description: '同一章内要一次性应用的多处编辑。每条 edit 都基于同一份原文快照定位。',
+          items: {
+            type: 'object',
+            properties: {
+              targetText: { type: 'string', description: '原文片段' },
+              replacement: { type: 'string', description: '替换后的文本' },
+              expectedMatchCount: { type: 'number', description: '预期命中次数，默认 1' },
+              beforeContext: { type: 'string', description: '可选。targetText 前方附近原文，用于锚定位置。' },
+              afterContext: { type: 'string', description: '可选。targetText 后方附近原文，用于锚定位置。' },
+            },
+            required: ['targetText', 'replacement'],
+          },
+        },
+      },
+      required: ['name', 'edits'],
+    },
+    requiresConfirmation: true,
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      const payload = _coerceChapterPatchArgs(args);
+      const result = await novelData.applyChapterPatch(dir, payload.name, payload.edits, {
+        baseContent: payload.baseContent,
+      });
+      const title = result.metadata?.title || null;
+      notifyChapterChanged(result.name, 'updated', title);
+      return textResult({
+        ok: true,
+        name: result.name,
+        editCount: result.editCount,
+        replacedCount: result.replacedCount,
+        edits: result.edits,
+      });
     },
   },
   {
@@ -602,7 +680,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        nodes: { type: 'array', description: 'OutlineNode 数组。含路由字段(volumeIndex/sectionIndex/chapterIndex)则自动分层，否则平坦写入 nodes.json' },
+        nodes: { type: 'array', description: 'OutlineNode 数组。含路由字段(volumeIndex/sectionIndex/chapterIndex)则自动分层，否则平坦写入 nodes.json', items: { type: 'object' } },
       },
       required: ['nodes'],
     },
@@ -794,6 +872,108 @@ const TOOLS = [
       }
       const displayName = novelData.computeChapterDisplayName(cfg.rule, seq, cfg.separator);
       return textResult({ seq, fileName, displayName });
+    },
+  },
+  {
+    name: 'de_ai_ify',
+    description: '调用专门的去 AI 味改写器，对给定中文小说片段做去套话、去八股、保留原意的自然化改写。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', description: '需要去 AI 味改写的正文片段' },
+        guidance: { type: 'string', description: '可选，额外改写要求，例如保留语气、压缩字数、维持冷淡口吻' },
+      },
+      required: ['text'],
+    },
+    handler: async (args, ctx) => {
+      const sourceText = _cleanText(args.text);
+      if (!sourceText) throw new Error('de_ai_ify requires non-empty text');
+
+      const workflowOrchestrator = require('../runtime/workflowOrchestrator');
+      const prompt = [
+        '请对下面这段中文小说正文去 AI 味改写。',
+        '要求：保留情节事实、人物关系、时态、视角、专有名词；去掉 AI 八股和套话；输出自然的中文小说表达。',
+        args.guidance ? `额外要求：${String(args.guidance).trim()}` : '',
+        '',
+        '原文：',
+        sourceText,
+      ].filter(Boolean).join('\n');
+
+      const result = await workflowOrchestrator.runWorkflow({
+        mode: 'subagent',
+        subagentId: 'sa-de-ai-ifier',
+        input: prompt,
+        novelContext: ctx?.novel
+          ? { novelId: ctx.novel.id || null, novelDir: ctx.novelDir || null }
+          : undefined,
+      });
+
+      return textResult({
+        revisedText: String(result.output || '').trim(),
+        subagentId: 'sa-de-ai-ifier',
+      });
+    },
+  },
+  {
+    name: 'review_character_consistency',
+    description: '按段审查章节正文与角色卡是否冲突，返回段落级人设/设定不一致问题，不直接改正文。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        chapterName: { type: 'string', description: '章节文件名，如 "chapter-005.md"' },
+        focus: { type: 'string', description: '可选，用户对本次审查的补充说明或关注角色名，例如“检查信浓是否 OOC”' },
+        characterIds: { type: 'array', items: { type: 'string' }, description: '可选，指定要重点审查的角色 ID 列表' },
+      },
+      required: ['chapterName'],
+    },
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      const chapterName = _cleanText(args.chapterName);
+      if (!chapterName) throw new Error('review_character_consistency requires chapterName');
+
+      const chapterText = await novelData.readChapter(dir, chapterName);
+      if (!_cleanText(chapterText)) {
+        throw new Error(`chapter is empty or missing: ${chapterName}`);
+      }
+
+      const allCharacters = await novelData.listCharacters(dir);
+      const targetCharacters = resolveTargetCharacters(allCharacters, {
+        focus: _cleanText(args.focus),
+        characterIds: Array.isArray(args.characterIds) ? args.characterIds : [],
+        chapterText,
+      });
+      if (!targetCharacters.length) {
+        throw new Error('review_character_consistency could not resolve any target characters; specify characterIds or mention a character name in focus');
+      }
+
+      const payload = buildCharacterConsistencyReviewPayload({
+        chapterName,
+        chapterText,
+        focus: _cleanText(args.focus),
+        characters: targetCharacters,
+      });
+      const workflowOrchestrator = require('../runtime/workflowOrchestrator');
+      const result = await workflowOrchestrator.runWorkflow({
+        mode: 'subagent',
+        subagentId: 'sa-character-consistency-reviewer',
+        input: JSON.stringify(payload),
+        novelContext: ctx?.novel
+          ? { novelId: ctx.novel.id || null, novelDir: ctx.novelDir || null }
+          : undefined,
+      });
+      const parsed = _parseJsonText(String(result.output || ''), { annotations: [] });
+      const annotations = enrichCharacterConsistencyAnnotations(
+        parsed?.annotations,
+        payload.paragraphs,
+        targetCharacters
+      );
+
+      return textResult({
+        chapterName,
+        reviewedCharacterIds: targetCharacters.map((character) => character.id),
+        reviewedCharacterNames: targetCharacters.map((character) => character.name),
+        annotations,
+      });
     },
   },
   // ---------------- 技能管理 (Skill Management) ----------------
@@ -1052,7 +1232,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        id: { type: 'string' }, name: { type: 'string' }, aliases: { type: 'array' },
+        id: { type: 'string' }, name: { type: 'string' }, aliases: { type: 'array', items: { type: 'string' } },
         faction: { type: 'string' }, role: { type: 'string' },
         attributes: {}, relationships: {}, arc: {}, bio: { type: 'string' },
       },
@@ -1094,7 +1274,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         lore: { type: 'string' },
-        places: { type: 'array' },
+        places: { type: 'array', items: { type: 'object' } },
       },
     },
     requiresConfirmation: true,
@@ -1187,7 +1367,7 @@ const TOOLS = [
       type: "object",
       properties: {
         importId: { type: "string", description: "Staging project ID" },
-        characters: { type: "array", description: "Full character JSON objects to overwrite" },
+        characters: { type: "array", description: "Full character JSON objects to overwrite", items: { type: "object" } },
       },
       required: ["importId", "characters"],
     },

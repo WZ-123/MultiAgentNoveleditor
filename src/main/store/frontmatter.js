@@ -17,7 +17,7 @@
 const fs = require('node:fs');
 const fsp = require('node:fs').promises;
 
-const FM_RE = /^---\n([\s\S]*?)\n---\n*/;
+const FM_RE = /^\uFEFF?---\r?\n([\s\S]*?)\r?\n---(?:\r?\n)*/;
 
 /**
  * Parse YAML-like frontmatter from a string.
@@ -31,10 +31,13 @@ function parseFrontmatter(text) {
 
   const raw = m[1];
   const metadata = {};
-  for (const line of raw.split('\n')) {
-    const kv = line.match(/^\s*(\w+)\s*:\s*(.*?)\s*$/);
+  for (const line of raw.split(/\r?\n/)) {
+    const kv = line.match(/^\s*([A-Za-z0-9_-]+)\s*[:：]\s*(.*?)\s*$/);
     if (kv) {
       let val = kv[2].trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith('\'') && val.endsWith('\''))) {
+        val = val.slice(1, -1);
+      }
       // Try numeric
       if (/^\d+$/.test(val)) metadata[kv[1]] = Number(val);
       else metadata[kv[1]] = val;

@@ -22,7 +22,7 @@ function getDeviceId() {
 }
 
 async function verifyLicense(options = {}) {
-  const { silent = false } = options;
+  const { silent = false, forceOnline = false } = options;
   const cfg = await appConfig.load();
   const license = cfg.license || {};
 
@@ -66,7 +66,7 @@ async function verifyLicense(options = {}) {
   // Check local cache (allow offline usage within grace period)
   const now = Date.now();
   const cachedUntil = license.verifiedUntil ? new Date(license.verifiedUntil).getTime() : 0;
-  if (cachedUntil > now) {
+  if (!forceOnline && cachedUntil > now) {
     return { valid: true, cached: true, verifiedUntil: license.verifiedUntil };
   }
 

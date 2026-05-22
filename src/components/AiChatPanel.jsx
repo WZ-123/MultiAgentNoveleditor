@@ -8,7 +8,7 @@ import { appendToolUseMessage, applyToolResultMessage } from '@/components/chatT
 import { buildQuickFeedbackPayload } from '@/components/chatFeedbackPayload.mjs';
 import { getRecentRendererLogs, installRecentRendererLogCapture } from '@/components/recentRendererLogs.mjs';
 
-export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTextNearCursor, onInsertTextAtCursor }) {
+export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTextNearCursor, onInsertTextAtCursor, onBeforeSendMessage }) {
   const mana = typeof window !== 'undefined' ? window.mana : null;
 
   function expandThreadBranch(branch) {
@@ -438,6 +438,16 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
     const trimmed = rawInput.trim();
     if (!trimmed) return;
 
+    if (typeof onBeforeSendMessage === 'function') {
+      try {
+        await onBeforeSendMessage();
+      } catch (err) {
+        setError(err?.message || String(err));
+        setStatus('idle');
+        return;
+      }
+    }
+
     // Ensure we have an active thread
     let currentThreadId = activeThreadId;
     let currentSessionId = sessionId;
@@ -487,7 +497,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
       setError(msg);
       setStatus('idle');
     }
-  }, [input, activeThreadId, sessionId, status, mana, editorContext]);
+  }, [input, activeThreadId, sessionId, status, mana, editorContext, onBeforeSendMessage]);
 
   const cancelGeneration = useCallback(() => {
     if (sessionId && mana?.chatAgent?.cancel) {

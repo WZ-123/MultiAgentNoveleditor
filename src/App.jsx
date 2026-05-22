@@ -832,7 +832,7 @@ function App() {
     setTimeout(() => setSaveToast(null), 3000);
   }, []);
 
-  const manualSave = useCallback(async () => {
+  const flushActiveChapterToDisk = useCallback(async ({ silent = false } = {}) => {
     if (!activeChapterId || !activeNovelId) return;
     const entry = chapterMap.get(activeChapterId);
     if (!entry?.chapter?.fileName) return;
@@ -841,21 +841,34 @@ function App() {
     if (!window.mana?.novel?.saveChapter) return;
     const key = `_save_${name}`;
     clearTimeout(window[key]);
-    setSaveStatus('saving');
+    if (!silent) setSaveStatus('saving');
     try {
       const titleMatch = content.match(/^#\s+(.+)/);
       const chapTitle = titleMatch ? titleMatch[1].trim() : (entry.chapter._title || '');
       await window.mana.novel.saveChapter(activeNovelId, name, content, { title: chapTitle });
-      setSaveStatus('saved');
-      showSaveToast('success', '已保存到磁盘');
-      setTimeout(() => setSaveStatus(null), 2000);
+      if (!silent) {
+        setSaveStatus('saved');
+        showSaveToast('success', '已保存到磁盘');
+        setTimeout(() => setSaveStatus(null), 2000);
+      } else {
+        setSaveStatus(null);
+      }
     } catch (err) {
       setSaveStatus('save-failed');
       const reason = err?.message || String(err);
-      showSaveToast('error', `保存失败：${reason}`);
+      if (!silent) showSaveToast('error', `保存失败：${reason}`);
       console.error('[editor-save]', reason);
+      throw err;
     }
   }, [activeChapterId, activeNovelId, activeChapter, chapterMap, showSaveToast]);
+
+  const manualSave = useCallback(async () => {
+    try {
+      await flushActiveChapterToDisk();
+    } catch (err) {
+      // flushActiveChapterToDisk already reported the save failure.
+    }
+  }, [flushActiveChapterToDisk]);
 
   const updateActiveChapterContent = (content) => {
     if (!activeChapterId) return;
@@ -1628,6 +1641,7 @@ function App() {
                 onReplaceSelectedText={replaceSelectedText}
                 onReplaceTextNearCursor={replaceTextNearCursor}
                 onInsertTextAtCursor={insertTextAtCursor}
+                onBeforeSendMessage={() => flushActiveChapterToDisk({ silent: true })}
               />
             </div>
           </div>
