@@ -48,8 +48,9 @@ MultiAgentNovelAssistant 通过 MCP 协议暴露 32 个工具，供 Claude Code 
 |------|------|---------|
 | `list_assets` | 列出所有资产 | 否 |
 | `read_asset` | 读取单个资产。参数：`id`(必填) | 否 |
-| `grant_asset` | 将资产授予角色。参数：`assetId`(必填), `charId`(必填) | 否 |
-| `revoke_asset` | 回收资产。参数：`assetId`(必填), `charId`(必填) | 否 |
+| `grant_asset` | 将资产授予角色。参数：`assetId`(必填), `charId`(必填), `baseGrantedTo`(可选，最近一次读取到的授权快照) | 否 |
+| `revoke_asset` | 回收资产。参数：`assetId`(必填), `charId`(必填), `baseGrantedTo`(可选，最近一次读取到的授权快照) | 否 |
+| `apply_asset_patch` | 批量处理多个资产授权变更。参数：`edits`(必填，每项含 `assetId`、可选 `baseGrantedTo`、顺序执行的 `operations`) | 否 |
 
 ## 文风与摘要
 

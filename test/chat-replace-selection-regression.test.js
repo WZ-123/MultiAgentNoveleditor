@@ -27,6 +27,7 @@ async function seedNovel(ROOT) {
 阿宁把铜钱在指间翻了个花，笑得像没睡醒。
 她袖口里还藏着另一枚铜钱，以备临时起卦。
 铜钱左右铜钱，一时看不出该敲哪一枚。
+她忽然想起那句叮嘱：　“今夜先别走。”
 街口忽然传来一阵喧哗，像有人打翻了整条早市。
 她抬起眼，决定先看看热闹，再决定要不要出手。
 `, 'utf8');
@@ -74,6 +75,9 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
   const duplicateFirstLine = unsavedReplacement;
   const duplicateSecondLine = '她袖口里还藏着另一枚铜钱，以备临时起卦。';
   const equidistantLine = '铜钱左右铜钱，一时看不出该敲哪一枚。';
+  const normalizedNearCursorOriginal = '她忽然想起那句叮嘱：　“今夜先别走。”';
+  const normalizedNearCursorTarget = '她忽然想起那句叮嘱: "今夜先别走。"';
+  const normalizedNearCursorReplacement = '她忽然想起那句叮嘱：“今夜先别走，先听我说完。”';
   const secondOriginal = '街口忽然传来一阵喧哗，像有人打翻了整条早市。';
   const manualReplacement = '街口忽然传来一阵喧哗，卖鱼摊的木桶被人撞翻在地。';
   const blockedReplacement = '这句不该被插进去。';
@@ -172,6 +176,24 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
     {
       stopReason: 'tool_use',
       content: [
+        { type: 'text', text: '我按你光标附近那句引号形式不同的话来改。' },
+        {
+          type: 'tool_use',
+          id: 'toolu-near-cursor-replace-normalized-1',
+          name: 'replace_text_near_cursor',
+          input: { targetText: normalizedNearCursorTarget, replacement: normalizedNearCursorReplacement },
+        },
+      ],
+    },
+    {
+      stopReason: 'end_turn',
+      content: [
+        { type: 'text', text: '那句引号形式不同的话也已经替换。' },
+      ],
+    },
+    {
+      stopReason: 'tool_use',
+      content: [
         { type: 'text', text: '我按你现在的光标位置继续尝试替换。' },
         {
           type: 'tool_use',
@@ -262,6 +284,8 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
         const duplicateFirstLine = ${JSON.stringify(duplicateFirstLine)};
         const duplicateSecondLine = ${JSON.stringify(duplicateSecondLine)};
         const equidistantLine = ${JSON.stringify(equidistantLine)};
+        const normalizedNearCursorOriginal = ${JSON.stringify(normalizedNearCursorOriginal)};
+        const normalizedNearCursorReplacement = ${JSON.stringify(normalizedNearCursorReplacement)};
         const secondOriginal = ${JSON.stringify(secondOriginal)};
         const manualReplacement = ${JSON.stringify(manualReplacement)};
         const blockedReplacement = ${JSON.stringify(blockedReplacement)};
@@ -430,6 +454,15 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
         await sleep(2400);
         const diskAfterNearCursor = await window.mana.novel.readChapter(novelId, chapterFile);
 
+        placeCursorNearOccurrence(chapterEditor, normalizedNearCursorOriginal, 0);
+        const normalizedNearCursorResult = await sendPrompt('我已经把光标放到那句“今夜先别走”旁边了，你继续替换。', '那句引号形式不同的话也已经替换。');
+        await waitFor(
+          () => chapterEditor.value.includes(normalizedNearCursorReplacement) && !chapterEditor.value.includes(normalizedNearCursorOriginal),
+          'normalized near-cursor replacement not applied'
+        );
+        await sleep(2400);
+        const diskAfterNormalizedNearCursor = await window.mana.novel.readChapter(novelId, chapterFile);
+
         placeCursorBetweenOccurrences(chapterEditor, equidistantLine, duplicateTarget, duplicateTarget);
         const equalDistanceResult = await sendPrompt('我把光标放在“铜钱左右铜钱”中间了，你继续替换。', '这次光标两边的候选距离一样，我先不替换。');
         await sleep(500);
@@ -455,6 +488,7 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
           diskAfterAuto,
           diskAfterFirst,
           diskAfterNearCursor,
+          diskAfterNormalizedNearCursor,
           diskAfterEqualDistance,
           diskAfterSecond,
           selectionOverlayVisible: firstResult.selectionOverlayVisible,
@@ -470,6 +504,9 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
           nearCursorToolUsed: nearCursorResult.body.includes('调用: replace_text_near_cursor'),
           nearCursorReplaceUi: chapterEditor.value.includes(duplicateFirstLine) && chapterEditor.value.includes(duplicateSecondLine.replace(duplicateTarget, duplicateReplacement)),
           nearCursorReplaceDisk: diskAfterNearCursor.includes(duplicateFirstLine) && diskAfterNearCursor.includes(duplicateSecondLine.replace(duplicateTarget, duplicateReplacement)) && !diskAfterNearCursor.includes(duplicateFirstLine.replace(duplicateTarget, duplicateReplacement)),
+          normalizedNearCursorToolUsed: normalizedNearCursorResult.body.includes('调用: replace_text_near_cursor'),
+          normalizedNearCursorReplaceUi: chapterEditor.value.includes(normalizedNearCursorReplacement) && !chapterEditor.value.includes(normalizedNearCursorOriginal),
+          normalizedNearCursorReplaceDisk: diskAfterNormalizedNearCursor.includes(normalizedNearCursorReplacement) && !diskAfterNormalizedNearCursor.includes(normalizedNearCursorOriginal),
           equalDistanceToolUsed: equalDistanceResult.body.includes('调用: replace_text_near_cursor'),
           equalDistanceRejected: equalDistanceResult.body.includes('错误: Frontend action failed: 当前光标附近仍有多个等距命中，请再把光标放近一点，或直接手动选中文本'),
           equalDistanceDiskUnchanged: diskAfterEqualDistance.includes(equidistantLine),
@@ -507,6 +544,12 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
       pass('CHAT_REPLACE_duplicate_match_requires_cursor', 'duplicate matches now require the user to place the cursor near the intended occurrence before AI performs a near-cursor replacement');
     } else {
       fail('CHAT_REPLACE_duplicate_match_requires_cursor', JSON.stringify(r));
+    }
+
+    if (r?.normalizedNearCursorToolUsed && r?.normalizedNearCursorReplaceUi && r?.normalizedNearCursorReplaceDisk) {
+      pass('CHAT_REPLACE_near_cursor_normalized_match', 'replace_text_near_cursor also resolves Chinese full-width punctuation and quote variants near the cursor');
+    } else {
+      fail('CHAT_REPLACE_near_cursor_normalized_match', JSON.stringify(r));
     }
 
     if (r?.equalDistanceToolUsed && r?.equalDistanceRejected && r?.equalDistanceDiskUnchanged) {

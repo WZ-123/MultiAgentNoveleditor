@@ -45,7 +45,7 @@ function buildDraftSystemPrompt(basePrompt) {
 }
 
 function createDraftMcpClient() {
-  const blocked = new Set(['write_chapter', 'append_timeline', 'update_timeline', 'append_summary', 'grant_asset', 'revoke_asset', 'update_character', 'create_character', 'update_world']);
+  const blocked = new Set(['write_chapter', 'append_timeline', 'update_timeline', 'append_summary', 'grant_asset', 'revoke_asset', 'apply_asset_patch', 'update_character', 'create_character', 'update_world']);
   return {
     async listTools() {
       const tools = await mcpClient.listTools();

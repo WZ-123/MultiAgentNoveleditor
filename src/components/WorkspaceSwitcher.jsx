@@ -4,7 +4,7 @@ import { BookOpen } from 'lucide-react';
 import { useI18n } from '@/i18n/LanguageContext.jsx';
 import { useNovel } from '@/hooks/useNovel.js';
 
-export function WorkspaceSwitcher({ onImportExternal }) {
+export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged }) {
   const { t } = useI18n();
   const mana = typeof window !== 'undefined' ? window.mana : null;
   const { novels, active, open, close, create, importExisting, remove } = useNovel();
@@ -56,13 +56,16 @@ export function WorkspaceSwitcher({ onImportExternal }) {
       if (!dir) return;
       const title = createTitle.trim() || dir.split(/[/\\]/).pop() || 'Untitled';
       const r = await create({ title, dir });
-      if (r?.id) await open(r.id);
+      if (r?.id) {
+        await open(r.id);
+        await onActiveNovelChanged?.();
+      }
       setCreateTitle('');
       setOpened(false);
     } finally {
       setBusy(false);
     }
-  }, [mana, t, createTitle, create, open]);
+  }, [mana, t, createTitle, create, open, onActiveNovelChanged]);
 
   const onImport = useCallback(async () => {
     if (!mana?.fs) return;
@@ -72,38 +75,46 @@ export function WorkspaceSwitcher({ onImportExternal }) {
       if (!dir) return;
       try {
         const r = await importExisting(dir);
-        if (r?.id) await open(r.id);
+        if (r?.id) {
+          await open(r.id);
+          await onActiveNovelChanged?.();
+        }
       } catch (err) {
         // No novel.json present — auto-create one with directory name as title
         const title = dir.split(/[/\\]/).pop() || 'Untitled';
         const r = await create({ title, dir });
-        if (r?.id) await open(r.id);
+        if (r?.id) {
+          await open(r.id);
+          await onActiveNovelChanged?.();
+        }
       }
       setOpened(false);
     } finally {
       setBusy(false);
     }
-  }, [mana, t, importExisting, create, open]);
+  }, [mana, t, importExisting, create, open, onActiveNovelChanged]);
 
   const onSwitch = useCallback(async (id) => {
     setBusy(true);
     try {
       await open(id);
+      await onActiveNovelChanged?.();
       setOpened(false);
     } finally {
       setBusy(false);
     }
-  }, [open]);
+  }, [open, onActiveNovelChanged]);
 
   const onClose = useCallback(async () => {
     setBusy(true);
     try {
       await close();
+      await onActiveNovelChanged?.();
       setOpened(false);
     } finally {
       setBusy(false);
     }
-  }, [close]);
+  }, [close, onActiveNovelChanged]);
 
   const onRemove = useCallback(async (id) => {
     setBusy(true);

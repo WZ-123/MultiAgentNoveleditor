@@ -12,6 +12,7 @@ const lockfile = require('proper-lockfile');
 const { novelPaths, ensureNovelLayout, generateId, outlineVolumePath, outlineSectionPath, outlineChapterPath, outlineVolumeDir, outlineSectionDir } = require('./paths');
 const { parseFrontmatter, serializeFrontmatter, readFrontmatterFromFile, computeNextInsertName } = require('./frontmatter');
 const { readJson, writeJson, listJsonFiles, deleteFile, appendJsonl, readJsonl } = require('./jsonStore');
+const { resolveAnchoredTextMatches } = require('../../domain/textMatch.cjs');
 
 // Global mutex per file path for jsonl writes (in-process serialization)
 const _mutex = new Map();
@@ -22,6 +23,24 @@ async function withMutex(key, fn) {
   _mutex.set(key, prev.then(() => next));
   try { await prev; return await fn(); }
   finally { release(); if (_mutex.get(key) === next) _mutex.delete(key); }
+}
+
+function _hasOwn(obj, key) {
+  return !!obj && Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+function _isPlainObject(value) {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function _cloneStructuredValue(value) {
+  if (Array.isArray(value)) return value.map((item) => _cloneStructuredValue(item));
+  if (_isPlainObject(value)) {
+    const out = {};
+    for (const [key, item] of Object.entries(value)) out[key] = _cloneStructuredValue(item);
+    return out;
+  }
+  return value;
 }
 
 function _cleanStr(value) {
@@ -53,16 +72,16 @@ function _parseRawCharacter(value) {
   } catch {
     let depth = 0;
     let start = -1;
-    for (let i = 0; i < value.length; i++) {
-      const ch = value[i];
+    for (let index = 0; index < value.length; index += 1) {
+      const ch = value[index];
       if (ch === '{') {
-        if (depth === 0) start = i;
-        depth++;
+        if (depth === 0) start = index;
+        depth += 1;
       } else if (ch === '}') {
-        depth--;
+        depth -= 1;
         if (depth === 0 && start >= 0) {
           try {
-            const parsed = JSON.parse(value.slice(start, i + 1));
+            const parsed = JSON.parse(value.slice(start, index + 1));
             return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
           } catch {
             start = -1;
@@ -78,15 +97,38 @@ function _mergeStringArrays(...lists) {
   const out = [];
   const seen = new Set();
   for (const list of lists) {
-    if (!Array.isArray(list)) continue;
-    for (const item of list) {
-      const text = _cleanStr(item);
-      if (!text || seen.has(text)) continue;
-      seen.add(text);
-      out.push(text);
+    for (const item of Array.isArray(list) ? list : []) {
+      const safe = _cleanStr(item);
+      if (!safe) continue;
+      const key = safe.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(safe);
     }
   }
   return out;
+}
+
+function _deepMergePatch(baseValue, patchValue) {
+  if (Array.isArray(patchValue)) return patchValue.map((item) => _cloneStructuredValue(item));
+  if (!_isPlainObject(patchValue)) return _cloneStructuredValue(patchValue);
+
+  const next = _isPlainObject(baseValue) ? { ...baseValue } : {};
+  const deleteKeys = Array.isArray(patchValue.__delete)
+    ? patchValue.__delete.map((key) => _cleanStr(key)).filter(Boolean)
+    : [];
+  for (const key of deleteKeys) delete next[key];
+
+  for (const [key, value] of Object.entries(patchValue)) {
+    if (key === '__delete') continue;
+    if (_isPlainObject(value)) {
+      next[key] = _deepMergePatch(next[key], value);
+      continue;
+    }
+    next[key] = _cloneStructuredValue(value);
+  }
+
+  return next;
 }
 
 function _pickFirstString(...values) {
@@ -235,6 +277,14 @@ async function writeCharacter(novelDir, character) {
   return normalized;
 }
 
+async function patchCharacter(novelDir, id, patch) {
+  const current = await readCharacter(novelDir, id);
+  if (!current) throw new Error(`character not found: ${id}`);
+  const next = _deepMergePatch(current, _isPlainObject(patch) ? patch : {});
+  next.id = id;
+  return writeCharacter(novelDir, next);
+}
+
 async function deleteCharacter(novelDir, id) {
   const np = novelPaths(novelDir);
   await deleteFile(path.join(np.characters, `${id}.json`));
@@ -278,33 +328,179 @@ async function upsertAsset(novelDir, asset) {
   });
 }
 
-async function grantAsset(novelDir, { assetId, charId, chapterRef, note }) {
+function _coerceAssetPatchOperation(input, assetId, index) {
+  if (!_isPlainObject(input)) {
+    throw new Error(`asset patch operation ${index + 1} for ${assetId} must be an object`);
+  }
+  const action = _cleanStr(input.action).toLowerCase();
+  if (action !== 'grant' && action !== 'revoke') {
+    throw new Error(`asset patch operation ${index + 1} for ${assetId} requires action "grant" or "revoke"`);
+  }
+  const charId = _cleanStr(input.charId);
+  if (!charId) {
+    throw new Error(`asset patch operation ${index + 1} for ${assetId} requires charId`);
+  }
+  const at = _cleanStr(input.at) || new Date().toISOString();
+  return {
+    action,
+    charId,
+    chapterRef: _cleanStr(input.chapterRef) || null,
+    note: _cleanStr(input.note),
+    at,
+  };
+}
+
+function _coerceAssetPatchEdit(edit, index) {
+  if (!_isPlainObject(edit)) {
+    throw new Error(`asset patch edit ${index + 1} must be an object`);
+  }
+  const assetId = _cleanStr(edit.assetId || edit.id);
+  if (!assetId) {
+    throw new Error(`asset patch edit ${index + 1} requires assetId`);
+  }
+  if (_hasOwn(edit, 'baseGrantedTo') && !Array.isArray(edit.baseGrantedTo)) {
+    throw new Error(`asset patch edit ${index + 1} requires baseGrantedTo to be an array when provided`);
+  }
+  const operations = Array.isArray(edit.operations)
+    ? edit.operations.map((operation, opIndex) => _coerceAssetPatchOperation(operation, assetId, opIndex))
+    : [];
+  if (!operations.length) {
+    throw new Error(`asset patch edit ${index + 1} requires a non-empty operations array`);
+  }
+  return {
+    assetId,
+    operations,
+    ...(_hasOwn(edit, 'baseGrantedTo') ? { baseGrantedTo: _cloneStructuredValue(edit.baseGrantedTo) } : {}),
+  };
+}
+
+function _assertAssetGrantSnapshot(currentAsset, baseGrantedTo, assetId) {
+  const currentGrantedTo = Array.isArray(currentAsset?.grantedTo) ? currentAsset.grantedTo : [];
+  const expectedGrantedTo = Array.isArray(baseGrantedTo) ? baseGrantedTo : [];
+  if (stableSerialize(currentGrantedTo) !== stableSerialize(expectedGrantedTo)) {
+    throw new Error(`asset grant snapshot mismatch for ${assetId}: the asset authorization state changed after it was read. Read it again before applying this change.`);
+  }
+}
+
+function _applyAssetPatchEdit(asset, edit) {
+  const nextAsset = _cloneStructuredValue(asset);
+  let nextGrantedTo = Array.isArray(nextAsset.grantedTo)
+    ? nextAsset.grantedTo.map((entry) => _cloneStructuredValue(entry))
+    : [];
+
+  for (const operation of edit.operations) {
+    if (operation.action === 'grant') {
+      nextGrantedTo.push({
+        charId: operation.charId,
+        chapterRef: operation.chapterRef || null,
+        at: operation.at,
+        note: operation.note || '',
+      });
+      continue;
+    }
+
+    const filtered = nextGrantedTo.filter((entry) => _cleanStr(entry?.charId) !== operation.charId);
+    filtered.push({
+      charId: operation.charId,
+      chapterRef: operation.chapterRef || null,
+      at: operation.at,
+      note: `(revoked) ${operation.note || ''}`,
+      revoked: true,
+    });
+    nextGrantedTo = filtered;
+  }
+
+  nextAsset.grantedTo = nextGrantedTo;
+  return nextAsset;
+}
+
+async function applyAssetPatch(novelDir, patch = {}) {
   const np = ensureNovelLayout(novelDir);
   return withMutex(np.assetsMain, async () => {
     const data = await readAssetsFile(novelDir);
-    const idx = data.assets.findIndex((a) => a.id === assetId);
-    if (idx < 0) throw new Error(`asset not found: ${assetId}`);
-    const granted = data.assets[idx].grantedTo || [];
-    granted.push({ charId, chapterRef: chapterRef || null, at: new Date().toISOString(), note: note || '' });
-    data.assets[idx].grantedTo = granted;
+    const rawEdits = Array.isArray(patch.edits) ? patch.edits : [];
+    const edits = rawEdits.map((edit, index) => _coerceAssetPatchEdit(edit, index));
+    if (!edits.length) throw new Error('applyAssetPatch requires a non-empty edits array');
+
+    const seenAssetIds = new Set();
+    for (const edit of edits) {
+      if (seenAssetIds.has(edit.assetId)) {
+        throw new Error(`applyAssetPatch received duplicate assetId: ${edit.assetId}. Merge operations for the same asset into one edit.`);
+      }
+      seenAssetIds.add(edit.assetId);
+    }
+
+    const nextAssets = Array.isArray(data.assets) ? data.assets.map((asset) => _cloneStructuredValue(asset)) : [];
+    const updatedAssets = [];
+    let operationCount = 0;
+
+    for (const edit of edits) {
+      const assetIndex = nextAssets.findIndex((asset) => asset?.id === edit.assetId);
+      if (assetIndex < 0) throw new Error(`asset not found: ${edit.assetId}`);
+
+      const currentAsset = nextAssets[assetIndex] || {};
+      if (_hasOwn(edit, 'baseGrantedTo')) {
+        _assertAssetGrantSnapshot(currentAsset, edit.baseGrantedTo, edit.assetId);
+      }
+
+      const nextAsset = _applyAssetPatchEdit(currentAsset, edit);
+      nextAssets[assetIndex] = nextAsset;
+      updatedAssets.push(_cloneStructuredValue(nextAsset));
+      operationCount += edit.operations.length;
+    }
+
+    data.assets = nextAssets;
     await writeAssetsFile(novelDir, data);
-    return data.assets[idx];
+
+    return {
+      assetCount: updatedAssets.length,
+      operationCount,
+      assetIds: updatedAssets.map((asset) => asset.id),
+      assets: updatedAssets,
+    };
   });
 }
 
-async function revokeAsset(novelDir, { assetId, charId, chapterRef, note }) {
-  const np = ensureNovelLayout(novelDir);
-  return withMutex(np.assetsMain, async () => {
-    const data = await readAssetsFile(novelDir);
-    const idx = data.assets.findIndex((a) => a.id === assetId);
-    if (idx < 0) throw new Error(`asset not found: ${assetId}`);
-    const granted = data.assets[idx].grantedTo || [];
-    const filtered = granted.filter((g) => g.charId !== charId);
-    filtered.push({ charId, chapterRef: chapterRef || null, at: new Date().toISOString(), note: `(revoked) ${note || ''}`, revoked: true });
-    data.assets[idx].grantedTo = filtered;
-    await writeAssetsFile(novelDir, data);
-    return data.assets[idx];
+async function grantAsset(novelDir, { assetId, charId, chapterRef, note }) {
+  const payload = arguments[1] && typeof arguments[1] === 'object' ? arguments[1] : { assetId, charId, chapterRef, note };
+  if (_hasOwn(payload, 'baseGrantedTo') && !Array.isArray(payload.baseGrantedTo)) {
+    throw new Error('grantAsset requires baseGrantedTo to be an array when provided');
+  }
+  const result = await applyAssetPatch(novelDir, {
+    edits: [{
+      assetId: payload.assetId,
+      ...(_hasOwn(payload, 'baseGrantedTo') ? { baseGrantedTo: payload.baseGrantedTo } : {}),
+      operations: [{
+        action: 'grant',
+        charId: payload.charId,
+        chapterRef: payload.chapterRef,
+        note: payload.note,
+        at: payload.at,
+      }],
+    }],
   });
+  return result.assets[0] || null;
+}
+
+async function revokeAsset(novelDir, { assetId, charId, chapterRef, note }) {
+  const payload = arguments[1] && typeof arguments[1] === 'object' ? arguments[1] : { assetId, charId, chapterRef, note };
+  if (_hasOwn(payload, 'baseGrantedTo') && !Array.isArray(payload.baseGrantedTo)) {
+    throw new Error('revokeAsset requires baseGrantedTo to be an array when provided');
+  }
+  const result = await applyAssetPatch(novelDir, {
+    edits: [{
+      assetId: payload.assetId,
+      ...(_hasOwn(payload, 'baseGrantedTo') ? { baseGrantedTo: payload.baseGrantedTo } : {}),
+      operations: [{
+        action: 'revoke',
+        charId: payload.charId,
+        chapterRef: payload.chapterRef,
+        note: payload.note,
+        at: payload.at,
+      }],
+    }],
+  });
+  return result.assets[0] || null;
 }
 
 // ---------------- Timeline ----------------
@@ -1015,15 +1211,43 @@ async function readChapterWithMeta(novelDir, name) {
   }
 }
 
+async function _readChapterHead(filePath, start = 0, length = 4096) {
+  try {
+    const fd = await fs.open(filePath, 'r');
+    try {
+      const buffer = Buffer.alloc(length);
+      const { bytesRead } = await fd.read(buffer, 0, length, start);
+      return buffer.toString('utf8', 0, bytesRead);
+    } finally {
+      await fd.close();
+    }
+  } catch (err) {
+    if (err.code === 'ENOENT') return null;
+    throw err;
+  }
+}
+
+function _extractHeadingTitle(text) {
+  const match = String(text || '').replace(/^\uFEFF/, '').match(/^\s*#\s+(.+?)\s*$/m);
+  return match ? match[1].trim() : '';
+}
+
 /**
  * Read only frontmatter of a chapter file (reads first 2KB).
- * @returns {{ metadata: object|null, fileName: string }|null}
+ * Also returns a lightweight heading fallback for legacy files without frontmatter.
+ * @returns {{ metadata: object|null, fileName: string, headingTitle: string }|null}
  */
 async function readChapterMeta(novelDir, name) {
   const np = novelPaths(novelDir);
-  const fm = await readFrontmatterFromFile(path.join(np.chapters, name));
-  if (fm) return { metadata: fm.metadata, fileName: name };
-  return null;
+  const filePath = path.join(np.chapters, name);
+  const fm = await readFrontmatterFromFile(filePath);
+  const head = await _readChapterHead(filePath, fm?.bodyStart || 0, 4096);
+  if (head == null && !fm) return null;
+  return {
+    metadata: fm?.metadata || null,
+    fileName: name,
+    headingTitle: _extractHeadingTitle(head || ''),
+  };
 }
 
 async function writeChapter(novelDir, name, content) {
@@ -1045,6 +1269,16 @@ async function writeChapter(novelDir, name, content) {
 async function writeChapterWithMeta(novelDir, name, content, metadata) {
   const np = ensureNovelLayout(novelDir);
   const safe = String(name).replace(/[^\w.\-]/g, '_');
+  if (arguments.length >= 5) {
+    const options = arguments[4] || {};
+    if (_hasOwn(options, 'baseContent')) {
+      const expectedBaseContent = typeof options.baseContent === 'string' ? options.baseContent : '';
+      const existing = await readChapterWithMeta(novelDir, safe);
+      if ((existing?.content || '') !== expectedBaseContent) {
+        throw new Error('chapter snapshot mismatch: the chapter changed after it was read. Read the latest chapter again before overwriting it.');
+      }
+    }
+  }
   const file = path.join(np.chapters, safe);
   const output = serializeFrontmatter(metadata || {}, content || '');
   await fs.writeFile(file, output, 'utf8');
@@ -1201,39 +1435,14 @@ function _applyResolvedEditRanges(current, resolvedRanges) {
 }
 
 function _resolveReplaceChapterMatches(current, search, options = {}) {
-  const expectedMatchCount = Number.isInteger(options.expectedMatchCount)
-    ? options.expectedMatchCount
-    : 1;
-  const exactMatches = _findLiteralRanges(current, search);
-  if (exactMatches.length === expectedMatchCount) {
-    return { matches: exactMatches, strategy: 'exact', expectedMatchCount };
-  }
-
-  const currentIndex = _buildNormalizedTextIndex(current);
-  const normalizedMatches = _findNormalizedRanges(currentIndex, search);
-  const filteredNormalizedMatches = _filterRangesByContext(normalizedMatches, currentIndex, options);
-
-  if (filteredNormalizedMatches.length === expectedMatchCount) {
-    return {
-      matches: filteredNormalizedMatches.map(({ start, end }) => ({ start, end })),
-      strategy: options.beforeContext || options.afterContext ? 'normalized_context' : 'normalized',
-      expectedMatchCount,
-    };
-  }
-
-  return {
-    matches: exactMatches,
-    strategy: 'exact',
-    expectedMatchCount,
-    normalizedMatchCount: filteredNormalizedMatches.length,
-  };
+  return resolveAnchoredTextMatches(current, search, options);
 }
 
-function _resolveChapterPatchEdit(current, edit, index) {
+function _resolveAnchoredTextPatchEdit(current, edit, index, label) {
   const targetText = typeof edit?.targetText === 'string' ? edit.targetText : '';
   const replacement = typeof edit?.replacement === 'string' ? edit.replacement : '';
   if (!targetText) {
-    throw new Error(`chapter patch edit ${index + 1} is missing targetText`);
+    throw new Error(`${label} ${index + 1} is missing targetText`);
   }
 
   const resolved = _resolveReplaceChapterMatches(current, targetText, {
@@ -1244,10 +1453,10 @@ function _resolveChapterPatchEdit(current, edit, index) {
   const matchCount = resolved.matches.length;
 
   if (matchCount === 0) {
-    throw new Error(`chapter patch edit ${index + 1} targetText not found; re-read the chapter and include beforeContext/afterContext`);
+    throw new Error(`${label} ${index + 1} targetText not found; re-read the latest text and include beforeContext/afterContext`);
   }
   if (matchCount !== resolved.expectedMatchCount) {
-    throw new Error(`chapter patch edit ${index + 1} matched ${matchCount} times; expected ${resolved.expectedMatchCount}. Add tighter beforeContext/afterContext, or split the patch into a cursor-based edit.`);
+    throw new Error(`${label} ${index + 1} matched ${matchCount} times; expected ${resolved.expectedMatchCount}. Add tighter beforeContext/afterContext, or split it into a more targeted edit.`);
   }
 
   return {
@@ -1269,7 +1478,11 @@ function _resolveChapterPatchEdit(current, edit, index) {
   };
 }
 
-function _assertNonOverlappingPatchRanges(resolvedEdits) {
+function _resolveChapterPatchEdit(current, edit, index) {
+  return _resolveAnchoredTextPatchEdit(current, edit, index, 'chapter patch edit');
+}
+
+function _assertNonOverlappingPatchRanges(resolvedEdits, label = 'text patch edits') {
   const ranges = resolvedEdits
     .flatMap((edit) => edit.ranges.map((range) => ({ ...range, editNumber: edit.editIndex + 1 })))
     .sort((left, right) => left.start - right.start || left.editIndex - right.editIndex);
@@ -1278,7 +1491,7 @@ function _assertNonOverlappingPatchRanges(resolvedEdits) {
     const previous = ranges[index - 1];
     const current = ranges[index];
     if (current.start < previous.end) {
-      throw new Error(`chapter patch edits ${previous.editNumber} and ${current.editNumber} overlap. Merge them into one consolidated replacement, or use write_chapter for a full rewrite.`);
+      throw new Error(`${label} ${previous.editNumber} and ${current.editNumber} overlap. Merge them into one consolidated replacement, or use a full rewrite instead.`);
     }
   }
 
@@ -1333,10 +1546,10 @@ async function applyChapterPatch(novelDir, name, edits, options = {}) {
   }
 
   const resolvedEdits = patchEdits.map((edit, index) => _resolveChapterPatchEdit(current, edit, index));
-  const resolvedRanges = _assertNonOverlappingPatchRanges(resolvedEdits);
+  const resolvedRanges = _assertNonOverlappingPatchRanges(resolvedEdits, 'chapter patch edits');
   const nextContent = _applyResolvedEditRanges(current, resolvedRanges);
 
-  await writeChapterWithMeta(novelDir, safeName, nextContent, metadata || null);
+  await writeChapterWithMeta(novelDir, safeName, nextContent, metadata || null, { baseContent: current });
   return {
     name: safeName,
     editCount: resolvedEdits.length,
@@ -1396,6 +1609,22 @@ async function readWorldMeta(novelDir) {
 }
 
 async function writeWorld(novelDir, { lore, places }) {
+  const options = arguments.length >= 3 ? (arguments[2] || {}) : {};
+  if (_hasOwn(options, 'baseLore') || _hasOwn(options, 'basePlaces')) {
+    const current = await readWorld(novelDir);
+    if (_hasOwn(options, 'baseLore')) {
+      const expectedLore = typeof options.baseLore === 'string' ? options.baseLore : '';
+      if ((current?.lore || '') !== expectedLore) {
+        throw new Error('world lore snapshot mismatch: the world changed after it was read. Read it again before overwriting.');
+      }
+    }
+    if (_hasOwn(options, 'basePlaces')) {
+      const expectedPlaces = Array.isArray(options.basePlaces) ? options.basePlaces : [];
+      if (stableSerialize(current?.places || []) !== stableSerialize(expectedPlaces)) {
+        throw new Error('world places snapshot mismatch: the world changed after it was read. Read it again before overwriting.');
+      }
+    }
+  }
   const np = ensureNovelLayout(novelDir);
   if (typeof lore === 'string') {
     await fs.writeFile(np.worldLore, lore, 'utf8');
@@ -1403,6 +1632,127 @@ async function writeWorld(novelDir, { lore, places }) {
   if (Array.isArray(places)) {
     await writeJson(np.worldPlaces, { schemaVersion: 1, places });
   }
+  return readWorld(novelDir);
+}
+
+function _normalizePlaceKey(value) {
+  return _cleanStr(value).toLowerCase();
+}
+
+function _coercePlaceDeleteNames(placeDeletes) {
+  if (!Array.isArray(placeDeletes)) return [];
+  return placeDeletes
+    .map((item) => (typeof item === 'string' ? item : item?.name))
+    .map((item) => _cleanStr(item))
+    .filter(Boolean);
+}
+
+function _coercePlaceUpsert(place, index) {
+  if (!_isPlainObject(place)) {
+    throw new Error(`world place upsert ${index + 1} must be an object`);
+  }
+  const patch = _cloneStructuredValue(place);
+  const matchName = _cleanStr(patch.matchName);
+  delete patch.matchName;
+  if (!_cleanStr(patch.name) && !matchName) {
+    throw new Error(`world place upsert ${index + 1} requires name or matchName`);
+  }
+  return { matchName, patch };
+}
+
+async function applyWorldPatch(novelDir, patch = {}) {
+  const current = await readWorld(novelDir);
+  const baseLore = _hasOwn(patch, 'baseLore') ? (typeof patch.baseLore === 'string' ? patch.baseLore : '') : undefined;
+  const basePlaces = _hasOwn(patch, 'basePlaces') ? (Array.isArray(patch.basePlaces) ? patch.basePlaces : []) : undefined;
+  if (baseLore != null && (current?.lore || '') !== baseLore) {
+    throw new Error('world lore snapshot mismatch: the world changed after it was read. Read it again before applying this patch.');
+  }
+  if (basePlaces != null && stableSerialize(current?.places || []) !== stableSerialize(basePlaces)) {
+    throw new Error('world places snapshot mismatch: the world changed after it was read. Read it again before applying this patch.');
+  }
+
+  const loreEdits = Array.isArray(patch.loreEdits) ? patch.loreEdits : [];
+  const hasLoreReplacement = _hasOwn(patch, 'loreReplacement');
+  if (hasLoreReplacement && loreEdits.length) {
+    throw new Error('applyWorldPatch accepts either loreReplacement or loreEdits, not both');
+  }
+
+  let nextLore = current?.lore || '';
+  let loreEditResults = [];
+  if (hasLoreReplacement) {
+    nextLore = typeof patch.loreReplacement === 'string' ? patch.loreReplacement : '';
+  } else if (loreEdits.length) {
+    const resolvedLoreEdits = loreEdits.map((edit, index) => _resolveAnchoredTextPatchEdit(nextLore, edit, index, 'world lore patch edit'));
+    const resolvedLoreRanges = _assertNonOverlappingPatchRanges(resolvedLoreEdits, 'world lore patch edits');
+    nextLore = _applyResolvedEditRanges(nextLore, resolvedLoreRanges);
+    loreEditResults = resolvedLoreEdits.map((edit) => ({
+      index: edit.editIndex,
+      matchCount: edit.matchCount,
+      expectedMatchCount: edit.expectedMatchCount,
+      matchStrategy: edit.matchStrategy,
+      beforeContext: edit.beforeContext,
+      afterContext: edit.afterContext,
+    }));
+  }
+
+  let nextPlaces = Array.isArray(current?.places) ? current.places.map((place) => _cloneStructuredValue(place)) : [];
+  const deletedPlaceNames = [];
+  const deleteNames = _coercePlaceDeleteNames(patch.placeDeletes);
+  if (deleteNames.length) {
+    const deleteKeys = new Set(deleteNames.map((item) => _normalizePlaceKey(item)));
+    nextPlaces = nextPlaces.filter((place) => {
+      const keep = !deleteKeys.has(_normalizePlaceKey(place?.name));
+      if (!keep && _cleanStr(place?.name)) deletedPlaceNames.push(_cleanStr(place.name));
+      return keep;
+    });
+  }
+
+  const upsertedPlaceNames = [];
+  const placeUpserts = Array.isArray(patch.placeUpserts) ? patch.placeUpserts : [];
+  for (let index = 0; index < placeUpserts.length; index += 1) {
+    const { matchName, patch: placePatch } = _coercePlaceUpsert(placeUpserts[index], index);
+    const lookupKey = _normalizePlaceKey(matchName || placePatch.name);
+    const existingIndex = nextPlaces.findIndex((place) => _normalizePlaceKey(place?.name) === lookupKey);
+    if (existingIndex >= 0) {
+      const merged = _deepMergePatch(nextPlaces[existingIndex], placePatch);
+      if (!_cleanStr(merged.name)) merged.name = nextPlaces[existingIndex]?.name || matchName;
+      if (!_cleanStr(merged.name)) {
+        throw new Error(`world place upsert ${index + 1} produced an empty name`);
+      }
+      nextPlaces[existingIndex] = merged;
+      upsertedPlaceNames.push(_cleanStr(merged.name));
+      continue;
+    }
+    const created = _deepMergePatch({}, placePatch);
+    if (!_cleanStr(created.name)) {
+      throw new Error(`world place upsert ${index + 1} requires name when creating a new place`);
+    }
+    nextPlaces.push(created);
+    upsertedPlaceNames.push(_cleanStr(created.name));
+  }
+
+  const seenPlaceKeys = new Set();
+  for (const place of nextPlaces) {
+    const key = _normalizePlaceKey(place?.name);
+    if (!key) throw new Error('world places cannot contain an empty name');
+    if (seenPlaceKeys.has(key)) throw new Error(`world places contain duplicate name: ${place.name}`);
+    seenPlaceKeys.add(key);
+  }
+
+  const written = await writeWorld(novelDir, { lore: nextLore, places: nextPlaces }, {
+    baseLore: current?.lore || '',
+    basePlaces: current?.places || [],
+  });
+
+  return {
+    loreChanged: nextLore !== (current?.lore || ''),
+    loreEditCount: loreEditResults.length,
+    loreEdits: loreEditResults,
+    placeCount: nextPlaces.length,
+    upsertedPlaceNames,
+    deletedPlaceNames,
+    world: written,
+  };
 }
 
 // ---------------- 章节命名规则 ----------------
@@ -1489,9 +1839,9 @@ async function listChaptersWithDisplay(novelDir) {
 module.exports = {
   // characters
   normalizeCharacter,
-  listCharacters, readCharacter, writeCharacter, deleteCharacter,
+  listCharacters, readCharacter, writeCharacter, patchCharacter, deleteCharacter,
   // assets
-  listAssets, readAsset, upsertAsset, grantAsset, revokeAsset,
+  listAssets, readAsset, upsertAsset, grantAsset, revokeAsset, applyAssetPatch,
   // timeline
   listTimeline, appendTimelineEvent, updateTimelineEvent, replaceTimeline, dedupeTimeline, queryTimeline,
   // summaries
@@ -1510,5 +1860,5 @@ module.exports = {
   computeChapterDisplayName, computeDisplayNameForNovel, toChineseNum,
   listChaptersWithDisplay,
   // world
-  readWorld, writeWorld, readWorldMeta,
+  readWorld, writeWorld, applyWorldPatch, readWorldMeta,
 };

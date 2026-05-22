@@ -48,6 +48,10 @@ function requireNovel(ctx) {
   return ctx.novelDir;
 }
 
+function _hasOwn(obj, key) {
+  return !!obj && Object.prototype.hasOwnProperty.call(obj, key);
+}
+
 function _cleanText(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
@@ -168,6 +172,162 @@ function _coerceUpdateCharacterArgs(args) {
   }
 
   return { id, patch };
+}
+
+function _coerceWorldWriteArgs(args, action = 'update_world') {
+  const payload = args && typeof args === 'object' ? { ...args } : {};
+  const hadPlaces = _hasOwn(payload, 'places');
+  const parsedPlaces = Array.isArray(payload.places) ? payload.places : _parseJsonText(payload.places, null);
+  if (hadPlaces && !Array.isArray(parsedPlaces)) {
+    throw new Error(`${action} requires places to be an array when provided`);
+  }
+  if (hadPlaces) payload.places = parsedPlaces;
+
+  const hadBasePlaces = _hasOwn(payload, 'basePlaces');
+  const parsedBasePlaces = Array.isArray(payload.basePlaces) ? payload.basePlaces : _parseJsonText(payload.basePlaces, null);
+  if (hadBasePlaces && !Array.isArray(parsedBasePlaces)) {
+    throw new Error(`${action} requires basePlaces to be an array when provided`);
+  }
+  if (hadBasePlaces) payload.basePlaces = parsedBasePlaces;
+
+  if (_hasOwn(payload, 'lore') && typeof payload.lore !== 'string') {
+    throw new Error(`${action} requires lore to be a string when provided`);
+  }
+  if (_hasOwn(payload, 'baseLore') && typeof payload.baseLore !== 'string') {
+    throw new Error(`${action} requires baseLore to be a string when provided`);
+  }
+  return payload;
+}
+
+function _coerceWorldPatchArgs(args) {
+  const payload = _coerceWorldWriteArgs(args, 'apply_world_patch');
+
+  const hadLoreEdits = _hasOwn(payload, 'loreEdits');
+  const parsedLoreEdits = Array.isArray(payload.loreEdits) ? payload.loreEdits : _parseJsonText(payload.loreEdits, null);
+  if (hadLoreEdits && !Array.isArray(parsedLoreEdits)) {
+    throw new Error('apply_world_patch requires loreEdits to be an array when provided');
+  }
+  payload.loreEdits = Array.isArray(parsedLoreEdits) ? parsedLoreEdits : [];
+
+  const hadPlaceUpserts = _hasOwn(payload, 'placeUpserts');
+  const parsedPlaceUpserts = Array.isArray(payload.placeUpserts) ? payload.placeUpserts : _parseJsonText(payload.placeUpserts, null);
+  if (hadPlaceUpserts && !Array.isArray(parsedPlaceUpserts)) {
+    throw new Error('apply_world_patch requires placeUpserts to be an array when provided');
+  }
+  payload.placeUpserts = Array.isArray(parsedPlaceUpserts) ? parsedPlaceUpserts : [];
+
+  const hadPlaceDeletes = _hasOwn(payload, 'placeDeletes');
+  const parsedPlaceDeletes = Array.isArray(payload.placeDeletes) ? payload.placeDeletes : _parseJsonText(payload.placeDeletes, null);
+  if (hadPlaceDeletes && !Array.isArray(parsedPlaceDeletes)) {
+    throw new Error('apply_world_patch requires placeDeletes to be an array when provided');
+  }
+  payload.placeDeletes = Array.isArray(parsedPlaceDeletes)
+    ? parsedPlaceDeletes.map((item) => (typeof item === 'string' ? item : item?.name)).map((item) => _cleanText(item)).filter(Boolean)
+    : [];
+
+  if (_hasOwn(payload, 'loreReplacement') && typeof payload.loreReplacement !== 'string') {
+    throw new Error('apply_world_patch requires loreReplacement to be a string when provided');
+  }
+
+  if (!_hasOwn(payload, 'loreReplacement') && !payload.loreEdits.length && !payload.placeUpserts.length && !payload.placeDeletes.length) {
+    throw new Error('apply_world_patch requires at least one lore or place edit');
+  }
+
+  return payload;
+}
+
+function _coerceAssetAuthArgs(args, action) {
+  const payload = args && typeof args === 'object' ? { ...args } : {};
+  const assetId = _cleanText(payload.assetId || payload.id);
+  const charId = _cleanText(payload.charId || payload.characterId);
+  if (!assetId) throw new Error(`${action} requires a valid assetId`);
+  if (!charId) throw new Error(`${action} requires a valid charId`);
+  if (_hasOwn(payload, 'chapterRef') && typeof payload.chapterRef !== 'string') {
+    throw new Error(`${action} requires chapterRef to be a string when provided`);
+  }
+  if (_hasOwn(payload, 'note') && typeof payload.note !== 'string') {
+    throw new Error(`${action} requires note to be a string when provided`);
+  }
+  if (_hasOwn(payload, 'at') && typeof payload.at !== 'string') {
+    throw new Error(`${action} requires at to be a string when provided`);
+  }
+  if (_hasOwn(payload, 'baseGrantedTo')) {
+    const parsedBaseGrantedTo = Array.isArray(payload.baseGrantedTo) ? payload.baseGrantedTo : _parseJsonText(payload.baseGrantedTo, null);
+    if (!Array.isArray(parsedBaseGrantedTo)) {
+      throw new Error(`${action} requires baseGrantedTo to be an array when provided`);
+    }
+    payload.baseGrantedTo = parsedBaseGrantedTo;
+  }
+  return {
+    assetId,
+    charId,
+    ...(_hasOwn(payload, 'chapterRef') ? { chapterRef: payload.chapterRef } : {}),
+    ...(_hasOwn(payload, 'note') ? { note: payload.note } : {}),
+    ...(_hasOwn(payload, 'at') ? { at: payload.at } : {}),
+    ...(_hasOwn(payload, 'baseGrantedTo') ? { baseGrantedTo: payload.baseGrantedTo } : {}),
+  };
+}
+
+function _coerceAssetPatchArgs(args) {
+  const payload = args && typeof args === 'object' ? { ...args } : {};
+  const parsedEdits = Array.isArray(payload.edits) ? payload.edits : _parseJsonText(payload.edits, null);
+  if (!Array.isArray(parsedEdits) || !parsedEdits.length) {
+    throw new Error('apply_asset_patch requires a non-empty edits array');
+  }
+  payload.edits = parsedEdits.map((edit, index) => {
+    if (!edit || typeof edit !== 'object' || Array.isArray(edit)) {
+      throw new Error(`apply_asset_patch edit ${index + 1} must be an object`);
+    }
+    const assetId = _cleanText(edit.assetId || edit.id);
+    if (!assetId) throw new Error(`apply_asset_patch edit ${index + 1} requires assetId`);
+
+    const nextEdit = { assetId };
+    if (_hasOwn(edit, 'baseGrantedTo')) {
+      const parsedBaseGrantedTo = Array.isArray(edit.baseGrantedTo) ? edit.baseGrantedTo : _parseJsonText(edit.baseGrantedTo, null);
+      if (!Array.isArray(parsedBaseGrantedTo)) {
+        throw new Error(`apply_asset_patch edit ${index + 1} requires baseGrantedTo to be an array when provided`);
+      }
+      nextEdit.baseGrantedTo = parsedBaseGrantedTo;
+    }
+
+    const parsedOperations = Array.isArray(edit.operations) ? edit.operations : _parseJsonText(edit.operations, null);
+    if (!Array.isArray(parsedOperations) || !parsedOperations.length) {
+      throw new Error(`apply_asset_patch edit ${index + 1} requires a non-empty operations array`);
+    }
+
+    nextEdit.operations = parsedOperations.map((operation, opIndex) => {
+      if (!operation || typeof operation !== 'object' || Array.isArray(operation)) {
+        throw new Error(`apply_asset_patch operation ${opIndex + 1} for ${assetId} must be an object`);
+      }
+      const action = _cleanText(operation.action).toLowerCase();
+      if (action !== 'grant' && action !== 'revoke') {
+        throw new Error(`apply_asset_patch operation ${opIndex + 1} for ${assetId} requires action "grant" or "revoke"`);
+      }
+      const charId = _cleanText(operation.charId || operation.characterId);
+      if (!charId) {
+        throw new Error(`apply_asset_patch operation ${opIndex + 1} for ${assetId} requires charId`);
+      }
+      if (_hasOwn(operation, 'chapterRef') && typeof operation.chapterRef !== 'string') {
+        throw new Error(`apply_asset_patch operation ${opIndex + 1} for ${assetId} requires chapterRef to be a string when provided`);
+      }
+      if (_hasOwn(operation, 'note') && typeof operation.note !== 'string') {
+        throw new Error(`apply_asset_patch operation ${opIndex + 1} for ${assetId} requires note to be a string when provided`);
+      }
+      if (_hasOwn(operation, 'at') && typeof operation.at !== 'string') {
+        throw new Error(`apply_asset_patch operation ${opIndex + 1} for ${assetId} requires at to be a string when provided`);
+      }
+      return {
+        action,
+        charId,
+        ...(_hasOwn(operation, 'chapterRef') ? { chapterRef: operation.chapterRef } : {}),
+        ...(_hasOwn(operation, 'note') ? { note: operation.note } : {}),
+        ...(_hasOwn(operation, 'at') ? { at: operation.at } : {}),
+      };
+    });
+
+    return nextEdit;
+  });
+  return payload;
 }
 
 // ── Character context filtering for scene-aware writing (AB hybrid) ──
@@ -778,12 +938,13 @@ const TOOLS = [
   },
   {
     name: 'write_chapter',
-    description: '写入章节内容到 chapters/ 目录。content 为 Markdown 正文（不含 frontmatter）。可选 title/volumeIndex/sectionIndex 写入 frontmatter。可选 insertAfter 在指定章节后插入新章节，自动计算文件名（如 chapter-001a.md）。',
+    description: '写入章节内容到 chapters/ 目录。content 为 Markdown 正文（不含 frontmatter）。可选 title/volumeIndex/sectionIndex 写入 frontmatter。可选 baseContent 作为最近一次 read_chapter 的原文快照；若当前章节已变化，写入会拒绝，避免旧全文覆盖新内容。可选 insertAfter 在指定章节后插入新章节，自动计算文件名（如 chapter-001a.md）。',
     inputSchema: {
       type: 'object',
       properties: {
         name: { type: 'string', description: '文件名，如 "chapter-003.md"。不传时若指定 insertAfter 则自动计算' },
         content: { type: 'string', description: 'Markdown 正文（不含 frontmatter，frontmatter 自动生成）' },
+        baseContent: { type: 'string', description: '可选。最近一次 read_chapter 读到的整章正文。若当前文件已变化，工具会拒绝写入。' },
         title: { type: 'string', description: '章节标题，写入 frontmatter' },
         volumeIndex: { type: 'number', description: '所属卷索引，写入 frontmatter' },
         sectionIndex: { type: 'number', description: '所属节索引，写入 frontmatter' },
@@ -791,6 +952,7 @@ const TOOLS = [
       },
       required: ['content'],
     },
+    requiresConfirmation: true,
     handler: async (args, ctx) => {
       const dir = requireNovel(ctx);
       let name = args.name;
@@ -803,7 +965,10 @@ const TOOLS = [
       if (args.volumeIndex != null) meta.volume = args.volumeIndex;
       if (args.sectionIndex != null) meta.section = args.sectionIndex;
       const metaObj = Object.keys(meta).length > 0 ? meta : null;
-      await novelData.writeChapterWithMeta(dir, name, args.content, metaObj);
+      const writeOptions = _hasOwn(args, 'baseContent')
+        ? { baseContent: typeof args.baseContent === 'string' ? args.baseContent : '' }
+        : undefined;
+      await novelData.writeChapterWithMeta(dir, name, args.content, metaObj, writeOptions);
       notifyChapterChanged(name, 'created', args.title || null);
       return textResult({ ok: true, name });
     },
@@ -1103,36 +1268,82 @@ const TOOLS = [
   },
   {
     name: 'grant_asset',
-    description: '把资产授予某角色（直接落盘）。',
+    description: '把资产授予某角色（直接落盘）。可选传 baseGrantedTo 做快照校验，避免基于旧授权状态继续写。',
     inputSchema: {
       type: 'object',
       properties: {
         assetId: { type: 'string' }, charId: { type: 'string' },
         chapterRef: { type: 'string' }, note: { type: 'string' },
+        baseGrantedTo: { type: 'array', items: { type: 'object' }, description: '可选。最近一次读取到的 grantedTo 快照。' },
       },
       required: ['assetId', 'charId'],
     },
     handler: async (args, ctx) => {
       const dir = requireNovel(ctx);
-      const updated = await novelData.grantAsset(dir, args);
+      const payload = _coerceAssetAuthArgs(args || {}, 'grant_asset');
+      const updated = await novelData.grantAsset(dir, payload);
       return textResult({ ok: true, asset: updated });
     },
   },
   {
     name: 'revoke_asset',
-    description: '撤销某资产对某角色的授予（追加 revoked 记录）。',
+    description: '撤销某资产对某角色的授予（追加 revoked 记录）。可选传 baseGrantedTo 做快照校验，避免基于旧授权状态继续写。',
     inputSchema: {
       type: 'object',
       properties: {
         assetId: { type: 'string' }, charId: { type: 'string' },
         chapterRef: { type: 'string' }, note: { type: 'string' },
+        baseGrantedTo: { type: 'array', items: { type: 'object' }, description: '可选。最近一次读取到的 grantedTo 快照。' },
       },
       required: ['assetId', 'charId'],
     },
     handler: async (args, ctx) => {
       const dir = requireNovel(ctx);
-      const updated = await novelData.revokeAsset(dir, args);
+      const payload = _coerceAssetAuthArgs(args || {}, 'revoke_asset');
+      const updated = await novelData.revokeAsset(dir, payload);
       return textResult({ ok: true, asset: updated });
+    },
+  },
+  {
+    name: 'apply_asset_patch',
+    description: '在一次写入中批量处理多个资产的授权变更。每个 edit 针对一个 assetId，支持按 operations 顺序执行 grant/revoke，并可选传 baseGrantedTo 快照防止旧状态覆盖新授权。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        edits: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              assetId: { type: 'string' },
+              baseGrantedTo: { type: 'array', items: { type: 'object' }, description: '可选。该资产最近一次读取到的 grantedTo 快照。' },
+              operations: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    action: { type: 'string', enum: ['grant', 'revoke'] },
+                    charId: { type: 'string' },
+                    chapterRef: { type: 'string' },
+                    note: { type: 'string' },
+                    at: { type: 'string' },
+                  },
+                  required: ['action', 'charId'],
+                },
+              },
+            },
+            required: ['assetId', 'operations'],
+          },
+        },
+      },
+      required: ['edits'],
+    },
+    requiresConfirmation: false,
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      const payload = _coerceAssetPatchArgs(args || {});
+      const result = await novelData.applyAssetPatch(dir, payload);
+      return textResult({ ok: true, ...result });
     },
   },
   {
@@ -1250,7 +1461,7 @@ const TOOLS = [
   },
   {
     name: 'update_character',
-    description: '修改某个角色卡的字段（需用户确认）。',
+    description: '修改某个角色卡的字段（需用户确认）。patch 对嵌套对象执行 deep merge，未提到的子字段会保留；数组仍按整数组替换。若要删除某层对象里的字段，可在该层 patch 中传 __delete: ["字段名"]。',
     inputSchema: {
       type: 'object',
       properties: { id: { type: 'string' }, patch: {} },
@@ -1260,28 +1471,66 @@ const TOOLS = [
     handler: async (args, ctx) => {
       const dir = requireNovel(ctx);
       const payload = _coerceUpdateCharacterArgs(args);
-      const cur = await novelData.readCharacter(dir, payload.id);
-      if (!cur) throw new Error(`character not found: ${payload.id}`);
-      const next = { ...cur, ...(payload.patch || {}), id: payload.id };
-      const written = await novelData.writeCharacter(dir, next);
+      const written = await novelData.patchCharacter(dir, payload.id, payload.patch || {});
       return textResult({ ok: true, character: written });
     },
   },
   {
     name: 'update_world',
-    description: '修改世界观 lore 或地名表（需用户确认）。',
+    description: '整体覆盖世界观 lore 或地名表（需用户确认）。如果只是改几处 lore 文本或增删改少量地点，优先使用 apply_world_patch；若传 baseLore/basePlaces，则会先校验快照，避免旧数据覆盖新数据。',
     inputSchema: {
       type: 'object',
       properties: {
         lore: { type: 'string' },
         places: { type: 'array', items: { type: 'object' } },
+        baseLore: { type: 'string', description: '可选。最近一次读取到的 lore 原文快照。' },
+        basePlaces: { type: 'array', items: { type: 'object' }, description: '可选。最近一次读取到的 places 快照。' },
       },
     },
     requiresConfirmation: true,
     handler: async (args, ctx) => {
       const dir = requireNovel(ctx);
-      await novelData.writeWorld(dir, args || {});
-      return textResult({ ok: true });
+      const payload = _coerceWorldWriteArgs(args || {}, 'update_world');
+      const result = await novelData.writeWorld(dir, payload || {}, {
+        ...(_hasOwn(payload, 'baseLore') ? { baseLore: payload.baseLore } : {}),
+        ...(_hasOwn(payload, 'basePlaces') ? { basePlaces: payload.basePlaces } : {}),
+      });
+      return textResult({ ok: true, world: result });
+    },
+  },
+  {
+    name: 'apply_world_patch',
+    description: '在同一份世界观快照上增量修改 lore 和地点表。支持 loreReplacement 全量替换，或用 loreEdits 做带前后文锚点的局部修补；地点支持 placeUpserts 和 placeDeletes。工具会先校验 baseLore/basePlaces 快照，避免把旧 patch 打到新世界观上。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        baseLore: { type: 'string', description: '可选。最近一次读取到的 lore 原文快照。' },
+        basePlaces: { type: 'array', items: { type: 'object' }, description: '可选。最近一次读取到的 places 快照。' },
+        loreReplacement: { type: 'string', description: '可选。直接整段替换 lore。与 loreEdits 二选一。' },
+        loreEdits: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              targetText: { type: 'string' },
+              replacement: { type: 'string' },
+              expectedMatchCount: { type: 'number' },
+              beforeContext: { type: 'string' },
+              afterContext: { type: 'string' },
+            },
+            required: ['targetText', 'replacement'],
+          },
+        },
+        placeUpserts: { type: 'array', items: { type: 'object' }, description: '可选。按 name 或 matchName 定位地点并 deep merge；不存在则创建。' },
+        placeDeletes: { type: 'array', items: { type: 'string' }, description: '可选。按地点名删除。' },
+      },
+    },
+    requiresConfirmation: true,
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      const payload = _coerceWorldPatchArgs(args || {});
+      const result = await novelData.applyWorldPatch(dir, payload);
+      return textResult({ ok: true, ...result });
     },
   },
   {
