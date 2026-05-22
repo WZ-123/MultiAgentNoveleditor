@@ -40,6 +40,7 @@ function buildDraftSystemPrompt(basePrompt) {
     '- 当前任务只允许生成章节草稿，严禁调用 write_chapter、append_timeline、update_timeline 或任何保存动作。',
     '- 你必须只输出一个 JSON 对象：{"title":"章节标题","summary":"一句话摘要","text":"完整章节正文"}。',
     '- 先保证时间线、人设、因果链自洽，再给出正文。',
+    '- 当正文为简体中文小说语境时，标点符号必须使用全角中文标点（，。！？：；、“”‘’（）《》——），不要使用半角英文标点。',
   ].join('\n');
 }
 

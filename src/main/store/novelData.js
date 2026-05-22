@@ -1051,6 +1051,240 @@ async function writeChapterWithMeta(novelDir, name, content, metadata) {
   return { name: safe, path: file };
 }
 
+function _findLiteralRanges(haystack, needle) {
+  if (!needle) return [];
+  const matches = [];
+  let cursor = 0;
+  while (cursor <= haystack.length) {
+    const index = haystack.indexOf(needle, cursor);
+    if (index < 0) break;
+    matches.push({ start: index, end: index + needle.length });
+    cursor = index + needle.length;
+  }
+  return matches;
+}
+
+function _normalizeMatchChar(rawChar) {
+  if (/[ -]/u.test(rawChar) && rawChar !== '\n' && rawChar !== '\t' && rawChar !== '\r') {
+    return rawChar;
+  }
+  if ('“”„‟〝〞＂'.includes(rawChar)) return '"';
+  if ('‘’‚‛＇'.includes(rawChar)) return '\'';
+  return rawChar.normalize('NFKC');
+}
+
+function _buildNormalizedTextIndex(text) {
+  const source = typeof text === 'string' ? text : '';
+  let normalized = '';
+  const ranges = [];
+  let originalIndex = 0;
+
+  while (originalIndex < source.length) {
+    const rawChar = source[originalIndex];
+    let originalEnd = originalIndex + 1;
+    let normalizedChunk = rawChar;
+
+    if (rawChar === '\r') {
+      if (source[originalIndex + 1] === '\n') originalEnd = originalIndex + 2;
+      normalizedChunk = '\n';
+    } else if (rawChar === '\u00a0' || rawChar === '\u3000' || rawChar === '\t') {
+      normalizedChunk = ' ';
+    } else if (/[\u200b\u200c\u200d\ufeff]/u.test(rawChar)) {
+      originalIndex = originalEnd;
+      continue;
+    }
+
+    normalizedChunk = Array.from(normalizedChunk, _normalizeMatchChar).join('');
+    for (const normalizedChar of normalizedChunk) {
+      normalized += normalizedChar;
+      ranges.push({ start: originalIndex, end: originalEnd });
+    }
+    originalIndex = originalEnd;
+  }
+
+  return { text: normalized, ranges };
+}
+
+function _findNormalizedRanges(currentIndex, searchText) {
+  const normalizedNeedle = _buildNormalizedTextIndex(searchText).text;
+  if (!normalizedNeedle) return [];
+
+  const matches = [];
+  let cursor = 0;
+  while (cursor <= currentIndex.text.length) {
+    const normalizedStart = currentIndex.text.indexOf(normalizedNeedle, cursor);
+    if (normalizedStart < 0) break;
+    const normalizedEnd = normalizedStart + normalizedNeedle.length;
+    const firstRange = currentIndex.ranges[normalizedStart];
+    const lastRange = currentIndex.ranges[normalizedEnd - 1];
+    if (firstRange && lastRange) {
+      matches.push({
+        start: firstRange.start,
+        end: lastRange.end,
+        normalizedStart,
+        normalizedEnd,
+      });
+    }
+    cursor = normalizedEnd;
+  }
+
+  const deduped = [];
+  const seen = new Set();
+  for (const match of matches) {
+    const key = `${match.start}:${match.end}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(match);
+  }
+  return deduped;
+}
+
+function _filterRangesByContext(matches, currentIndex, options = {}) {
+  const beforeContext = typeof options.beforeContext === 'string' ? options.beforeContext : '';
+  const afterContext = typeof options.afterContext === 'string' ? options.afterContext : '';
+  if (!beforeContext && !afterContext) return matches;
+
+  const normalizedBefore = _buildNormalizedTextIndex(beforeContext).text;
+  const normalizedAfter = _buildNormalizedTextIndex(afterContext).text;
+  const lookaround = Math.max(240, normalizedBefore.length + normalizedAfter.length + 40);
+
+  return matches.filter((match) => {
+    if (normalizedBefore) {
+      const leftEdge = Math.max(0, match.normalizedStart - lookaround);
+      const leftText = currentIndex.text.slice(leftEdge, match.normalizedStart);
+      if (!leftText.includes(normalizedBefore)) return false;
+    }
+    if (normalizedAfter) {
+      const rightEdge = Math.min(currentIndex.text.length, match.normalizedEnd + lookaround);
+      const rightText = currentIndex.text.slice(match.normalizedEnd, rightEdge);
+      if (!rightText.includes(normalizedAfter)) return false;
+    }
+    return true;
+  });
+}
+
+function _applyRangesToText(current, matches, replacement) {
+  if (!matches.length) return current;
+  const sorted = [...matches].sort((left, right) => left.start - right.start);
+  let cursor = 0;
+  let nextContent = '';
+
+  for (const match of sorted) {
+    if (match.start < cursor) {
+      throw new Error('replaceChapterText received overlapping match ranges');
+    }
+    nextContent += current.slice(cursor, match.start);
+    nextContent += replacement;
+    cursor = match.end;
+  }
+  nextContent += current.slice(cursor);
+  return nextContent;
+}
+
+function _applyResolvedEditRanges(current, resolvedRanges) {
+  if (!resolvedRanges.length) return current;
+  const sorted = [...resolvedRanges].sort((left, right) => left.start - right.start || left.editIndex - right.editIndex);
+  let cursor = 0;
+  let nextContent = '';
+
+  for (const range of sorted) {
+    if (range.start < cursor) {
+      throw new Error('chapter patch contains overlapping ranges');
+    }
+    nextContent += current.slice(cursor, range.start);
+    nextContent += range.replacement;
+    cursor = range.end;
+  }
+
+  nextContent += current.slice(cursor);
+  return nextContent;
+}
+
+function _resolveReplaceChapterMatches(current, search, options = {}) {
+  const expectedMatchCount = Number.isInteger(options.expectedMatchCount)
+    ? options.expectedMatchCount
+    : 1;
+  const exactMatches = _findLiteralRanges(current, search);
+  if (exactMatches.length === expectedMatchCount) {
+    return { matches: exactMatches, strategy: 'exact', expectedMatchCount };
+  }
+
+  const currentIndex = _buildNormalizedTextIndex(current);
+  const normalizedMatches = _findNormalizedRanges(currentIndex, search);
+  const filteredNormalizedMatches = _filterRangesByContext(normalizedMatches, currentIndex, options);
+
+  if (filteredNormalizedMatches.length === expectedMatchCount) {
+    return {
+      matches: filteredNormalizedMatches.map(({ start, end }) => ({ start, end })),
+      strategy: options.beforeContext || options.afterContext ? 'normalized_context' : 'normalized',
+      expectedMatchCount,
+    };
+  }
+
+  return {
+    matches: exactMatches,
+    strategy: 'exact',
+    expectedMatchCount,
+    normalizedMatchCount: filteredNormalizedMatches.length,
+  };
+}
+
+function _resolveChapterPatchEdit(current, edit, index) {
+  const targetText = typeof edit?.targetText === 'string' ? edit.targetText : '';
+  const replacement = typeof edit?.replacement === 'string' ? edit.replacement : '';
+  if (!targetText) {
+    throw new Error(`chapter patch edit ${index + 1} is missing targetText`);
+  }
+
+  const resolved = _resolveReplaceChapterMatches(current, targetText, {
+    expectedMatchCount: Number.isInteger(edit?.expectedMatchCount) ? edit.expectedMatchCount : 1,
+    beforeContext: typeof edit?.beforeContext === 'string' ? edit.beforeContext : '',
+    afterContext: typeof edit?.afterContext === 'string' ? edit.afterContext : '',
+  });
+  const matchCount = resolved.matches.length;
+
+  if (matchCount === 0) {
+    throw new Error(`chapter patch edit ${index + 1} targetText not found; re-read the chapter and include beforeContext/afterContext`);
+  }
+  if (matchCount !== resolved.expectedMatchCount) {
+    throw new Error(`chapter patch edit ${index + 1} matched ${matchCount} times; expected ${resolved.expectedMatchCount}. Add tighter beforeContext/afterContext, or split the patch into a cursor-based edit.`);
+  }
+
+  return {
+    editIndex: index,
+    targetText,
+    replacement,
+    beforeContext: typeof edit?.beforeContext === 'string' ? edit.beforeContext : '',
+    afterContext: typeof edit?.afterContext === 'string' ? edit.afterContext : '',
+    expectedMatchCount: resolved.expectedMatchCount,
+    matchCount,
+    matchStrategy: resolved.strategy,
+    ranges: resolved.matches.map((match, matchIndex) => ({
+      start: match.start,
+      end: match.end,
+      editIndex: index,
+      matchIndex,
+      replacement,
+    })),
+  };
+}
+
+function _assertNonOverlappingPatchRanges(resolvedEdits) {
+  const ranges = resolvedEdits
+    .flatMap((edit) => edit.ranges.map((range) => ({ ...range, editNumber: edit.editIndex + 1 })))
+    .sort((left, right) => left.start - right.start || left.editIndex - right.editIndex);
+
+  for (let index = 1; index < ranges.length; index += 1) {
+    const previous = ranges[index - 1];
+    const current = ranges[index];
+    if (current.start < previous.end) {
+      throw new Error(`chapter patch edits ${previous.editNumber} and ${current.editNumber} overlap. Merge them into one consolidated replacement, or use write_chapter for a full rewrite.`);
+    }
+  }
+
+  return ranges;
+}
+
 async function replaceChapterText(novelDir, name, targetText, replacementText, options = {}) {
   const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
   const search = typeof targetText === 'string' ? targetText : '';
@@ -1060,36 +1294,63 @@ async function replaceChapterText(novelDir, name, targetText, replacementText, o
   const { content, metadata } = await readChapterWithMeta(novelDir, safeName);
   const current = content || '';
   const replacement = typeof replacementText === 'string' ? replacementText : '';
-
-  let matchCount = 0;
-  let cursor = 0;
-  while (cursor <= current.length) {
-    const index = current.indexOf(search, cursor);
-    if (index < 0) break;
-    matchCount += 1;
-    cursor = index + search.length;
-    if (!search.length) break;
-  }
-
-  const expectedMatchCount = Number.isInteger(options.expectedMatchCount)
-    ? options.expectedMatchCount
-    : 1;
+  const resolved = _resolveReplaceChapterMatches(current, search, options);
+  const matchCount = resolved.matches.length;
 
   if (matchCount === 0) {
-    throw new Error('targetText not found in chapter content');
+    throw new Error('targetText not found in chapter content, even after normalized/context matching. Read the latest chapter text again and include beforeContext/afterContext, or use replace_text_near_cursor.');
   }
-  if (matchCount !== expectedMatchCount) {
-    throw new Error(`targetText matched ${matchCount} times; expected ${expectedMatchCount}. Ask the user to select the exact occurrence, or place the cursor next to it and then use replace_text_near_cursor.`);
+  if (matchCount !== resolved.expectedMatchCount) {
+    const contextualHint = options.beforeContext || options.afterContext
+      ? ' The provided context still matched multiple locations; narrow it further or switch to replace_text_near_cursor.'
+      : ' Include beforeContext/afterContext from the surrounding sentences, ask the user to select the exact occurrence, or place the cursor next to it and then use replace_text_near_cursor.';
+    throw new Error(`targetText matched ${matchCount} times; expected ${resolved.expectedMatchCount}.${contextualHint}`);
   }
 
-  const nextContent = current.split(search).join(replacement);
+  const nextContent = _applyRangesToText(current, resolved.matches, replacement);
   await writeChapterWithMeta(novelDir, safeName, nextContent, metadata || null);
   return {
     name: safeName,
     matchCount,
     replacedCount: matchCount,
+    matchStrategy: resolved.strategy,
     content: nextContent,
     metadata: metadata || null,
+  };
+}
+
+async function applyChapterPatch(novelDir, name, edits, options = {}) {
+  const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
+  const patchEdits = Array.isArray(edits) ? edits : [];
+  if (!safeName) throw new Error('chapter name is required');
+  if (!patchEdits.length) throw new Error('edits must be a non-empty array');
+
+  const { content, metadata } = await readChapterWithMeta(novelDir, safeName);
+  const current = content || '';
+  const baseContent = typeof options.baseContent === 'string' ? options.baseContent : '';
+  if (baseContent && baseContent !== current) {
+    throw new Error('chapter snapshot mismatch: the chapter changed after it was read. Read the latest chapter again before applying this patch.');
+  }
+
+  const resolvedEdits = patchEdits.map((edit, index) => _resolveChapterPatchEdit(current, edit, index));
+  const resolvedRanges = _assertNonOverlappingPatchRanges(resolvedEdits);
+  const nextContent = _applyResolvedEditRanges(current, resolvedRanges);
+
+  await writeChapterWithMeta(novelDir, safeName, nextContent, metadata || null);
+  return {
+    name: safeName,
+    editCount: resolvedEdits.length,
+    replacedCount: resolvedRanges.length,
+    content: nextContent,
+    metadata: metadata || null,
+    edits: resolvedEdits.map((edit) => ({
+      index: edit.editIndex,
+      matchCount: edit.matchCount,
+      expectedMatchCount: edit.expectedMatchCount,
+      matchStrategy: edit.matchStrategy,
+      beforeContext: edit.beforeContext,
+      afterContext: edit.afterContext,
+    })),
   };
 }
 
@@ -1239,7 +1500,7 @@ module.exports = {
   readStyleMemory, appendStyleMemory, writeStyleMemory,
   // chapters
   listChapters, readChapter, readChapterRaw, readChapterWithMeta, readChapterMeta,
-  writeChapter, writeChapterWithMeta, replaceChapterText, computeNextInsertNameForNovel,
+  writeChapter, writeChapterWithMeta, replaceChapterText, applyChapterPatch, computeNextInsertNameForNovel,
   // outlines
   readOutlineNodes, writeOutlineNodes, writeOutlineNodesToHierarchy,
   writeHierarchicalOutline,

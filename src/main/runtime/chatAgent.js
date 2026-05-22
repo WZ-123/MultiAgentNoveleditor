@@ -331,12 +331,16 @@ function generatePhaseRules(phase) {
         '## Rules (Editing Phase)',
         '1. Use `list_chapters` and `read_chapter` to read existing chapters.',
         '2. If the user has explicitly selected text in the editor, use `replace_selected_text` or `insert_text_at_cursor` for targeted edits.',
-        '3. If the user wants to revise an existing passage but has not selected text, first use `read_chapter`, then call `replace_chapter_text` with a sufficiently long unique snippet from the chapter.',
+        '2a. If the user asks to "去 AI 味" / "去套话" / "润色得更像人写" and Current Editor State includes `User selected text`, prefer `de_ai_ify` on that selected text first, then apply the result with `replace_selected_text`.',
+        '2b. If the user asks to check character consistency / OOC / 人设冲突 in the current chapter, prefer `review_character_consistency` first and report paragraph-level findings before making any edits.',
+        '3. If the user wants to revise an existing passage but has not selected text, first use `read_chapter`, then call `replace_chapter_text` with a sufficiently long snippet plus nearby `beforeContext`/`afterContext` from the same chapter so the edit stays anchored like an IDE patch.',
         '4. If `replace_chapter_text` reports multiple matches, tell the user to either select the exact target text or place the cursor next to the desired occurrence. Then use `replace_selected_text` or `replace_text_near_cursor` instead of guessing.',
         '5. Use `replace_text_near_cursor` only after the user has manually moved the cursor near the intended occurrence.',
-        '6. For bulk rewrites, use `write_chapter` to update the full file.',
-        '7. Always use tools to inspect state before making changes.',
-        '8. Respond in the same language as the user.',
+        '6. If you need multiple non-overlapping fixes in the same chapter, prefer `apply_chapter_patch` so every edit is resolved against one shared snapshot and written once.',
+        '7. For review-style requests, do not batch many overlapping `replace_chapter_text` calls immediately after the audit. Review first; if multiple fixes are needed, prefer scoped selected-text edits, `apply_chapter_patch`, or one consolidated rewrite.',
+        '8. For bulk rewrites, use `write_chapter` to update the full file.',
+        '9. Always use tools to inspect state before making changes.',
+        '10. Respond in the same language as the user.',
       ];
     default:
       return [
@@ -407,9 +411,11 @@ async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, w
   lines.push('## Available Tools');
   lines.push('You can call tools to read/write novel data and manipulate the editor:');
   lines.push('- Character tools: list_characters, read_character, enrich_character');
-  lines.push('- Novel data: read_outline, read_outline_nodes, list_chapters, read_chapter, write_chapter, replace_chapter_text, query_world, query_timeline, list_assets, read_asset, read_style_memory, read_skill, search_index');
+  lines.push('- Novel data: read_outline, read_outline_nodes, list_chapters, read_chapter, write_chapter, replace_chapter_text, apply_chapter_patch, query_world, query_timeline, list_assets, read_asset, read_style_memory, read_skill, list_skills, read_skill_content, search_index');
+  lines.push('- Review: review_character_consistency (inspect chapter paragraphs against character cards and report paragraph-level conflicts without editing)');
+  lines.push('- Rewrite: de_ai_ify (rewrite a Chinese fiction passage to remove AI-ish cliches while preserving meaning)');
   lines.push('- Auto-write: grant_asset, revoke_asset, append_timeline, update_timeline, dedupe_timeline, append_summary, append_style_memory');
-  lines.push('- Write (requires confirmation): create_character, update_character, update_world, write_chapter, replace_chapter_text');
+  lines.push('- Write (requires confirmation): create_character, update_character, update_world, write_chapter, replace_chapter_text, apply_chapter_patch');
   lines.push('- Editor: replace_selected_text, replace_text_near_cursor, insert_text_at_cursor, get_full_editor_content');
   lines.push('- Workflow: set_workflow_phase (change current phase), confirm_outline (save outline and enter writing phase)');
   lines.push('- Delegate: spawn_subagent');
@@ -428,6 +434,7 @@ async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, w
   lines.push('5. Be systematic: break complex requests into steps, use tools to gather facts, then act.');
   lines.push('6. If the user asks to clean up historical duplicate timeline events, use `dedupe_timeline` instead of manually rewriting files.');
   lines.push('7. If Current Editor State includes `User selected text`, that selection metadata is authoritative. Do not tell the user that you cannot see the editor highlight or selection marker.');
+  lines.push('8. For chapter-wide review requests, prefer explicit review tools first; do not jump straight into many sequential `replace_chapter_text` calls against overlapping snippets. If multiple concrete fixes are already known, prefer one `apply_chapter_patch` over many independent replaces.');
 
   // Inject phase-relevant skills
   const skillBlock = await loadPhaseSkills(phase);
@@ -476,6 +483,67 @@ function storePendingOutlineDraft(session, draft, issues) {
   session.pendingOutlineDraft = draft;
   session.pendingOutlineIssues = Array.isArray(issues) ? issues : [];
   session.workflowPhase = 'outline';
+}
+
+function parseTextJson(text) {
+  if (typeof text !== 'string' || !text.trim()) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function detectOpenChapterName(editorContext) {
+  const candidates = [
+    editorContext?.activeChapterName,
+    editorContext?.chapterName,
+    editorContext?.title,
+    editorContext?.activeChapterTitle,
+  ];
+  for (const candidate of candidates) {
+    const value = safeStr(candidate).trim();
+    if (!value) continue;
+    const matched = value.match(/chapter-[\w.-]+\.md/i);
+    if (matched?.[0]) return matched[0];
+    if (/\.md$/i.test(value)) return value;
+  }
+  return '';
+}
+
+function detectCharacterConsistencyReviewIntent(userText, session) {
+  const text = safeStr(userText).trim();
+  if (!text) return { shouldRoute: false };
+
+  const mentionsCharacterConsistency = /人设|ooc|设定冲突|角色崩了|角色冲突|不符合人设|反应不对|口吻不对|说话方式不对/u.test(text);
+  const looksLikeReview = /检查|审查|看看|有地方|哪里|不符合|冲突|对不上|漏检|找出/u.test(text);
+  const looksLikeDirectRewrite = /修|改|替换|重写|润色|改写|统一改掉/u.test(text);
+  const chapterName = detectOpenChapterName(session?.editorContext);
+
+  if (!chapterName || !mentionsCharacterConsistency || !looksLikeReview || looksLikeDirectRewrite) {
+    return { shouldRoute: false };
+  }
+
+  return {
+    shouldRoute: true,
+    chapterName,
+    focus: text,
+  };
+}
+
+function detectDeAiChatIntent(userText, session) {
+  const text = safeStr(userText).trim();
+  const selectedText = safeStr(session?.editorContext?.selectedText).trim();
+  if (!text || !selectedText) return { shouldRoute: false };
+
+  const looksLikeDeAiRequest = /去\s*a\s*i\s*味|去掉\s*a\s*i\s*味|润色去套话|去套话|去掉套话|去除套话|改得不那么像\s*a\s*i|改得更像人(?:写|说)|去掉八股|去掉机翻腔|去掉模型味/iu.test(text);
+  if (!looksLikeDeAiRequest) return { shouldRoute: false };
+
+  return {
+    shouldRoute: true,
+    sourceText: selectedText,
+    guidance: text,
+  };
 }
 
 async function persistAssistantTurn(session, result) {
@@ -558,6 +626,140 @@ async function maybeHandleOutlineAutomation(session, userText, abortSignal) {
   };
 }
 
+async function maybeHandleDeAiAutomation(session, sessionId, userText) {
+  const intent = detectDeAiChatIntent(userText, session);
+  if (!intent.shouldRoute) return null;
+
+  const rewriteResult = await callMcpTool('de_ai_ify', {
+    text: intent.sourceText,
+    guidance: intent.guidance,
+  });
+  if (rewriteResult.isError) {
+    return {
+      text: `去 AI 味改写失败：${rewriteResult.text}`,
+      turns: 1,
+      toolCalls: [
+        {
+          id: 'de-ai-ify-auto',
+          name: 'de_ai_ify',
+          input: { text: intent.sourceText, guidance: intent.guidance },
+          status: 'done',
+          result: rewriteResult.text,
+          isError: true,
+        },
+      ],
+    };
+  }
+
+  const rewritePayload = parseTextJson(rewriteResult.text);
+  const replacement = safeStr(rewritePayload?.revisedText || rewriteResult.text).trim();
+  if (!replacement) {
+    throw new Error('de_ai_ify returned empty revisedText');
+  }
+
+  const replaceResult = await handleFrontendTool(session, {
+    name: 'replace_selected_text',
+    input: { replacement },
+  });
+
+  const replaceFailed = !!replaceResult?.isError;
+  return {
+    text: replaceFailed
+      ? `去 AI 味改写已完成，但替换选中文本失败：${replaceResult.text}`
+      : '已按你当前选中的内容去 AI 味改写，并替换回编辑器。',
+    turns: 1,
+    toolCalls: [
+      {
+        id: 'de-ai-ify-auto',
+        name: 'de_ai_ify',
+        input: { text: intent.sourceText, guidance: intent.guidance },
+        status: 'done',
+        result: rewriteResult.text,
+        isError: false,
+      },
+      {
+        id: 'replace-selected-auto',
+        name: 'replace_selected_text',
+        input: { replacement },
+        status: 'done',
+        result: replaceResult.text,
+        isError: replaceFailed,
+      },
+    ],
+  };
+}
+
+function formatCharacterConsistencyReviewReply(reviewPayload) {
+  const characterNames = Array.isArray(reviewPayload?.reviewedCharacterNames) && reviewPayload.reviewedCharacterNames.length
+    ? reviewPayload.reviewedCharacterNames.join('、')
+    : '相关角色';
+  const chapterName = safeStr(reviewPayload?.chapterName) || '当前章节';
+  const annotations = Array.isArray(reviewPayload?.annotations) ? reviewPayload.annotations : [];
+
+  if (!annotations.length) {
+    return `我按段检查了 ${chapterName} 里与 ${characterNames} 相关的人设一致性，目前没有发现明确的硬冲突。\n\n这是审查结果，暂不自动改正文；如果你要我继续修，我会按你指定的段落逐处处理。`;
+  }
+
+  const lines = [`我按段检查了 ${chapterName} 里与 ${characterNames} 相关的人设一致性，发现 ${annotations.length} 处明确问题：`, ''];
+  for (const annotation of annotations) {
+    const paragraphIndexes = Array.isArray(annotation.paragraphIndexes) && annotation.paragraphIndexes.length
+      ? annotation.paragraphIndexes.map((index) => `第${index + 1}段`).join(' / ')
+      : `第${(annotation.paragraphIndex || 0) + 1}段`;
+    lines.push(`- ${paragraphIndexes}：${annotation.note || '发现人设冲突'}`);
+    if (annotation.characterName) lines.push(`  角色：${annotation.characterName}`);
+    if (annotation.evidence) lines.push(`  依据：${annotation.evidence}`);
+    if (annotation.excerpt) lines.push(`  摘录：${annotation.excerpt}`);
+  }
+  lines.push('');
+  lines.push('这是审查结果，暂不自动批量改正文；如果你要修，我建议按选中段落逐处改，或先确认后用 apply_chapter_patch 一次提交多处非重叠修改；只有整章重写时才直接改整章，避免连续 replace_chapter_text 失配。');
+  return lines.join('\n');
+}
+
+async function maybeHandleCharacterConsistencyReviewAutomation(session, userText) {
+  const activeNovelId = session.editorContext?.novelId || mcpClient.getActiveNovel();
+  if (!activeNovelId) return null;
+
+  const intent = detectCharacterConsistencyReviewIntent(userText, session);
+  if (!intent.shouldRoute) return null;
+
+  const reviewResult = await callMcpTool('review_character_consistency', {
+    chapterName: intent.chapterName,
+    focus: intent.focus,
+  });
+  if (reviewResult.isError) {
+    return {
+      text: `人设一致性审查失败：${reviewResult.text}`,
+      turns: 1,
+      toolCalls: [
+        {
+          id: 'review-character-consistency-auto',
+          name: 'review_character_consistency',
+          input: { chapterName: intent.chapterName, focus: intent.focus },
+          status: 'done',
+          result: reviewResult.text,
+          isError: true,
+        },
+      ],
+    };
+  }
+
+  const payload = parseTextJson(reviewResult.text) || { annotations: [] };
+  return {
+    text: formatCharacterConsistencyReviewReply(payload),
+    turns: 1,
+    toolCalls: [
+      {
+        id: 'review-character-consistency-auto',
+        name: 'review_character_consistency',
+        input: { chapterName: intent.chapterName, focus: intent.focus },
+        status: 'done',
+        result: reviewResult.text,
+        isError: false,
+      },
+    ],
+  };
+}
+
 // ---------- tool execution ----------
 
 async function callMcpTool(name, args) {
@@ -637,7 +839,7 @@ async function _runTurnViaProvider(session, sessionId, system, userText, abortSi
       // due to polling delay between WorkspaceSwitcher and App.jsx state).
       const activeNovelId = session.editorContext?.novelId || mcpClient.getActiveNovel();
       if (!activeNovelId) {
-        const allowed = ["read_skill", "create_novel", "list_novels"];
+        const allowed = ['read_skill', 'list_skills', 'read_skill_content', 'de_ai_ify', 'create_novel', 'list_novels'];
         const filtered = mcpTools.filter((t) => allowed.includes(t.name));
         tools = [...filtered, ...BUILTIN_CHAT_TOOLS];
       } else {
@@ -901,6 +1103,22 @@ async function runTurn(sessionId, userText) {
       session.messages.push(assistantContent([{ type: 'text', text: automated.text || '' }]));
       emitEvent(sessionId, 'turn_done', { text: automated.text, turns: automated.turns });
       await persistAssistantTurn(session, automated);
+      return;
+    }
+
+    const characterReviewAutomated = await maybeHandleCharacterConsistencyReviewAutomation(session, userText);
+    if (characterReviewAutomated) {
+      session.messages.push(assistantContent([{ type: 'text', text: characterReviewAutomated.text || '' }]));
+      emitEvent(sessionId, 'turn_done', { text: characterReviewAutomated.text, turns: characterReviewAutomated.turns });
+      await persistAssistantTurn(session, characterReviewAutomated);
+      return;
+    }
+
+    const deAiAutomated = await maybeHandleDeAiAutomation(session, sessionId, userText);
+    if (deAiAutomated) {
+      session.messages.push(assistantContent([{ type: 'text', text: deAiAutomated.text || '' }]));
+      emitEvent(sessionId, 'turn_done', { text: deAiAutomated.text, turns: deAiAutomated.turns });
+      await persistAssistantTurn(session, deAiAutomated);
       return;
     }
 

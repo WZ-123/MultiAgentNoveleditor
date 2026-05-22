@@ -62,13 +62,16 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
   let entry = null;
   let chapterFile = 'chapter-001.md';
 
+  const unsavedOriginal = '阿宁把铜钱在指间翻了个花，笑得像没睡醒。';
+  const unsavedEditedLine = '阿宁把铜钱在指间翻了个花，笑意却没到眼底。';
+  const unsavedReplacement = '阿宁把铜钱在指间翻了个花，笑意收住，只剩眼底一点冷光。';
   const autoOriginal = '她抬起眼，决定先看看热闹，再决定要不要出手。';
   const autoReplacement = '她抬起眼，决定先把那阵异样的喧哗看个分明。';
   const firstOriginal = '晨光穿过旧窗台，照在斑驳的木桌上。';
   const firstReplacement = '晨光像碎金一样落在旧窗台上。';
   const duplicateTarget = '铜钱';
   const duplicateReplacement = '铜铃';
-  const duplicateFirstLine = '阿宁把铜钱在指间翻了个花，笑得像没睡醒。';
+  const duplicateFirstLine = unsavedReplacement;
   const duplicateSecondLine = '她袖口里还藏着另一枚铜钱，以备临时起卦。';
   const equidistantLine = '铜钱左右铜钱，一时看不出该敲哪一枚。';
   const secondOriginal = '街口忽然传来一阵喧哗，像有人打翻了整条早市。';
@@ -76,6 +79,24 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
   const blockedReplacement = '这句不该被插进去。';
 
   const scriptedResponses = [
+    {
+      stopReason: 'tool_use',
+      content: [
+        { type: 'text', text: '我先按你刚改过的最新句子继续细修。' },
+        {
+          type: 'tool_use',
+          id: 'toolu-unsaved-replace-1',
+          name: 'replace_chapter_text',
+          input: { name: chapterFile, targetText: unsavedEditedLine, replacement: unsavedReplacement },
+        },
+      ],
+    },
+    {
+      stopReason: 'end_turn',
+      content: [
+        { type: 'text', text: '未保存改动后的替换已完成。' },
+      ],
+    },
     {
       stopReason: 'tool_use',
       content: [
@@ -229,6 +250,9 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
       (async () => {
         const novelId = ${JSON.stringify(entry.id)};
         const chapterFile = ${JSON.stringify(chapterFile)};
+        const unsavedOriginal = ${JSON.stringify(unsavedOriginal)};
+        const unsavedEditedLine = ${JSON.stringify(unsavedEditedLine)};
+        const unsavedReplacement = ${JSON.stringify(unsavedReplacement)};
         const autoOriginal = ${JSON.stringify(autoOriginal)};
         const autoReplacement = ${JSON.stringify(autoReplacement)};
         const firstOriginal = ${JSON.stringify(firstOriginal)};
@@ -363,6 +387,17 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
           return textarea.value.includes(firstOriginal) ? textarea : null;
         }, 'chapter editor not ready', 20000);
 
+        setControlValue(chapterEditor, chapterEditor.value.replace(unsavedOriginal, unsavedEditedLine));
+        await sleep(150);
+        chapterEditor.setSelectionRange(0, 0);
+        chapterEditor.blur();
+        const unsavedResult = await sendPrompt('我刚把阿宁那句动作自己改了一下，你接着再收紧一点，不用我手动选。', '未保存改动后的替换已完成。');
+        await waitFor(
+          () => chapterEditor.value.includes(unsavedReplacement) && !chapterEditor.value.includes(unsavedEditedLine),
+          'unsaved replacement not applied'
+        );
+        const diskAfterUnsaved = await window.mana.novel.readChapter(novelId, chapterFile);
+
         chapterEditor.setSelectionRange(0, 0);
         chapterEditor.blur();
         const autoResult = await sendPrompt('请直接把当前章节最后一句改得更警觉一点，不用我手动选。', '自动定位替换已完成。');
@@ -411,16 +446,21 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
         const diskAfterSecond = await window.mana.novel.readChapter(novelId, chapterFile);
 
         return {
+          unsavedBody: unsavedResult.body,
           autoBody: autoResult.body,
           firstBody: firstResult.body,
           secondBody: secondResult.body,
           editorValue: chapterEditor.value,
+          diskAfterUnsaved,
           diskAfterAuto,
           diskAfterFirst,
           diskAfterNearCursor,
           diskAfterEqualDistance,
           diskAfterSecond,
           selectionOverlayVisible: firstResult.selectionOverlayVisible,
+          unsavedReplaceUi: chapterEditor.value.includes(unsavedReplacement) && !chapterEditor.value.includes(unsavedEditedLine),
+          unsavedReplaceDisk: diskAfterUnsaved.includes(unsavedReplacement) && !diskAfterUnsaved.includes(unsavedEditedLine),
+          unsavedReplaceToolUsed: unsavedResult.body.includes('调用: replace_chapter_text'),
           autoReplaceUi: chapterEditor.value.includes(autoReplacement) && !chapterEditor.value.includes(autoOriginal),
           autoReplaceDisk: diskAfterAuto.includes(autoReplacement) && !diskAfterAuto.includes(autoOriginal),
           autoReplaceToolUsed: autoResult.body.includes('调用: replace_chapter_text'),
@@ -438,6 +478,12 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
         };
       })()
     `);
+
+    if (r?.unsavedReplaceUi && r?.unsavedReplaceDisk && r?.unsavedReplaceToolUsed) {
+      pass('CHAT_REPLACE_unsaved_editor_flush_before_backend_replace', 'chat send flushed unsaved editor content before replace_chapter_text ran');
+    } else {
+      fail('CHAT_REPLACE_unsaved_editor_flush_before_backend_replace', JSON.stringify(r));
+    }
 
     if (r?.autoReplaceUi && r?.autoReplaceDisk && r?.autoReplaceToolUsed) {
       pass('CHAT_REPLACE_auto_targeted_replace', 'AI replaced chapter text through replace_chapter_text without requiring a manual selection');

@@ -47,7 +47,7 @@ button {
 <body>
 <div class="container">
   <h2>授权验证</h2>
-  <div class="sub">请输入授权码以继续使用。<br>首次验证后 7 天内无需重复输入。</div>
+  <div class="sub">首次使用请输入授权码。<br>验证通过后会自动保存，后续登录会在后台自动校验。</div>
   <input id="code" type="text" placeholder="授权码" autofocus>
   <div id="error" class="error"></div>
   <div class="btn-row">

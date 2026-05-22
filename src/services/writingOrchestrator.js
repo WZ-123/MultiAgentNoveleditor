@@ -8,6 +8,7 @@ import {
   CHAPTER_DRAFT_SYSTEM,
 } from '@/services/agentPrompts.js';
 import { parseJsonFromModelText } from '@/services/llmJson.js';
+import { buildQualityReviewPayload, detectCrossParagraphQualityAnnotations } from '@/services/qualityReview.mjs';
 import { createRemoteAIClient } from '@/services/remoteAI.js';
 import { appendStyleMemory, loadStyleMemory } from '@/services/styleMemoryStore.js';
 
@@ -181,14 +182,35 @@ function normalizeQualityAnnotations(paragraphs, raw) {
   const out = [];
   if (!Array.isArray(raw)) return out;
   for (const a of raw) {
-    const pid = String(a.paragraphId ?? '');
-    if (!ids.has(pid)) continue;
-    out.push({
-      id: createId('ql'),
-      paragraphId: pid,
-      kind: String(a.kind ?? 'other'),
-      note: String(a.note ?? ''),
-    });
+    const paragraphIds = Array.isArray(a.paragraphIds)
+      ? a.paragraphIds.map((pid) => String(pid || '')).filter((pid) => ids.has(pid))
+      : [];
+    const fallbackId = String(a.paragraphId ?? '');
+    const targets = paragraphIds.length > 0
+      ? paragraphIds
+      : ids.has(fallbackId)
+        ? [fallbackId]
+        : [];
+    for (const paragraphId of targets) {
+      out.push({
+        id: createId('ql'),
+        paragraphId,
+        kind: String(a.kind ?? 'other'),
+        note: String(a.note ?? ''),
+      });
+    }
+  }
+  return out;
+}
+
+function mergeQualityAnnotations(primary, fallback) {
+  const out = [];
+  const seen = new Set();
+  for (const annotation of [...(Array.isArray(primary) ? primary : []), ...(Array.isArray(fallback) ? fallback : [])]) {
+    const key = `${annotation.paragraphId}::${annotation.kind}::${annotation.note}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(annotation);
   }
   return out;
 }
@@ -293,22 +315,16 @@ export async function runAgent5Quality(state) {
         { role: 'system', content: AGENT5_SYSTEM },
         {
           role: 'user',
-          content: JSON.stringify({
-            paragraphs: state.paragraphs.map((p) => ({
-              id: p.id,
-              index: p.index,
-              text: p.text,
-            })),
-          }),
+          content: JSON.stringify(buildQualityReviewPayload(state.paragraphs)),
         },
       ],
       { expectJson: true }
     );
     const data = parseJsonFromModelText(raw);
-    const qualityAnnotations = normalizeQualityAnnotations(
-      state.paragraphs,
-      data.annotations
-    );
+    const modelAnnotations = normalizeQualityAnnotations(state.paragraphs, data.annotations);
+    const crossParagraphAnnotations = detectCrossParagraphQualityAnnotations(state.paragraphs)
+      .map((annotation) => ({ ...annotation, id: createId('ql') }));
+    const qualityAnnotations = mergeQualityAnnotations(modelAnnotations, crossParagraphAnnotations);
     return {
       ...state,
       phase: WRITING_PHASE.AGENT5,
@@ -356,7 +372,7 @@ export async function requestPeekRewrite(state, paragraphId) {
     const text = await client.completeForAgent(
       'agent5',
       [
-        { role: 'system', content: '重写下列段落，保持剧情，提升流畅度。避免「不是……，也不是……，而是……」与「不是……，不是……，是」这类 AI 套句；也不要写成「然后她笑了。」「然后他沉默了。」这种独立短反应句，更不要下一句再用「那是一个……」「那是一种……」去解释。能直叙就直叙，若确实需要保留转折，可改成「并非……抑或……而是……」。只输出改写后的正文，不要解释。' },
+        { role: 'system', content: '重写下列段落，保持剧情，提升流畅度。避免「不是……，也不是……，而是……」与「不是……，不是……，是」这类 AI 套句；也不要写成「然后她笑了。」「然后他沉默了。」这种独立短反应句，更不要下一句再用「那是一个……」「那是一种……」去解释。能直叙就直叙，若确实需要保留转折，可改成「并非……抑或……而是……」。若输出为简体中文小说正文，标点必须使用全角中文标点（，。！？：；、“”‘’（）《》——），不要使用半角英文标点。只输出改写后的正文，不要解释。' },
         { role: 'user', content: para.text },
       ],
       { expectJson: false }
@@ -421,7 +437,7 @@ export async function bulkRewriteUnresolved(state) {
       [
         {
           role: 'system',
-          content: '重写下列段落：保持情节不变，提升流畅度。只输出正文。',
+          content: '重写下列段落：保持情节不变，提升流畅度。若输出为简体中文小说正文，标点必须使用全角中文标点（，。！？：；、“”‘’（）《》——），不要使用半角英文标点。只输出正文。',
         },
         { role: 'user', content: p.text },
       ],

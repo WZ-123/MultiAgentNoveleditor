@@ -54,14 +54,24 @@ export function ToolConfirmationModal() {
 
   if (!pending) return null;
 
-  const replacePreview = pending.tool === 'replace_chapter_text'
+  const chapterPatchPreview = pending.tool === 'replace_chapter_text'
     ? {
         chapterName: pending.arguments?.name || '',
-        targetText: pending.arguments?.targetText || '',
-        replacement: pending.arguments?.replacement || '',
-        expectedMatchCount: pending.arguments?.expectedMatchCount,
+        edits: [{
+          targetText: pending.arguments?.targetText || '',
+          replacement: pending.arguments?.replacement || '',
+          expectedMatchCount: pending.arguments?.expectedMatchCount,
+          beforeContext: pending.arguments?.beforeContext || '',
+          afterContext: pending.arguments?.afterContext || '',
+        }],
       }
-    : null;
+    : pending.tool === 'apply_chapter_patch'
+      ? {
+          chapterName: pending.arguments?.name || '',
+          edits: Array.isArray(pending.arguments?.edits) ? pending.arguments.edits : [],
+          baseContent: pending.arguments?.baseContent || '',
+        }
+      : null;
 
   const desc = (t('toolConfirm.desc') || '')
     .replace('{subagent}', pending.subagentId || 'subagent')
@@ -80,24 +90,47 @@ export function ToolConfirmationModal() {
         </div>
         <div className="px-4 py-3 overflow-y-auto flex-1">
           <div className="text-sm text-gray-300 mb-3">{desc}</div>
-          {replacePreview ? (
+          {chapterPatchPreview ? (
             <div className="mb-3 space-y-3">
               <div className="text-xs text-gray-400">章节</div>
               <div className="rounded border border-vscode-panel-border/60 bg-vscode-bg/60 px-2 py-1 text-xs text-gray-200">
-                {replacePreview.chapterName || '(未指定章节)'}
-              </div>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <div>
-                  <div className="mb-1 text-xs text-gray-400">原文片段</div>
-                  <pre className="min-h-24 rounded border border-vscode-panel-border/60 bg-vscode-bg/60 p-2 text-xs whitespace-pre-wrap text-rose-200 overflow-auto">{replacePreview.targetText || '(空)'}</pre>
-                </div>
-                <div>
-                  <div className="mb-1 text-xs text-gray-400">替换为</div>
-                  <pre className="min-h-24 rounded border border-vscode-panel-border/60 bg-vscode-bg/60 p-2 text-xs whitespace-pre-wrap text-emerald-200 overflow-auto">{replacePreview.replacement || '(空)'}</pre>
-                </div>
+                {chapterPatchPreview.chapterName || '(未指定章节)'}
               </div>
               <div className="text-[11px] text-gray-500">
-                预期命中次数: {replacePreview.expectedMatchCount ?? 1}
+                编辑条数: {chapterPatchPreview.edits.length || 0}
+                {chapterPatchPreview.baseContent ? ' · 已附带原始快照校验' : ''}
+              </div>
+              <div className="space-y-3">
+                {chapterPatchPreview.edits.map((edit, index) => (
+                  <div key={`patch-edit-${index}`} className="rounded border border-vscode-panel-border/60 bg-vscode-bg/40 p-3">
+                    <div className="mb-2 text-xs text-gray-400">编辑 {index + 1}</div>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <div>
+                        <div className="mb-1 text-xs text-gray-400">原文片段</div>
+                        <pre className="min-h-20 rounded border border-vscode-panel-border/60 bg-vscode-bg/60 p-2 text-xs whitespace-pre-wrap text-rose-200 overflow-auto">{edit?.targetText || '(空)'}</pre>
+                      </div>
+                      <div>
+                        <div className="mb-1 text-xs text-gray-400">替换为</div>
+                        <pre className="min-h-20 rounded border border-vscode-panel-border/60 bg-vscode-bg/60 p-2 text-xs whitespace-pre-wrap text-emerald-200 overflow-auto">{edit?.replacement || '(空)'}</pre>
+                      </div>
+                    </div>
+                    {(edit?.beforeContext || edit?.afterContext) ? (
+                      <div className="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <div>
+                          <div className="mb-1 text-[11px] text-gray-500">前文锚点</div>
+                          <pre className="rounded border border-vscode-panel-border/60 bg-vscode-bg/60 p-2 text-[11px] whitespace-pre-wrap text-gray-300 overflow-auto">{edit?.beforeContext || '(未提供)'}</pre>
+                        </div>
+                        <div>
+                          <div className="mb-1 text-[11px] text-gray-500">后文锚点</div>
+                          <pre className="rounded border border-vscode-panel-border/60 bg-vscode-bg/60 p-2 text-[11px] whitespace-pre-wrap text-gray-300 overflow-auto">{edit?.afterContext || '(未提供)'}</pre>
+                        </div>
+                      </div>
+                    ) : null}
+                    <div className="mt-2 text-[11px] text-gray-500">
+                      预期命中次数: {edit?.expectedMatchCount ?? 1}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ) : null}

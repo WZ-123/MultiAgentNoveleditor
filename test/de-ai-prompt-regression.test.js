@@ -73,6 +73,8 @@ async function runDeAiPromptRegressionTest() {
     assert.ok(upgraded?.content.includes('并非……抑或……而是……'));
     assert.ok(upgraded?.content.includes('绝对避免「然后她笑了」式独立短反应句'));
     assert.ok(upgraded?.content.includes('那是一个……'));
+    assert.ok(upgraded?.content.includes('跨段拆开的套句也要算'));
+    assert.ok(upgraded?.content.includes('上一段是「然后她笑了。」、下一段才是「那是一个……」'));
     pass('DAI1_existing_de_ai_skill_is_upgraded', 'legacy seeded content picked up the new anti-cliche guidance');
   } catch (err) {
     fail('DAI1_existing_de_ai_skill_is_upgraded', err?.message || String(err));
@@ -92,10 +94,13 @@ async function runDeAiPromptRegressionTest() {
     assert.ok(proseQuality?.systemPrompt.includes('并非……抑或……而是……'));
     assert.ok(proseQuality?.systemPrompt.includes('然后她笑了。'));
     assert.ok(proseQuality?.systemPrompt.includes('那是一个……'));
+    assert.ok(proseQuality?.systemPrompt.includes('如果一个 AI 套句被拆到了相邻两段之间'));
+    assert.ok(proseQuality?.systemPrompt.includes('paragraphIds'));
     assert.ok(writer?.systemPrompt.includes('不是……，也不是……，而是……'));
     assert.ok(writer?.systemPrompt.includes('不是……，不是……，是'));
     assert.ok(writer?.systemPrompt.includes('然后她笑了。'));
     assert.ok(writer?.systemPrompt.includes('那是一个……'));
+    assert.ok(writer?.systemPrompt.includes('标点必须使用全角中文标点'));
     pass('DAI2_builtin_subagent_prompts_cover_new_patterns', 'writer and prose-quality prompts both mention the new anti-cliche rule');
   } catch (err) {
     fail('DAI2_builtin_subagent_prompts_cover_new_patterns', err?.message || String(err));
@@ -110,10 +115,12 @@ async function runDeAiPromptRegressionTest() {
     assert.ok(agentPromptsText.includes('并非……抑或……而是……'));
     assert.ok(agentPromptsText.includes('然后她笑了。'));
     assert.ok(agentPromptsText.includes('那是一个……'));
-    assert.ok(writingOrchestratorText.includes('不是……，也不是……，而是……'));
-    assert.ok(writingOrchestratorText.includes('并非……抑或……而是……'));
-    assert.ok(writingOrchestratorText.includes('然后她笑了。'));
-    assert.ok(writingOrchestratorText.includes('那是一个……'));
+    assert.ok(agentPromptsText.includes('如果一个 AI 套句被拆到了相邻两段之间'));
+    assert.ok(agentPromptsText.includes('paragraphIds'));
+    assert.ok(agentPromptsText.includes('标点必须使用全角中文标点'));
+    assert.ok(writingOrchestratorText.includes('buildQualityReviewPayload'));
+    assert.ok(writingOrchestratorText.includes('detectCrossParagraphQualityAnnotations'));
+    assert.ok(writingOrchestratorText.includes('paragraphIds'));
     pass('DAI3_legacy_prompt_paths_cover_new_patterns', 'legacy draft and review prompt paths were updated too');
   } catch (err) {
     fail('DAI3_legacy_prompt_paths_cover_new_patterns', err?.message || String(err));
