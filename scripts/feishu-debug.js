@@ -8,6 +8,9 @@
  *   node scripts/feishu-debug.js --action=configure --appId=xxx --appSecret=xxx --appToken=xxx --tableId=xxx --enabled=true
  *   node scripts/feishu-debug.js --action=verify
  *   node scripts/feishu-debug.js --action=list-fields
+ *   node scripts/feishu-debug.js --action=list-records --limit=20
+ *   node scripts/feishu-debug.js --action=find-feedback --feedbackId=fb-xxx
+ *   node scripts/feishu-debug.js --action=find-feedback --query=联网补全
  *   node scripts/feishu-debug.js --action=ensure-schema
  *   node scripts/feishu-debug.js --action=playout --feedbackId=fb-xxx
  *   node scripts/feishu-debug.js --action=smoke
@@ -161,6 +164,95 @@ async function actionListFields(cfg) {
     const { token } = await feishuAdapter.getTenantAccessToken(cfg.appId, cfg.appSecret);
     const fields = await feishuAdapter.getTableFields(cfg.appToken, cfg.tableId, token);
     console.log(JSON.stringify(fields, null, 2));
+  } catch (err) {
+    console.error('Failed:', err.message);
+    process.exit(1);
+  }
+}
+
+function summarizeRecord(record) {
+  const fields = record?.fields || {};
+  return {
+    recordId: record?.record_id || '',
+    feedbackId: fields.feedbackId || '',
+    createdAt: fields.createdAt || '',
+    issueTitle: fields.issueTitle || '',
+    actualBehavior: fields.actualBehavior || '',
+    latestUiError: fields.latestUiError || '',
+    latestMainProcessError: fields.latestMainProcessError || '',
+    latestChatAgentError: fields.latestChatAgentError || '',
+    activeRuntimeDriver: fields.activeRuntimeDriver || '',
+    activeProviderType: fields.activeProviderType || '',
+    activeModel: fields.activeModel || '',
+    currentSessionStatus: fields.currentSessionStatus || '',
+    syncStatus: fields.syncStatus || '',
+  };
+}
+
+async function fetchRecentRecords(cfg, limit = 20) {
+  const { token } = await feishuAdapter.getTenantAccessToken(cfg.appId, cfg.appSecret);
+  const records = [];
+  let pageToken = '';
+  while (records.length < limit) {
+    const page = await feishuAdapter.listRecords(cfg.appToken, cfg.tableId, token, {
+      pageSize: Math.min(100, limit),
+      pageToken,
+      sort: { fieldName: 'createdAt', order: 'desc' },
+    });
+    records.push(...(page.items || []));
+    if (!page.hasMore || !page.pageToken) break;
+    pageToken = page.pageToken;
+  }
+  return records.slice(0, limit);
+}
+
+async function actionListRecords(cfg, args) {
+  try {
+    printConfigSources(cfg);
+    const limit = Math.max(1, Math.min(100, Number(args.limit) || 20));
+    const records = await fetchRecentRecords(cfg, limit);
+    console.log(JSON.stringify(records.map(summarizeRecord), null, 2));
+  } catch (err) {
+    console.error('Failed:', err.message);
+    process.exit(1);
+  }
+}
+
+function recordMatchesQuery(record, query) {
+  const needle = String(query || '').trim().toLowerCase();
+  if (!needle) return true;
+  const fields = record?.fields || {};
+  return [
+    record?.record_id,
+    fields.feedbackId,
+    fields.issueTitle,
+    fields.actualBehavior,
+    fields.latestUiError,
+    fields.latestMainProcessError,
+    fields.latestChatAgentError,
+    fields.payloadJson,
+  ].some((value) => String(value || '').toLowerCase().includes(needle));
+}
+
+async function actionFindFeedback(cfg, args) {
+  const query = String(args.feedbackId || args.query || '').trim();
+  if (!query) {
+    console.error('Missing --feedbackId or --query');
+    process.exit(1);
+  }
+
+  try {
+    printConfigSources(cfg);
+    const records = await fetchRecentRecords(cfg, Math.max(20, Math.min(100, Number(args.limit) || 50)));
+    const matches = records.filter((record) => recordMatchesQuery(record, query));
+    if (!matches.length) {
+      console.error(`No remote records matched: ${query}`);
+      process.exit(1);
+    }
+    console.log(JSON.stringify(matches.map((record) => ({
+      ...summarizeRecord(record),
+      payloadJson: record?.fields?.payloadJson || '',
+    })), null, 2));
   } catch (err) {
     console.error('Failed:', err.message);
     process.exit(1);
@@ -409,6 +501,18 @@ async function main() {
   if (action === 'list-fields') {
     validateConfig(cfg);
     await actionListFields(cfg);
+    return;
+  }
+
+  if (action === 'list-records') {
+    validateConfig(cfg);
+    await actionListRecords(cfg, args);
+    return;
+  }
+
+  if (action === 'find-feedback') {
+    validateConfig(cfg);
+    await actionFindFeedback(cfg, args);
     return;
   }
 

@@ -1,13 +1,15 @@
 # 【功能完成声明】
 
-用户一键反馈到飞书表格（Bitable）的全链路功能已开发完成，支持：
-- 反馈内容、日志、截图等自动收集并本地入队
-- 自动/手动同步到飞书Bitable表格，支持失败重试、状态回写
-- 支持命令行和主程序内触发同步，配置灵活
+用户一键反馈到飞书表格（Bitable）的全链路功能已开发完成，但运行边界分为两类：
+- 打包交付给用户的客户端：只允许通过腾讯云 SCF Web Function 中继访问飞书，不允许内置开发者本地填写的 API Key，也不允许保留直连飞书 Bitable 能力。
+- 开发者环境：允许保留直连飞书脚本和适配器，用于本地 AI 联调、表结构排查、反馈查询、样本回放和 bug 收集。
 
-所有关键链路已通过E2E测试和实际飞书表格验证。
+对用户客户端而言，以下能力都必须走腾讯云函数中继实现：
+- 将 bug 反馈发送到飞书
+- 从飞书查询反馈/授权相关数据
+- 写入授权码使用记录
 
-如需扩展或迁移到服务端/云函数，可基于现有实现快速适配。
+所有关键链路已通过 E2E 测试和实际飞书表格验证；开发环境仍保留直连飞书工具，但不进入打包产物。
 # 【2026-05-16 进度总结】
 
 ## 本地outbox到飞书表格同步服务进展
@@ -21,15 +23,17 @@
 7. 已通过多轮冒烟测试和E2E验证，表格字段、附件、时区等均已对齐。
 
 ### 使用方法简述
-- 配置好app-config.json中的feishuSync（appId、appSecret、appToken、tableId、enabled）。
-- 也可用中继模式（不持飞书凭证）：`node scripts/feishu-debug.js --action=configure --relayUrl=https://xxx.tencentscf.com --relayApiKey=xxx --enabled=true`
+- 开发者直连模式：仅在本地开发环境配置 `FEISHU_APP_ID` / `FEISHU_APP_SECRET` / `FEISHU_APP_TOKEN` / `FEISHU_TABLE_ID`，供脚本联调、飞书查询和故障排查使用。
+- 客户端/中继模式：用户客户端只配置 `relayUrl` + `relayApiKey`，通过腾讯云 SCF 访问飞书，不持飞书凭证。
 - 可用脚本 `node scripts/feishu-debug.js --action=smoke` 或 `--action=playout --feedbackId=xxx` 进行手动同步；smoke 也支持 `--feedbackId=xxx` 重放已有记录。
+- 可用 `node scripts/feishu-debug.js --action=list-records` 或 `--action=find-feedback --query=xxx` 读取远程飞书反馈（仅开发者环境直连使用）。
 - 可用 `node scripts/feishu-debug.js --action=ensure-schema` 自动检查并补齐表格字段。
-- 也可在主程序内通过feedbackSyncWorker.triggerSync()触发全量同步。
+- 也可在主程序内通过 feedbackSyncWorker.triggerSync() 触发全量同步；打包客户端使用的是 relay 路径，而不是直连飞书路径。
 
 ### 结论
-当前无需重写API，直接用现有的feishuAdapter + feedbackSyncWorker + fieldMapper即可实现本地outbox到飞书表格的自动/手动同步。
-如需具体命令或配置模板，可随时补充。
+开发者环境下，现有 `feishuAdapter + feedbackSyncWorker + fieldMapper + feishu-debug.js` 足以支撑本地直连飞书联调与 bug 收集。
+
+面向用户的打包客户端则必须坚持 relay-only：不包含本地填写的飞书凭证，不保留直连飞书链路，所有反馈发送、授权查询/写入都经腾讯云 SCF 完成。
 # 飞书多维表格反馈同步设计
 
 **状态：已实现（Phase 1–5 全部完成，已部署到腾讯云 SCF）**
@@ -53,7 +57,7 @@
 2. 不让渲染器直接持有飞书凭证
 3. 不要求用户等待飞书写入成功后才算“提交成功”
 4. 不把完整 payload 的所有字段强行摊平成多维表格列
-5. 第一阶段不引入云端中转服务
+5. 不在打包客户端中保留直连飞书能力；用户端飞书访问统一走腾讯云 SCF
 
 ## 设计原则
 
@@ -62,7 +66,22 @@
 3. 摘要优先：多维表格用于筛选和分派，完整 JSON 用于深度排查
 4. 附件独立处理：截图单独作为附件上传，不和文本列混杂
 5. 失败可恢复：所有同步失败都要能分类、记录、重试或人工回放
-6. CLI 仅开发使用：飞书 CLI 用于联调、验权、回放，不进入客户运行链路
+6. 开发工具仅开发使用：飞书 CLI / 调试脚本 / 直连 Bitable 查询只用于联调、验权、回放和本地 bug 排查，不进入客户运行链路
+
+## 运行边界声明
+
+### 打包客户端
+
+- 不打包开发者本地填写的飞书 API Key 或 `appId/appSecret/appToken/tableId`。
+- 不打包直连飞书 Bitable 的运行链路。
+- 所有飞书相关读写都经腾讯云 SCF 中继完成。
+- 允许保留 relay 地址和 relay API Key，但它们只用于访问云函数，不直接访问飞书。
+
+### 开发者环境
+
+- 可以通过 [../scripts/feishu-debug.js](../scripts/feishu-debug.js) 和 [../src/main/feishu/feishuAdapter.js](../src/main/feishu/feishuAdapter.js) 直连飞书。
+- 直连能力用于本地 AI 调试、反馈表查询、回放 bug 样本、表字段联调与故障诊断。
+- 这些脚本和适配器属于开发者工具，不应进入发布包，也不应作为用户运行链路依赖。
 
 ## 当前基础
 

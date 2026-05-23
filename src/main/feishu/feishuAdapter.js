@@ -232,6 +232,37 @@ async function getTableFields(appToken, tableId, token) {
   return res.data.data?.items || [];
 }
 
+async function listRecords(appToken, tableId, token, options = {}) {
+  const pageSize = Math.max(1, Math.min(500, Number(options.pageSize) || 100));
+  const params = new URLSearchParams({ page_size: String(pageSize) });
+  if (options.pageToken) params.set('page_token', String(options.pageToken));
+  if (options.viewId) params.set('view_id', String(options.viewId));
+  if (options.filter) params.set('filter', String(options.filter));
+  if (options.sort?.fieldName) {
+    params.set('sort[0][field_name]', String(options.sort.fieldName));
+    params.set('sort[0][desc]', String(options.sort.order).toLowerCase() === 'desc' ? 'true' : 'false');
+  }
+
+  const res = await request(buildRequest(
+    'GET',
+    `/open-apis/bitable/v1/apps/${appToken}/tables/${tableId}/records?${params.toString()}`,
+    { Authorization: `Bearer ${token}` },
+    null
+  ));
+
+  if (res.data?.code !== 0) {
+    const err = normalizeError(res.statusCode, res.data);
+    throw Object.assign(new Error(err.message), { feishuError: err });
+  }
+
+  return {
+    items: res.data.data?.items || [],
+    hasMore: !!res.data.data?.has_more,
+    pageToken: res.data.data?.page_token || '',
+    total: Number(res.data.data?.total || 0),
+  };
+}
+
 async function createField(appToken, tableId, token, field) {
   const res = await request(buildRequest(
     'POST',
@@ -255,6 +286,7 @@ module.exports = {
   updateRecord,
   uploadAttachment,
   getTableFields,
+  listRecords,
   createField,
   normalizeError,
 };
