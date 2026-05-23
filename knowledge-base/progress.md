@@ -56,7 +56,12 @@
 
 **从头构建并验证**
 
-`node scripts/verify-win-package.js --build`
+`RELEASE_RELAY_URL=<url> RELEASE_RELAY_API_KEY=<key> node scripts/verify-win-package.js --build`
+
+说明：
+
+- 2026-05-24 之后，打包客户端默认必须预置 relay 配置，否则授权码验证无法通过。
+- 因此 `--build` 模式会要求 `RELEASE_RELAY_URL` / `RELEASE_RELAY_API_KEY`（兼容旧名 `BETA_RELAY_URL` / `BETA_RELAY_API_KEY`）。
 
 适用场景：
 
@@ -86,7 +91,8 @@
 
 - 触发条件：`push` 匹配 `v*` tag
 - Matrix：macOS / Windows / Ubuntu 三平台并行
-- 步骤：checkout → Node.js 18 → `npm ci` → `vite build` → `electron-builder --publish=never` → 创建 Release → 上传产物
+- 步骤：checkout → Node.js 18 → `npm ci` → `npm run build:<platform> -- --publish=never` → 创建 Release → 上传产物
+- Release 构建要求在 GitHub Secrets 中提供：`RELEASE_RELAY_URL` / `RELEASE_RELAY_API_KEY`
 - 产物：
   - macOS arm64 → `*.dmg`
   - Windows → `*.exe`

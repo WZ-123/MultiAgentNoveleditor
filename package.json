@@ -13,12 +13,12 @@
     "feishu:verify": "node scripts/feishu-debug.js --action=verify",
     "feishu:list-fields": "node scripts/feishu-debug.js --action=list-fields",
     "feishu:smoke": "node scripts/feishu-debug.js --action=smoke",
-    "build": "vite build && electron-builder",
-    "build:beta": "node scripts/build-beta.js",
-    "build:win": "electron-builder --win",
+    "build": "node scripts/build-release.js",
+    "build:beta": "node scripts/build-release.js",
+    "build:win": "node scripts/build-release.js --win",
     "verify:win-package": "node scripts/verify-win-package.js",
-    "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux"
+    "build:mac": "node scripts/build-release.js --mac",
+    "build:linux": "node scripts/build-release.js --linux"
   },
   "keywords": [
     "Electron",

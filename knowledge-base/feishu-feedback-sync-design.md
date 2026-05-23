@@ -496,14 +496,14 @@ worker 只负责调度和状态回写，不直接拼 HTTP 请求。
 
 1. 集中权限管理：飞书凭证由 SCF 环境变量持有，客户端不接触
 2. 跨设备汇聚：多台内测设备共用同一中继，反馈汇聚到同一张表格
-3. 内测零配置：构建时通过 `BETA_RELAY_URL` / `BETA_RELAY_API_KEY` 环境变量预置，用户装完即用
+3. 内测零配置：构建时通过 `RELEASE_RELAY_URL` / `RELEASE_RELAY_API_KEY` 预置（兼容旧名 `BETA_RELAY_URL` / `BETA_RELAY_API_KEY`），用户装完即用
 4. 保持 outbox 协议不变，降低迁移成本
 
 实现：
 
 - `relay-worker/scf-app-final.js`：SCF HTTP Server 入口（本地备份），接收反馈/附件，内部调飞书 OpenAPI
 - `src/main/sync/relayClient.js`：本地客户端，HTTP multipart 上传 + JSON submit
-- `scripts/build-beta.js`：打包时注入预置配置，打完包自动恢复原代码
+- `scripts/build-release.js`：打包时注入预置配置，打完包自动恢复原代码
 - 设置面板不暴露反馈同步入口，内测用户不应感知此功能存在
 
 部署方式（腾讯云 SCF）：
@@ -571,7 +571,7 @@ Phase 1–5 全部完成，代码已合入主干。
 | `test/feedback-sync.test.js` | 10 个单元测试（状态机/退避/错误分类/字段映射/锁） |
 | `src/main/sync/relayClient.js` | 中继客户端：HTTP multipart 上传附件 + JSON submit，与 SCF API 对齐 |
 | `relay-worker/scf-app-final.js` | 腾讯云 SCF HTTP Server 入口：接收反馈/附件，内部调飞书 OpenAPI |
-| `scripts/build-beta.js` | 构建时注入 `BETA_RELAY_URL` / `BETA_RELAY_API_KEY` 到 `DEFAULT_APP_CONFIG` |
+| `scripts/build-release.js` | 构建时注入 `RELEASE_RELAY_URL` / `RELEASE_RELAY_API_KEY`（兼容 `BETA_*`）到 `DEFAULT_APP_CONFIG` |
 | `test/relay-client.test.js` | relayClient 单元测试（5 个：auth、错误分类、create/update） |
 | `test/relay-e2e.test.js` | 端到端测试（3 个：完整 upload→create→update 链路） |
 
@@ -603,7 +603,7 @@ Phase 1–5 全部完成，代码已合入主干。
 **中继模式安全（Phase 5）**：
 - 客户端不再持有飞书 `appId/appSecret/appToken/tableId`
 - 飞书凭证仅存于腾讯云 SCF 环境变量中
-- 客户端只持有 `relayUrl` + `relayApiKey`，且通过 `build-beta.js` 在打包时注入 `DEFAULT_APP_CONFIG`
+- 客户端只持有 `relayUrl` + `relayApiKey`，且通过 `build-release.js` 在打包时注入 `DEFAULT_APP_CONFIG`
 - 内测安装包中不暴露任何飞书相关凭证
 
 **待实现**：`appSecret` 目前与普通配置混存在直连模式的 `app-config.json` 中。项目 `paths.js` 已预留 `secrets.json`，但尚未接入使用。后续需要把 `appSecret`（以及 relayApiKey）迁移到 `secrets.json`，实现"敏感凭证 / 普通配置"分离。
@@ -617,4 +617,4 @@ Phase 1–5 全部完成，代码已合入主干。
 5. 多维表格采用”摘要字段 + 截图附件 + 原始 payload”三层结构
 6. 完整 payload 不做全量平铺，避免表结构脆弱和维护失控
 7. **Phase 5 中转服务采用腾讯云 SCF**：国内可访问、低运维成本；客户端凭证完全隔离
-8. **内测包零配置**：`build-beta.js` 构建时注入预置配置，用户装完即用，设置面板不暴露反馈同步入口
+8. **内测包零配置**：`build-release.js` 构建时注入预置配置，用户装完即用，设置面板不暴露反馈同步入口
