@@ -2,7 +2,9 @@
 'use strict';
 
 /**
- * One-click init script for Cloudflare Worker relay deployment.
+ * One-click init script for the Cloudflare Worker backup relay deployment.
+ * Tencent Cloud SCF Web Function is the primary production path; use this only
+ * to prepare the standby Cloudflare deployment.
  *
  * Usage:
  *   cd relay-worker

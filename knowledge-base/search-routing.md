@@ -31,7 +31,7 @@
 
 | 文化圈 | 搜索源优先级 |
 |--------|-------------|
-| `east-asian-cn` | 萌娘百科 → Bing → Wikipedia → DuckDuckGo |
+| `east-asian-cn` | 萌娘百科 → Biligame Wiki（已知作品子 wiki）→ Bing → Wikipedia → DuckDuckGo |
 | `east-asian-jp` | Wikipedia → 萌娘百科 → Bing → DuckDuckGo |
 | `east-asian-kr` | Wikipedia → Bing → 萌娘百科 → DuckDuckGo |
 | `western-en` | Wikipedia → Bing → DuckDuckGo |
@@ -46,14 +46,22 @@
 | 搜索源 | 查询格式 |
 |--------|----------|
 | 萌娘百科 | `作品名:角色名`（如 `碧蓝航线:爱宕`）→ 若空则回退 `作品名 角色名` |
+| Biligame Wiki | 先把作品名映射到已知子 wiki slug，再在子 wiki 内搜索 `角色名` → 回退 `作品名 角色名` |
 | Wikipedia | `角色名 作品名 character` → 回退 `角色名 作品名` |
 | Bing | `角色名 作品名 character wiki` → 回退 `角色名 作品名` |
 | DuckDuckGo | 同上 Bing 格式 |
 
+当前已验证并内置的 Biligame 子 wiki 映射：
+- `碧蓝航线` → `blhx`
+- `原神` → `ys`
+- `崩坏：星穹铁道` / `崩坏星穹铁道` → `sr`
+
+若作品名没有已知 slug 映射，则 Biligame 源自动跳过，不会硬猜子 wiki。
+
 ## 4. 搜索结果获取
 
 `fetchBestPage()` 在 `src/main/import/searchEngine.js` 中：
-1. **优先取百科来源**（萌娘百科 → Wikipedia）的页面内容
+1. **优先取百科来源**（萌娘百科 → Biligame Wiki → Wikipedia）的页面内容
 2. 次选通用搜索引擎结果
 3. 取首个内容质量 > 200 字符的页面
 4. 页面内容切片 12000 字符传给 AI 提取
@@ -78,8 +86,9 @@
 ```
 
 提取规则：
-- 如果页面内容不完整，可根据页面中出现的角色设定关键词合理推断
-- 优先从页面内容提取，只有页面完全未提及该角色的任何信息时才留空
+- 只能提取页面里已经明确写出的事实
+- 页面信息不完整或存在歧义时，相关字段必须留空，不能根据弱线索补写
+- 若联网搜索没有发生、没有结果、或没有拿到页面正文，必须直接失败，不能使用模型训练数据补全
 - 严禁无依据虚构
 
 ## 6. 合并逻辑

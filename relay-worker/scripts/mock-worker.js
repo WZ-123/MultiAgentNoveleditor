@@ -1,8 +1,9 @@
 'use strict';
 
 /**
- * Mock Cloudflare Worker server for local testing.
- * Simulates the Workers behavior without calling Feishu APIs.
+ * Mock backup relay server for local testing.
+ * Simulates the Cloudflare Worker fallback behavior without calling Feishu
+ * APIs. Tencent Cloud SCF Web Function remains the primary deployment target.
  */
 
 const http = require('node:http');

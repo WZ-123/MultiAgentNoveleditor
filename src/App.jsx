@@ -244,6 +244,18 @@ function App() {
     return () => { cancelled = true; };
   }, [refreshActiveNovelState]);
 
+  useEffect(() => {
+    if (!window.mana?.novel?.onActiveChanged) return undefined;
+    const off = window.mana.novel.onActiveChanged((payload) => {
+      refreshActiveNovelState(payload?.entry ?? null).catch((err) => {
+        console.error('[App] active novel push refresh failed', err);
+      });
+    });
+    return () => {
+      try { off(); } catch {}
+    };
+  }, [refreshActiveNovelState]);
+
   async function loadExistingNovels() {
     if (!window.mana?.novel?.list) return;
     try {

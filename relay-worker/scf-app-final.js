@@ -1,7 +1,8 @@
 'use strict';
 
 /**
- * Tencent Cloud SCF Web Function — HTTP Server mode
+ * Tencent Cloud SCF Web Function — primary feedback/auth relay deployment.
+ * Cloudflare Worker remains in this repo only as a backup fallback path.
  *
  * Paste this entire file into app.js in the SCF online editor.
  * Runtime: Node.js 18.15

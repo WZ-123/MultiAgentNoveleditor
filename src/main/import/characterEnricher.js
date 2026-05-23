@@ -214,15 +214,8 @@ async function _enrichOneCharacterWithLLM(ch, { fanworkName, userLang, onProgres
 
       const toolUses = (result.content || []).filter((b) => b.type === 'tool_use');
       if (!toolUses.length) {
-        const textBlock = (result.content || []).find((b) => b.type === 'text');
-        const webInfo = _parseJson(textBlock?.text || '');
-        if (!webInfo) {
-          onProgress?.({ charName, status: 'failed', message: 'LLM返回格式错误' });
-          return { ch, merged: null, status: 'llm-parse-failed' };
-        }
-        const merged = _mergeWebInfo(ch, webInfo, 'llm-search', charName, onProgress, fanworkName);
-        const mergeStatus = merged._enrichmentStatus === 'extract-empty' ? 'extract-empty' : 'success';
-        return { ch: merged, merged, status: mergeStatus };
+        onProgress?.({ charName, status: 'failed', message: 'LLM未执行联网搜索，已拒绝无证据补全' });
+        return { ch, merged: null, status: 'llm-tool-required' };
       }
 
       // Process all tool calls — auto-extract page content after search

@@ -22,10 +22,40 @@
 const registry = require('./drivers/registry');
 const eventBus = require('./eventBus');
 const { generateId } = require('../store/paths');
+const subagentsStore = require('../store/subagents');
+const dagsStore = require('../store/dags');
 const { resumePipeline, listActivePipelines } = require('./runPipeline');
 
 /** runId | pipelineRunId  ->  { driverId, handle, mode } */
 const activeHandles = new Map();
+let builtinSubagentsReadyPromise = null;
+let builtinDagsReadyPromise = null;
+
+async function ensureBuiltinSubagentsReady() {
+  if (!builtinSubagentsReadyPromise) {
+    builtinSubagentsReadyPromise = subagentsStore.ensureBuiltinSeeds().catch((err) => {
+      builtinSubagentsReadyPromise = null;
+      throw err;
+    });
+  }
+  return builtinSubagentsReadyPromise;
+}
+
+async function ensureBuiltinDagsReady() {
+  if (!builtinDagsReadyPromise) {
+    builtinDagsReadyPromise = dagsStore.ensureBuiltinSeeds().catch((err) => {
+      builtinDagsReadyPromise = null;
+      throw err;
+    });
+  }
+  return builtinDagsReadyPromise;
+}
+
+async function ensureWorkflowSeeds(mode) {
+  const tasks = [ensureBuiltinSubagentsReady()];
+  if (mode === 'pipeline') tasks.push(ensureBuiltinDagsReady());
+  await Promise.all(tasks);
+}
 
 /**
  * Run a workflow with the active driver.
@@ -52,6 +82,8 @@ async function runWorkflow(payload = {}) {
   if (mode !== 'subagent' && mode !== 'pipeline') {
     throw new Error(`runWorkflow: invalid mode '${mode}'`);
   }
+
+  await ensureWorkflowSeeds(mode);
 
   let driver;
   if (explicitDriverId) {

@@ -1,5 +1,7 @@
 /**
- * Local integration test for the Cloudflare Worker relay.
+ * Local integration test for the feedback relay.
+ * Primary deployment is Tencent Cloud SCF Web Function; Cloudflare Worker is a
+ * backup target, so this script accepts both runtime health modes.
  *
  * Usage:
  *   1. Start local dev server: cd relay-worker && npx wrangler dev
@@ -62,7 +64,10 @@ async function test1_health() {
   const { status, data } = await request('/api/v1/health', { method: 'GET', headers: {} });
   assert(status === 200, `Expected 200, got ${status}`);
   assert(data.ok === true, 'Expected ok=true');
-  assert(data.mode === 'cloudflare-worker', 'Expected cloudflare-worker mode');
+  assert(
+    data.mode === 'scf-web-function' || data.mode === 'cloudflare-worker',
+    `Expected scf-web-function or cloudflare-worker mode, got ${data.mode}`
+  );
 }
 
 async function test2_auth_rejected() {
@@ -85,7 +90,7 @@ async function test3_submit_without_screenshot() {
       fields: {
         feedbackId: `test-${Date.now()}`,
         createdAt: '2026-05-16 12:00:00 +08:00',
-        issueTitle: '[TEST] Cloudflare Worker relay',
+        issueTitle: '[TEST] Tencent SCF primary relay',
         actualBehavior: 'Automated test from test-relay.js',
         feedbackMode: 'opinion-only',
         severity: 'low',

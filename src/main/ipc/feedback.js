@@ -3,9 +3,12 @@
 const { ipcMain } = require('electron');
 const feedbackOutbox = require('../store/feedbackOutbox');
 const recentLogBuffer = require('../store/recentLogBuffer');
-const { getFeedbackSyncWorker } = require('../index');
 const appConfig = require('../store/appConfig');
 const providerManager = require('../providerManager');
+
+function getFeedbackSyncWorker() {
+  return require('../index').getFeedbackSyncWorker();
+}
 
 async function hideUiOverlaysForScreenshot(webContents) {
   if (!webContents?.executeJavaScript) return [];

@@ -25,6 +25,22 @@ function notifyChapterChanged(name, action, title) {
   }
 }
 
+function notifyActiveNovelChanged(entry, action) {
+  try {
+    const { webContents } = require('electron');
+    for (const wc of webContents.getAllWebContents()) {
+      try {
+        wc.send('mana:novel:activeChanged', {
+          action: action || 'updated',
+          entry: entry || null,
+        });
+      } catch {}
+    }
+  } catch {
+    // ignore renderer sync failures
+  }
+}
+
 function safeIpc(handler) {
   return async (event, ...args) => {
     try { return { ok: true, value: await handler(event, ...args) }; }
@@ -67,11 +83,13 @@ function registerNovelIpc() {
     mcpClient.setActiveNovel(id, r.entry?.dir);
     const cfg = await appConfig.load();
     await appConfig.save({ ...cfg, lastNovelId: id, lastNovelDir: r.entry.dir });
+    notifyActiveNovelChanged(r.entry || null, 'opened');
     return { entry: r.entry, meta: r.meta };
   }));
 
   ipcMain.handle('mana:novel:close', safeIpc(async () => {
     mcpClient.setActiveNovel(null);
+    notifyActiveNovelChanged(null, 'closed');
     return true;
   }));
 

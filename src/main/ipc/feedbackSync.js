@@ -2,7 +2,10 @@
 
 const { ipcMain } = require('electron');
 const feedbackOutbox = require('../store/feedbackOutbox');
-const { getFeedbackSyncWorker } = require('../index');
+
+function getFeedbackSyncWorker() {
+  return require('../index').getFeedbackSyncWorker();
+}
 
 function safeIpc(handler) {
   return async (event, ...args) => {

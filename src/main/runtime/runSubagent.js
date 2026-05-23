@@ -20,6 +20,18 @@ const providerManager = require('../providerManager');
 const modelAliases = require('../modelAliases');
 const subagentsStore = require('../store/subagents');
 
+let builtinSubagentsReadyPromise = null;
+
+async function ensureBuiltinSubagentsReady() {
+  if (!builtinSubagentsReadyPromise) {
+    builtinSubagentsReadyPromise = subagentsStore.ensureBuiltinSeeds().catch((err) => {
+      builtinSubagentsReadyPromise = null;
+      throw err;
+    });
+  }
+  return builtinSubagentsReadyPromise;
+}
+
 function pickProvider(type) {
   if (type === 'anthropic') return anthropic;
   if (type === 'openai-compat') return openaiCompat;
@@ -88,6 +100,8 @@ async function runSubagent(opts = {}) {
   } = opts;
 
   const runId = eventBus.ensureRunId(providedRunId);
+
+  await ensureBuiltinSubagentsReady();
 
   const subagent = await subagentsStore.getSubagent(subagentId);
   if (!subagent) {

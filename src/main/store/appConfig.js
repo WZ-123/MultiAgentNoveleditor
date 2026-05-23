@@ -51,12 +51,7 @@ const DEFAULT_APP_CONFIG = {
   feishuSync: {
     enabled: true,
     endpointProfile: 'dev',
-    appId: '',
-    appSecret: '',
-    appToken: '',
-    tableId: '',
-    // Relay mode: client talks to a relay server instead of Feishu directly.
-    // When relayUrl is set, appId/appSecret/appToken/tableId are not used client-side.
+    // The packaged client is relay-only for feedback sync and auth verification.
     relayUrl: '',
     relayApiKey: '',
   },
@@ -71,6 +66,18 @@ const DEFAULT_APP_CONFIG = {
     lastCheckAt: '',
   },
 };
+
+function normalizeFeishuSync(savedFeishu) {
+  const feishuSync = { ...DEFAULT_APP_CONFIG.feishuSync };
+  for (const key of Object.keys(DEFAULT_APP_CONFIG.feishuSync)) {
+    const saved = savedFeishu?.[key];
+    const hasSavedValue = saved !== undefined && saved !== null && saved !== '';
+    if (hasSavedValue) {
+      feishuSync[key] = saved;
+    }
+  }
+  return feishuSync;
+}
 
 function mergeDrivers(saved) {
   // Deep-merge each driver's config so newly-added drivers (e.g. when we add a
@@ -122,14 +129,7 @@ async function load() {
   // Merge feishuSync: saved non-empty values take precedence over defaults,
   // but empty strings do NOT override pre-seeded defaults (for beta builds).
   const savedFeishu = data.feishuSync || {};
-  const feishuSync = { ...DEFAULT_APP_CONFIG.feishuSync };
-  for (const key of Object.keys(DEFAULT_APP_CONFIG.feishuSync)) {
-    const saved = savedFeishu[key];
-    const hasSavedValue = saved !== undefined && saved !== null && saved !== '';
-    if (hasSavedValue) {
-      feishuSync[key] = saved;
-    }
-  }
+  const feishuSync = normalizeFeishuSync(savedFeishu);
 
   // Merge license: same rules as feishuSync
   const savedLicense = data.license || {};
@@ -192,7 +192,7 @@ async function save(patch) {
   }
   // Deep-merge feishuSync so partial patches don't drop sibling fields.
   if (patch && patch.feishuSync) {
-    next.feishuSync = { ...current.feishuSync, ...patch.feishuSync };
+    next.feishuSync = normalizeFeishuSync({ ...current.feishuSync, ...patch.feishuSync });
   } else {
     next.feishuSync = current.feishuSync;
   }

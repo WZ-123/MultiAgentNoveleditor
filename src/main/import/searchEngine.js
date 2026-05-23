@@ -15,6 +15,21 @@
 
 // ── Source registry ──────────────────────────────────────────────
 
+const BILIGAME_WIKI_ALIASES = {
+  blhx: ['碧蓝航线', 'Azur Lane', 'azur lane'],
+  ys: ['原神', 'Genshin Impact', 'genshin impact', 'genshin'],
+  sr: ['崩坏：星穹铁道', '崩坏:星穹铁道', '崩坏星穹铁道', 'Honkai: Star Rail', 'Honkai Star Rail', 'star rail'],
+};
+
+function resolveBiligameWikiSlug(fanworkName) {
+  const normalized = String(fanworkName || '').trim().toLowerCase();
+  if (!normalized) return null;
+  for (const [slug, aliases] of Object.entries(BILIGAME_WIKI_ALIASES)) {
+    if (aliases.some((alias) => alias.toLowerCase() === normalized)) return slug;
+  }
+  return null;
+}
+
 const SOURCES = {
   moegirl: {
     id: 'moegirl', label: '萌娘百科',
@@ -34,6 +49,33 @@ const SOURCES = {
       const json = await res.json();
       const html = json?.parse?.text?.['*'] || '';
       return html.replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;/g, ' ').replace(/\s+/g, ' ').trim();
+    },
+  },
+
+  biligame: {
+    id: 'biligame', label: 'Biligame Wiki',
+    regions: ['zh-CN', 'zh-TW'],
+    async search(query, _userRegionCode, context = {}) {
+      const slug = resolveBiligameWikiSlug(context?.fanworkName);
+      if (!slug) return [];
+      const url = `https://wiki.biligame.com/${slug}/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&srlimit=3`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      const json = await res.json();
+      return (json?.query?.search || []).map((page) => ({
+        title: page.title,
+        snippet: (page.snippet || '').replace(/<[^>]+>/g, ''),
+        url: `https://wiki.biligame.com/${slug}/${encodeURIComponent(page.title)}`,
+        source: 'biligame',
+      }));
+    },
+    async fetchPage(title, _userLang, context = {}) {
+      const slug = resolveBiligameWikiSlug(context?.fanworkName);
+      if (!slug) return '';
+      const url = `https://wiki.biligame.com/${slug}/api.php?action=parse&page=${encodeURIComponent(title)}&prop=text&format=json`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      const json = await res.json();
+      const html = json?.parse?.text?.['*'] || '';
+      return _normalizeFetchText(html);
     },
   },
 
@@ -142,7 +184,7 @@ function sourcePriority(fanworkSphere, userLang) {
   const ur = userRegion(userLang);
   // Map cultural sphere to preferred source order
   const sphereSources = {
-    'east-asian-cn': ['moegirl', 'bing', 'wikipedia'],
+    'east-asian-cn': ['moegirl', 'biligame', 'bing', 'wikipedia'],
     'east-asian-jp': ['wikipedia', 'moegirl', 'bing'],
     'east-asian-kr': ['wikipedia', 'bing', 'moegirl'],
     'western-en': ['wikipedia', 'bing'],
@@ -151,6 +193,139 @@ function sourcePriority(fanworkSphere, userLang) {
   const primary = sphereSources[fanworkSphere] || ['wikipedia'];
   const fallback = ['duckduckgo'];
   return [...primary, ...fallback.filter((s) => !primary.includes(s))];
+}
+
+function _dedupeResults(results) {
+  const seen = new Set();
+  const out = [];
+  for (const result of results || []) {
+    const key = `${result?.url || ''}::${result?.title || ''}::${result?.snippet || ''}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(result);
+  }
+  return out;
+}
+
+function _sortResultsBySourcePriority(results, sourceIds) {
+  const order = new Map((sourceIds || []).map((id, index) => [id, index]));
+  return [...(results || [])].sort((left, right) => {
+    const leftRank = order.has(left?.source) ? order.get(left.source) : Number.MAX_SAFE_INTEGER;
+    const rightRank = order.has(right?.source) ? order.get(right.source) : Number.MAX_SAFE_INTEGER;
+    if (leftRank !== rightRank) return leftRank - rightRank;
+    return 0;
+  });
+}
+
+function _sortSourceDetailsByPriority(sourceDetails, sourceIds) {
+  const order = new Map((sourceIds || []).map((id, index) => [id, index]));
+  return [...(sourceDetails || [])].sort((left, right) => {
+    const leftRank = order.has(left?.source) ? order.get(left.source) : Number.MAX_SAFE_INTEGER;
+    const rightRank = order.has(right?.source) ? order.get(right.source) : Number.MAX_SAFE_INTEGER;
+    if (leftRank !== rightRank) return leftRank - rightRank;
+    return 0;
+  });
+}
+
+function _normalizeFetchText(raw) {
+  return String(raw || '')
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<!--([\s\S]*?)-->/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+async function searchWeb({ query, userLang = 'zh-CN', preferredEngine = 'auto', fanworkSphere = 'global' }) {
+  const trimmed = String(query || '').trim();
+  if (!trimmed) return { results: [], errors: ['查询为空'], sourceDetails: [] };
+
+  const ur = userRegion(userLang);
+  let sourceIds;
+  if (preferredEngine !== 'auto' && preferredEngine !== 'all') {
+    sourceIds = [preferredEngine].filter((id) => SOURCES[id]);
+    if (!sourceIds.includes('duckduckgo')) sourceIds.push('duckduckgo');
+  } else if (preferredEngine === 'all') {
+    sourceIds = Object.keys(SOURCES);
+  } else {
+    sourceIds = sourcePriority(fanworkSphere, userLang);
+  }
+
+  const allResults = [];
+  const sourceDetails = [];
+  const sourceMsgs = [];
+
+  await Promise.allSettled(sourceIds.map(async (id) => {
+    const src = SOURCES[id];
+    if (!src?.search) return;
+    try {
+      const results = await src.search(trimmed, ur);
+      const tagged = (results || []).map((result) => ({ ...result, source: result?.source || id }));
+      allResults.push(...tagged);
+      sourceDetails.push({
+        source: id,
+        sourceLabel: src.label,
+        query: trimmed,
+        count: tagged.length,
+        topResults: tagged.slice(0, 5).map((result) => ({
+          title: result.title || '',
+          snippet: result.snippet || '',
+          url: result.url || '',
+        })),
+      });
+      sourceMsgs.push(`${src.label}: ${tagged.length}条`);
+    } catch (err) {
+      sourceDetails.push({ source: id, sourceLabel: src.label, query: trimmed, count: 0, error: err.message || 'unknown' });
+      sourceMsgs.push(`${src.label}: 错误(${err.message || 'unknown'})`);
+    }
+  }));
+
+  return {
+    results: _sortResultsBySourcePriority(_dedupeResults(allResults), sourceIds),
+    errors: sourceMsgs,
+    sourceDetails: _sortSourceDetailsByPriority(sourceDetails, sourceIds),
+  };
+}
+
+async function fetchWebPage(url, { maxChars = 12000 } = {}) {
+  const target = String(url || '').trim();
+  if (!target) throw new Error('url is required');
+  let parsed;
+  try {
+    parsed = new URL(target);
+  } catch {
+    throw new Error(`invalid url: ${target}`);
+  }
+  if (!/^https?:$/i.test(parsed.protocol)) {
+    throw new Error(`unsupported protocol: ${parsed.protocol}`);
+  }
+
+  const res = await fetch(parsed.toString(), {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+    },
+    signal: AbortSignal.timeout(12000),
+  });
+  const raw = await res.text();
+  const contentType = res.headers.get('content-type') || '';
+  const isMarkup = /html|xml/i.test(contentType) || /^\s*</.test(raw);
+  const text = isMarkup ? _normalizeFetchText(raw) : String(raw || '').trim();
+
+  return {
+    url: parsed.toString(),
+    ok: res.ok,
+    status: res.status,
+    contentType,
+    text: text.slice(0, Math.max(256, Number(maxChars) || 12000)),
+  };
 }
 
 // ── Public API ───────────────────────────────────────────────────
@@ -164,6 +339,10 @@ function buildQueries(sourceId, charName, fanworkName) {
   if (sourceId === 'moegirl') {
     // Moegirl uses "Work:Character" naming convention (e.g. 碧蓝航线:爱宕)
     return [`${fanworkName}:${charName}`, `${fanworkName} ${charName}`];
+  }
+  if (sourceId === 'biligame') {
+    // Biligame searches inside a work-specific sub wiki, so bare character name is usually best.
+    return [charName, `${fanworkName} ${charName}`];
   }
   if (sourceId === 'wikipedia') {
     return [`${charName} ${fanworkName} character`, `${charName} ${fanworkName}`];
@@ -209,9 +388,9 @@ async function searchCharacter({ charName, fanworkName, userLang = 'zh-CN', fanw
     for (const q of queries) {
       if (gotResults) break;
       try {
-        const results = await src.search(q.trim(), ur);
+        const results = await src.search(q.trim(), ur, { fanworkName, charName, userLang });
         if (results.length > 0) {
-          const tagged = results.map((r) => ({ ...r, source: id }));
+          const tagged = results.map((r) => ({ ...r, source: id, fanworkName }));
           allResults.push(...tagged);
           // Build detailed log entry with query, source, and top result snippets
           const detail = {
@@ -242,8 +421,11 @@ async function searchCharacter({ charName, fanworkName, userLang = 'zh-CN', fanw
   });
 
   await Promise.allSettled(promises);
-  console.error('[searchEngine] sources:', sourceMsgs.join(' | ') || '(none)', '→ total', allResults.length, 'results');
-  return { results: allResults, errors: sourceMsgs, sourceDetails };
+  const dedupedResults = _dedupeResults(allResults);
+  const sortedResults = _sortResultsBySourcePriority(dedupedResults, sourceIds);
+  const sortedSourceDetails = _sortSourceDetailsByPriority(sourceDetails, sourceIds);
+  console.error('[searchEngine] sources:', sourceMsgs.join(' | ') || '(none)', '→ total', sortedResults.length, 'results');
+  return { results: sortedResults, errors: sourceMsgs, sourceDetails: sortedSourceDetails };
 }
 
 /**
@@ -254,7 +436,7 @@ async function fetchBestPage(results, userLang) {
   // Priority sources: wiki/encyclopedia sites that usually have character info.
   // Since parallel search may reorder results (fast engines like Bing resolve first),
   // we explicitly try higher-quality sources before generic search results.
-  const wikiSources = ['moegirl', 'wikipedia', 'baike'];
+  const wikiSources = ['moegirl', 'biligame', 'wikipedia', 'baike'];
   const wikiResults = results.filter((r) => wikiSources.includes(r.source));
   const otherResults = results.filter((r) => !wikiSources.includes(r.source));
 
@@ -262,11 +444,11 @@ async function fetchBestPage(results, userLang) {
     const src = SOURCES[r.source];
     if (!src?.fetchPage) continue;
     try {
-      const text = await src.fetchPage(r.title, userLang);
+      const text = await src.fetchPage(r.title, userLang, { fanworkName: r.fanworkName || r.sourceWork || '' });
       if (text && text.length > 200) return text;
     } catch { /* try next */ }
   }
   return '';
 }
 
-module.exports = { searchCharacter, fetchBestPage, SOURCES, sourcePriority, userRegion };
+module.exports = { searchCharacter, searchWeb, fetchBestPage, fetchWebPage, SOURCES, sourcePriority, userRegion };
