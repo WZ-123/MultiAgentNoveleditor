@@ -283,7 +283,10 @@ function gracefulExit(code = 0) {
   process.exit(code);
 }
 
-process.on('SIGTERM', () => gracefulExit(0));
+// On Windows, SIGTERM is never delivered; only register it on non-Windows.
+if (process.platform !== 'win32') {
+  process.on('SIGTERM', () => gracefulExit(0));
+}
 process.on('SIGINT', () => gracefulExit(0));
 process.on('uncaughtException', (err) => {
   sendToParent({ type: 'error', message: err.message || String(err) });

@@ -7,8 +7,11 @@ if (process.env.ELECTRON_RUN_AS_NODE) {
     env: { ...process.env, ELECTRON_RUN_AS_NODE: undefined },
   });
   child.on('exit', (code) => process.exit(code ?? 0));
+  // On Windows, SIGTERM is never delivered; use 'exit' for cleanup instead.
+  if (process.platform !== 'win32') {
+    process.on('SIGTERM', () => child.kill('SIGTERM'));
+  }
   process.on('SIGINT', () => { /* hand off to child */ });
-  process.on('SIGTERM', () => child.kill('SIGTERM'));
   return; // stop loading this script
 }
 
@@ -18,6 +21,18 @@ const backend = require('./src/main/index.js')
 const { verifyLicense } = require('./src/main/license/authVerifier.js')
 const { showAuthDialog } = require('./src/main/license/authDialog.js')
 const { ensureDevAuthRelayConfig } = require('./src/main/license/devAuthBootstrap.js')
+
+const APP_NAME = 'MultiAgentNovelAssistant';
+
+app.setName(APP_NAME);
+try {
+  const userDataRoot = path.join(app.getPath('appData'), APP_NAME);
+  const sessionDataRoot = path.join(userDataRoot, 'session-data');
+  app.setPath('userData', userDataRoot);
+  app.setPath('sessionData', sessionDataRoot);
+} catch (err) {
+  console.warn('[main] failed to pin userData/sessionData path:', err.message || String(err));
+}
 
 const isUiTest = process.argv.includes('--test-ui');
 const isChatTest = process.argv.includes('--test-chat');

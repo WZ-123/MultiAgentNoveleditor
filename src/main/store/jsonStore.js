@@ -18,6 +18,9 @@ async function writeJson(file, data) {
   await fsp.mkdir(path.dirname(file), { recursive: true });
   const tmp = `${file}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   await fsp.writeFile(tmp, JSON.stringify(data, null, 2), 'utf8');
+  // On Windows, fs.rename() cannot overwrite an existing file (EPERM/EACCES).
+  // Remove the target first; ignore ENOENT if it doesn't exist yet.
+  try { await fsp.unlink(file); } catch (err) { if (err.code !== 'ENOENT') throw err; }
   await fsp.rename(tmp, file);
 }
 

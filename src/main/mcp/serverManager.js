@@ -244,7 +244,16 @@ function _resolveEntryScript() {
   // Prefer the asar-unpacked root entry (same file external drivers will use).
   const root = path.resolve(__dirname, '..', '..', '..');
   const rootEntry = path.join(root, 'mcp-server-entry.js');
-  // Use the in-repo one in dev (since asar-unpack only matters in packaged builds).
+  // In a packaged build, `__dirname` points inside `app.asar/...`, but
+  // `mcp-server-entry.js` is asar-unpacked to `app.asar.unpacked/`.
+  // Replace `.asar/` or `.asar\` with `.asar.unpacked/` (or `\`).
+  if (rootEntry.includes('.asar') && !rootEntry.includes('.asar.unpacked')) {
+    const unpacked = rootEntry.replace(/\.asar([\\/])/, '.asar.unpacked$1');
+    try {
+      const fs = require('node:fs');
+      if (fs.existsSync(unpacked)) return unpacked;
+    } catch { /* fall through to original path */ }
+  }
   return rootEntry;
 }
 
@@ -534,9 +543,11 @@ async function dispose() {
   client = null;
   starting = null;
   setTimeout(() => {
-    try { dying.kill('SIGTERM'); } catch { /* ignore */ }
+    const sig = process.platform === 'win32' ? undefined : 'SIGTERM';
+    try { dying.kill(sig); } catch { /* ignore */ }
     setTimeout(() => {
-      try { dying.kill('SIGKILL'); } catch { /* ignore */ }
+      const sigKill = process.platform === 'win32' ? undefined : 'SIGKILL';
+      try { dying.kill(sigKill); } catch { /* ignore */ }
     }, 1500).unref?.();
   }, 200).unref?.();
 }

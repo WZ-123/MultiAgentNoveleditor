@@ -172,10 +172,13 @@ function spawnClaude(opts = {}) {
   function cancel(reason) {
     if (resolved || killScheduled) return;
     killScheduled = true;
-    try { proc.kill('SIGTERM'); } catch { /* ignore */ }
+    // On Windows, SIGTERM/SIGKILL are not supported by child.kill();
+    // calling kill() without a signal is equivalent to SIGKILL.
+    const sig = process.platform === 'win32' ? undefined : 'SIGTERM';
+    try { proc.kill(sig); } catch { /* ignore */ }
     setTimeout(() => {
       if (resolved) return;
-      try { proc.kill('SIGKILL'); } catch { /* ignore */ }
+      try { proc.kill(process.platform === 'win32' ? undefined : 'SIGKILL'); } catch { /* ignore */ }
     }, killGraceMs).unref?.();
   }
 

@@ -44,7 +44,16 @@ const DEFAULT_SERVER_NAME = 'novel-tools';
  */
 function defaultEntryScript() {
   // src/main/runtime/drivers/shared/  →  five levels up to repo root
-  return path.resolve(__dirname, '..', '..', '..', '..', '..', 'mcp-server-entry.js');
+  let entry = path.resolve(__dirname, '..', '..', '..', '..', '..', 'mcp-server-entry.js');
+  // In a packaged build, the file is asar-unpacked.  Redirect accordingly.
+  if (entry.includes('.asar') && !entry.includes('.asar.unpacked')) {
+    const unpacked = entry.replace(/\.asar([\\/])/, '.asar.unpacked$1');
+    try {
+      const fs = require('node:fs');
+      if (fs.existsSync(unpacked)) return unpacked;
+    } catch { /* fall through */ }
+  }
+  return entry;
 }
 
 /**
