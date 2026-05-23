@@ -1,6 +1,6 @@
 # 开发进度追踪
 
-最后更新：2026-05-17
+最后更新：2026-05-24
 
 ## 当前阶段
 
@@ -11,6 +11,68 @@
 
 
 ## 里程碑
+
+### 2026-05-24 — Windows 打包/安装验证脚本补齐
+
+#### 背景
+
+之前虽然已有 `scripts/verify-package.js` 用来检查 Windows 打包产物结构，但它只覆盖 ASAR / unpacked 路径正确性，不能回答两个更关键的问题：
+
+- NSIS 安装包是否还能正常安装
+- 安装后的正式 EXE 是否还能正常启动
+
+另外，已安装版启动时还观察到过 Chromium cache / GPU cache 的非致命告警，需要确认是不是运行时目录未固定导致。
+
+#### 本次补充
+
+**运行时路径固定**
+
+- [main.js](../main.js) 在 Electron 主进程最早阶段显式固定：
+  - `userData` → `%APPDATA%/MultiAgentNovelAssistant`
+  - `sessionData` → `%APPDATA%/MultiAgentNovelAssistant/session-data`
+- 目的：避免安装版首次启动时 Chromium 默认 session/cache 路径不稳定，降低 cache / GPU cache 初始化告警。
+- 复验结果：重打包后，`session-data/Cache` 与 `session-data/GPUCache` 已正常创建，直接启动打包 EXE 时未再观察到之前那组 cache 告警。
+
+**Windows 端到端验证脚本**
+
+- 新增脚本：[scripts/verify-win-package.js](../scripts/verify-win-package.js)
+- 新增 npm 命令：`npm run verify:win-package`
+- 带重打包的完整验证命令：`node scripts/verify-win-package.js --build`
+
+脚本覆盖范围：
+
+- `npm run build:win`
+- `node scripts/verify-package.js`（现有结构校验）
+- 静默执行 NSIS 安装器
+- 启动 `dist/win-unpacked/MultiAgentNovelAssistant.exe`
+- 启动已安装目录中的 `MultiAgentNovelAssistant.exe`
+- 每一步输出明确的 `OK / FAIL`
+
+#### 使用方式
+
+**仅验证已有产物**
+
+`npm run verify:win-package`
+
+**从头构建并验证**
+
+`node scripts/verify-win-package.js --build`
+
+适用场景：
+
+- 改动了 `main.js`、Electron 打包配置、`asarUnpack`、主进程路径解析、安装器相关逻辑后
+- 发布 Windows 新版本前做一次人工兜底验收
+- 用户报告“安装不了 / 装完打不开”时先本地快速复检
+
+#### 当前结论
+
+- 当前仓库状态下，Windows 安装包可正常构建
+- 静默安装可成功完成
+- 已安装版 EXE 可正常启动并保持存活
+- 卸载器可能移除注册表项但保留安装目录残片；若发生这种情况，需要先确认无运行中进程，再手动删除：
+  - `%LOCALAPPDATA%/Programs/multi-agent-novel-assistant`
+
+---
 
 ### 2026-05-17 — GitHub Actions 多平台自动打包 + 自动更新器
 

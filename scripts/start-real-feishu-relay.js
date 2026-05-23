@@ -68,7 +68,10 @@ function main() {
   });
 
   process.on('SIGINT', () => child.kill('SIGINT'));
-  process.on('SIGTERM', () => child.kill('SIGTERM'));
+  // On Windows, SIGTERM is never delivered; skip to avoid issues.
+  if (process.platform !== 'win32') {
+    process.on('SIGTERM', () => child.kill('SIGTERM'));
+  }
 
   console.log(`[real-feishu-relay] relay url: ${DEFAULT_RELAY_URL}`);
 }

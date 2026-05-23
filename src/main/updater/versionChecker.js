@@ -174,7 +174,7 @@ async function installUpdate(filePath) {
   if (platform === 'win32') {
     // Windows: spawn the installer
     const { spawn } = require('node:child_process');
-    spawn(filePath, [], { detached: true, shell: true });
+    spawn(filePath, [], { detached: true });
     app.quit();
   } else if (platform === 'darwin') {
     // macOS: open the dmg

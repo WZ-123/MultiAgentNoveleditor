@@ -65,7 +65,7 @@ async function sendMessage(opts) {
     let stdout = '';
     let stderr = '';
     const onAbort = () => {
-      try { proc.kill('SIGTERM'); } catch { /* ignore */ }
+      try { proc.kill(process.platform === 'win32' ? undefined : 'SIGTERM'); } catch { /* ignore */ }
     };
     if (abortSignal) {
       if (abortSignal.aborted) onAbort();
