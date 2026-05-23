@@ -83,6 +83,11 @@ Workflow Run：`https://github.com/WZ-123/MultiAgentNovelAssistant/actions/runs/
 
 为内测安全隔离飞书凭证：客户端不再持有 `appId/appSecret/appToken/tableId`，只通过 SCF 中继转发反馈数据。
 
+补充运行边界：
+- 打包给用户的客户端不得包含开发者本地填写的 API Key，也不得保留直连飞书能力。
+- 用户侧“从飞书查询 / 写入授权码使用记录 / 将 bug 反馈发送到飞书”统一走腾讯云 SCF。
+- 开发者环境允许保留直连飞书能力，用于本地 AI 调试和 bug 收集。
+
 #### SCF 部署信息
 
 | 项 | 值 |
@@ -91,7 +96,7 @@ Workflow Run：`https://github.com/WZ-123/MultiAgentNovelAssistant/actions/runs/
 | 入口文件 | `app.js`（HTTP Server 模式，`http.createServer`） |
 | 函数 URL | `https://1301861337-iyb2r0f8lz.ap-guangzhou.tencentscf.com` |
 | 环境变量 | `FEISHU_APP_ID` / `FEISHU_APP_SECRET` / `FEISHU_APP_TOKEN` / `FEISHU_TABLE_ID` / `RELAY_API_KEY` |
-| 客户端 API Key | `mana-relay-7c5d98a5787f415a62c89277cdeec1fb` |
+| 客户端配置 | 仅允许保存 `relayUrl` / `relayApiKey`，不得保存飞书凭证 |
 
 #### SCF 文件
 
@@ -107,12 +112,13 @@ Workflow Run：`https://github.com/WZ-123/MultiAgentNovelAssistant/actions/runs/
 | 文件 | 改动 |
 |---|---|
 | `src/main/store/appConfig.js` | 新增 `relayUrl` / `relayApiKey`；`load()` 合并逻辑修复：**空字符串不覆盖预置默认值**；`save()` 深合并 `feishuSync` |
-| `src/main/sync/feedbackSyncWorker.js` | 双模式切换：`_useRelay()` / `_hasValidConfig()`；`_processRecord` 根据配置自动选择 `relayClient` 或 `feishuAdapter` |
+| `src/main/sync/feedbackSyncWorker.js` | 当前发布路径已收敛为 relay-only；开发者环境仍可保留直连飞书调试工具，但不进入打包客户端 |
 | `src/main/sync/relayClient.js` | 本地 HTTP 客户端：multipart 上传附件 + JSON submit（协议与 SCF 对齐） |
 
 #### 关键设计选择
 
 - **凭证完全隔离**：飞书 `appId/appSecret/appToken/tableId` 仅存在于 SCF 环境变量中；客户端只持有 `relayUrl` + `relayApiKey`
+- **打包边界固定**：用户客户端不打包开发者本地填写的 API Key，也不保留直连飞书读写能力
 - **协议对齐**：relayClient 与 SCF 保持相同 API：`POST /api/v1/feedback/upload`（multipart）+ `POST /api/v1/feedback/submit`（JSON）
 - **SCF 无状态 token 策略**：每次请求重新获取飞书 tenant_access_token（内测低频场景，不引入缓存）
 - **HTTP Server 模式**：SCF Web Function 要求启动 `http.createServer` 监听 `process.env.PORT`，而非 `exports.main_handler`

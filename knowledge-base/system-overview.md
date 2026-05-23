@@ -75,6 +75,13 @@ AI IDE（Claude Code）负责：
 - AI 驱动：Claude Code（外部）/ 内置 provider-agnostic runtime（替补）
 - 数据存储：文件系统（JSON + Markdown）
 
+## 安全边界
+
+- 打包交付给用户的客户端不得包含开发者本地填写的任何 API Key，也不得包含飞书 `appId/appSecret/appToken/tableId`。
+- 打包客户端不得保留直连飞书多维表格的运行链路；用户侧涉及飞书的能力统一走腾讯云 SCF Web Function 中继实现。
+- 对用户客户端而言，“从飞书查询数据”“写入授权码使用记录”“将 bug 反馈发送到飞书”这三类能力都必须经腾讯云函数完成；Cloudflare Worker 仅保留为备份实现，不是主生产路径。
+- 开发者环境可以保留直连飞书能力，仅用于本地 AI 联调、飞书表查询、反馈回放和 bug 收集；这类脚本和适配器不应进入发布包。
+
 ## 目录与模块
 
 - `src/components`：UI 组件（状态监控、配置面板、手动干预入口）

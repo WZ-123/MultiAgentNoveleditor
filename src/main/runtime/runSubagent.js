@@ -190,7 +190,7 @@ async function runSubagent(opts = {}) {
     if (tx) lastTextOutput = tx;
 
     const toolUses = findToolUses(result.content);
-    if (result.stopReason !== 'tool_use' || !toolUses.length) {
+    if (!toolUses.length) {
       break;
     }
     if (!mcpClient) {
