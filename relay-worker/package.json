@@ -1,7 +1,7 @@
 {
   "name": "feedback-relay-worker",
   "version": "1.0.0",
-  "description": "Cloudflare Worker for feedback relay to Feishu Bitable",
+  "description": "Tencent Cloud SCF primary feedback relay with Cloudflare Worker backup",
   "main": "src/index.js",
   "scripts": {
     "dev": "wrangler dev",

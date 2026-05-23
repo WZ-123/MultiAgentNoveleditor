@@ -1,5 +1,7 @@
 /**
- * Cloudflare Worker: Feedback Relay to Feishu Bitable
+ * Cloudflare Worker backup relay for Feishu Bitable.
+ * Primary deployment is Tencent Cloud SCF Web Function; keep this Worker path
+ * as a standby fallback and compatibility target only.
  *
  * Routes:
  *   GET  /api/v1/health          → Health check

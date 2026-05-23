@@ -31,15 +31,18 @@ context: fork
 - 其他 → `western-en`
 
 ### 来源选择
-- `east-asian-cn`: 萌娘百科(优先) → Bing → Wikipedia → DuckDuckGo
+- `east-asian-cn`: 萌娘百科(优先) → Biligame Wiki（已知作品子 wiki）→ Bing → Wikipedia → DuckDuckGo
 - `east-asian-jp`: Wikipedia → 萌娘百科 → Bing → DuckDuckGo
 - `east-asian-kr`: Wikipedia → Bing → 萌娘百科 → DuckDuckGo
 - `western-en/global`: Wikipedia → Bing → DuckDuckGo
 
 ### 查询构建
 - 萌娘百科: `作品名:角色名`（如 `碧蓝航线:爱宕`）
+- Biligame Wiki: 先映射到已知子 wiki，再在子 wiki 内搜 `角色名`
 - Wikipedia: `角色名 作品名 character`
 - Bing/DuckDuckGo: `角色名 作品名 character wiki`
+
+当前内置的 Biligame 子 wiki 映射：`碧蓝航线`→`blhx`，`原神`→`ys`，`崩坏：星穹铁道`→`sr`。没有映射就跳过，不硬猜。
 
 ### 提取字段
 从搜索结果页面提取 JSON：
@@ -50,5 +53,9 @@ context: fork
 - 小说无值 → 用网络值
 - 两者有值且不同 → 保留小说值，追加 `（参考原作设定: ...）`
 - 全部空 → 失败：extract-empty
+
+### 严格约束
+- 没有发生真实联网搜索时，不允许接受模型直出 JSON 作为角色设定
+- 没有页面正文证据时，字段必须留空或直接失败，不能靠训练数据补全
 
 详细规则见 `knowledge-base/search-routing.md`。

@@ -115,6 +115,11 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
       // If active thread belongs to current novel, keep it; otherwise switch to first available
       const activeBelongs = activeThreadId && list?.some((t) => t.id === activeThreadId);
       if (!activeBelongs) {
+        // Active novel state can briefly flicker to null while the app refreshes
+        // workspace context. Do not kill an in-flight chat turn during that gap.
+        if (!currentNovelId && status !== 'idle' && (sessionId || activeThreadId)) {
+          return;
+        }
         if (list?.length > 0) {
           switchThread(list[0].id);
         } else {
@@ -136,7 +141,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
     };
     run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentNovelId]);
+  }, [currentNovelId, status]);
 
   // ====== Sync editorContext to backend session when it changes ======
   const prevCtxRef = useRef(null);
@@ -652,7 +657,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
       const scope = parts.length ? `（${parts.join('、')}）` : '（仅意见）';
       setFeedbackNotice({
         type: 'success',
-        text: `反馈提交成功${scope}。ID: ${result.feedbackId}`,
+        text: `反馈已保存${scope}。ID: ${result.feedbackId}`,
       });
       setShowFeedbackModal(false);
     } catch (err) {

@@ -12,6 +12,7 @@
  */
 
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
@@ -19,7 +20,7 @@ const RELAY_URL = process.env.BETA_RELAY_URL || '';
 const RELAY_API_KEY = process.env.BETA_RELAY_API_KEY || '';
 
 const APPCONFIG_PATH = path.resolve(__dirname, '..', 'src', 'main', 'store', 'appConfig.js');
-const BACKUP_PATH = `${APPCONFIG_PATH}.backup`;
+const BACKUP_PATH = path.join(os.tmpdir(), `mana-build-beta-appConfig-${process.pid}-${Date.now()}.js.bak`);
 
 function log(...args) {
   console.log('[build-beta]', ...args);

@@ -2,7 +2,6 @@
 
 const feedbackOutbox = require('../store/feedbackOutbox');
 const syncLock = require('./syncLock');
-const feishuAdapter = require('../feishu/feishuAdapter');
 const fieldMapper = require('../feishu/fieldMapper');
 const { RelayClient } = require('./relayClient');
 
@@ -94,13 +93,7 @@ class FeedbackSyncWorker {
 
   _hasValidConfig() {
     const c = this._config;
-    if (c.relayUrl && c.relayApiKey) return true;
-    if (c.appId && c.appSecret && c.appToken && c.tableId) return true;
-    return false;
-  }
-
-  _useRelay() {
-    return !!(this._config?.relayUrl && this._config?.relayApiKey);
+    return !!(c?.relayUrl && c?.relayApiKey);
   }
 
   async _scan() {
@@ -128,14 +121,10 @@ class FeedbackSyncWorker {
     const feedbackId = record.feedbackId;
     if (!syncLock.acquire(feedbackId)) return;
 
-    const useRelay = this._useRelay();
-    let relayClient = null;
-    if (useRelay) {
-      relayClient = new RelayClient({
-        relayUrl: this._config.relayUrl,
-        relayApiKey: this._config.relayApiKey,
-      });
-    }
+    const relayClient = new RelayClient({
+      relayUrl: this._config.relayUrl,
+      relayApiKey: this._config.relayApiKey,
+    });
 
     try {
       // Re-read record to ensure we have the latest state
@@ -160,15 +149,6 @@ class FeedbackSyncWorker {
         lastSendAttemptAt: new Date().toISOString(),
       });
 
-      let token = null;
-      if (!useRelay) {
-        const tokenResult = await feishuAdapter.getTenantAccessToken(
-          this._config.appId,
-          this._config.appSecret
-        );
-        token = tokenResult.token;
-      }
-
       // Upload attachments with compensation
       let attachmentTokens = Array.isArray(fresh.remoteAttachmentTokens)
         ? [...fresh.remoteAttachmentTokens]
@@ -179,16 +159,7 @@ class FeedbackSyncWorker {
 
       if (screenshotAttachment && attachmentTokens.length === 0) {
         try {
-          let uploadResult;
-          if (useRelay) {
-            uploadResult = await relayClient.uploadAttachment(screenshotAttachment.localPath);
-          } else {
-            uploadResult = await feishuAdapter.uploadAttachment(
-              this._config.appToken,
-              screenshotAttachment.localPath,
-              token
-            );
-          }
+          const uploadResult = await relayClient.uploadAttachment(screenshotAttachment.localPath);
           attachmentTokens.push(uploadResult.fileToken);
           // Save tokens immediately so we don't re-upload on retry
           await feedbackOutbox.updateSyncMeta(feedbackId, {
@@ -210,26 +181,11 @@ class FeedbackSyncWorker {
       // Build fields
       const fields = fieldMapper.toBitableFields(fresh);
 
-      // Add attachments to fields only in direct mode (relay server handles this)
-      if (!useRelay && attachmentTokens.length > 0) {
-        fields.screenshot = fieldMapper.toAttachmentField(attachmentTokens);
-      }
-
       // Create or update record with compensation
       let remoteRecordId = fresh.remoteRecordId;
       if (!remoteRecordId) {
         try {
-          let createResult;
-          if (useRelay) {
-            createResult = await relayClient.createRecord(feedbackId, fields, attachmentTokens);
-          } else {
-            createResult = await feishuAdapter.createRecord(
-              this._config.appToken,
-              this._config.tableId,
-              token,
-              fields
-            );
-          }
+          const createResult = await relayClient.createRecord(feedbackId, fields, attachmentTokens);
           remoteRecordId = createResult.recordId;
         } catch (err) {
           const classified = classifyError(err);
@@ -245,17 +201,7 @@ class FeedbackSyncWorker {
       } else {
         // Record already exists, update attachments only
         try {
-          if (useRelay) {
-            await relayClient.updateRecord(feedbackId, remoteRecordId, fields, attachmentTokens);
-          } else {
-            await feishuAdapter.updateRecord(
-              this._config.appToken,
-              this._config.tableId,
-              remoteRecordId,
-              token,
-              { screenshot: fieldMapper.toAttachmentField(attachmentTokens) }
-            );
-          }
+          await relayClient.updateRecord(feedbackId, remoteRecordId, fields, attachmentTokens);
         } catch (err) {
           const classified = classifyError(err);
           await feedbackOutbox.updateSyncMeta(feedbackId, {
@@ -278,7 +224,7 @@ class FeedbackSyncWorker {
         lastError: null,
         lastErrorCode: null,
         remoteRecordId,
-        remoteTableId: useRelay ? 'relay' : this._config.tableId,
+        remoteTableId: 'relay',
         remoteAttachmentTokens: attachmentTokens,
       });
 

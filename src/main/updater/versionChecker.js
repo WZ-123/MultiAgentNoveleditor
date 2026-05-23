@@ -12,6 +12,15 @@ const REPO = 'MultiAgentNovelAssistant';
 const LATEST_RELEASE_URL = `https://api.github.com/repos/${OWNER}/${REPO}/releases/latest`;
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
+function getReleaseTagName(release) {
+  const tagName = typeof release?.tag_name === 'string' ? release.tag_name.trim() : '';
+  if (!tagName) {
+    const message = typeof release?.message === 'string' ? release.message : 'Missing release tag_name';
+    throw new Error(message);
+  }
+  return tagName;
+}
+
 function semverGt(a, b) {
   const pa = a.split('.').map(Number);
   const pb = b.split('.').map(Number);
@@ -62,7 +71,7 @@ async function checkForUpdates(options = {}) {
   if (!force && updaterCfg.skipVersion) {
     try {
       const release = await fetchLatestRelease();
-      const latest = release.tag_name.replace(/^v/, '');
+      const latest = getReleaseTagName(release).replace(/^v/, '');
       if (latest === updaterCfg.skipVersion) {
         return { hasUpdate: false, reason: 'skipped' };
       }
@@ -92,7 +101,7 @@ async function checkForUpdates(options = {}) {
   // Save check time
   await appConfig.save({ updater: { ...updaterCfg, lastCheckAt: new Date().toISOString() } });
 
-  const latest = release.tag_name.replace(/^v/, '');
+  const latest = getReleaseTagName(release).replace(/^v/, '');
   if (!semverGt(latest, current)) {
     if (!silent) {
       dialog.showMessageBox({ type: 'info', title: '已是最新版本', message: `当前版本 ${current} 已是最新。` });

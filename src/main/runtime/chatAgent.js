@@ -23,6 +23,7 @@ const eventBus = require('./eventBus');
 const { getActiveNovelContext } = require('./activeNovelContext');
 const skillsStore = require('../store/skills');
 const chatHistoryStore = require('../store/chatHistory');
+const { searchWeb, fetchWebPage } = require('../import/searchEngine');
 const { generateOutlineDraft } = require('./outlineDraftService');
 const { detectOutlineChatIntent, detectOutlineConfirmIntent } = require('./outlineIntent');
 const { webContents } = require('electron');
@@ -156,10 +157,46 @@ const FRONTEND_TOOLS = [
   },
 ];
 
-const BUILTIN_CHAT_TOOLS = [...BUILTIN_BACKEND_TOOLS, ...FRONTEND_TOOLS];
+const WEB_TOOLS = [
+  {
+    name: 'WebSearch',
+    description: 'Search the public web and return a compact list of relevant results.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'The search query.' },
+        preferredEngine: {
+          type: 'string',
+          description: 'Optional source preference.',
+          enum: ['auto', 'all', 'moegirl', 'wikipedia', 'bing', 'duckduckgo'],
+        },
+        maxResults: { type: 'number', description: 'Optional maximum number of results to return.' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'WebFetch',
+    description: 'Fetch a public URL and return a cleaned plain-text excerpt.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'The URL to fetch.' },
+        maxChars: { type: 'number', description: 'Optional maximum number of characters to return.' },
+      },
+      required: ['url'],
+    },
+  },
+];
+
+const DIRECT_API_CHAT_TOOLS = [...BUILTIN_BACKEND_TOOLS, ...FRONTEND_TOOLS, ...WEB_TOOLS];
 
 function isFrontendTool(name) {
   return FRONTEND_TOOLS.some((t) => t.name === name);
+}
+
+function isWebTool(name) {
+  return WEB_TOOLS.some((t) => t.name === name);
 }
 
 // ---------- sessions ----------
@@ -285,14 +322,16 @@ async function loadPhaseSkills(workflowPhase) {
   }
 }
 
-function generatePhaseRules(phase) {
+function generatePhaseRules(phase, { useDriver = false } = {}) {
   switch (phase) {
     case 'idle':
       return [
         '## Rules (Idle — No Active Novel)',
         '1. If the user wants to start a new novel, use the `create_novel` MCP tool to create the project.',
         '2. If the user wants to open an existing novel, use `list_novels` to browse and guide them.',
-        '3. Once a novel is active, use `set_workflow_phase({phase:"outline"})` to begin outlining.',
+        useDriver
+          ? '3. Once a novel is active, begin outlining directly; do not reference tools that are not actually exposed in this runtime.'
+          : '3. Once a novel is active, use `set_workflow_phase({phase:"outline"})` to begin outlining.',
         '4. Respond in the same language as the user.',
       ];
     case 'outline':
@@ -302,7 +341,9 @@ function generatePhaseRules(phase) {
         '2. If a pending outline draft already exists in session, treat that draft as the current source of truth until the user discards or confirms it.',
         '3. If no outline exists, propose a complete outline with volumes/sections/chapters.',
         '4. Present your outline clearly and wait for the user to review and confirm it.',
-        '5. When the user confirms, call `confirm_outline`. If a pending outline draft exists in session, you may call it without reconstructing nodes from memory.',
+        useDriver
+          ? '5. When the user confirms, finalize the outline clearly in your reply. Do not mention `confirm_outline` unless that tool is actually available.'
+          : '5. When the user confirms, call `confirm_outline`. If a pending outline draft exists in session, you may call it without reconstructing nodes from memory.',
         '5. Level field in outline nodes: level=1 for volume, level=2 for section, level=3 for chapter.',
         '6. DO NOT write chapter content in this phase. Only outline planning.',
         '7. Always use tools to inspect state before making changes. Do not guess.',
@@ -321,21 +362,33 @@ function generatePhaseRules(phase) {
         '8. AFTER writing each chapter, you MUST do the following in order:',
         '   a. For new timeline events, call `append_timeline`; if you are correcting an existing event by id, call `update_timeline` instead of appending a duplicate.',
         '   b. Call `update_character` for characters whose state changed.',
-        '   c. Call `spawn_subagent({subagentId:"sa-lore-updater", input:"Chapter written: <filename>\\n\\n<brief summary>"})` for comprehensive lore update.',
+        useDriver
+          ? '   c. Call the `Agent` tool (Claude Code 1.x may surface it as `Task`) with subagent `sa-lore-updater` for comprehensive lore update.'
+          : '   c. Call `spawn_subagent({subagentId:"sa-lore-updater", input:"Chapter written: <filename>\\n\\n<brief summary>"})` for comprehensive lore update.',
         '9. The chapter list will auto-refresh in the UI after write_chapter.',
-        '10. Use `spawn_subagent` for heavy writing or review tasks.',
+        useDriver
+          ? '10. Use the `Agent` tool for heavy writing or review tasks.'
+          : '10. Use `spawn_subagent` for heavy writing or review tasks.',
         '11. Respond in the same language as the user.',
       ];
     case 'editing':
       return [
         '## Rules (Editing Phase)',
         '1. Use `list_chapters` and `read_chapter` to read existing chapters.',
-        '2. If the user has explicitly selected text in the editor, use `replace_selected_text` or `insert_text_at_cursor` for targeted edits.',
-        '2a. If the user asks to "去 AI 味" / "去套话" / "润色得更像人写" and Current Editor State includes `User selected text`, prefer `de_ai_ify` on that selected text first, then apply the result with `replace_selected_text`.',
+        useDriver
+          ? '2. If the user has explicitly selected text in the editor, treat that selection as authoritative context, but use chapter MCP tools such as `replace_chapter_text` or `apply_chapter_patch` because direct editor action tools are not exposed in this runtime.'
+          : '2. If the user has explicitly selected text in the editor, use `replace_selected_text` or `insert_text_at_cursor` for targeted edits.',
+        useDriver
+          ? '2a. If the user asks to "去 AI 味" / "去套话" / "润色得更像人写" and Current Editor State includes `User selected text`, rewrite only that selected span and apply it with anchored chapter tools. Do not mention `replace_selected_text` unless it is actually available.'
+          : '2a. If the user asks to "去 AI 味" / "去套话" / "润色得更像人写" and Current Editor State includes `User selected text`, prefer `de_ai_ify` on that selected text first, then apply the result with `replace_selected_text`.',
         '2b. If the user asks to check character consistency / OOC / 人设冲突 in the current chapter, prefer `review_character_consistency` first and report paragraph-level findings before making any edits.',
         '3. If the user wants to revise an existing passage but has not selected text, first use `read_chapter`, then call `replace_chapter_text` with a sufficiently long snippet plus nearby `beforeContext`/`afterContext` from the same chapter so the edit stays anchored like an IDE patch.',
-        '4. If `replace_chapter_text` reports multiple matches, tell the user to either select the exact target text or place the cursor next to the desired occurrence. Then use `replace_selected_text` or `replace_text_near_cursor` instead of guessing.',
-        '5. Use `replace_text_near_cursor` only after the user has manually moved the cursor near the intended occurrence.',
+        useDriver
+          ? '4. If `replace_chapter_text` reports multiple matches, tell the user to either select the exact target text or give nearby context, then retry with a longer anchored snippet. Do not reference editor-only tools that are not exposed here.'
+          : '4. If `replace_chapter_text` reports multiple matches, tell the user to either select the exact target text or place the cursor next to the desired occurrence. Then use `replace_selected_text` or `replace_text_near_cursor` instead of guessing.',
+        useDriver
+          ? '5. When duplicate matches remain ambiguous in this runtime, ask for clearer nearby context and retry with a more specific anchored edit.'
+          : '5. Use `replace_text_near_cursor` only after the user has manually moved the cursor near the intended occurrence.',
         '6. If you need multiple non-overlapping fixes in the same chapter, prefer `apply_chapter_patch` so every edit is resolved against one shared snapshot and written once.',
         '7. For review-style requests, do not batch many overlapping `replace_chapter_text` calls immediately after the audit. Review first; if multiple fixes are needed, prefer scoped selected-text edits, `apply_chapter_patch`, or one consolidated rewrite.',
         '8. For bulk rewrites, use `write_chapter` to update the full file, and include `baseContent` when rewriting an existing chapter from a prior read.',
@@ -353,9 +406,62 @@ function generatePhaseRules(phase) {
   }
 }
 
+function buildAvailableToolLines({ useDriver = false, hasActiveNovel = false } = {}) {
+  const lines = [];
+  if (hasActiveNovel) {
+    lines.push('- Character tools: list_characters, read_character, enrich_character');
+    lines.push('- Novel data: read_outline, read_outline_nodes, list_chapters, read_chapter, write_chapter, replace_chapter_text, apply_chapter_patch, query_world, apply_world_patch, query_timeline, list_assets, read_asset, read_style_memory, read_skill, list_skills, read_skill_content, search_index');
+    lines.push('- Review: review_character_consistency (inspect chapter paragraphs against character cards and report paragraph-level conflicts without editing)');
+    lines.push('- Rewrite: de_ai_ify (rewrite a Chinese fiction passage to remove AI-ish cliches while preserving meaning)');
+    lines.push('- Auto-write: grant_asset, revoke_asset, apply_asset_patch, append_timeline, update_timeline, dedupe_timeline, append_summary, append_style_memory');
+    lines.push('- Write (requires confirmation): create_character, update_character, update_world, apply_world_patch, write_chapter, replace_chapter_text, apply_chapter_patch');
+  } else {
+    lines.push('- Bootstrap: create_novel, list_novels, read_skill, list_skills, read_skill_content, de_ai_ify');
+  }
+
+  if (useDriver) {
+    lines.push('- Delegate: Agent (Claude Code builtin subagent tool; Claude Code 1.x may surface it as Task)');
+  } else {
+    lines.push('- Editor: replace_selected_text, replace_text_near_cursor, insert_text_at_cursor, get_full_editor_content');
+    lines.push('- Workflow: set_workflow_phase (change current phase)' + (hasActiveNovel ? ', confirm_outline (save outline and enter writing phase)' : ''));
+    lines.push('- Delegate: spawn_subagent');
+  }
+
+  lines.push(`- Web: ${hasActiveNovel ? 'enrich_character, ' : ''}WebFetch (fetch a web page), WebSearch (search the web)`);
+  return lines;
+}
+
+function buildCommonRules({ useDriver = false, hasActiveNovel = false } = {}) {
+  const lines = [
+    '## Common Rules',
+    '1. NEVER use Write, Edit, or Bash to modify novel data files. Use MCP tools for writes.',
+    useDriver
+      ? '2. Use the `Agent` tool for heavy drafting or review tasks when delegation is needed.'
+      : '2. Use `spawn_subagent` for heavy tasks (drafting, review). Subagents run through the active driver.',
+    hasActiveNovel
+      ? '3. Character info: call `list_characters` first, then `read_character` for details.'
+      : '3. Without an active novel, do not reference chapter/character/world MCP tools that are not currently exposed. Bootstrap the project first.',
+    hasActiveNovel
+      ? '4. Web search: use `enrich_character` first when character enrichment is available. Otherwise use WebFetch/WebSearch directly.'
+      : '4. Web search: use WebFetch/WebSearch directly in the no-project state; do not reference character-enrichment tools that are not currently exposed.',
+    '5. Be systematic: break complex requests into steps, use tools to gather facts, then act.',
+    '6. If the user asks to clean up historical duplicate timeline events, use `dedupe_timeline` instead of manually rewriting files.',
+    useDriver
+      ? '7. If Current Editor State includes `User selected text`, that selection metadata is authoritative. In this runtime, direct editor frontend tools are not exposed, so use anchored chapter MCP tools instead of claiming the selection is unavailable.'
+      : '7. If Current Editor State includes `User selected text`, that selection metadata is authoritative. Do not tell the user that you cannot see the editor highlight or selection marker.',
+  ];
+  if (hasActiveNovel) {
+    lines.push('8. For chapter-wide review requests, prefer explicit review tools first; do not jump straight into many sequential `replace_chapter_text` calls against overlapping snippets. If multiple concrete fixes are already known, prefer one `apply_chapter_patch` over many independent replaces.');
+    lines.push('9. For world lore or place-table tweaks, prefer `apply_world_patch` over `update_world` unless you are intentionally replacing the whole world block.');
+    lines.push('10. For multi-step asset handoff changes, prefer `apply_asset_patch` over many separate `grant_asset`/`revoke_asset` calls. When editing from a prior asset read, include that asset\'s `baseGrantedTo` snapshot.');
+  }
+  return lines;
+}
+
 async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, workflowPhase, pendingOutlineDraft, pendingOutlineIssues) {
   const ctx = editorContext || {};
   const phase = workflowPhase || 'idle';
+  const hasActiveNovel = !!(ctx.novelId || mcpFallbackNovelId);
   const lines = [
     'You are the interactive writing assistant for Multi-Agent Novel Assistant.',
     '',
@@ -391,7 +497,9 @@ async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, w
     lines.push('## Pending Outline Draft');
     lines.push('A session-local outline draft exists but has NOT been saved yet. Treat it as the current working draft for review, revision, and confirmation.');
     lines.push('If the user asks to revise the outline, revise this draft instead of inventing a new one from scratch.');
-    lines.push('If the user confirms saving, call `confirm_outline` and let the app use the pending draft nodes.');
+    lines.push(useDriver
+      ? 'If the user confirms saving, finalize the outline clearly without mentioning tools that are not actually exposed in this runtime.'
+      : 'If the user confirms saving, call `confirm_outline` and let the app use the pending draft nodes.');
     lines.push('');
     lines.push(pendingOutlineDraft.rawMarkdown);
     if (Array.isArray(pendingOutlineIssues) && pendingOutlineIssues.length) {
@@ -405,40 +513,20 @@ async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, w
   }
 
   // Phase-specific rules
-  const phaseRules = generatePhaseRules(phase);
+  const phaseRules = generatePhaseRules(phase, { useDriver });
   lines.push.apply(lines, phaseRules);
 
   // Common tool list
   lines.push('');
   lines.push('## Available Tools');
-  lines.push('You can call tools to read/write novel data and manipulate the editor:');
-  lines.push('- Character tools: list_characters, read_character, enrich_character');
-  lines.push('- Novel data: read_outline, read_outline_nodes, list_chapters, read_chapter, write_chapter, replace_chapter_text, apply_chapter_patch, query_world, apply_world_patch, query_timeline, list_assets, read_asset, read_style_memory, read_skill, list_skills, read_skill_content, search_index');
-  lines.push('- Review: review_character_consistency (inspect chapter paragraphs against character cards and report paragraph-level conflicts without editing)');
-  lines.push('- Rewrite: de_ai_ify (rewrite a Chinese fiction passage to remove AI-ish cliches while preserving meaning)');
-  lines.push('- Auto-write: grant_asset, revoke_asset, apply_asset_patch, append_timeline, update_timeline, dedupe_timeline, append_summary, append_style_memory');
-  lines.push('- Write (requires confirmation): create_character, update_character, update_world, apply_world_patch, write_chapter, replace_chapter_text, apply_chapter_patch');
-  lines.push('- Editor: replace_selected_text, replace_text_near_cursor, insert_text_at_cursor, get_full_editor_content');
-  lines.push('- Workflow: set_workflow_phase (change current phase), confirm_outline (save outline and enter writing phase)');
-  lines.push('- Delegate: spawn_subagent');
-  lines.push('- Web: enrich_character (search web for fanwork character info)');
-  if (useDriver) {
-    lines.push('- Web: WebFetch (fetch a web page), WebSearch (search the web) — via Claude Code driver');
-  }
+  lines.push(useDriver
+    ? 'You can call the following tools in this driver-backed chat runtime:'
+    : 'You can call the following tools directly in this chat runtime:');
+  lines.push(...buildAvailableToolLines({ useDriver, hasActiveNovel }));
 
   // Common rules
   lines.push('');
-  lines.push('## Common Rules');
-  lines.push('1. NEVER use Write, Edit, or Bash to modify novel data files. Use MCP tools for writes.');
-  lines.push('2. Use `spawn_subagent` for heavy tasks (drafting, review). Subagents run through the active driver.');
-  lines.push('3. Character info: call `list_characters` first, then `read_character` for details.');
-  lines.push('4. Web search: use `enrich_character` first. Only use WebFetch/WebSearch as fallback.');
-  lines.push('5. Be systematic: break complex requests into steps, use tools to gather facts, then act.');
-  lines.push('6. If the user asks to clean up historical duplicate timeline events, use `dedupe_timeline` instead of manually rewriting files.');
-  lines.push('7. If Current Editor State includes `User selected text`, that selection metadata is authoritative. Do not tell the user that you cannot see the editor highlight or selection marker.');
-  lines.push('8. For chapter-wide review requests, prefer explicit review tools first; do not jump straight into many sequential `replace_chapter_text` calls against overlapping snippets. If multiple concrete fixes are already known, prefer one `apply_chapter_patch` over many independent replaces.');
-  lines.push('9. For world lore or place-table tweaks, prefer `apply_world_patch` over `update_world` unless you are intentionally replacing the whole world block.');
-  lines.push('10. For multi-step asset handoff changes, prefer `apply_asset_patch` over many separate `grant_asset`/`revoke_asset` calls. When editing from a prior asset read, include that asset\'s `baseGrantedTo` snapshot.');
+  lines.push(...buildCommonRules({ useDriver, hasActiveNovel }));
 
   // Inject phase-relevant skills
   const skillBlock = await loadPhaseSkills(phase);
@@ -820,6 +908,40 @@ async function handleSpawnSubagent(input, session) {
   return { text: result.output || '', isError: false };
 }
 
+async function handleWebSearch(input, session) {
+  const query = safeStr(input?.query).trim();
+  if (!query) throw new Error('WebSearch: query required');
+  const preferredEngine = safeStr(input?.preferredEngine).trim() || 'auto';
+  const maxResults = Math.max(1, Number(input?.maxResults) || 5);
+  const payload = await searchWeb({
+    query,
+    preferredEngine,
+    userLang: safeStr(session?.editorContext?.userLang || 'zh-CN') || 'zh-CN',
+    fanworkSphere: 'global',
+  });
+  return {
+    text: JSON.stringify({
+      query,
+      preferredEngine,
+      results: (payload.results || []).slice(0, maxResults),
+      sources: payload.errors || [],
+      sourceDetails: payload.sourceDetails || [],
+    }, null, 2),
+    isError: false,
+  };
+}
+
+async function handleWebFetch(input) {
+  const url = safeStr(input?.url).trim();
+  if (!url) throw new Error('WebFetch: url required');
+  const maxChars = Math.max(256, Number(input?.maxChars) || 12000);
+  const payload = await fetchWebPage(url, { maxChars });
+  return {
+    text: JSON.stringify(payload, null, 2),
+    isError: !payload.ok,
+  };
+}
+
 // ---------- main turn loop ----------
 
 /**
@@ -845,9 +967,9 @@ async function _runTurnViaProvider(session, sessionId, system, userText, abortSi
       if (!activeNovelId) {
         const allowed = ['read_skill', 'list_skills', 'read_skill_content', 'de_ai_ify', 'create_novel', 'list_novels'];
         const filtered = mcpTools.filter((t) => allowed.includes(t.name));
-        tools = [...filtered, ...BUILTIN_CHAT_TOOLS];
+        tools = [...filtered, ...DIRECT_API_CHAT_TOOLS];
       } else {
-        tools = [...mcpTools, ...BUILTIN_CHAT_TOOLS];
+        tools = [...mcpTools, ...DIRECT_API_CHAT_TOOLS];
       }
       break; // success
     } catch (err) {
@@ -856,7 +978,7 @@ async function _runTurnViaProvider(session, sessionId, system, userText, abortSi
         await new Promise((r) => setTimeout(r, 500));
       } else {
         console.error('[chatAgent] mcp.listTools failed after retry', err);
-        tools = [...BUILTIN_CHAT_TOOLS];
+        tools = [...DIRECT_API_CHAT_TOOLS];
       }
     }
   }
@@ -944,6 +1066,10 @@ async function _runTurnViaProvider(session, sessionId, system, userText, abortSi
           toolResult = { text: 'Outline confirmed and saved. Switched to writing phase.', isError: false };
         } else if (isFrontendTool(use.name)) {
           toolResult = await handleFrontendTool(session, use);
+        } else if (use.name === 'WebSearch') {
+          toolResult = await handleWebSearch(use.input, session);
+        } else if (use.name === 'WebFetch') {
+          toolResult = await handleWebFetch(use.input);
         } else if (use.name === 'spawn_subagent') {
           toolResult = await handleSpawnSubagent(use.input, session);
         } else {

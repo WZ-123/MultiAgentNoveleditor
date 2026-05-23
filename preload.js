@@ -110,6 +110,11 @@ const novel = {
     ipcRenderer.on('mana:chapter:changed', handler);
     return () => ipcRenderer.removeListener('mana:chapter:changed', handler);
   },
+  onActiveChanged: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('mana:novel:activeChanged', handler);
+    return () => ipcRenderer.removeListener('mana:novel:activeChanged', handler);
+  },
   listCharacters: (id) => invoke('mana:novel:listCharacters', { id }),
   readCharacter: (id, charId) => invoke('mana:novel:readCharacter', { id, charId }),
   writeCharacter: (id, character) => invoke('mana:novel:writeCharacter', { id, character }),
