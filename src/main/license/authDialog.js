@@ -162,7 +162,15 @@ function showAuthDialog() {
       reject(new Error('user_closed'));
     });
 
+    const showTimeout = setTimeout(() => {
+      if (!win.isDestroyed() && !win.isVisible()) {
+        win.show();
+        win.focus();
+      }
+    }, 500);
+
     win.once('ready-to-show', () => {
+      clearTimeout(showTimeout);
       win.show();
       win.focus();
     });

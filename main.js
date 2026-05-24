@@ -24,9 +24,11 @@ const { ensureDevAuthRelayConfig } = require('./src/main/license/devAuthBootstra
 
 const APP_NAME = 'MultiAgentNovelAssistant';
 
-app.setName(APP_NAME);
+const isDevMode = process.env.NODE_ENV !== 'production' && !app.isPackaged;
+const APP_NAME_EFFECTIVE = isDevMode ? `${APP_NAME}-dev` : APP_NAME;
+app.setName(APP_NAME_EFFECTIVE);
 try {
-  const userDataRoot = path.join(app.getPath('appData'), APP_NAME);
+  const userDataRoot = path.join(app.getPath('appData'), APP_NAME_EFFECTIVE);
   const sessionDataRoot = path.join(userDataRoot, 'session-data');
   app.setPath('userData', userDataRoot);
   app.setPath('sessionData', sessionDataRoot);
