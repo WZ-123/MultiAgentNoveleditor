@@ -23,7 +23,7 @@ const eventBus = require('./eventBus');
 const { getActiveNovelContext } = require('./activeNovelContext');
 const skillsStore = require('../store/skills');
 const chatHistoryStore = require('../store/chatHistory');
-const { searchWeb, fetchWebPage } = require('../import/searchEngine');
+const { searchWeb, fetchWebPage, fetchBestPage } = require('../import/searchEngine');
 const { generateOutlineDraft } = require('./outlineDraftService');
 const { detectOutlineChatIntent, detectOutlineConfirmIntent } = require('./outlineIntent');
 const { webContents } = require('electron');
@@ -160,7 +160,7 @@ const FRONTEND_TOOLS = [
 const WEB_TOOLS = [
   {
     name: 'WebSearch',
-    description: 'Search the public web and return a compact list of relevant results.',
+    description: 'Search the public web and return relevant results. If a wiki/encyclopedia page is found, its content is automatically fetched and included in the result. You do not need to call WebFetch separately for URLs returned by WebSearch.',
     input_schema: {
       type: 'object',
       properties: {
@@ -455,6 +455,8 @@ function buildCommonRules({ useDriver = false, hasActiveNovel = false } = {}) {
     lines.push('9. For world lore or place-table tweaks, prefer `apply_world_patch` over `update_world` unless you are intentionally replacing the whole world block.');
     lines.push('10. For multi-step asset handoff changes, prefer `apply_asset_patch` over many separate `grant_asset`/`revoke_asset` calls. When editing from a prior asset read, include that asset\'s `baseGrantedTo` snapshot.');
   }
+  lines.push('11. When given a research task (e.g., searching for character info, verifying facts), continue using tools until you have gathered sufficient information. Do not stop after a single search if the results are incomplete or ambiguous.');
+  lines.push('12. WebSearch automatically fetches and includes page content from the best wiki/encyclopedia result. You do NOT need to call WebFetch for URLs returned by WebSearch unless you need content from a specific non-wiki URL.');
   return lines;
 }
 
@@ -913,20 +915,60 @@ async function handleWebSearch(input, session) {
   if (!query) throw new Error('WebSearch: query required');
   const preferredEngine = safeStr(input?.preferredEngine).trim() || 'auto';
   const maxResults = Math.max(1, Number(input?.maxResults) || 5);
+  const userLang = safeStr(session?.editorContext?.userLang || 'zh-CN') || 'zh-CN';
   const payload = await searchWeb({
     query,
     preferredEngine,
-    userLang: safeStr(session?.editorContext?.userLang || 'zh-CN') || 'zh-CN',
+    userLang,
     fanworkSphere: 'global',
   });
+
+  const results = (payload.results || []).slice(0, maxResults);
+  let pageContent = '';
+  let pageSource = '';
+  let pageUrl = '';
+
+  // Auto-fetch best page content from wiki/encyclopedia sources
+  if (results.length > 0) {
+    try {
+      const bestText = await fetchBestPage(results, userLang);
+      if (bestText && bestText.length > 200) {
+        pageContent = bestText.slice(0, 6000);
+        const wikiSources = ['moegirl', 'biligame', 'wikipedia'];
+        const wikiResult = results.find((r) => wikiSources.includes(r.source));
+        if (wikiResult) {
+          pageSource = `${wikiResult.source} | ${wikiResult.title || ''}`;
+          pageUrl = wikiResult.url || '';
+        } else {
+          pageSource = results[0]?.source || 'unknown';
+          pageUrl = results[0]?.url || '';
+        }
+      }
+    } catch (err) {
+      console.error('[chatAgent] auto-fetch page failed:', err.message);
+    }
+  }
+
+  const response = {
+    query,
+    preferredEngine,
+    results,
+    sources: payload.errors || [],
+    sourceDetails: payload.sourceDetails || [],
+  };
+
+  if (pageContent) {
+    response.fetchedPage = {
+      source: pageSource,
+      url: pageUrl,
+      contentLength: pageContent.length,
+      content: pageContent,
+    };
+    response.note = 'The fetched page content above is from the best wiki/encyclopedia result. You do NOT need to call WebFetch separately for this URL.';
+  }
+
   return {
-    text: JSON.stringify({
-      query,
-      preferredEngine,
-      results: (payload.results || []).slice(0, maxResults),
-      sources: payload.errors || [],
-      sourceDetails: payload.sourceDetails || [],
-    }, null, 2),
+    text: JSON.stringify(response, null, 2),
     isError: false,
   };
 }
@@ -983,7 +1025,7 @@ async function _runTurnViaProvider(session, sessionId, system, userText, abortSi
     }
   }
 
-  const maxTurns = 6;
+  const maxTurns = 12; // single user-query tool-use loop limit
   let turnIdx = 0;
   let lastText = '';
   const toolCalls = [];

@@ -47,11 +47,12 @@ async function run() {
 
     assert.equal(result.results[0]?.source, 'moegirl');
     assert.equal(result.results[0]?.title, '碧蓝航线:爱宕');
+    // DuckDuckGo is now last-resort only; primary sources returned results, so DDG should not appear
     assert.deepEqual(
       result.sourceDetails.map((item) => item.source),
-      ['moegirl', 'biligame', 'bing', 'wikipedia', 'duckduckgo']
+      ['moegirl', 'biligame', 'bing', 'wikipedia']
     );
-    pass('CSPR1_character_results_follow_cultural_source_priority', 'moegirl result remains first even if Bing resolves earlier');
+    pass('CSPR1_character_results_follow_cultural_source_priority', 'moegirl result remains first even if Bing resolves earlier; DuckDuckGo excluded when primary sources succeed');
   } catch (err) {
     failed += 1;
     fail('CSPR_harness', err?.stack || String(err));

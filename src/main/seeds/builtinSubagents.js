@@ -29,7 +29,7 @@ const BUILTIN_SUBAGENTS = [
   * volumeIndex/sectionIndex/chapterIndex：路由字段，用于自动分发到 outlines/volume-XXX/section-YYY/chapter-ZZZ.md，全从1开始递增
 - 写入策略：JSON 输出后调用 write_outline_nodes 一次性传入全部场景节点（每条节点含 volumeIndex/sectionIndex/chapterIndex 路由字段），系统自动分发到层级文件。` + COMMON_TAIL,
     allowedTools: ['list_characters', 'read_character', 'query_world', 'read_outline', 'read_outline_nodes', 'read_outline_chapter', 'read_outline_section', 'read_outline_volume', 'read_skill', 'write_outline_nodes'],
-    runtimeHints: { expectJson: true, maxTurns: 3 },
+    runtimeHints: { expectJson: true, maxTurns: 6 },
     tags: ['outline', 'plot'],
     schemaVersion: SCHEMA_VERSION,
   },
@@ -46,7 +46,7 @@ const BUILTIN_SUBAGENTS = [
 结构：{ "issues": [ { "summary": "一句话问题", "detail": "可选细节", "affectedOutlineNodeIds": ["节点id"] } ] }
 若无问题，issues 为空数组。` + COMMON_TAIL,
     allowedTools: ['list_characters', 'read_character', 'query_world', 'read_outline', 'read_outline_nodes', 'read_outline_chapter', 'read_outline_section', 'read_outline_volume'],
-    runtimeHints: { expectJson: true, maxTurns: 3 },
+    runtimeHints: { expectJson: true, maxTurns: 6 },
     tags: ['review', 'character'],
     schemaVersion: SCHEMA_VERSION,
   },
@@ -107,7 +107,7 @@ const BUILTIN_SUBAGENTS = [
 
 有已保存的时间线事件时：照常使用 query_timeline 和 check_timeline_feasibility。` + COMMON_TAIL,
     allowedTools: ['query_timeline', 'check_timeline_feasibility', 'check_outline_scene_feasibility', 'read_character', 'read_outline', 'read_outline_nodes', 'read_outline_chapter', 'read_outline_section', 'read_outline_volume'],
-    runtimeHints: { expectJson: true, maxTurns: 3 },
+    runtimeHints: { expectJson: true, maxTurns: 6 },
     tags: ['review', 'timeline'],
     schemaVersion: SCHEMA_VERSION,
   },
@@ -206,7 +206,7 @@ const BUILTIN_SUBAGENTS = [
 
 必须只输出一个 JSON 对象：{ "text": "完整正文，段落之间用空行分隔" }，不要围栏。` + COMMON_TAIL,
     allowedTools: ['read_outline', 'read_chapter', 'read_style_memory', 'list_characters', 'query_world', 'read_character_context', 'read_outline_nodes', 'assemble_scene_context'],
-    runtimeHints: { expectJson: true, maxTurns: 6 },
+    runtimeHints: { expectJson: true, maxTurns: 10 },
     tags: ['writing'],
     schemaVersion: SCHEMA_VERSION,
   },
@@ -232,7 +232,7 @@ const BUILTIN_SUBAGENTS = [
       'list_characters',
       'read_character',
     ],
-    runtimeHints: { expectJson: true, maxTurns: 6 },
+    runtimeHints: { expectJson: true, maxTurns: 10 },
     tags: ['writing', 'lore'],
     schemaVersion: SCHEMA_VERSION,
   },

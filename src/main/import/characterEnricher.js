@@ -454,9 +454,6 @@ async function enrichCharacters(characters, worldOutput, userLang = 'zh-CN', opt
     preferredEngine = cfg?.searchEngine || 'auto';
     concurrency = cfg?.enrichmentConcurrency ?? 10;
     enrichmentMode = cfg?.enrichmentMode || 'traditional';
-    if (preferredEngine === 'auto' && !userLang?.startsWith('zh')) {
-      preferredEngine = 'duckduckgo';
-    }
   } catch { /* use default */ }
 
   // 3. Determine search language for this sphere+user combination

@@ -781,7 +781,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
         </div>
 
         {/* Messages */}
-        <div ref={containerRef} className="flex-1 overflow-y-auto p-3 space-y-3">
+        <div ref={containerRef} className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-3">
           {messages.length === 0 && (
             <div className="flex gap-2">
               <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
@@ -796,23 +796,23 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
           {messages.map((m, idx) => {
             if (m.role === 'tool') {
               return (
-                <div key={m.id || idx} className="flex gap-2">
+                <div key={m.id || idx} className="flex gap-2 min-w-0">
                   <div className="w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center shrink-0">
                     <Wrench size={12} className="text-white" />
                   </div>
-                  <div className="bg-vscode-active-item/50 p-2 rounded max-w-[85%] text-sm">
+                  <div className="bg-vscode-active-item/50 p-2 rounded max-w-[85%] min-w-0 break-words text-sm">
                     <div className="text-amber-400 text-xs font-medium mb-1">
                       {m.status === 'running' ? `调用: ${m.name}...` : `调用: ${m.name}`}
                     </div>
                     {m.input && (
-                      <pre className="text-gray-400 text-[11px] overflow-x-auto whitespace-pre-wrap">
+                      <pre className="text-gray-400 text-[11px] overflow-x-hidden whitespace-pre-wrap break-words">
                         {JSON.stringify(m.input, null, 2)}
                       </pre>
                     )}
                     {m.status === 'done' && (
                       <div>
                         {expandedResults[m.id] ? (
-                          <pre className="mt-1 text-[11px] text-green-400 overflow-x-auto whitespace-pre-wrap max-h-60 overflow-y-auto">
+                          <pre className="mt-1 text-[11px] text-green-400 overflow-x-hidden whitespace-pre-wrap break-words max-h-60 overflow-y-auto">
                             {m.result}
                           </pre>
                         ) : (
@@ -841,7 +841,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
             const isEditing = editingId === m.id;
 
             return (
-              <div key={m.id || idx} className={`flex gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+              <div key={m.id || idx} className={`flex gap-2 min-w-0 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
                     m.role === 'user' ? 'bg-gray-600' : 'bg-blue-600'
@@ -853,7 +853,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
                     <Bot size={14} className="text-white" />
                   )}
                 </div>
-                <div className={`group relative p-2 rounded text-sm whitespace-pre-wrap ${
+                <div className={`group relative p-2 rounded text-sm whitespace-pre-wrap min-w-0 break-words ${
                   isEditing
                     ? 'w-[95%]'
                     : 'max-w-[85%]'

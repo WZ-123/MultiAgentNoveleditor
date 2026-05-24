@@ -152,7 +152,7 @@ async function runSubagent(opts = {}) {
 
   const transcript = [...messages];
   let lastTextOutput = '';
-  const maxTurns = subagent.runtimeHints?.maxTurns || 4;
+  const maxTurns = subagent.runtimeHints?.maxTurns || 8;
   let turnIdx = 0;
 
   await eventBus.emit({ runId, pipelineRunId, nodeId, subagentId, kind: 'running', data: { tier: tier.tierName, model: tier.model } });

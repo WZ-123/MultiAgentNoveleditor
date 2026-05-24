@@ -11,6 +11,7 @@
 - `handover-checklist.md`：跨设备续接时的快速检查清单
 - `quick-feedback-design.md`：用户快速反馈功能设计（字段、快照、脱敏、发送策略）
 - `feishu-feedback-sync-design.md`：飞书多维表格反馈同步设计（outbox、同步层、附件、重试、联调）
+- `packaged-client-design.md`：打包客户端设计（relay 授权码认证、一键反馈、GitHub Actions 打包流程）
 
 ## 建议更新节奏
 

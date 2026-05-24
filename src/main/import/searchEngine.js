@@ -190,9 +190,7 @@ function sourcePriority(fanworkSphere, userLang) {
     'western-en': ['wikipedia', 'bing'],
     'global': ['wikipedia', 'bing'],
   };
-  const primary = sphereSources[fanworkSphere] || ['wikipedia'];
-  const fallback = ['duckduckgo'];
-  return [...primary, ...fallback.filter((s) => !primary.includes(s))];
+  return sphereSources[fanworkSphere] || ['wikipedia'];
 }
 
 function _dedupeResults(results) {
@@ -286,6 +284,26 @@ async function searchWeb({ query, userLang = 'zh-CN', preferredEngine = 'auto', 
       sourceMsgs.push(`${src.label}: 错误(${err.message || 'unknown'})`);
     }
   }));
+
+  // Last-resort fallback: DuckDuckGo only if primary sources returned nothing
+  if (allResults.length === 0 && preferredEngine === 'auto') {
+    try {
+      const ddResults = await SOURCES.duckduckgo.search(trimmed, ur);
+      const tagged = (ddResults || []).map((r) => ({ ...r, source: 'duckduckgo' }));
+      allResults.push(...tagged);
+      sourceDetails.push({
+        source: 'duckduckgo',
+        sourceLabel: SOURCES.duckduckgo.label,
+        query: trimmed,
+        count: tagged.length,
+        topResults: tagged.slice(0, 5).map((r) => ({ title: r.title || '', snippet: r.snippet || '', url: r.url || '' })),
+      });
+      sourceMsgs.push(`${SOURCES.duckduckgo.label}: ${tagged.length}条 (last-resort fallback)`);
+    } catch (err) {
+      sourceDetails.push({ source: 'duckduckgo', sourceLabel: SOURCES.duckduckgo.label, query: trimmed, count: 0, error: err.message || 'unknown' });
+      sourceMsgs.push(`${SOURCES.duckduckgo.label}: 错误(${err.message || 'unknown'})`);
+    }
+  }
 
   return {
     results: _sortResultsBySourcePriority(_dedupeResults(allResults), sourceIds),
@@ -421,6 +439,39 @@ async function searchCharacter({ charName, fanworkName, userLang = 'zh-CN', fanw
   });
 
   await Promise.allSettled(promises);
+
+  // Last-resort fallback: DuckDuckGo only if primary sources returned nothing
+  if (allResults.length === 0 && preferredEngine === 'auto') {
+    try {
+      const ddQueries = buildQueries('duckduckgo', charName, fanworkName);
+      let gotResults = false;
+      for (const q of ddQueries) {
+        if (gotResults) break;
+        const results = await SOURCES.duckduckgo.search(q.trim(), ur);
+        if (results.length > 0) {
+          const tagged = results.map((r) => ({ ...r, source: 'duckduckgo', fanworkName }));
+          allResults.push(...tagged);
+          sourceDetails.push({
+            source: 'duckduckgo',
+            sourceLabel: SOURCES.duckduckgo.label,
+            query: q.trim(),
+            count: results.length,
+            topResults: results.slice(0, 3).map((r) => ({ title: r.title, snippet: r.snippet, url: r.url })),
+          });
+          sourceMsgs.push(`${SOURCES.duckduckgo.label}: ${results.length}条 (last-resort fallback)`);
+          gotResults = true;
+        }
+      }
+      if (!gotResults) {
+        sourceDetails.push({ source: 'duckduckgo', sourceLabel: SOURCES.duckduckgo.label, query: ddQueries[0] || '', count: 0 });
+        sourceMsgs.push(`${SOURCES.duckduckgo.label}: 0条`);
+      }
+    } catch (err) {
+      sourceDetails.push({ source: 'duckduckgo', sourceLabel: SOURCES.duckduckgo.label, query: charName, count: 0, error: err.message || 'unknown' });
+      sourceMsgs.push(`${SOURCES.duckduckgo.label}: 错误(${err.message || 'unknown'})`);
+    }
+  }
+
   const dedupedResults = _dedupeResults(allResults);
   const sortedResults = _sortResultsBySourcePriority(dedupedResults, sourceIds);
   const sortedSourceDetails = _sortSourceDetailsByPriority(sourceDetails, sourceIds);
