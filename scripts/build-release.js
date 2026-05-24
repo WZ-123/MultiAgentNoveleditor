@@ -76,7 +76,7 @@ try {
   }
 
   log('Running electron-builder', BUILDER_ARGS.join(' ') || '(default)');
-  const builderResult = spawnSync(npmCmd, ['exec', 'electron-builder', ...BUILDER_ARGS], {
+  const builderResult = spawnSync(npmCmd, ['exec', '--', 'electron-builder', ...BUILDER_ARGS], {
     cwd: ROOT,
     stdio: 'inherit',
     shell: process.platform === 'win32',
