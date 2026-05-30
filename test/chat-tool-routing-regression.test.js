@@ -62,6 +62,7 @@ async function runChatToolRoutingRegressionTest() {
   let sessionId = '';
   let driverSessionId = '';
   let idleSessionId = '';
+  let stopReasonSessionId = '';
   let providerCallCount = 0;
   let capturedToolNames = [];
   const workflowCalls = [];
@@ -248,6 +249,53 @@ async function runChatToolRoutingRegressionTest() {
       'CTR3_idle_prompt_only_mentions_bootstrap_and_web_tools',
       'when no novel is active, the chat prompt no longer advertises novel-only tools that are filtered out of the actual tool list'
     );
+
+    workflowOrchestrator.getActiveDriverId = () => 'direct-api';
+    mcpClient.getActiveNovel = () => 'novel-routing-regression';
+    mcpClient.getActiveNovelContext = () => ({
+      id: 'novel-routing-regression',
+      dir: '/tmp/novel-routing-regression',
+    });
+    providerCallCount = 0;
+    anthropicProvider.sendMessage = async ({ tools }) => {
+      providerCallCount += 1;
+      if (providerCallCount === 1) {
+        capturedToolNames = (tools || []).map((tool) => tool.name);
+        return {
+          stopReason: 'end_turn',
+          content: [{
+            type: 'tool_use',
+            id: 'toolu-routing-stopreason-1',
+            name: 'WebSearch',
+            input: { query: '碧蓝航线 信浓 设定' },
+          }],
+        };
+      }
+      return {
+        stopReason: 'end_turn',
+        content: [{ type: 'text', text: '搜索完成，继续执行。' }],
+      };
+    };
+
+    stopReasonSessionId = chatAgent.createSession({
+      editorContext: { novelId: 'novel-routing-regression', type: 'chapter', title: 'chapter-001.md' },
+      messages: [],
+    });
+    await chatAgent.runTurn(stopReasonSessionId, '先搜一下信浓设定，再继续。');
+
+    assert.equal(providerCallCount, 2);
+    assert.equal(
+      emittedEvents.some((event) => event.channel === 'chatAgent:event'
+        && event.payload?.sessionId === stopReasonSessionId
+        && event.payload?.kind === 'tool_result'
+        && event.payload?.data?.name === 'WebSearch'
+        && event.payload?.data?.isError === false),
+      true
+    );
+    pass(
+      'CTR4_provider_tool_loop_continues_even_when_stop_reason_is_end_turn',
+      'chat provider loop continues on tool_use blocks even when an Anthropic-compatible endpoint misreports stopReason'
+    );
   } catch (err) {
     fail('CTR_harness', err?.message || String(err));
   } finally {
@@ -259,6 +307,9 @@ async function runChatToolRoutingRegressionTest() {
     }
     if (idleSessionId && chatAgent) {
       try { chatAgent.closeSession(idleSessionId); } catch { /* ignore */ }
+    }
+    if (stopReasonSessionId && chatAgent) {
+      try { chatAgent.closeSession(stopReasonSessionId); } catch { /* ignore */ }
     }
     providerManager.getActiveProvider = originalGetActiveProvider;
     modelAliases.getAlias = originalGetAlias;

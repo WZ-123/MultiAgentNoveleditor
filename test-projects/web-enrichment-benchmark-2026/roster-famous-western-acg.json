@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "track": "western-en-general-layer",
+  "note": "欧美文化圈通用层主验收集。特化轨（BWiki 手游等）见 roster.json。角色分层定义与轮换规则见 ROSTER-WESTERN.md 与 knowledge-base/western-enrichment-benchmark.md。",
+  "works": {
+    "黑袍纠察队": {
+      "latest": ["祖国人", "比利·布彻尔"],
+      "obscure": ["休伊·坎贝尔", "星光"],
+      "mid": ["玄色", "梅芙女王"]
+    },
+    "漫威": {
+      "latest": ["钢铁侠", "蜘蛛侠"],
+      "obscure": ["奇异博士", "绯红女巫"],
+      "mid": ["美国队长", "洛基"]
+    },
+    "DC": {
+      "latest": ["蝙蝠侠", "超人"],
+      "obscure": ["神奇女侠", "闪电侠"],
+      "mid": ["小丑", "哈莉·奎茵"]
+    },
+    "魔戒": {
+      "latest": ["弗罗多·巴金斯", "甘道夫"],
+      "obscure": ["阿拉贡", "莱戈拉斯"],
+      "mid": ["山姆卫斯·詹吉", "咕噜"]
+    },
+    "哈利波特": {
+      "latest": ["哈利·波特", "赫敏·格兰杰"],
+      "obscure": ["罗恩·韦斯莱", "西弗勒斯·斯内普"],
+      "mid": ["德拉科·马尔福", "阿不思·邓布利多"]
+    },
+    "RWBY": {
+      "latest": ["Ruby Rose", "Weiss Schnee"],
+      "obscure": ["Blake Belladonna", "Yang Xiao Long"],
+      "mid": ["Jaune Arc", "Pyrrha Nikos"]
+    }
+  },
+  "pools": {
+    "黑袍纠察队": {
+      "latest": ["士兵男孩", "深海王"],
+      "mid": ["母乳", "风暴前线"],
+      "obscure": ["艾什莉", "纳迪亚"]
+    },
+    "漫威": {
+      "latest": ["雷神", "黑寡妇"],
+      "mid": ["浩克", "鹰眼"],
+      "obscure": ["蚁人", "惊奇队长"]
+    },
+    "DC": {
+      "latest": ["海王", "绿灯侠"],
+      "mid": ["猫女", "夜翼"],
+      "obscure": ["钢骨", "沙赞"]
+    },
+    "魔戒": {
+      "latest": ["萨鲁曼", "波罗米尔"],
+      "mid": ["金雳", "皮平"],
+      "obscure": ["法拉米尔", "伊欧墨"]
+    },
+    "哈利波特": {
+      "latest": ["伏地魔", "小天狼星·布莱克"],
+      "mid": ["纳威·隆巴顿", "金妮·韦斯莱"],
+      "obscure": ["卢娜·洛夫古德", "多比"]
+    },
+    "RWBY": {
+      "latest": ["Cinder Fall", "Neo Politan"],
+      "mid": ["Qrow Branwen", "Winter Schnee"],
+      "obscure": ["Ren Lie", "Nora Valkyrie"]
+    }
+  },
+  "usedInRun": []
+}

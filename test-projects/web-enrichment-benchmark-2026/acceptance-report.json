@@ -1,0 +1,408 @@
+{
+  "evaluatedAt": "2026-05-28T19:53:00.664Z",
+  "reportPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/benchmark-report.json",
+  "total": 36,
+  "successCount": 14,
+  "successRate": 38.9,
+  "accuracyCount": 13,
+  "accuracyRate": 36.1,
+  "targets": {
+    "successRate": 90,
+    "accuracyRate": 95
+  },
+  "passed": false,
+  "perGame": {
+    "碧蓝航线": {
+      "total": 6,
+      "success": 0,
+      "accurate": 0
+    },
+    "蔚蓝档案": {
+      "total": 6,
+      "success": 4,
+      "accurate": 4
+    },
+    "原神": {
+      "total": 6,
+      "success": 2,
+      "accurate": 1
+    },
+    "崩坏：星穹铁道": {
+      "total": 6,
+      "success": 1,
+      "accurate": 1
+    },
+    "绝区零": {
+      "total": 6,
+      "success": 1,
+      "accurate": 1
+    },
+    "鸣潮": {
+      "total": 6,
+      "success": 6,
+      "accurate": 6
+    }
+  },
+  "details": [
+    {
+      "key": "碧蓝航线:戈达·冯·贝格海姆",
+      "status": "extract-rejected",
+      "success": false,
+      "accurate": false,
+      "completeness": "extract-rejected",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "碧蓝航线:优妮可欧伊",
+      "status": "extract-rejected",
+      "success": false,
+      "accurate": false,
+      "completeness": "extract-rejected",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "碧蓝航线:肇和",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "ref-ok",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "碧蓝航线:应瑞",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "碧蓝航线:爱宕",
+      "status": "incomplete-skins",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-skins",
+      "reference": "ref-ok",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "碧蓝航线:能代",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "蔚蓝档案:三千留",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "no-ref",
+      "filledCount": 9,
+      "skinsCount": 1
+    },
+    {
+      "key": "蔚蓝档案:月夜",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "蔚蓝档案:冰室濑名",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "no-ref",
+      "filledCount": 9,
+      "skinsCount": 2
+    },
+    {
+      "key": "蔚蓝档案:宇泽玲纱",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "no-ref",
+      "filledCount": 9,
+      "skinsCount": 1
+    },
+    {
+      "key": "蔚蓝档案:砂狼白子",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "no-ref",
+      "filledCount": 8,
+      "skinsCount": 4
+    },
+    {
+      "key": "蔚蓝档案:阿罗娜",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "原神:尼可·莱恩",
+      "status": "extract-empty",
+      "success": false,
+      "accurate": false,
+      "completeness": "extract-empty",
+      "reference": "ref-ok",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "原神:洛恩",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "原神:蓝砚",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "原神:伊安珊",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "no-ref",
+      "filledCount": 6,
+      "skinsCount": 0
+    },
+    {
+      "key": "原神:胡桃",
+      "status": "success",
+      "success": true,
+      "accurate": false,
+      "completeness": "success",
+      "reference": "ref-mismatch:eyeColor",
+      "filledCount": 8,
+      "skinsCount": 1
+    },
+    {
+      "key": "原神:雷电将军",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "崩坏：星穹铁道:刃",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "崩坏：星穹铁道:昔涟",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "no-ref",
+      "filledCount": 6,
+      "skinsCount": 0
+    },
+    {
+      "key": "崩坏：星穹铁道:阿兰",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "崩坏：星穹铁道:希露瓦",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "崩坏：星穹铁道:三月七",
+      "status": "success",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 8,
+      "skinsCount": 2
+    },
+    {
+      "key": "崩坏：星穹铁道:黄泉",
+      "status": "success",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 4,
+      "skinsCount": 0
+    },
+    {
+      "key": "绝区零:普罗米娅",
+      "status": "extract-rejected",
+      "success": false,
+      "accurate": false,
+      "completeness": "extract-rejected",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "绝区零:星徽·比利",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "绝区零:可琳",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "ref-ok",
+      "filledCount": 4,
+      "skinsCount": 1
+    },
+    {
+      "key": "绝区零:安东",
+      "status": "extract-rejected",
+      "success": false,
+      "accurate": false,
+      "completeness": "extract-rejected",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "绝区零:艾莲",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "绝区零:朱鸢",
+      "status": "incomplete-base",
+      "success": false,
+      "accurate": false,
+      "completeness": "incomplete-base",
+      "reference": "no-ref",
+      "filledCount": 0,
+      "skinsCount": 0
+    },
+    {
+      "key": "鸣潮:绯雪",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "no-ref",
+      "filledCount": 4,
+      "skinsCount": 1
+    },
+    {
+      "key": "鸣潮:达妮娅",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "no-ref",
+      "filledCount": 4,
+      "skinsCount": 0
+    },
+    {
+      "key": "鸣潮:丹瑾",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "no-ref",
+      "filledCount": 5,
+      "skinsCount": 0
+    },
+    {
+      "key": "鸣潮:白芷",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "no-ref",
+      "filledCount": 4,
+      "skinsCount": 1
+    },
+    {
+      "key": "鸣潮:今汐",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "no-ref",
+      "filledCount": 4,
+      "skinsCount": 0
+    },
+    {
+      "key": "鸣潮:长离",
+      "status": "success",
+      "success": true,
+      "accurate": true,
+      "completeness": "success",
+      "reference": "no-ref",
+      "filledCount": 4,
+      "skinsCount": 0
+    }
+  ]
+}

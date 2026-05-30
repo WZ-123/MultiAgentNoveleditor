@@ -167,7 +167,15 @@
       "Bash(node test/character-enricher-llm-guard-regression.test.js)",
       "Bash(node test/chat-tool-result-meta.test.js)",
       "Bash(node test/chat-session-lifecycle-regression.test.js)",
-      "Bash(node test/character-card-parsing.test.js)"
+      "Bash(node test/character-card-parsing.test.js)",
+      "Bash(npx -y -p @babel/core -p @babel/parser node -e ' *)",
+      "Bash(git -C /Users/potablewater/Desktop/MultiAgentNovelAssistant diff --no-color -- src/main/runtime/chatAgent.js src/components/AiChatPanel.jsx)",
+      "Bash(node test/de-ai-prompt-regression.test.js)",
+      "Bash(node test/quality-cross-paragraph-regression.test.js)",
+      "Bash(node test/de-ai-tool-regression.test.js)",
+      "Bash(node test/chat-de-ai-routing-regression.test.js)",
+      "Bash(node test/chat-outline-intent-regression.test.js)",
+      "Bash(node test/anthropic-tool-schema-regression.test.js)"
     ],
     "additionalDirectories": [
       "/Users/potablewater/.claude/plans",

@@ -1,0 +1,641 @@
+{
+  "startedAt": "2026-05-29T14:50:36.770Z",
+  "novelId": "novel-web-enrichment-benchmark-2026",
+  "projectDir": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026",
+  "characterCount": 36,
+  "args": {
+    "concurrency": 3,
+    "onlyWork": null,
+    "reportPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/benchmark-report-famous-jp-acg.json",
+    "rosterPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/roster-famous-jp-acg.json",
+    "skipEnrich": true
+  },
+  "searchProbes": [
+    {
+      "name": "博丽灵梦",
+      "work": "东方Project",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 9111,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "博丽灵梦"
+      ],
+      "pageLen": 737,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "雾雨魔理沙",
+      "work": "东方Project",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 6760,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "雾雨魔理沙"
+      ],
+      "pageLen": 698,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "魂魄妖梦",
+      "work": "东方Project",
+      "tag": "obscure",
+      "sphere": "east-asian-jp",
+      "searchMs": 9355,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "魂魄妖梦"
+      ],
+      "pageLen": 1044,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "十六夜咲夜",
+      "work": "东方Project",
+      "tag": "obscure",
+      "sphere": "east-asian-jp",
+      "searchMs": 9274,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "十六夜咲夜"
+      ],
+      "pageLen": 713,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "古明地觉",
+      "work": "东方Project",
+      "tag": "mid",
+      "sphere": "east-asian-jp",
+      "searchMs": 6451,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "古明地觉"
+      ],
+      "pageLen": 577,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "西行寺幽幽子",
+      "work": "东方Project",
+      "tag": "mid",
+      "sphere": "east-asian-jp",
+      "searchMs": 8252,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "西行寺幽幽子"
+      ],
+      "pageLen": 1177,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "阿尔托莉雅·潘德拉贡",
+      "work": "Fate/stay night",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 9629,
+      "resultCount": 5,
+      "topSources": [
+        "bangumi",
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "阿尔托莉雅·潘德拉贡",
+        "阿尔托莉雅·潘德拉贡〔Lily〕",
+        "阿尔托莉雅·潘德拉贡"
+      ],
+      "pageLen": 1555,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "远坂凛",
+      "work": "Fate/stay night",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 6645,
+      "resultCount": 3,
+      "topSources": [
+        "bangumi",
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "远坂凛",
+        "远坂凛 (EXTRA)",
+        "远坂凛 (Prisma☆Illya)"
+      ],
+      "pageLen": 533,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "间桐樱",
+      "work": "Fate/stay night",
+      "tag": "obscure",
+      "sphere": "east-asian-jp",
+      "searchMs": 8815,
+      "resultCount": 3,
+      "topSources": [
+        "bangumi",
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "间桐樱",
+        "间桐樱 (EXTRA)",
+        "间桐樱 (美游世界)"
+      ],
+      "pageLen": 501,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "美狄亚",
+      "work": "Fate/stay night",
+      "tag": "obscure",
+      "sphere": "east-asian-jp",
+      "searchMs": 9414,
+      "resultCount": 6,
+      "topSources": [
+        "bangumi",
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "美狄亚",
+        "美狄亚",
+        "美狄亚"
+      ],
+      "pageLen": 593,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "卫宫士郎",
+      "work": "Fate/stay night",
+      "tag": "mid",
+      "sphere": "east-asian-jp",
+      "searchMs": 6774,
+      "resultCount": 3,
+      "topSources": [
+        "bangumi",
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "卫宫士郎",
+        "卫宫士郎 (美游世界)",
+        "卫宫士郎 (伊莉雅世界)"
+      ],
+      "pageLen": 1986,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "库·丘林",
+      "work": "Fate/stay night",
+      "tag": "mid",
+      "sphere": "east-asian-jp",
+      "searchMs": 9091,
+      "resultCount": 5,
+      "topSources": [
+        "bangumi",
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "库·丘林",
+        "库·丘林",
+        "库丘林"
+      ],
+      "pageLen": 747,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "吹雪",
+      "work": "舰队Collection",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 10349,
+      "resultCount": 6,
+      "topSources": [
+        "bangumi",
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "吹雪",
+        "吹雪",
+        "吹雪"
+      ],
+      "pageLen": 560,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "岛风",
+      "work": "舰队Collection",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 6860,
+      "resultCount": 4,
+      "topSources": [
+        "bangumi",
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "岛风",
+        "安城岛风",
+        "神之岛风太"
+      ],
+      "pageLen": 788,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "时雨",
+      "work": "舰队Collection",
+      "tag": "obscure",
+      "sphere": "east-asian-jp",
+      "searchMs": 9011,
+      "resultCount": 4,
+      "topSources": [
+        "bangumi",
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "时雨",
+        "时雨",
+        "时雨"
+      ],
+      "pageLen": 1179,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "夕立",
+      "work": "舰队Collection",
+      "tag": "obscure",
+      "sphere": "east-asian-jp",
+      "searchMs": 7873,
+      "resultCount": 2,
+      "topSources": [
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "夕立",
+        "椿"
+      ],
+      "pageLen": 491,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "金刚",
+      "work": "舰队Collection",
+      "tag": "mid",
+      "sphere": "east-asian-jp",
+      "searchMs": 7536,
+      "resultCount": 4,
+      "topSources": [
+        "bangumi",
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "金刚",
+        "金刚",
+        "金刚寺琥珀"
+      ],
+      "pageLen": 774,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "赤城",
+      "work": "舰队Collection",
+      "tag": "mid",
+      "sphere": "east-asian-jp",
+      "searchMs": 8353,
+      "resultCount": 6,
+      "topSources": [
+        "bangumi",
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "赤城",
+        "赤城",
+        "赤城香織"
+      ],
+      "pageLen": 600,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "上条当麻",
+      "work": "魔法禁书目录",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 6347,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "上条当麻"
+      ],
+      "pageLen": 541,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "茵蒂克丝",
+      "work": "魔法禁书目录",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 11607,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "茵蒂克丝·卡拉"
+      ],
+      "pageLen": 822,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "一方通行",
+      "work": "魔法禁书目录",
+      "tag": "obscure",
+      "sphere": "east-asian-jp",
+      "searchMs": 9279,
+      "resultCount": 2,
+      "topSources": [
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "一方通行",
+        "石头单行道"
+      ],
+      "pageLen": 587,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "神裂火织",
+      "work": "魔法禁书目录",
+      "tag": "obscure",
+      "sphere": "east-asian-jp",
+      "searchMs": 6220,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "神裂火织"
+      ],
+      "pageLen": 869,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "御坂美琴",
+      "work": "魔法禁书目录",
+      "tag": "mid",
+      "sphere": "east-asian-jp",
+      "searchMs": 7900,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "御坂美琴"
+      ],
+      "pageLen": 1043,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "白井黑子",
+      "work": "魔法禁书目录",
+      "tag": "mid",
+      "sphere": "east-asian-jp",
+      "searchMs": 8623,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "白井黑子"
+      ],
+      "pageLen": 474,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "芙莉莲",
+      "work": "葬送的芙莉莲",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 6734,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "芙莉莲"
+      ],
+      "pageLen": 331,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "菲伦",
+      "work": "葬送的芙莉莲",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 7922,
+      "resultCount": 2,
+      "topSources": [
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "菲伦",
+        "菲伦"
+      ],
+      "pageLen": 292,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "修塔尔克",
+      "work": "葬送的芙莉莲",
+      "tag": "obscure",
+      "sphere": "east-asian-jp",
+      "searchMs": 6501,
+      "resultCount": 2,
+      "topSources": [
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "修塔尔克",
+        "修塔尔克的爸爸"
+      ],
+      "pageLen": 288,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "欣梅尔",
+      "work": "葬送的芙莉莲",
+      "tag": "obscure",
+      "sphere": "east-asian-jp",
+      "searchMs": 16566,
+      "resultCount": 0,
+      "topSources": [],
+      "topTitles": [],
+      "pageLen": 0,
+      "pageSource": ""
+    },
+    {
+      "name": "费伦",
+      "work": "葬送的芙莉莲",
+      "tag": "mid",
+      "sphere": "east-asian-jp",
+      "searchMs": 7839,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "费伦"
+      ],
+      "pageLen": 815,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "阿乌拉",
+      "work": "葬送的芙莉莲",
+      "tag": "mid",
+      "sphere": "east-asian-jp",
+      "searchMs": 10631,
+      "resultCount": 2,
+      "topSources": [
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "阿乌拉",
+        "道羽根阿乌拉"
+      ],
+      "pageLen": 4819,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "灶门炭治郎",
+      "work": "鬼灭之刃",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 9127,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "灶门炭治郎"
+      ],
+      "pageLen": 542,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "我妻善逸",
+      "work": "鬼灭之刃",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 6406,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "我妻善逸"
+      ],
+      "pageLen": 471,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "嘴平伊之助",
+      "work": "鬼灭之刃",
+      "tag": "obscure",
+      "sphere": "east-asian-jp",
+      "searchMs": 8339,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "嘴平伊之助"
+      ],
+      "pageLen": 467,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "胡蝶忍",
+      "work": "鬼灭之刃",
+      "tag": "obscure",
+      "sphere": "east-asian-jp",
+      "searchMs": 17069,
+      "resultCount": 0,
+      "topSources": [],
+      "topTitles": [],
+      "pageLen": 0,
+      "pageSource": ""
+    },
+    {
+      "name": "灶门祢豆子",
+      "work": "鬼灭之刃",
+      "tag": "mid",
+      "sphere": "east-asian-jp",
+      "searchMs": 8313,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "灶门祢豆子"
+      ],
+      "pageLen": 513,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "富冈义勇",
+      "work": "鬼灭之刃",
+      "tag": "mid",
+      "sphere": "east-asian-jp",
+      "searchMs": 11153,
+      "resultCount": 1,
+      "topSources": [
+        "bangumi"
+      ],
+      "topTitles": [
+        "富冈义勇"
+      ],
+      "pageLen": 426,
+      "pageSource": "bangumi"
+    }
+  ],
+  "enrichResults": [],
+  "summary": {
+    "skippedEnrich": true
+  }
+}

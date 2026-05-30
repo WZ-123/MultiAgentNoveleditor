@@ -19,25 +19,49 @@ const KNOWN_IPS = new Map([
   // 原神 / Genshin Impact
   ['genshin impact', 'east-asian-cn'],
   ['原神', 'east-asian-cn'],
-  // 蔚蓝档案 / Blue Archive — Korean-developed, popular in JP/KR/CN
-  ['blue archive', 'east-asian-kr'],
-  ['蔚蓝档案', 'east-asian-kr'],
+  // 蔚蓝档案 / Blue Archive — 中文百科以萌娘为主，路由 JP 圈优先萌娘
+  ['blue archive', 'east-asian-jp'],
+  ['蔚蓝档案', 'east-asian-jp'],
   ['ブルーアーカイブ', 'east-asian-jp'],
+  // 绝区零 / 鸣潮
+  ['绝区零', 'east-asian-cn'],
+  ['zenless zone zero', 'east-asian-cn'],
+  ['鸣潮', 'east-asian-cn'],
+  ['wuthering waves', 'east-asian-cn'],
+  ['崩坏：星穹铁道', 'east-asian-cn'],
+  ['崩坏星穹铁道', 'east-asian-cn'],
   // Fate series
   ['fate', 'east-asian-jp'],
   ['fate/stay night', 'east-asian-jp'],
+  ['命运之夜', 'east-asian-jp'],
+  ['fate/grand order', 'east-asian-jp'],
   // 东方Project / Touhou
   ['touhou', 'east-asian-jp'],
   ['東方', 'east-asian-jp'],
+  ['东方project', 'east-asian-jp'],
+  ['东方 project', 'east-asian-jp'],
+  ['东方幻想乡', 'east-asian-jp'],
   // 舰娘 / Kantai Collection
   ['kantai collection', 'east-asian-jp'],
   ['艦隊これくしょん', 'east-asian-jp'],
+  ['舰队collection', 'east-asian-jp'],
+  ['舰队收藏', 'east-asian-jp'],
+  ['舰队これくしょん', 'east-asian-jp'],
   // 崩坏系列 / Honkai
   ['honkai', 'east-asian-cn'],
   ['崩坏', 'east-asian-cn'],
   // 鬼灭之刃 / Demon Slayer
   ['demon slayer', 'east-asian-jp'],
   ['鬼滅の刃', 'east-asian-jp'],
+  ['鬼灭之刃', 'east-asian-jp'],
+  // 魔法禁书目录 / A Certain Magical Index
+  ['a certain magical index', 'east-asian-jp'],
+  ['toaru majutsu no index', 'east-asian-jp'],
+  ['魔法禁书目录', 'east-asian-jp'],
+  // 葬送的芙莉莲 / Frieren
+  ['frieren', 'east-asian-jp'],
+  ['frieren: beyond journey\'s end', 'east-asian-jp'],
+  ['葬送的芙莉莲', 'east-asian-jp'],
   // 原神 / Genshin
   ['genshin', 'east-asian-cn'],
   // 赛马娘 / Uma Musume
@@ -65,11 +89,27 @@ const KNOWN_IPS = new Map([
   ['魔兽世界', 'western-en'],
   // 哈利波特 / Harry Potter
   ['harry potter', 'western-en'],
+  ['哈利波特', 'western-en'],
   // 漫威 / Marvel
   ['marvel', 'western-en'],
   ['漫威', 'western-en'],
+  ['marvel comics', 'western-en'],
+  ['漫威电影宇宙', 'western-en'],
   // DC
   ['dc comics', 'western-en'],
+  ['dc', 'western-en'],
+  ['dc宇宙', 'western-en'],
+  ['dc漫画', 'western-en'],
+  // 黑袍纠察队 / The Boys
+  ['the boys', 'western-en'],
+  ['黑袍纠察队', 'western-en'],
+  // 魔戒 / The Lord of the Rings
+  ['the lord of the rings', 'western-en'],
+  ['lord of the rings', 'western-en'],
+  ['魔戒', 'western-en'],
+  ['指环王', 'western-en'],
+  // RWBY
+  ['rwby', 'western-en'],
   // 星球大战 / Star Wars
   ['star wars', 'western-en'],
   // 巫师 / The Witcher

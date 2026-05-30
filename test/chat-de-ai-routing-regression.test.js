@@ -46,6 +46,8 @@ async function runChatDeAiRoutingRegressionTest() {
   const workflowOrchestrator = require(path.join(ROOT, 'src/main/runtime/workflowOrchestrator'));
   const anthropicProvider = require(path.join(ROOT, 'src/main/runtime/providers/anthropic'));
   const mcpClient = require(path.join(ROOT, 'src/main/mcp/mcpClientStdio'));
+  const driverRegistry = require(path.join(ROOT, 'src/main/runtime/drivers/registry'));
+  const { getToolByName } = require(path.join(ROOT, 'src/main/mcp/tools'));
 
   const originalGetActiveProvider = providerManager.getActiveProvider;
   const originalGetAlias = modelAliases.getAlias;
@@ -54,6 +56,7 @@ async function runChatDeAiRoutingRegressionTest() {
   const originalCallTool = mcpClient.callTool;
   const originalListTools = mcpClient.listTools;
   const originalGetActiveNovel = mcpClient.getActiveNovel;
+  const originalRegistryGetActive = driverRegistry.getActive;
 
   let chatAgent = null;
   let sessionId = '';
@@ -192,6 +195,322 @@ async function runChatDeAiRoutingRegressionTest() {
     if (sessionId && chatAgent) {
       try { chatAgent.closeSession(sessionId); } catch { /* ignore */ }
     }
+  }
+
+  try {
+    let providerCallCount = 0;
+    const toolCalls = [];
+    anthropicProvider.sendMessage = async () => {
+      providerCallCount += 1;
+      return { stopReason: 'end_turn', content: [{ type: 'text', text: 'provider should not run for multi-chapter de-ai review' }] };
+    };
+    mcpClient.getActiveNovel = () => 'novel-de-ai-routing';
+    mcpClient.callTool = async ({ name, arguments: args }) => {
+      toolCalls.push({ name, args });
+      if (name === 'list_chapters') {
+        return {
+          content: [{ type: 'text', text: JSON.stringify(['chapter-001.md', 'chapter-002.md', 'chapter-003.md']) }],
+        };
+      }
+      if (name === 'review_de_ai_style') {
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              chapterCount: 2,
+              totalAnnotations: 1,
+              chapters: [
+                {
+                  chapterName: 'chapter-001.md',
+                  annotations: [{ paragraphIndex: 1, paragraphIndexes: [1], note: '独立短反应句和解释句拆段，AI 味重。', kind: 'choppy' }],
+                },
+                {
+                  chapterName: 'chapter-002.md',
+                  annotations: [],
+                },
+              ],
+            }),
+          }],
+        };
+      }
+      throw new Error(`unexpected tool call: ${name}`);
+    };
+
+    const chatAgentPath = path.join(ROOT, 'src/main/runtime/chatAgent');
+    delete require.cache[require.resolve(chatAgentPath)];
+    chatAgent = require(chatAgentPath);
+    sessionId = chatAgent.createSession({
+      editorContext: { novelId: 'novel-de-ai-routing', type: 'chapter', title: 'chapter-003.md', selectedText: '' },
+      messages: [],
+    });
+
+    await chatAgent.runTurn(sessionId, '并行审查第一章到第二章的 AI 味和套话，先给我审查结果，不要直接改正文。');
+
+    const session = chatAgent.getSession(sessionId);
+    const lastAssistantText = session?.messages?.[session.messages.length - 1]?.content?.[0]?.text || '';
+
+    assert.equal(providerCallCount, 0);
+    assert.deepEqual(toolCalls.map((call) => call.name), ['list_chapters', 'review_de_ai_style']);
+    assert.deepEqual(toolCalls[1]?.args?.chapterNames, ['chapter-001.md', 'chapter-002.md']);
+    assert.match(lastAssistantText, /并行审查/u);
+    assert.match(lastAssistantText, /chapter-001\.md：1 处/u);
+    assert.match(lastAssistantText, /暂不自动改正文/u);
+    pass('CDR3_multi_chapter_de_ai_review_bypasses_provider_and_uses_explicit_batch_tool', 'multi-chapter de-ai review requests bypass provider reasoning and go through list_chapters + review_de_ai_style');
+  } catch (err) {
+    fail('CDR3_multi_chapter_de_ai_review_bypasses_provider_and_uses_explicit_batch_tool', err?.message || String(err));
+  } finally {
+    if (sessionId && chatAgent) {
+      try { chatAgent.closeSession(sessionId); } catch { /* ignore */ }
+    }
+  }
+
+  try {
+    let providerCallCount = 0;
+    const toolCalls = [];
+    anthropicProvider.sendMessage = async () => {
+      providerCallCount += 1;
+      return { stopReason: 'end_turn', content: [{ type: 'text', text: 'provider should not run for 2-6 wording' }] };
+    };
+    mcpClient.getActiveNovel = () => 'novel-de-ai-routing';
+    mcpClient.callTool = async ({ name, arguments: args }) => {
+      toolCalls.push({ name, args });
+      if (name === 'list_chapters') {
+        return {
+          content: [{ type: 'text', text: JSON.stringify(['chapter-001.md', 'chapter-002.md', 'chapter-003.md', 'chapter-004.md', 'chapter-005.md', 'chapter-006.md']) }],
+        };
+      }
+      if (name === 'review_de_ai_style') {
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              chapterCount: 5,
+              totalAnnotations: 1,
+              chapters: [
+                { chapterName: 'chapter-002.md', annotations: [] },
+                { chapterName: 'chapter-003.md', annotations: [{ paragraphIndex: 1, paragraphIndexes: [1], note: '独立短反应句和解释句拆段，AI 味重。', kind: 'choppy' }] },
+                { chapterName: 'chapter-004.md', annotations: [] },
+                { chapterName: 'chapter-005.md', annotations: [] },
+                { chapterName: 'chapter-006.md', annotations: [] },
+              ],
+            }),
+          }],
+        };
+      }
+      throw new Error(`unexpected tool call: ${name}`);
+    };
+
+    const chatAgentPath = path.join(ROOT, 'src/main/runtime/chatAgent');
+    delete require.cache[require.resolve(chatAgentPath)];
+    chatAgent = require(chatAgentPath);
+    sessionId = chatAgent.createSession({
+      editorContext: { novelId: 'novel-de-ai-routing', type: 'chapter', title: 'chapter-003.md', selectedText: '' },
+      messages: [],
+    });
+
+    await chatAgent.runTurn(sessionId, '拿去ai味工具审查2-6章');
+
+    const session = chatAgent.getSession(sessionId);
+    const lastAssistantText = session?.messages?.[session.messages.length - 1]?.content?.[0]?.text || '';
+
+    assert.equal(providerCallCount, 0);
+    assert.deepEqual(toolCalls.map((call) => call.name), ['list_chapters', 'review_de_ai_style']);
+    assert.deepEqual(toolCalls[1]?.args?.chapterNames, ['chapter-002.md', 'chapter-003.md', 'chapter-004.md', 'chapter-005.md', 'chapter-006.md']);
+    assert.match(lastAssistantText, /我已并行审查 5 章/u);
+    assert.match(lastAssistantText, /chapter-003\.md：1 处/u);
+    pass('CDR3b_bare_numeric_range_wording_routes_to_multi_chapter_de_ai_review', 'bare 2-6 wording now routes into review_de_ai_style without falling back to provider');
+  } catch (err) {
+    fail('CDR3b_bare_numeric_range_wording_routes_to_multi_chapter_de_ai_review', err?.message || String(err));
+  } finally {
+    if (sessionId && chatAgent) {
+      try { chatAgent.closeSession(sessionId); } catch { /* ignore */ }
+    }
+  }
+
+  try {
+    let providerCallCount = 0;
+    const toolCalls = [];
+    anthropicProvider.sendMessage = async () => {
+      providerCallCount += 1;
+      if (providerCallCount === 1) {
+        return {
+          stopReason: 'tool_use',
+          content: [{
+            type: 'tool_use',
+            id: 'toolu-de-ai-chat-1',
+            name: 'de_ai_ify',
+            input: {
+              text: '然后她笑了。那是一个很淡的笑。',
+              guidance: '保留冷淡感',
+            },
+          }],
+        };
+      }
+      return {
+        stopReason: 'end_turn',
+        content: [{ type: 'text', text: '工具改写已完成。' }],
+      };
+    };
+    driverRegistry.getActive = async () => ({
+      id: 'test-driver',
+      prepare: async (spec) => ({ runId: spec.runId, spec }),
+      run: async () => ({ output: '她只淡淡笑了一下，像把原本要出口的话又按了回去。' }),
+      dispose: async () => {},
+      cancel: async () => {},
+      capabilities: () => ({}),
+      availability: async () => ({ available: true }),
+    });
+    mcpClient.getActiveNovel = () => 'novel-de-ai-routing';
+    mcpClient.callTool = async ({ name, arguments: args }) => {
+      toolCalls.push({ name, args });
+      if (name !== 'de_ai_ify') throw new Error(`unexpected tool call: ${name}`);
+      const tool = getToolByName('de_ai_ify');
+      return tool.handler(args, {
+        novel: { id: 'novel-de-ai-routing' },
+        novelDir: '/tmp/novel-de-ai-routing',
+      });
+    };
+
+    const chatAgentPath = path.join(ROOT, 'src/main/runtime/chatAgent');
+    delete require.cache[require.resolve(chatAgentPath)];
+    chatAgent = require(chatAgentPath);
+    sessionId = chatAgent.createSession({
+      editorContext: { novelId: 'novel-de-ai-routing', type: 'chapter', title: 'chapter-001.md', selectedText: '' },
+      messages: [],
+    });
+
+    await chatAgent.runTurn(sessionId, '请直接调用去AI味工具改写这句。');
+
+    const session = chatAgent.getSession(sessionId);
+    const lastAssistantText = session?.messages?.[session.messages.length - 1]?.content?.[0]?.text || '';
+    assert.equal(providerCallCount, 2);
+    assert.deepEqual(toolCalls.map((call) => call.name), ['de_ai_ify']);
+    assert.equal(toolCalls[0]?.args?.text, '然后她笑了。那是一个很淡的笑。');
+    assert.equal(
+      emittedEvents.some((event) => event.channel === 'chatAgent:event'
+        && event.payload?.sessionId === sessionId
+        && event.payload?.kind === 'tool_result'
+        && event.payload?.data?.name === 'de_ai_ify'
+        && event.payload?.data?.isError === false),
+      true
+    );
+    assert.match(lastAssistantText, /工具改写已完成/u);
+    assert.equal(/no driver registered/i.test(lastAssistantText), false);
+    pass('CDR4_chat_provider_can_execute_de_ai_tool_without_driver_registration_failure', 'chat tool loop can execute de_ai_ify through the tool handler without surfacing no driver registered');
+  } catch (err) {
+    fail('CDR4_chat_provider_can_execute_de_ai_tool_without_driver_registration_failure', err?.message || String(err));
+  } finally {
+    if (sessionId && chatAgent) {
+      try { chatAgent.closeSession(sessionId); } catch { /* ignore */ }
+    }
+  }
+
+  try {
+    let providerCallCount = 0;
+    let readCount = 0;
+    let applyCount = 0;
+    const toolCalls = [];
+    anthropicProvider.sendMessage = async () => {
+      providerCallCount += 1;
+      return { stopReason: 'end_turn', content: [{ type: 'text', text: 'provider should not run for pending de-ai apply' }] };
+    };
+    mcpClient.getActiveNovel = () => 'novel-de-ai-routing';
+    mcpClient.callTool = async ({ name, arguments: args }) => {
+      toolCalls.push({ name, args });
+      if (name === 'list_chapters') {
+        return {
+          content: [{ type: 'text', text: JSON.stringify(['chapter-001.md']) }],
+        };
+      }
+      if (name === 'review_de_ai_style') {
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              chapterCount: 1,
+              totalAnnotations: 1,
+              chapters: [{
+                chapterName: 'chapter-001.md',
+                annotations: [{
+                  paragraphIndex: 1,
+                  paragraphIndexes: [1],
+                  note: '句式发虚，AI 味重。',
+                  excerpt: '然后她笑了。那是一个很淡的笑。',
+                }],
+              }],
+            }),
+          }],
+        };
+      }
+      if (name === 'read_chapter') {
+        readCount += 1;
+        const body = readCount === 1
+          ? ['第一段。', '', '然后她笑了。那是一个很淡的笑。', '', '第三段。'].join('\n')
+          : ['第一段。', '', '然后她笑了。那是一个很淡的笑。', '', '第三段。', '', '补入的新段落。'].join('\n');
+        return { content: [{ type: 'text', text: body }] };
+      }
+      if (name === 'de_ai_ify') {
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({ revisedText: '她笑了一下，笑意很淡，像把话先按回了心里。' }),
+          }],
+        };
+      }
+      if (name === 'apply_chapter_patch') {
+        applyCount += 1;
+        if (applyCount === 1) {
+          return {
+            isError: true,
+            content: [{ type: 'text', text: 'chapter snapshot mismatch: the chapter changed after it was read. Read the latest chapter again before applying this patch.' }],
+          };
+        }
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({ ok: true, name: 'chapter-001.md', editCount: 1, replacedCount: 1 }),
+          }],
+        };
+      }
+      throw new Error(`unexpected tool call: ${name}`);
+    };
+
+    const chatAgentPath = path.join(ROOT, 'src/main/runtime/chatAgent');
+    delete require.cache[require.resolve(chatAgentPath)];
+    chatAgent = require(chatAgentPath);
+    sessionId = chatAgent.createSession({
+      editorContext: { novelId: 'novel-de-ai-routing', type: 'chapter', title: 'chapter-001.md', selectedText: '' },
+      messages: [],
+    });
+
+    await chatAgent.runTurn(sessionId, '审查第一章的AI味，先不要直接改。');
+    await chatAgent.runTurn(sessionId, '方案A');
+
+    const session = chatAgent.getSession(sessionId);
+    const lastAssistantText = session?.messages?.[session.messages.length - 1]?.content?.[0]?.text || '';
+
+    assert.equal(providerCallCount, 0);
+    assert.equal(readCount, 2);
+    assert.equal(applyCount, 2);
+    assert.deepEqual(toolCalls.map((call) => call.name), [
+      'list_chapters',
+      'review_de_ai_style',
+      'read_chapter',
+      'de_ai_ify',
+      'apply_chapter_patch',
+      'read_chapter',
+      'de_ai_ify',
+      'apply_chapter_patch',
+    ]);
+    assert.match(lastAssistantText, /已按上一次审查结果自动应用去 AI 味修改/u);
+    assert.match(lastAssistantText, /chapter-001\.md：1 处/u);
+    pass('CDR5_pending_de_ai_review_apply_retries_after_snapshot_mismatch', 'confirmed de-ai fixes re-read and retry apply_chapter_patch once after snapshot mismatch');
+  } catch (err) {
+    fail('CDR5_pending_de_ai_review_apply_retries_after_snapshot_mismatch', err?.message || String(err));
+  } finally {
+    if (sessionId && chatAgent) {
+      try { chatAgent.closeSession(sessionId); } catch { /* ignore */ }
+    }
     providerManager.getActiveProvider = originalGetActiveProvider;
     modelAliases.getAlias = originalGetAlias;
     workflowOrchestrator.getActiveDriverId = originalGetActiveDriverId;
@@ -199,6 +518,7 @@ async function runChatDeAiRoutingRegressionTest() {
     mcpClient.callTool = originalCallTool;
     mcpClient.listTools = originalListTools;
     mcpClient.getActiveNovel = originalGetActiveNovel;
+    driverRegistry.getActive = originalRegistryGetActive;
     if (originalElectronCache) {
       require.cache[electronModulePath] = originalElectronCache;
     } else {

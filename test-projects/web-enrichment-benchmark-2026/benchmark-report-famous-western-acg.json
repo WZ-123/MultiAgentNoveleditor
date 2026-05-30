@@ -1,0 +1,739 @@
+{
+  "startedAt": "2026-05-29T08:55:04.011Z",
+  "novelId": "novel-web-enrichment-benchmark-2026",
+  "projectDir": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026",
+  "characterCount": 36,
+  "args": {
+    "concurrency": 3,
+    "onlyWork": null,
+    "reportPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/benchmark-report-famous-western-acg.json",
+    "rosterPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/roster-famous-western-acg.json",
+    "skipEnrich": true
+  },
+  "searchProbes": [
+    {
+      "name": "祖国人",
+      "work": "黑袍纠察队",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 131476,
+      "resultCount": 10,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "祖国人",
+        "谁才是真正的英雄",
+        "近藤浩德"
+      ],
+      "pageLen": 3016,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "比利·布彻尔",
+      "work": "黑袍纠察队",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 135637,
+      "resultCount": 9,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "祖国人",
+        "宫内敦士",
+        "Volcano太田"
+      ],
+      "pageLen": 0,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "休伊·坎贝尔",
+      "work": "黑袍纠察队",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 131168,
+      "resultCount": 3,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "bing"
+      ],
+      "topTitles": [
+        "祖国人",
+        "明日方舟/剧情/第十章",
+        "sogou.comhttps://wenwen.sogou.com › question"
+      ],
+      "pageLen": 3016,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "星光",
+      "work": "黑袍纠察队",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 132094,
+      "resultCount": 9,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "星光",
+        "祖国人",
+        "Sb"
+      ],
+      "pageLen": 21443,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "玄色",
+      "work": "黑袍纠察队",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 133183,
+      "resultCount": 10,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "祖国人",
+        "黑神话：悟空/人物",
+        "明日方舟/剧情/第十章"
+      ],
+      "pageLen": 3016,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "梅芙女王",
+      "work": "黑袍纠察队",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 132611,
+      "resultCount": 8,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "bing"
+      ],
+      "topTitles": [
+        "祖国人",
+        "坦克世界",
+        "qcc.comhttps://www.qcc.com › crun"
+      ],
+      "pageLen": 3016,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "钢铁侠",
+      "work": "漫威",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 131178,
+      "resultCount": 11,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "钢铁侠",
+        "钢铁侠",
+        "钢铁侠装甲马克I号（地球-199999）"
+      ],
+      "pageLen": 3121,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "蜘蛛侠",
+      "work": "漫威",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 132014,
+      "resultCount": 17,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "蜘蛛侠",
+        "蜘蛛侠：英雄归来",
+        "蜘蛛侠"
+      ],
+      "pageLen": 4274,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "奇异博士",
+      "work": "漫威",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 131384,
+      "resultCount": 10,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "moegirl"
+      ],
+      "topTitles": [
+        "奇异博士",
+        "奇异博士（电影）",
+        "奇异博士(漫威争锋)"
+      ],
+      "pageLen": 12854,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "绯红女巫",
+      "work": "漫威",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 131142,
+      "resultCount": 9,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "绯红女巫",
+        "幻视(漫威)",
+        "漫威漫画公司"
+      ],
+      "pageLen": 2747,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "美国队长",
+      "work": "漫威",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 131103,
+      "resultCount": 9,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "美国队长",
+        "美国队长(漫威争锋)",
+        "漫威漫画公司"
+      ],
+      "pageLen": 3302,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "洛基",
+      "work": "漫威",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 131041,
+      "resultCount": 10,
+      "topSources": [
+        "fandom",
+        "fandom",
+        "moegirl"
+      ],
+      "topTitles": [
+        "洛基·劳菲森（地球-199999）",
+        "洛基",
+        "洛基(漫威)"
+      ],
+      "pageLen": 518,
+      "pageSource": "fandom"
+    },
+    {
+      "name": "蝙蝠侠",
+      "work": "DC",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 131440,
+      "resultCount": 10,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "蝙蝠侠",
+        "忍者蝙蝠侠",
+        "蝙蝠侠：黑暗骑士系列"
+      ],
+      "pageLen": 13575,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "超人",
+      "work": "DC",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 132687,
+      "resultCount": 13,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "超人",
+        "超人",
+        "超人：鋼鐵英雄"
+      ],
+      "pageLen": 613,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "神奇女侠",
+      "work": "DC",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 133726,
+      "resultCount": 7,
+      "topSources": [
+        "moegirl",
+        "bing",
+        "moegirl"
+      ],
+      "topTitles": [
+        "神奇女侠",
+        "fandom.comhttps://dc.fandom.com › zh",
+        "DC宇宙原创动画电影"
+      ],
+      "pageLen": 4642,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "闪电侠",
+      "work": "DC",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 131069,
+      "resultCount": 9,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "白灯(DC漫画)",
+        "超人(DC漫画)",
+        "DC宇宙原创动画电影"
+      ],
+      "pageLen": 2999,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "小丑",
+      "work": "DC",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 131313,
+      "resultCount": 9,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "moegirl"
+      ],
+      "topTitles": [
+        "小丑",
+        "小丑",
+        "小丑(DC漫画)"
+      ],
+      "pageLen": 814,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "哈莉·奎茵",
+      "work": "DC",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 131656,
+      "resultCount": 7,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "moegirl"
+      ],
+      "topTitles": [
+        "哈莉·奎茵",
+        "哈莉·奎茵",
+        "DC宇宙原创动画电影"
+      ],
+      "pageLen": 3316,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "弗罗多·巴金斯",
+      "work": "魔戒",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 131632,
+      "resultCount": 7,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "指环王",
+        "半身人",
+        "弥赛亚"
+      ],
+      "pageLen": 7171,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "甘道夫",
+      "work": "魔戒",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 131574,
+      "resultCount": 10,
+      "topSources": [
+        "bing",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "huijiwiki.comhttps://lotr.huijiwiki.com › wiki › 甘道夫",
+        "指环王",
+        "弥赛亚"
+      ],
+      "pageLen": 7171,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "阿拉贡",
+      "work": "魔戒",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 131532,
+      "resultCount": 10,
+      "topSources": [
+        "bing",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "huijiwiki.comhttps://lotr.huijiwiki.com › wiki › 阿拉贡",
+        "指环王",
+        "萨尔贡"
+      ],
+      "pageLen": 7171,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "莱戈拉斯",
+      "work": "魔戒",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 135667,
+      "resultCount": 10,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "指环王",
+        "程玉珠",
+        "射手"
+      ],
+      "pageLen": 22067,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "山姆卫斯·詹吉",
+      "work": "魔戒",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 139519,
+      "resultCount": 9,
+      "topSources": [
+        "moegirl",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "指环王",
+        "土师孝也",
+        "曹冀鲁"
+      ],
+      "pageLen": 0,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "咕噜",
+      "work": "魔戒",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 131349,
+      "resultCount": 10,
+      "topSources": [
+        "bing",
+        "moegirl",
+        "moegirl"
+      ],
+      "topTitles": [
+        "huijiwiki.comhttps://lotr.huijiwiki.com › wiki › 咕噜",
+        "指环王",
+        "惨遭游戏化"
+      ],
+      "pageLen": 7171,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "哈利·波特",
+      "work": "哈利波特",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 133163,
+      "resultCount": 16,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "哈利·波特",
+        "哈利·波特与密室",
+        "哈利·波特：魔法立体书"
+      ],
+      "pageLen": 63700,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "赫敏·格兰杰",
+      "work": "哈利波特",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 131552,
+      "resultCount": 12,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "赫敏·格兰杰",
+        "赫敏·格兰杰",
+        "《巫师周刊》读者给赫敏·格兰杰的恶意信件"
+      ],
+      "pageLen": 12766,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "罗恩·韦斯莱",
+      "work": "哈利波特",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 131705,
+      "resultCount": 10,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "罗恩·韦斯莱",
+        "莫丽·韦斯莱给罗恩·韦斯莱的吼叫信",
+        "罗恩·韦斯莱的十七岁生日"
+      ],
+      "pageLen": 16592,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "西弗勒斯·斯内普",
+      "work": "哈利波特",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 131477,
+      "resultCount": 14,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "西弗勒斯·斯内普",
+        "西弗勒斯·斯内普",
+        "西弗勒斯·斯内普的魔杖"
+      ],
+      "pageLen": 9489,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "德拉科·马尔福",
+      "work": "哈利波特",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 131370,
+      "resultCount": 11,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "moegirl"
+      ],
+      "topTitles": [
+        "德拉科·马尔福",
+        "德拉科·马尔福",
+        "哈利·波特"
+      ],
+      "pageLen": 8221,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "阿不思·邓布利多",
+      "work": "哈利波特",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 131685,
+      "resultCount": 8,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "阿不思·邓布利多",
+        "阿不思·邓布利多",
+        "阿不思·邓布利多的生平和谎言"
+      ],
+      "pageLen": 11598,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "Ruby Rose",
+      "work": "RWBY",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 135068,
+      "resultCount": 18,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "Ruby Rose",
+        "Ruby Rose/History",
+        "Ruby Rose/Relationships"
+      ],
+      "pageLen": 20751,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "Weiss Schnee",
+      "work": "RWBY",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 131502,
+      "resultCount": 16,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "Weiss Schnee",
+        "Weiss Schnee/History",
+        "Weiss Schnee"
+      ],
+      "pageLen": 14981,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "Blake Belladonna",
+      "work": "RWBY",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 131335,
+      "resultCount": 13,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "Blake Belladonna",
+        "Blake Belladonna/Relationships",
+        "Blake Belladonna/Image Gallery"
+      ],
+      "pageLen": 13840,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "Yang Xiao Long",
+      "work": "RWBY",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 131526,
+      "resultCount": 18,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "Yang Xiao Long",
+        "Yang Xiao Long/Quotes/RWBY Chibi",
+        "Yang Xiao Long/Relationships"
+      ],
+      "pageLen": 17032,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "Jaune Arc",
+      "work": "RWBY",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 132264,
+      "resultCount": 17,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "Jaune Arc",
+        "Jaune Arc",
+        "Jaune Arc/Relationships"
+      ],
+      "pageLen": 13417,
+      "pageSource": "moegirl"
+    },
+    {
+      "name": "Pyrrha Nikos",
+      "work": "RWBY",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 134432,
+      "resultCount": 18,
+      "topSources": [
+        "moegirl",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "Pyrrha Nikos",
+        "Pyrrha Nikos (Dream Actor)",
+        "Pyrrha Nikos/Image Gallery"
+      ],
+      "pageLen": 10567,
+      "pageSource": "moegirl"
+    }
+  ],
+  "enrichResults": [],
+  "summary": {
+    "skippedEnrich": true
+  }
+}

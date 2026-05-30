@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "note": "Gold fields for accuracy eval; expand as benchmark stabilizes.",
+  "characters": {
+    "碧蓝航线:爱宕": {
+      "hairColor": "黑",
+      "eyeColor": "金",
+      "forbidTokens": ["布伦希尔德", "莱卡恩"]
+    },
+    "碧蓝航线:肇和": {
+      "forbidTokens": ["布伦希尔德"]
+    },
+    "原神:胡桃": {
+      "hairColor": "棕",
+      "eyeColor": "梅",
+      "forbidTokens": ["莱卡恩", "绝区零"]
+    },
+    "原神:尼可·莱恩": {
+      "forbidTokens": ["莱卡恩", "维多利亚家政"]
+    },
+    "绝区零:可琳": {
+      "forbidTokens": ["布伦希尔德"]
+    }
+  }
+}

@@ -1,5 +1,7 @@
 'use strict';
 
+const { fetchWithRetry } = require('./retry');
+
 /**
  * OpenAI-compat (Chat Completions) adapter.
  * Converts to/from Anthropic-style content blocks so the runtime stays canonical.
@@ -20,6 +22,13 @@
 function endpoint(baseUrl) {
   const b = (baseUrl || '').replace(/\/$/, '');
   return `${b}/chat/completions`;
+}
+
+function normalizeStopReason(stopReason, content) {
+  if (Array.isArray(content) && content.some((block) => block?.type === 'tool_use')) {
+    return 'tool_use';
+  }
+  return stopReason || 'end_turn';
 }
 
 function authHeader(apiKey) {
@@ -154,16 +163,17 @@ async function sendMessageStreaming(opts) {
     }
   }
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: authHeader(apiKey),
-    body: JSON.stringify(body),
-    signal: abortSignal,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`OpenAI-compat ${res.status}: ${text.slice(0, 500)}`);
-  }
+  const res = await fetchWithRetry(
+    url,
+    {
+      method: 'POST',
+      headers: authHeader(apiKey),
+      body: JSON.stringify(body),
+      signal: abortSignal,
+    },
+    'OpenAI-compat',
+    abortSignal,
+  );
 
   let assistantText = '';
   const toolCallsByIndex = new Map();
@@ -213,7 +223,7 @@ async function sendMessageStreaming(opts) {
     });
   }
 
-  return { stopReason, content };
+  return { stopReason: normalizeStopReason(stopReason, content), content };
 }
 
 async function sendMessageNonStreaming(opts) {
@@ -234,16 +244,17 @@ async function sendMessageNonStreaming(opts) {
       body[k] = v;
     }
   }
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: authHeader(apiKey),
-    body: JSON.stringify(body),
-    signal: abortSignal,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`OpenAI-compat ${res.status}: ${text.slice(0, 500)}`);
-  }
+  const res = await fetchWithRetry(
+    url,
+    {
+      method: 'POST',
+      headers: authHeader(apiKey),
+      body: JSON.stringify(body),
+      signal: abortSignal,
+    },
+    'OpenAI-compat',
+    abortSignal,
+  );
   const data = await res.json();
   const choice = data.choices?.[0];
   const content = [];
@@ -261,7 +272,7 @@ async function sendMessageNonStreaming(opts) {
   let stopReason = 'end_turn';
   if (choice?.finish_reason === 'tool_calls') stopReason = 'tool_use';
   else if (choice?.finish_reason === 'length') stopReason = 'max_tokens';
-  return { stopReason, content };
+  return { stopReason: normalizeStopReason(stopReason, content), content };
 }
 
 async function sendMessage(opts) {

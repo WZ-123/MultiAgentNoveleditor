@@ -1,0 +1,135 @@
+{
+  "startedAt": "2026-05-29T07:44:42.969Z",
+  "novelId": "novel-web-enrichment-benchmark-2026",
+  "projectDir": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026",
+  "characterCount": 6,
+  "args": {
+    "concurrency": 3,
+    "onlyWork": "哈利波特",
+    "reportPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/benchmark-report-famous-western-acg-smoke.json",
+    "rosterPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/roster-famous-western-acg.json",
+    "skipEnrich": true
+  },
+  "searchProbes": [
+    {
+      "name": "哈利·波特",
+      "work": "哈利波特",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 132204,
+      "resultCount": 11,
+      "topSources": [
+        "fandom",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "哈利·波特与密室",
+        "哈利·波特：魔法立体书",
+        "哈利·波特与凤凰社"
+      ],
+      "pageLen": 5856,
+      "pageSource": "fandom"
+    },
+    {
+      "name": "赫敏·格兰杰",
+      "work": "哈利波特",
+      "tag": "latest",
+      "sphere": "western-en",
+      "searchMs": 137134,
+      "resultCount": 7,
+      "topSources": [
+        "fandom",
+        "fandom",
+        "bing"
+      ],
+      "topTitles": [
+        "赫敏·格兰杰",
+        "《巫师周刊》读者给赫敏·格兰杰的恶意信件",
+        "samr.gov.cnhttps://www.samr.gov.cn"
+      ],
+      "pageLen": 71403,
+      "pageSource": "fandom"
+    },
+    {
+      "name": "罗恩·韦斯莱",
+      "work": "哈利波特",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 131885,
+      "resultCount": 5,
+      "topSources": [
+        "fandom",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "莫丽·韦斯莱给罗恩·韦斯莱的吼叫信",
+        "罗恩·韦斯莱的十七岁生日",
+        "罗恩·韦斯莱"
+      ],
+      "pageLen": 1786,
+      "pageSource": "fandom"
+    },
+    {
+      "name": "西弗勒斯·斯内普",
+      "work": "哈利波特",
+      "tag": "obscure",
+      "sphere": "western-en",
+      "searchMs": 133194,
+      "resultCount": 9,
+      "topSources": [
+        "fandom",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "西弗勒斯·斯内普",
+        "西弗勒斯·斯内普的魔杖",
+        "西弗勒斯·斯内普的储藏室"
+      ],
+      "pageLen": 42515,
+      "pageSource": "fandom"
+    },
+    {
+      "name": "德拉科·马尔福",
+      "work": "哈利波特",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 132267,
+      "resultCount": 1,
+      "topSources": [
+        "fandom"
+      ],
+      "topTitles": [
+        "德拉科·马尔福"
+      ],
+      "pageLen": 11262,
+      "pageSource": "fandom"
+    },
+    {
+      "name": "阿不思·邓布利多",
+      "work": "哈利波特",
+      "tag": "mid",
+      "sphere": "western-en",
+      "searchMs": 134395,
+      "resultCount": 8,
+      "topSources": [
+        "fandom",
+        "fandom",
+        "fandom"
+      ],
+      "topTitles": [
+        "阿不思·邓布利多",
+        "阿不思·邓布利多的生平和谎言",
+        "阿不思·邓布利多 (巧克力蛙画片)"
+      ],
+      "pageLen": 56108,
+      "pageSource": "fandom"
+    }
+  ],
+  "enrichResults": [],
+  "summary": {
+    "skippedEnrich": true
+  }
+}

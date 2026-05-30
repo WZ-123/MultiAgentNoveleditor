@@ -83,6 +83,11 @@ async function runWorkflow(payload = {}) {
     throw new Error(`runWorkflow: invalid mode '${mode}'`);
   }
 
+  // Some callers reach the orchestrator before main-process startup finishes
+  // calling bootstrap(). Self-heal here so tool paths like de_ai_ify do not
+  // fail with "no driver registered".
+  registry.bootstrap();
+
   await ensureWorkflowSeeds(mode);
 
   let driver;

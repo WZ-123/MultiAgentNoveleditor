@@ -48,6 +48,28 @@ async function run() {
     assert.equal(result.results[0]?.source, 'biligame');
     assert.equal(result.results[0]?.title, '爱宕');
     pass('CSBR1_biligame_ranks_ahead_of_generic_search', 'mapped Biligame wiki result outranks generic Bing result');
+
+    const biligameWiki = require(path.join(ROOT, 'src/main/import/biligameWiki.js'));
+    const origSearch = biligameWiki.biligameSearchResults;
+    biligameWiki.biligameSearchResults = async (charName, fanworkName) => {
+      const resolved = await biligameWiki.resolveBiligamePageTitle(charName, fanworkName);
+      if (!resolved) return [];
+      return [{ title: resolved.title, snippet: '直链', url: resolved.url, source: 'biligame' }];
+    };
+    searchEngine.SOURCES.biligame.search = async (q, ur, ctx) =>
+      biligameWiki.biligameSearchResults(ctx?.charName || q, ctx?.fanworkName, ctx);
+
+    const directRes = await searchEngine.searchCharacter({
+      charName: '胡桃',
+      fanworkName: '原神',
+      userLang: 'zh-CN',
+      fanworkSphere: 'east-asian-cn',
+      preferredEngine: 'biligame',
+    });
+    assert.ok(directRes.results.length >= 1);
+    assert.match(directRes.results[0].url || '', /wiki\.biligame\.com\/ys\//);
+    biligameWiki.biligameSearchResults = origSearch;
+    pass('CSBR2_api_fail_direct_link', directRes.results[0].url);
   } catch (err) {
     failed += 1;
     fail('CSBR_harness', err?.stack || String(err));

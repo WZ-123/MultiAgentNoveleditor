@@ -31,23 +31,27 @@ context: fork
 - 其他 → `western-en`
 
 ### 来源选择
-- `east-asian-cn`: 萌娘百科(优先) → Biligame Wiki（已知作品子 wiki）→ Bing → Wikipedia → DuckDuckGo
+- `east-asian-cn`: **Biligame Wiki 直链优先**（六游子 wiki）→ 萌娘百科 → Bing → Wikipedia（`networkFetch` 代理）→ DuckDuckGo
 - `east-asian-jp`: Wikipedia → 萌娘百科 → Bing → DuckDuckGo
 - `east-asian-kr`: Wikipedia → Bing → 萌娘百科 → DuckDuckGo
-- `western-en/global`: Wikipedia → Bing → DuckDuckGo
+- `western-en/global`: **Fandom** → Wikipedia → **萌娘百科（中文角色名）** → Bing（en-US）→ DuckDuckGo
 
 ### 查询构建
-- 萌娘百科: `作品名:角色名`（如 `碧蓝航线:爱宕`）
-- Biligame Wiki: 先映射到已知子 wiki，再在子 wiki 内搜 `角色名`
-- Wikipedia: `角色名 作品名 character`
-- Bing/DuckDuckGo: `角色名 作品名 character wiki`
+- 确定作品与文化圈后，**欧美源用英文母语名**（`nativeSearchName.js`）：`哈利·波特`→`Harry Potter`，`比利·布彻尔`→`Billy Butcher`
+- 萌娘百科仍用中文：`作品名:角色名`
+- Biligame: 先映射到已知子 wiki，再在子 wiki 内搜 `角色名`
+- Wikipedia/Fandom/Bing（western-en）: 使用 `nativeCharName` + `nativeWorkName`
+- Fandom 子站发现用 `workSynonyms.js` 的 `WORK_SYNONYM_GROUPS`
 
-当前内置的 Biligame 子 wiki 映射：`碧蓝航线`→`blhx`，`原神`→`ys`，`崩坏：星穹铁道`→`sr`。没有映射就跳过，不硬猜。
+Biligame 映射：`碧蓝航线`→`blhx`，`原神`→`ys`，`星穹铁道`→`sr`，`绝区零`→`zzz`，`鸣潮`→`wutheringwaves`。API 返 HTML 时用 `biligameWiki.js` 直链；别名见 `bwiki-title-aliases.json`。外网请求走 `HTTPS_PROXY`（`networkFetch.js`）。
+
+欧美 smoke：基线 8/36 → v3 34/36（`western-enrichment-benchmark.md`）。Wikipedia 常超时。
 
 ### 提取字段
-从搜索结果页面提取 JSON：
+从搜索结果页面提取 JSON（正文上限约 24k，含时装子页）：
 - appearance, hairColor, eyeColor, height, figure
-- personality, background, moeTraits, quotes, skins
+- personality, background, moeTraits, quotes（常服默认台词）
+- skins: `[{ name, outfit, story, quotes }]`，与 `parseSkinBlocks()` 合并
 
 ### 合并规则
 - 小说无值 → 用网络值

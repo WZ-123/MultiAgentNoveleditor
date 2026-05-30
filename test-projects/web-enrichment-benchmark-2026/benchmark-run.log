@@ -1,0 +1,262 @@
+[benchmark] MANA_USER_DATA_ROOT= /Users/potablewater/Library/Application Support/multi-agent-novel-assistant/MultiAgentNovelAssistant
+[benchmark] project dir= /Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026
+[benchmark] wrote 36 character stubs
+
+[benchmark] Phase 1: search + fetch probes...
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 3条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 11 results
+  probe 碧蓝航线/戈达·冯·贝格海姆: results=11 pageLen=47881 sphere=east-asian-cn
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 3条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 11 results
+  probe 碧蓝航线/优妮可欧伊: results=11 pageLen=45460 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 3条 | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 11 results
+  probe 碧蓝航线/彰武: results=11 pageLen=50310 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 3条 | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 11 results
+  probe 碧蓝航线/肇和: results=11 pageLen=56751 sphere=east-asian-cn
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 3条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 11 results
+  probe 碧蓝航线/应瑞: results=11 pageLen=51488 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 碧蓝航线/宁海: results=8 pageLen=65152 sphere=east-asian-cn
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 蔚蓝档案/三千留: results=8 pageLen=62096 sphere=east-asian-kr
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 蔚蓝档案/月夜: results=8 pageLen=58665 sphere=east-asian-kr
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 蔚蓝档案/律: results=8 pageLen=56431 sphere=east-asian-kr
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 蔚蓝档案/冰室濑名: results=8 pageLen=64901 sphere=east-asian-kr
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 蔚蓝档案/宇泽玲纱: results=8 pageLen=60919 sphere=east-asian-kr
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 蔚蓝档案/天见凉: results=8 pageLen=58665 sphere=east-asian-kr
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 原神/尼可·莱恩: results=8 pageLen=29499 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 原神/洛恩: results=8 pageLen=110301 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 原神/布伦妮: results=8 pageLen=50156 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 原神/蓝砚: results=8 pageLen=47119 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 原神/伊安珊: results=8 pageLen=39361 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 原神/赛索斯: results=8 pageLen=47104 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 崩坏：星穹铁道/刃: results=8 pageLen=82749 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 崩坏：星穹铁道/昔涟: results=8 pageLen=82749 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 崩坏：星穹铁道/白厄: results=8 pageLen=82749 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 崩坏：星穹铁道/阿兰: results=8 pageLen=82749 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 崩坏：星穹铁道/希露瓦: results=8 pageLen=82749 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+  probe 崩坏：星穹铁道/米沙: results=8 pageLen=82749 sphere=east-asian-cn
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+  probe 绝区零/普罗米娅: results=5 pageLen=0 sphere=global
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+  probe 绝区零/星徽·比利: results=5 pageLen=0 sphere=global
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+  probe 绝区零/卢西娅: results=5 pageLen=0 sphere=global
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+  probe 绝区零/可琳: results=5 pageLen=0 sphere=global
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+  probe 绝区零/安东: results=5 pageLen=0 sphere=global
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+  probe 绝区零/波可娜: results=5 pageLen=0 sphere=global
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+  probe 鸣潮/绯雪: results=5 pageLen=0 sphere=global
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+  probe 鸣潮/达妮娅: results=5 pageLen=0 sphere=global
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+  probe 鸣潮/西格莉卡: results=5 pageLen=0 sphere=global
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+  probe 鸣潮/丹瑾: results=5 pageLen=0 sphere=global
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+  probe 鸣潮/白芷: results=5 pageLen=0 sphere=global
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+  probe 鸣潮/渊武: results=5 pageLen=0 sphere=global
+
+[benchmark] Phase 2: enrichCharacters (traditional mode)...
+
+[benchmark] enriching work="碧蓝航线" (6 chars)...
+[enricher] fanwork="碧蓝航线" sphere="east-asian-cn" (东亚（中国）, known)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 戈达·冯·贝格海姆: 获取页面: moegirl | 标题: 碧蓝航线/图鉴/驱逐(DD)
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 优妮可欧伊: 获取页面: moegirl | 标题: 碧蓝航线/图鉴/潜艇(SS)
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 彰武: 获取页面: moegirl | 标题: 碧蓝航线:紫
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 肇和: 获取页面: moegirl | 标题: 碧蓝航线:肇和
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 应瑞: 获取页面: moegirl | 标题: 碧蓝航线:应瑞
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 宁海: 获取页面: moegirl | 标题: 碧蓝航线:宁海
+    [extracting] 肇和: AI提取角色信息
+    [extracting] 优妮可欧伊: AI提取角色信息
+    [extracting] 彰武: AI提取角色信息
+    [extracting] 戈达·冯·贝格海姆: AI提取角色信息
+    [extracting] 应瑞: AI提取角色信息
+    [extracting] 宁海: AI提取角色信息
+    [failed] 戈达·冯·贝格海姆: AI提取结果为空（页面可能不含角色信息）
+    [failed] 优妮可欧伊: AI提取结果为空（页面可能不含角色信息）
+    [success] 宁海: 补全成功 appearance=true personality=false hair=true eyes=true skins=8
+    [success] 肇和: 补全成功 appearance=false personality=false hair=true eyes=true skins=2
+    [success] 彰武: 补全成功 appearance=true personality=true hair=true eyes=true skins=1
+    [success] 应瑞: 补全成功 appearance=true personality=false hair=true eyes=true skins=3
+[enricher] 6 个角色 → 4 补全成功, 2 失败/跳过
+  done in 26.9s
+
+[benchmark] enriching work="蔚蓝档案" (6 chars)...
+[enricher] fanwork="蔚蓝档案" sphere="east-asian-kr" (东亚（韩国）, known)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 三千留: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item › 一念三千
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 月夜: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item › 月夜
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 律: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 冰室濑名: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 宇泽玲纱: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 天见凉: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+    [extracting] 天见凉: AI提取角色信息
+    [extracting] 律: AI提取角色信息
+    [extracting] 冰室濑名: AI提取角色信息
+    [extracting] 月夜: AI提取角色信息
+    [extracting] 三千留: AI提取角色信息
+    [extracting] 宇泽玲纱: AI提取角色信息
+    [failed] 律: AI提取结果为空（页面可能不含角色信息）
+    [failed] 月夜: AI提取结果为空（页面可能不含角色信息）
+    [failed] 天见凉: AI提取结果为空（页面可能不含角色信息）
+    [success] 三千留: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 宇泽玲纱: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 冰室濑名: 补全成功 appearance=true personality=true hair=true eyes=true skins=2
+[enricher] 6 个角色 → 3 补全成功, 3 失败/跳过
+  done in 35.1s
+
+[benchmark] enriching work="原神" (6 chars)...
+[enricher] fanwork="原神" sphere="east-asian-cn" (东亚（中国）, known)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 尼可·莱恩: 获取页面: moegirl | 标题: 冯·莱卡恩
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 洛恩: 获取页面: moegirl | 标题: 原神
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 布伦妮: 获取页面: moegirl | 标题: 碧蓝航线:布伦希尔德
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 蓝砚: 获取页面: moegirl | 标题: 蓝砚
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 伊安珊: 获取页面: moegirl | 标题: 伊安珊
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 赛索斯: 获取页面: moegirl | 标题: 赛索斯
+    [extracting] 蓝砚: AI提取角色信息
+    [extracting] 伊安珊: AI提取角色信息
+    [extracting] 布伦妮: AI提取角色信息
+    [extracting] 洛恩: AI提取角色信息
+    [extracting] 尼可·莱恩: AI提取角色信息
+    [extracting] 赛索斯: AI提取角色信息
+    [failed] 洛恩: AI提取结果为空（页面可能不含角色信息）
+    [success] 尼可·莱恩: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 布伦妮: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 蓝砚: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 赛索斯: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 伊安珊: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+[enricher] 6 个角色 → 5 补全成功, 1 失败/跳过
+  done in 36.5s
+
+[benchmark] enriching work="崩坏：星穹铁道" (6 chars)...
+[enricher] fanwork="崩坏：星穹铁道" sphere="east-asian-cn" (东亚（中国）, known)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 刃: 获取页面: moegirl | 标题: 崩坏：星穹铁道
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 昔涟: 获取页面: moegirl | 标题: 崩坏：星穹铁道
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 白厄: 获取页面: moegirl | 标题: 崩坏：星穹铁道
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 阿兰: 获取页面: moegirl | 标题: 崩坏：星穹铁道
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 希露瓦: 获取页面: moegirl | 标题: 崩坏：星穹铁道
+[searchEngine] sources: Biligame Wiki: 错误(Unexpected token '<', "<!doctype "... is not valid JSON) | Bing 搜索: 5条 | 萌娘百科: 3条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 8 results
+    [fetching] 米沙: 获取页面: moegirl | 标题: 崩坏：星穹铁道
+    [extracting] 昔涟: AI提取角色信息
+    [extracting] 米沙: AI提取角色信息
+    [extracting] 希露瓦: AI提取角色信息
+    [extracting] 白厄: AI提取角色信息
+    [extracting] 阿兰: AI提取角色信息
+    [extracting] 刃: AI提取角色信息
+    [success] 刃: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [failed] 昔涟: AI提取结果为空（页面可能不含角色信息）
+    [failed] 白厄: AI提取结果为空（页面可能不含角色信息）
+    [success] 阿兰: 补全成功 appearance=false personality=true hair=false eyes=false skins=0
+    [success] 米沙: 补全成功 appearance=false personality=true hair=false eyes=false skins=0
+    [success] 希露瓦: 补全成功 appearance=false personality=true hair=false eyes=false skins=0
+[enricher] 6 个角色 → 4 补全成功, 2 失败/跳过
+  done in 17.9s
+
+[benchmark] enriching work="绝区零" (6 chars)...
+[enricher] fanwork="绝区零" sphere="global" (全球, detected)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+    [fetching] 普罗米娅: 获取页面: bing | 标题: reddit.comhttps://www.reddit.com › all
+    [failed] 普罗米娅: 页面获取失败
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+    [fetching] 星徽·比利: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+    [failed] 星徽·比利: 页面获取失败
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+    [fetching] 卢西娅: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+    [failed] 卢西娅: 页面获取失败
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+    [fetching] 可琳: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+    [failed] 可琳: 页面获取失败
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+    [fetching] 安东: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+    [failed] 安东: 页面获取失败
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+    [fetching] 波可娜: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+    [failed] 波可娜: 页面获取失败
+[enricher] 6 个角色 → 0 补全成功, 6 失败/跳过
+  done in 26.0s
+
+[benchmark] enriching work="鸣潮" (6 chars)...
+[enricher] fanwork="鸣潮" sphere="global" (全球, detected)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+    [fetching] 绯雪: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+    [failed] 绯雪: 页面获取失败
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+    [fetching] 达妮娅: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+    [failed] 达妮娅: 页面获取失败
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+    [fetching] 西格莉卡: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+    [failed] 西格莉卡: 页面获取失败
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+    [fetching] 丹瑾: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+    [failed] 丹瑾: 页面获取失败
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+    [fetching] 白芷: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item › 白芷
+    [failed] 白芷: 页面获取失败
+[searchEngine] sources: Bing 搜索: 5条 | Wikipedia: 错误(The operation was aborted due to timeout) → total 5 results
+    [fetching] 渊武: 获取页面: bing | 标题: baidu.comhttps://baike.baidu.com › item
+    [failed] 渊武: 页面获取失败
+[enricher] 6 个角色 → 0 补全成功, 6 失败/跳过
+  done in 26.0s
+
+[benchmark] === SUMMARY ===
+{
+  "statusCounts": {
+    "extract-empty": 8,
+    "success": 16,
+    "fetch-failed": 12
+  },
+  "avgFilledFields": 2.92,
+  "successRate": 44.4,
+  "searchProbeNoPage": 12,
+  "searchProbeNoResults": 0
+}
+[benchmark] full report: /Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/benchmark-report.json
+[benchmark] novel registered as: novel-web-enrichment-benchmark-2026

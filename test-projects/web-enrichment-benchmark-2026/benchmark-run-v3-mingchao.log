@@ -1,0 +1,71 @@
+[benchmark] MANA_USER_DATA_ROOT= /Users/potablewater/Library/Application Support/multi-agent-novel-assistant/MultiAgentNovelAssistant
+[benchmark] project dir= /Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026
+[benchmark] wrote 6 character stubs
+
+[benchmark] Phase 1: search + fetch probes...
+[searchEngine] sources: Biligame Wiki: 5条 | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 0条 → total 15 results
+  probe 鸣潮/绯雪: results=15 pageLen=57293 sphere=east-asian-cn
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 1条 | 萌娘百科: 5条 | Wikipedia: 0条 → total 11 results
+  probe 鸣潮/达妮娅: results=11 pageLen=1488 sphere=east-asian-cn
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 5条 | 萌娘百科: 5条 | Wikipedia: 0条 → total 15 results
+  probe 鸣潮/丹瑾: results=15 pageLen=14950 sphere=east-asian-cn
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 5条 | 萌娘百科: 5条 | Wikipedia: 0条 → total 15 results
+  probe 鸣潮/白芷: results=15 pageLen=16212 sphere=east-asian-cn
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 5条 | 萌娘百科: 5条 | Wikipedia: 0条 → total 15 results
+  probe 鸣潮/今汐: results=15 pageLen=21554 sphere=east-asian-cn
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 5条 | 萌娘百科: 5条 | Wikipedia: 0条 → total 15 results
+  probe 鸣潮/长离: results=15 pageLen=19801 sphere=east-asian-cn
+
+[benchmark] Phase 2: enrichCharacters (traditional mode)...
+
+[benchmark] enriching work="鸣潮" (6 chars)...
+[enricher] fanwork="鸣潮" sphere="east-asian-cn" (东亚（中国）, known)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Biligame Wiki: 1条 | Wikipedia: 0条 → total 11 results
+    [fetching] 达妮娅: 获取页面: biligame | 标题: opensearch desc.php
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 5条 | 萌娘百科: 5条 | Wikipedia: 0条 → total 15 results
+    [fetching] 丹瑾: 获取页面: biligame | 标题: 共鸣者/丹瑾
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 5条 | 萌娘百科: 5条 | Wikipedia: 0条 → total 15 results
+    [fetching] 长离: 获取页面: biligame | 标题: 共鸣者/长离
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 5条 | 萌娘百科: 5条 | Wikipedia: 0条 → total 15 results
+    [fetching] 白芷: 获取页面: biligame | 标题: 共鸣者/白芷
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 5条 | 萌娘百科: 5条 | Wikipedia: 0条 → total 15 results
+    [fetching] 今汐: 获取页面: biligame | 标题: 共鸣者/今汐
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Biligame Wiki: 5条 | Wikipedia: 0条 → total 15 results
+    [fetching] 绯雪: 获取页面: biligame | 标题: 共鸣者/绯雪
+    [fetching] 丹瑾: 已抓取: biligame | 共鸣者/丹瑾 | 时装块=0
+    [extracting] 丹瑾: AI提取角色信息
+    [fetching] 白芷: 已抓取: biligame | 共鸣者/白芷 | 时装块=0
+    [extracting] 白芷: AI提取角色信息
+    [fetching] 今汐: 已抓取: biligame | 共鸣者/今汐 | 时装块=0
+    [extracting] 今汐: AI提取角色信息
+    [fetching] 绯雪: 已抓取: biligame | 共鸣者/绯雪 | 时装块=0
+    [extracting] 绯雪: AI提取角色信息
+    [fetching] 长离: 已抓取: biligame | 共鸣者/长离 | 时装块=0
+    [extracting] 长离: AI提取角色信息
+    [fetching] 达妮娅: 已抓取: bing | taptap.cnhttps://www.taptap.cn › moment | 时装块=0
+    [extracting] 达妮娅: AI提取角色信息
+    [failed] 今汐: 字段不完整: extract-empty
+    [failed] 达妮娅: 提取内容与角色/作品不匹配，已拒绝写入
+    [failed] 丹瑾: 字段不完整: incomplete-base
+    [failed] 长离: 字段不完整: extract-empty
+    [success] 白芷: 补全成功 appearance=true personality=true hair=false eyes=true skins=1
+    [success] 绯雪: 补全成功 appearance=true personality=false hair=false eyes=false skins=1
+[enricher] 6 个角色 → 2 补全成功, 4 失败/跳过
+  done in 147.5s
+
+[benchmark] === SUMMARY ===
+{
+  "statusCounts": {
+    "success": 2,
+    "extract-rejected": 1,
+    "incomplete-base": 1,
+    "extract-empty": 2
+  },
+  "avgFilledFields": 1.33,
+  "successRate": 33.3,
+  "searchProbeNoPage": 0,
+  "searchProbeNoResults": 0
+}
+[benchmark] full report: /Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/benchmark-report.json
+[benchmark] novel registered as: novel-web-enrichment-benchmark-2026

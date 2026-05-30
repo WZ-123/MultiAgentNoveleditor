@@ -55,6 +55,7 @@ async function runChapterPostWriteSyncRegressionTest() {
   const responses = [
     {
       summary: '第一版摘要',
+      outlineActualSummary: '第一版写后大纲摘要',
       supplementMarkdown: '- 第一版补充',
       timelineEvents: [
         {
@@ -73,6 +74,14 @@ async function runChapterPostWriteSyncRegressionTest() {
     },
     {
       summary: '第二版摘要',
+      outlineActualSummary: '楚岚回到鹏城后转入复盘阶段，阿宁加入信息核对，旧线索被重新挂起。',
+      outlineUpdates: [
+        {
+          nodeId: 'scene-3-main',
+          actualSummary: '楚岚回到鹏城，与阿宁复盘吴老狗留下的疑点，确认下一步调查方向。',
+          actualBeats: ['返程后的落点从领人转为复盘', '阿宁成为下一步调查的信息支点'],
+        },
+      ],
       supplementMarkdown: '- 第二版补充',
       timelineEvents: [
         {
@@ -82,6 +91,12 @@ async function runChapterPostWriteSyncRegressionTest() {
           description: '楚岚回到鹏城后与阿宁复盘吴老狗的蹊跷。',
         },
       ],
+    },
+    {
+      summary: '第三版摘要',
+      outlineActualSummary: '第三版写后大纲摘要',
+      supplementMarkdown: '',
+      timelineEvents: [],
     },
   ];
 
@@ -122,6 +137,21 @@ async function runChapterPostWriteSyncRegressionTest() {
       text: '正文占位。',
     };
 
+    await novelData.writeOutlineNodesToHierarchy(seeded.dir, [
+      { id: 'vol-1', title: '鹏城疑云', summary: '楚岚回到鹏城追查旧案。', volumeIndex: 1, level: 1 },
+      { id: 'sec-1-1', title: '返程复盘', summary: '领人后进入复盘。', volumeIndex: 1, sectionIndex: 1, level: 2 },
+      {
+        id: 'scene-3-main',
+        title: '旧案复盘',
+        summary: '原计划：楚岚返程后整理吴老狗留下的疑点。',
+        volumeIndex: 1,
+        sectionIndex: 1,
+        chapterIndex: 3,
+        characters: ['楚岚', '阿宁'],
+        location: '鹏城',
+      },
+    ]);
+
     const first = await persistChapterArtifacts({ draft, abortSignal: null });
     const timelineAfterFirst = await novelData.queryTimeline(seeded.dir, { chapterRef: draft.name });
     if (first.timelineCount === 2 && timelineAfterFirst.length === 2) {
@@ -133,21 +163,40 @@ async function runChapterPostWriteSyncRegressionTest() {
     const second = await persistChapterArtifacts({ draft, abortSignal: null });
     const timelineAfterSecond = await novelData.queryTimeline(seeded.dir, { chapterRef: draft.name });
     const summaryAfterSecond = await novelData.readSummary(seeded.dir, draft.name);
+    const outlineAfterSecond = await novelData.readOutlineChapter(seeded.dir, 1, 1, 3);
     if (
       second.timelineCount === 1
+      && second.outlineUpdated === 1
       && timelineAfterSecond.length === 1
       && /次日上午/.test(timelineAfterSecond[0]?.when || '')
       && /阿宁复盘吴老狗/.test(timelineAfterSecond[0]?.description || '')
       && !timelineAfterSecond.some((event) => /武夷山领人|连夜返程/.test(event?.description || ''))
       && /第二版摘要/.test(summaryAfterSecond)
+      && /写后进展/.test(outlineAfterSecond)
+      && /楚岚回到鹏城，与阿宁复盘吴老狗留下的疑点/.test(outlineAfterSecond)
       && providerCallCount === 2
     ) {
-      pass('P3_second_sync_replaces_old_chapter_events', 'second sync replaced the chapter timeline instead of appending on top');
+      pass('P3_second_sync_replaces_old_chapter_events_and_updates_outline', 'second sync replaced the chapter timeline and wrote actual outline progress');
     } else {
-      fail('P3_second_sync_replaces_old_chapter_events', JSON.stringify({ second, timelineAfterSecond, summaryAfterSecond, providerCallCount }));
+      fail('P3_second_sync_replaces_old_chapter_events_and_updates_outline', JSON.stringify({ second, timelineAfterSecond, summaryAfterSecond, outlineAfterSecond, providerCallCount }));
+    }
+
+    const third = await persistChapterArtifacts({ draft, abortSignal: null });
+    const timelineAfterThird = await novelData.queryTimeline(seeded.dir, { chapterRef: draft.name });
+    const thirdWarnings = Array.isArray(third.warnings) ? third.warnings.join(' | ') : '';
+    if (
+      third.timelineCount === 1
+      && timelineAfterThird.length === 1
+      && /阿宁复盘吴老狗/.test(timelineAfterThird[0]?.description || '')
+      && /保留本章原有时间线/.test(thirdWarnings)
+      && providerCallCount === 3
+    ) {
+      pass('P4_empty_timeline_response_preserves_existing_events', 'empty AI timeline output no longer wipes existing chapter events');
+    } else {
+      fail('P4_empty_timeline_response_preserves_existing_events', JSON.stringify({ third, timelineAfterThird, providerCallCount }));
     }
   } catch (err) {
-    fail('P4_harness', err.message || String(err));
+    fail('P5_harness', err.message || String(err));
   } finally {
     providerManager.getActiveProvider = originalGetActiveProvider;
     modelAliases.getAlias = originalGetAlias;

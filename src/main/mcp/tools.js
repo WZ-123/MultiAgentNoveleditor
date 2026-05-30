@@ -23,7 +23,9 @@ const {
   buildCharacterConsistencyReviewPayload,
   enrichCharacterConsistencyAnnotations,
   resolveTargetCharacters,
+  splitIntoParagraphs,
 } = require('../runtime/chapterCharacterReview');
+const { getSystemTimeInfo } = require('../runtime/systemTime');
 
 function textResult(obj) {
   const text = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
@@ -109,6 +111,110 @@ function _parseJsonText(text, fallback = null) {
   } catch {
     return fallback;
   }
+}
+
+function _compactText(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function _excerptParagraph(text) {
+  const compacted = _compactText(text);
+  return compacted.length > 80 ? `${compacted.slice(0, 80)}...` : compacted;
+}
+
+function _normalizeQualityAnnotations(paragraphs, rawAnnotations) {
+  const paragraphMap = new Map((Array.isArray(paragraphs) ? paragraphs : []).map((paragraph) => [paragraph.id, paragraph]));
+  const validIds = new Set(paragraphMap.keys());
+  const annotations = [];
+  const seen = new Set();
+
+  for (const annotation of Array.isArray(rawAnnotations) ? rawAnnotations : []) {
+    const paragraphIds = Array.isArray(annotation?.paragraphIds)
+      ? annotation.paragraphIds.map((item) => _compactText(item)).filter((item) => validIds.has(item))
+      : [];
+    const fallbackId = _compactText(annotation?.paragraphId);
+    const targets = paragraphIds.length > 0
+      ? paragraphIds
+      : validIds.has(fallbackId)
+        ? [fallbackId]
+        : [];
+    if (!targets.length) continue;
+
+    const note = _compactText(annotation?.note);
+    const kind = _compactText(annotation?.kind) || 'other';
+    const key = `${targets.join(',')}::${kind}::${note}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    const firstParagraph = paragraphMap.get(targets[0]);
+    const paragraphIndexes = targets
+      .map((paragraphId) => paragraphMap.get(paragraphId)?.index)
+      .filter((index) => Number.isInteger(index));
+
+    annotations.push({
+      paragraphId: targets[0],
+      paragraphIds: targets,
+      paragraphIndex: Number.isInteger(firstParagraph?.index) ? firstParagraph.index : -1,
+      paragraphIndexes,
+      excerpt: _excerptParagraph(firstParagraph?.text || ''),
+      kind,
+      note,
+    });
+  }
+
+  return annotations.sort((left, right) => left.paragraphIndex - right.paragraphIndex);
+}
+
+async function _loadQualityReviewHelpers() {
+  const mod = await import(path.join(__dirname, '..', '..', 'services', 'qualityReview.mjs'));
+  return {
+    buildQualityReviewPayload: mod.buildQualityReviewPayload,
+    detectCrossParagraphQualityAnnotations: mod.detectCrossParagraphQualityAnnotations,
+  };
+}
+
+async function _reviewChapterDeAiStyle(chapterName, focus, ctx) {
+  const dir = requireNovel(ctx);
+  const chapterText = await novelData.readChapter(dir, chapterName);
+  if (!_cleanText(chapterText)) {
+    throw new Error(`chapter is empty or missing: ${chapterName}`);
+  }
+
+  const paragraphs = splitIntoParagraphs(chapterText);
+  const { buildQualityReviewPayload, detectCrossParagraphQualityAnnotations } = await _loadQualityReviewHelpers();
+  const payload = buildQualityReviewPayload(paragraphs);
+  payload.chapterName = chapterName;
+  payload.focus = _cleanText(focus);
+
+  const workflowOrchestrator = require('../runtime/workflowOrchestrator');
+  const result = await workflowOrchestrator.runWorkflow({
+    mode: 'subagent',
+    subagentId: 'sa-prose-quality',
+    input: JSON.stringify(payload),
+    novelContext: ctx?.novel
+      ? { novelId: ctx.novel.id || null, novelDir: ctx.novelDir || null }
+      : undefined,
+  });
+
+  const parsed = _parseJsonText(String(result.output || ''), { annotations: [] });
+  const modelAnnotations = _normalizeQualityAnnotations(paragraphs, parsed?.annotations);
+  const crossParagraphAnnotations = _normalizeQualityAnnotations(
+    paragraphs,
+    detectCrossParagraphQualityAnnotations(paragraphs)
+  );
+  const merged = [];
+  const seen = new Set();
+  for (const annotation of [...modelAnnotations, ...crossParagraphAnnotations]) {
+    const key = `${annotation.paragraphId}::${annotation.kind}::${annotation.note}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(annotation);
+  }
+
+  return {
+    chapterName,
+    annotations: merged.sort((left, right) => left.paragraphIndex - right.paragraphIndex),
+  };
 }
 
 function _coerceChapterPatchArgs(args) {
@@ -676,8 +782,23 @@ const TOOLS = [
     },
   },
   {
+    name: 'get_system_time',
+    description: '读取当前系统本地时间与时区。时间相关判断应优先使用这个结果，不要默认按 GMT/UTC 推断。',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async () => textResult(getSystemTimeInfo()),
+  },
+  {
     name: 'query_world',
     description: '读取世界观长文 lore.md 与地名/坐标 places.json。',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async (_args, ctx) => {
+      const dir = requireNovel(ctx);
+      return textResult(await novelData.readWorld(dir));
+    },
+  },
+  {
+    name: 'read_world',
+    description: '兼容旧工具名。等同于 query_world，用于读取世界观 lore.md 与地名/坐标 places.json。',
     inputSchema: { type: 'object', properties: {} },
     handler: async (_args, ctx) => {
       const dir = requireNovel(ctx);
@@ -1141,6 +1262,58 @@ const TOOLS = [
       });
     },
   },
+  {
+    name: 'review_de_ai_style',
+    description: '按段审查一个或多个章节中的 AI 味、套话和机械行文问题，不直接改正文。传多个 chapterNames 时会在后端并行审查。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        chapterName: { type: 'string', description: '单章审查时的章节文件名，如 "chapter-005.md"' },
+        chapterNames: {
+          type: 'array',
+          description: '多章节并行审查时的章节文件名数组，如 ["chapter-001.md","chapter-002.md"]',
+          items: { type: 'string' },
+        },
+        focus: { type: 'string', description: '可选，用户对本次审查的补充说明，例如“重点找 AI 套话和短反应句”' },
+      },
+    },
+    handler: async (args, ctx) => {
+      requireNovel(ctx);
+      const requested = [
+        _cleanText(args.chapterName),
+        ...(Array.isArray(args.chapterNames) ? args.chapterNames.map((item) => _cleanText(item)) : []),
+      ].filter((item, index, list) => item && list.indexOf(item) === index);
+
+      if (!requested.length) {
+        throw new Error('review_de_ai_style requires chapterName or chapterNames');
+      }
+
+      const focus = _cleanText(args.focus);
+      const chapters = await Promise.all(requested.map(async (chapterName) => {
+        try {
+          return await _reviewChapterDeAiStyle(chapterName, focus, ctx);
+        } catch (err) {
+          return {
+            chapterName,
+            annotations: [],
+            error: err?.message || String(err),
+          };
+        }
+      }));
+
+      if (chapters.every((chapter) => chapter.error)) {
+        throw new Error(chapters[0]?.error || 'review_de_ai_style failed');
+      }
+
+      return textResult({
+        reviewedWith: 'sa-prose-quality',
+        focus,
+        chapterCount: chapters.length,
+        totalAnnotations: chapters.reduce((sum, chapter) => sum + (chapter.annotations?.length || 0), 0),
+        chapters,
+      });
+    },
+  },
   // ---------------- 技能管理 (Skill Management) ----------------
   {
     name: 'list_skills',
@@ -1391,6 +1564,43 @@ const TOOLS = [
       const dir = requireNovel(ctx);
       const ev = await novelData.updateTimelineEvent(dir, args.id, args.patch || {});
       return textResult({ ok: true, event: ev });
+    },
+  },
+  {
+    name: 'sync_chapter_timeline',
+    description: '用指定章节的最新高置信事件替换该章节旧时间线事件，并校验章节覆盖缺口和残留 chapterRef。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        chapterRef: { type: 'string' },
+        events: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              when: { type: 'string' },
+              where: {},
+              participants: { type: 'array', items: { type: 'string' } },
+              description: { type: 'string' },
+              physical: {},
+              communication: {},
+            },
+          },
+        },
+      },
+      required: ['chapterRef', 'events'],
+    },
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      const summary = await novelData.syncTimelineEventsForChapter(dir, args.chapterRef, args.events || []);
+      const warnings = [];
+      if (summary.validation?.missingChapterRefs?.length) {
+        warnings.push(`检测到缺少时间线覆盖的章节: ${summary.validation.missingChapterRefs.join(', ')}`);
+      }
+      if (summary.validation?.orphanChapterRefs?.length) {
+        warnings.push(`检测到残留或无效章节引用: ${summary.validation.orphanChapterRefs.join(', ')}`);
+      }
+      return textResult({ ok: true, ...summary, warnings });
     },
   },
   {

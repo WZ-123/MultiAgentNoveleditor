@@ -1,10 +1,16 @@
 # 角色联网补全系统文档
 
-最后更新：2026-05-06
+最后更新：2026-05-27
 
 ## 1. 系统定位
 
 角色联网补全系统是 MultiAgentNovelAssistant 导入流程的子系统，用于在小说导入阶段为二创/同人作品中的角色自动补全原作设定信息（外貌、性格、背景、萌点等）。
+
+> 基准测试、补充 roster、回归循环的操作手册见：
+> [knowledge-base/character-enrichment-benchmark-loop.md](/Users/potablewater/Desktop/MultiAgentNovelAssistant/knowledge-base/character-enrichment-benchmark-loop.md)
+>
+> 欧美文化圈**通用层**验收集（保留 BWiki 等特化轨，欧美走通用搜索）见：
+> [knowledge-base/western-enrichment-benchmark.md](/Users/potablewater/Desktop/MultiAgentNovelAssistant/knowledge-base/western-enrichment-benchmark.md)
 
 系统核心理念：
 - **用户决策优先**：AI 提供检测建议，但最终是否启用补全、引用哪些作品，由用户在导入流程中显式确认
@@ -74,7 +80,7 @@
   "moeTraits": "萌点列表（逗号分隔）",
   "quotes": "代表性台词（分号分隔）",
   "skins": [
-    { "name": "皮肤名", "outfit": "服装妆造", "story": "故事背景", "scenario": "适用场景" }
+    { "name": "皮肤名", "outfit": "服装妆造", "story": "故事背景", "quotes": "该皮肤台词", "scenario": "适用场景（可选）" }
   ],
   "relationships": [{ "with": "对方名字", "type": "关系类型" }],
   "storyArc": "剧情中的作用",
@@ -95,7 +101,9 @@
 | `sourceWork` | `string` | 角色所属原作名称。由用户在 `character-review` 步骤选择，或由联网补全写入 |
 | `originalName` | `string` | 角色在原作中的官方名字。当小说中的名字与原作不同时填写 |
 | `_enrichmentSource` | `string` | 补全来源标记。格式：`sphere={文化圈} sources={搜索源列表}` |
-| `_enrichmentStatus` | `string` | 补全状态：`success` \| `extract-empty` \| `search-failed` \| `fetch-failed` \| `extract-failed` \| `skipped` |
+| `_enrichmentStatus` | `string` | 补全状态：`success` \| `extract-empty` \| `search-failed` \| `fetch-failed` \| `extract-failed` \| `extract-rejected` \| `incomplete-skins` \| `incomplete-base` \| `skipped` |
+| `_pageSnapshot` | `string` | 基准测试用：当次抓取正文片段（约 8k），供验收锚定 |
+| `_pageUrl` | `string` | 当次最佳页面 URL |
 
 > **设计原则**：`isOriginal` 必须由用户声明，AI **不得**自动判断。`sourceWork` 和 `originalName` 可由 AI 在提取阶段初步识别（从文本中找线索），但最终准确性依赖联网补全验证。
 
@@ -141,7 +149,9 @@ select → parse → target → fanwork-check → pick-dir → confirm → analy
 | 源 ID | 标签 | 支持区域 | 说明 |
 |-------|------|---------|------|
 | `moegirl` | 萌娘百科 | `zh-CN`, `zh-TW` | 中文 ACGN 百科，匿名访问 `moegirl.icu/api.php` |
-| `bing` | Bing 搜索 | 全球 | HTML 爬取有机结果 |
+| `bangumi` | Bangumi | `zh-CN`, `zh-TW`, `ja-JP`, `ko-KR` | 东亚角色库；优先用官方角色 API + 关联作品做消歧 |
+| `fandom` | Fandom Wiki | 全球 | 自动发现 `*.fandom.com`；`western-en` 用英文 `nativeCharName` 搜/抓页 |
+| `bing` | Bing 搜索 | 全球 | HTML 爬取有机结果；`western-en` 用 `www.bing.com` + `en-US` |
 | `wikipedia` | Wikipedia | 全球 | API 搜索，支持多语言 |
 | `duckduckgo` | DuckDuckGo | 全球 | HTML 爬取，全局 fallback |
 
@@ -153,10 +163,10 @@ select → parse → target → fanwork-check → pick-dir → confirm → analy
 
 | 文化圈 | 搜索源优先级 | 适用作品 |
 |--------|------------|---------|
-| `east-asian-cn` | 萌娘百科 → Bing → Wikipedia | 中文圈作品（碧蓝航线、原神等） |
-| `east-asian-jp` | Wikipedia → 萌娘百科 → Bing | 日本作品（Fate、东方等） |
-| `east-asian-kr` | Wikipedia → Bing → 萌娘百科 | 韩国作品 |
-| `western-en` | Wikipedia → Bing | 欧美作品 |
+| `east-asian-cn` | Biligame Wiki → Bangumi → 萌娘百科 → Bing → Wikipedia | 中文圈作品（碧蓝航线、原神等） |
+| `east-asian-jp` | Bangumi → 萌娘百科 → Wikipedia → Bing | 日本作品（Fate、东方等） |
+| `east-asian-kr` | Wikipedia → Bangumi → Bing → 萌娘百科 | 韩国作品 |
+| `western-en` | Fandom Wiki → Wikipedia → 萌娘百科 → Bing | 欧美作品；Fandom/Wikipedia/Bing 用英文 `nativeCharName`（`nativeSearchName.js`） |
 | `global` | Wikipedia → Bing | 无法确定时 |
 
 ### 5.3 查询构建
@@ -169,8 +179,11 @@ select → parse → target → fanwork-check → pick-dir → confirm → analy
 |--------|------------|------|
 | 萌娘百科 | `{作品名}:{角色名}` | `碧蓝航线:爱宕` |
 | 萌娘百科 (fallback) | `{作品名} {角色名}` | `碧蓝航线 爱宕` |
-| Wikipedia | `{角色名} {作品名} character` | `Atago Azur Lane character` |
-| Bing/DDG | `{角色名} {作品名} character wiki` | `爱宕 碧蓝航线 character wiki` |
+| Fandom | `{nativeCharName}` 或 `{nativeWorkName} {nativeCharName}` | `Billy Butcher`（`比利·布彻尔`） |
+| Wikipedia | `{nativeCharName}` 或 `{角色名} {作品名} character` | `Harry Potter` |
+| Bing/DDG | `{nativeWorkName} {nativeCharName}`（western-en） | `The Boys Billy Butcher` |
+
+**母语名解析**：`src/main/import/nativeSearchName.js`；作品别名（Fandom 发现）：`src/main/import/workSynonyms.js`。欧美 benchmark 见 `knowledge-base/western-enrichment-benchmark.md`。
 
 ### 5.4 双模式补全
 
@@ -181,7 +194,8 @@ select → parse → target → fanwork-check → pick-dir → confirm → analy
 2. `searchCharacter()` 按文化圈路由并行搜索多源
 3. `fetchBestPage()` 获取最佳结果的页面内容
 4. `_extractFromPage()` 调用 AI 提取结构化信息
-5. `_mergeWebInfo()` 合并网络数据与小说数据（小说优先）
+5. 若首选信源字段偏瘦，按文化圈优先级继续取第二信源交叉补足缺失字段
+6. `_mergeWebInfo()` 合并网络数据与小说数据（小说优先）
 
 #### LLM 智能模式（`enrichmentMode === 'llm'`）
 1. 构造 system prompt，定义 `web_search` tool schema
@@ -275,6 +289,9 @@ const [characterMarks, setCharacterMarks] = useState([
 | 文件 | 职责 |
 |------|------|
 | `src/main/import/searchEngine.js` | 多源搜索引擎、文化圈路由、查询构建 |
+| `src/main/import/nativeSearchName.js` | 母语检索名解析（`western-en` → 英文） |
+| `src/main/import/fandomWiki.js` | Fandom 子站发现与 MediaWiki API |
+| `src/main/import/workSynonyms.js` | 验收集作品中英别名（Fandom 发现） |
 | `src/main/import/characterEnricher.js` | 补全核心：搜索→获取页面→AI提取→合并 |
 | `src/main/import/analyzer.js` | 导入分析器：6任务并行提取，**不再自动触发补全** |
 | `src/main/import/stagingProject.js` | Staging 项目 CRUD，持久化 fanwork 元数据 |
@@ -283,3 +300,5 @@ const [characterMarks, setCharacterMarks] = useState([
 | `src/components/CharacterEnrichPanel.jsx` | 独立补全面板（手动触发时使用） |
 | `src/components/DataTabContent.jsx` | 数据浏览：角色卡展示、批量操作 |
 | `preload.js` | IPC 桥接暴露 |
+| `knowledge-base/western-enrichment-benchmark.md` | 欧美通用轨 benchmark 规则与 smoke 实测 |
+| `knowledge-base/character-enrichment-benchmark-loop.md` | Benchmark 循环手册（双轨策略） |

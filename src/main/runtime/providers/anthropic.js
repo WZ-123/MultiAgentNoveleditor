@@ -8,6 +8,8 @@
  *   -> { stopReason, content }
  */
 
+const { fetchWithRetry } = require('./retry');
+
 const ANTHROPIC_VERSION = '2023-06-01';
 
 function authHeader(apiKey) {
@@ -108,6 +110,13 @@ function normalizeTools(tools) {
   }));
 }
 
+function normalizeStopReason(stopReason, content) {
+  if (Array.isArray(content) && content.some((block) => block?.type === 'tool_use')) {
+    return 'tool_use';
+  }
+  return stopReason || 'end_turn';
+}
+
 function buildBody({ system, messages, tools, model, maxTokens, extra, stream, thinking }) {
   const body = {
     model,
@@ -184,16 +193,18 @@ async function sendMessageStreaming(opts) {
     thinking: tier.thinking,
   });
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: authHeader(apiKey),
-    body: JSON.stringify(body),
-    signal: abortSignal,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`${endpointLabel(tier.baseUrl)} ${res.status}: ${text.slice(0, 500)}`);
-  }
+  const label = endpointLabel(tier.baseUrl);
+  const res = await fetchWithRetry(
+    url,
+    {
+      method: 'POST',
+      headers: authHeader(apiKey),
+      body: JSON.stringify(body),
+      signal: abortSignal,
+    },
+    label,
+    abortSignal,
+  );
 
   const blocks = [];
   let stopReason = 'end_turn';
@@ -254,7 +265,7 @@ async function sendMessageStreaming(opts) {
   }
 
   const content = blocks.filter(Boolean);
-  return { stopReason, content };
+  return { stopReason: normalizeStopReason(stopReason, content), content };
 }
 
 async function sendMessageNonStreaming(opts) {
@@ -272,18 +283,21 @@ async function sendMessageNonStreaming(opts) {
     stream: false,
     thinking: tier.thinking,
   });
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: authHeader(apiKey),
-    body: JSON.stringify(body),
-    signal: abortSignal,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`${endpointLabel(tier.baseUrl)} ${res.status}: ${text.slice(0, 500)}`);
-  }
+  const label = endpointLabel(tier.baseUrl);
+  const res = await fetchWithRetry(
+    url,
+    {
+      method: 'POST',
+      headers: authHeader(apiKey),
+      body: JSON.stringify(body),
+      signal: abortSignal,
+    },
+    label,
+    abortSignal,
+  );
   const data = await res.json();
-  return { stopReason: data.stop_reason || 'end_turn', content: data.content || [] };
+  const content = data.content || [];
+  return { stopReason: normalizeStopReason(data.stop_reason || 'end_turn', content), content };
 }
 
 async function sendMessage(opts) {

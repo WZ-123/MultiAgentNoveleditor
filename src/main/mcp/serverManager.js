@@ -18,17 +18,78 @@
  */
 
 const path = require('node:path');
+const fs = require('node:fs');
 const net = require('node:net');
 const { fork } = require('node:child_process');
 const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
 const { ForkChildTransport } = require('./forkChildTransport');
 const { paths } = require('../store/paths');
 const eventBus = require('../runtime/eventBus');
+const pkg = require('../../../package.json');
 
 let child = null;
 let client = null;
 let starting = null; // Promise dedup for concurrent ensureServer()
 let activeNovel = { id: null, dir: null };
+let childServerToken = null;
+let childProviderToken = null;
+let childRestartToken = null;
+
+function _isPackagedRuntime() {
+  try {
+    const { app } = require('electron');
+    return !!app?.isPackaged;
+  } catch {
+    return false;
+  }
+}
+
+function _walkLatestSourceMtime(targetPath) {
+  let stat;
+  try {
+    stat = fs.statSync(targetPath);
+  } catch {
+    return 0;
+  }
+
+  if (stat.isFile()) {
+    return /\.(?:js|mjs|cjs|json)$/i.test(targetPath) ? stat.mtimeMs : 0;
+  }
+  if (!stat.isDirectory()) return 0;
+
+  let latest = stat.mtimeMs;
+  for (const entry of fs.readdirSync(targetPath, { withFileTypes: true })) {
+    if (entry.name === 'node_modules' || entry.name.startsWith('.git')) continue;
+    latest = Math.max(latest, _walkLatestSourceMtime(path.join(targetPath, entry.name)));
+  }
+  return latest;
+}
+
+function _computeServerToken() {
+  const forced = process.env.MANA_TEST_MCP_SERVER_TOKEN;
+  if (forced) return `forced:${forced}`;
+  if (_isPackagedRuntime()) return `pkg:${pkg.version}`;
+
+  const root = path.resolve(__dirname, '..', '..', '..');
+  const latest = Math.max(
+    _walkLatestSourceMtime(path.join(root, 'mcp-server-entry.js')),
+    _walkLatestSourceMtime(path.join(root, 'src', 'main')),
+    _walkLatestSourceMtime(path.join(root, 'src', 'services'))
+  );
+  return `src:${Math.trunc(latest)}`;
+}
+
+function _computeProviderToken() {
+  try {
+    const providerManager = require('../providerManager');
+    if (typeof providerManager.getProviderStateTokenSync === 'function') {
+      return providerManager.getProviderStateTokenSync();
+    }
+  } catch {
+    // fall through
+  }
+  return 'providers:unknown';
+}
 
 function _notifyChapterChanged(name, action, title) {
   if (!name) return;
@@ -265,12 +326,13 @@ function _resolveUserDataRoot() {
   }
 }
 
-function _spawnChild() {
+function _spawnChild(serverToken) {
   const entry = _resolveEntryScript();
   const userDataRoot = _resolveUserDataRoot();
   const env = {
     ...process.env,
     ELECTRON_RUN_AS_NODE: '1',
+    MANA_MCP_SERVER_TOKEN: serverToken,
   };
   if (userDataRoot) env.MANA_USER_DATA_ROOT = userDataRoot;
 
@@ -304,6 +366,9 @@ function _spawnChild() {
       child = null;
       client = null;
       starting = null;
+      childServerToken = null;
+      childProviderToken = null;
+      childRestartToken = null;
     }
   });
 
@@ -366,10 +431,28 @@ async function _handleChildMessage(msg) {
 }
 
 async function ensureServer() {
-  if (client && child && !child.killed) return client;
+  const currentServerToken = _computeServerToken();
+  const currentProviderToken = _computeProviderToken();
+  const currentRestartToken = `${currentServerToken}|${currentProviderToken}`;
+
+  if (client && child && !child.killed && childRestartToken === currentRestartToken) return client;
+  if (child && !child.killed && childRestartToken !== currentRestartToken) {
+    const reason = {};
+    if (childServerToken !== currentServerToken) {
+      reason.serverToken = { from: childServerToken, to: currentServerToken };
+    }
+    if (childProviderToken !== currentProviderToken) {
+      reason.providerToken = { from: childProviderToken, to: currentProviderToken };
+    }
+    console.error('[mcp/serverManager] restart token changed, restarting MCP child', reason);
+    await dispose();
+  }
   if (starting) return starting;
   starting = (async () => {
-    child = _spawnChild();
+    child = _spawnChild(currentServerToken);
+    childServerToken = currentServerToken;
+    childProviderToken = currentProviderToken;
+    childRestartToken = currentRestartToken;
     const transport = new ForkChildTransport({ stdin: child.stdin, stdout: child.stdout });
     const newClient = new Client(
       { name: 'mana-host', version: '1.0.0' },
@@ -404,6 +487,9 @@ async function ensureServer() {
     if (child) { try { child.kill(); } catch { /* ignore */ } }
     child = null;
     client = null;
+    childServerToken = null;
+    childProviderToken = null;
+    childRestartToken = null;
     throw err;
   }
 }
@@ -542,6 +628,9 @@ async function dispose() {
   child = null;
   client = null;
   starting = null;
+  childServerToken = null;
+  childProviderToken = null;
+  childRestartToken = null;
   setTimeout(() => {
     const sig = process.platform === 'win32' ? undefined : 'SIGTERM';
     try { dying.kill(sig); } catch { /* ignore */ }
@@ -563,4 +652,7 @@ module.exports = {
   resolveConfirmation,
   listPendingConfirmations,
   dispose,
+  _debugGetChildPid: () => child?.pid || null,
+  _debugGetChildServerToken: () => childServerToken,
+  _debugGetChildProviderToken: () => childProviderToken,
 };

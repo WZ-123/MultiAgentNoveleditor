@@ -224,10 +224,17 @@ async function runChatWritingIntentRegressionTest() {
 
     const thread = await chatHistory.getThread(threadId);
     const branch = chatHistory.getBranch(thread);
-    if (branch.filter((message) => message.role === 'assistant').length === 3) {
-      pass('W5_chat_history_keeps_review_turns', 'draft, revise, and confirm assistant turns were persisted');
+    const toolNames = branch
+      .flatMap((message) => message.toolCalls || [])
+      .map((toolCall) => toolCall.name);
+    if (
+      branch.filter((message) => message.role === 'assistant').length === 3
+      && toolNames.includes('review_de_ai_style')
+      && toolNames.includes('sync_chapter_timeline')
+    ) {
+      pass('W5_chat_history_keeps_review_turns', 'draft, revise, confirm, and automatic post-write review turns were persisted');
     } else {
-      fail('W5_chat_history_keeps_review_turns', JSON.stringify(branch));
+      fail('W5_chat_history_keeps_review_turns', JSON.stringify({ branch, toolNames }));
     }
 
     const secondThread = await chatHistory.createThread({ title: '普通聊天回归', novelId: seeded.entry.id });
@@ -237,7 +244,7 @@ async function runChatWritingIntentRegressionTest() {
       threadId: secondThread.id,
     });
     await chatAgent.runTurn(secondSessionId, '请总结一下当前角色设定');
-    if (providerCallCount === 1 && chapterCalls.length === 2) {
+    if (providerCallCount === 2 && chapterCalls.length === 2) {
       pass('W6_non_writing_chat_not_misrouted', 'ordinary writing-phase chat still falls back to provider path');
     } else {
       fail('W6_non_writing_chat_not_misrouted', JSON.stringify({ providerCallCount, chapterCalls }));
@@ -263,7 +270,7 @@ async function runChatWritingIntentRegressionTest() {
     const sessionAfterSelectionRewrite = chatAgent.getSession(thirdSessionId);
     const chapterTwoContent = await fs.readFile(path.join(seeded.dir, 'chapters', 'chapter-002.md'), 'utf8');
     if (
-      providerCallCount === 1
+      providerCallCount === 2
       && chapterCalls.length === 3
       && chapterCalls[2].mode === 'revise'
       && chapterCalls[2].selectedText === '第二章正文。'
@@ -295,7 +302,7 @@ async function runChatWritingIntentRegressionTest() {
     await chatAgent.runTurn(implicitSelectionSessionId, '这里加一段楚岚和阿宁告别时更克制的感情戏，同时把晚上直播前的铺垫和时空因果一起理顺，先不要直接写正文。');
     const sessionAfterImplicitSelectionRewrite = chatAgent.getSession(implicitSelectionSessionId);
     if (
-      providerCallCount === 1
+      providerCallCount === 2
       && chapterCalls.length === 4
       && chapterCalls[3].mode === 'revise'
       && chapterCalls[3].selectedText === '第二章正文。'

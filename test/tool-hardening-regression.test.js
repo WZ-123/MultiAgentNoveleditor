@@ -294,12 +294,33 @@ async function runToolHardeningRegressionTest() {
     assert.equal(sealAfterStaleReject.grantedTo.some((entry) => entry.charId === 'amagi' && entry.revoked !== true), true);
     pass('TH7_grant_asset_rejects_stale_base_granted_to', 'single-asset grant writes can now refuse stale authorization snapshots instead of appending onto newer state');
 
+    const queryWorldTool = getToolByName('query_world');
+    const readWorldTool = getToolByName('read_world');
+    const getSystemTimeTool = getToolByName('get_system_time');
+    assert.ok(queryWorldTool);
+    assert.ok(readWorldTool);
+    assert.ok(getSystemTimeTool);
+
+    const readWorldResult = await readWorldTool.handler({}, { novelDir, novel: { id: 'novel-hardening' } });
+    const queryWorldResult = await queryWorldTool.handler({}, { novelDir, novel: { id: 'novel-hardening' } });
+    assert.equal(readWorldResult.content[0].text, queryWorldResult.content[0].text);
+    pass('TH8_read_world_alias_matches_query_world', 'legacy read_world alias resolves to the same world payload as query_world');
+
+    const systemTimeResult = await getSystemTimeTool.handler({}, { novelDir, novel: { id: 'novel-hardening' } });
+    const systemTimePayload = JSON.parse(systemTimeResult.content[0].text);
+    assert.equal(typeof systemTimePayload.epochMs, 'number');
+    assert.match(String(systemTimePayload.isoLocal || ''), /[+-]\d\d:\d\d$/);
+    assert.ok(String(systemTimePayload.timezone || '').length > 0);
+    pass('TH9_get_system_time_returns_local_timezone_context', 'time tool returns local system time with timezone offset instead of a GMT-only hint');
+
     const chatAgentText = await fs.readFile(path.join(ROOT, 'src/main/runtime/chatAgent.js'), 'utf8');
     assert.ok(chatAgentText.includes('apply_world_patch'));
     assert.ok(chatAgentText.includes('baseContent'));
     assert.ok(chatAgentText.includes('apply_asset_patch'));
     assert.ok(chatAgentText.includes('baseGrantedTo'));
-    pass('TH8_chat_rules_expose_hardened_write_tools', 'chat rules mention apply_world_patch, apply_asset_patch, and snapshot-guarded write flows');
+    assert.ok(chatAgentText.includes('get_system_time'));
+    assert.ok(chatAgentText.includes('read_world (legacy alias)'));
+    pass('TH10_chat_rules_expose_hardened_write_tools', 'chat rules mention hardened write flows, world alias, and system-time guidance');
   } catch (err) {
     fail('TH_harness', err && err.stack ? err.stack : String(err));
   } finally {

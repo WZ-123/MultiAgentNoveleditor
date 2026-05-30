@@ -9,6 +9,7 @@ import { BlueprintEditor } from '@/components/BlueprintEditor.jsx';
 import { ProviderSettingsPanel } from '@/components/ProviderSettingsPanel.jsx';
 import { RuntimeDriverSettings } from '@/components/RuntimeDriverSettings.jsx';
 import { saveNovelTree } from '@/services/chapterStore.js';
+import { createRemoteAIClient } from '@/services/remoteAI.js';
 import { SubagentEditor } from '@/components/SubagentEditor.jsx';
 import { DagEditor } from '@/components/DagEditor.jsx';
 import { ConfigHelperChat } from '@/components/ConfigHelperChat.jsx';
@@ -30,15 +31,57 @@ const TAB_PREFIX = 'chapter:';
 const BLUEPRINT_PREFIX = 'blueprint:';
 const SETTINGS_PREFIX = 'settings:';
 const DATA_PREFIX = 'data:'; // character, world, outline, timeline, style
-const DEFAULT_RIGHT_PANEL_WIDTH = 448;
-const MIN_RIGHT_PANEL_WIDTH = 320;
+const DEFAULT_RIGHT_PANEL_WIDTH = 520;
+const MIN_RIGHT_PANEL_WIDTH = 360;
 const RIGHT_PANEL_WIDTH_STORAGE_KEY = 'mana-right-panel-width-v1';
+const EDITOR_CONTEXT_MENU_WIDTH = 220;
 const makeId = (prefix) =>
   `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+const EDITOR_AI_ACTIONS = {
+  rewrite: {
+    label: 'AI 重写选中段落',
+    requiresSelection: true,
+    mode: 'replace',
+    instruction: '重写选中文本：保持事实、人物关系和剧情推进不变，提升小说正文的自然度、节奏和画面感。避免 AI 八股句式、空泛总结和解释型旁白。只输出改写后的正文，不要解释。',
+  },
+  expand: {
+    label: '扩写选中文本',
+    requiresSelection: true,
+    mode: 'replace',
+    instruction: '扩写选中文本：保留原有剧情含义，把场面、动作、感官细节或人物反应写得更充分，篇幅约为原文 1.5 到 2 倍。不要新增会改变后续剧情的大事件。只输出扩写后的正文，不要解释。',
+  },
+  shorten: {
+    label: '缩写选中文本',
+    requiresSelection: true,
+    mode: 'replace',
+    instruction: '缩写选中文本：保留必要信息、情绪和剧情功能，删去重复解释、空泛修饰和拖慢节奏的句子，篇幅约为原文 50% 到 70%。只输出缩写后的正文，不要解释。',
+  },
+  deAi: {
+    label: '去 AI 味润色',
+    requiresSelection: true,
+    mode: 'replace',
+    instruction: '润色选中文本：重点去除 AI 味。避免「不是……而是……」「那是一种……」「仿佛……」「空气中弥漫着……」等模板化表达，改成具体动作、对白、触感、表情或场面推进。只输出润色后的正文，不要解释。',
+  },
+  strongerScene: {
+    label: '增强现场感',
+    requiresSelection: true,
+    mode: 'replace',
+    instruction: '改写选中文本：增强现场感和可读性，优先加入角色动作、视线、对白、环境反馈和节奏变化；不要写成设定说明或作者总结。只输出改写后的正文，不要解释。',
+  },
+  continue: {
+    label: '在光标处续写',
+    requiresSelection: false,
+    mode: 'insert',
+    instruction: '在光标处续写小说正文：承接前文语气、人物状态和当前场景，写一到三段自然衔接的内容。不要重复光标前已有文字，不要解释，只输出要插入的续写正文。',
+  },
+};
+
+const EDITOR_AI_SYSTEM_PROMPT = '你是中文小说正文编辑助手。输出必须是可直接粘贴进正文的简体中文小说内容；标点使用全角中文标点（，。！？：；、“”‘’（）《》——）；不要输出标题、列表、解释、前后缀说明或 Markdown 围栏。';
+
 function clampRightPanelWidth(width) {
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1440;
-  const maxWidth = Math.max(480, Math.floor(viewportWidth * 0.7));
+  const maxWidth = Math.max(MIN_RIGHT_PANEL_WIDTH, Math.floor(viewportWidth * 0.75));
   return Math.min(Math.max(width, MIN_RIGHT_PANEL_WIDTH), maxWidth);
 }
 
@@ -56,14 +99,25 @@ function readInitialRightPanelWidth() {
   return clampRightPanelWidth(DEFAULT_RIGHT_PANEL_WIDTH);
 }
 
-const CN_NUMS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-const toChineseNum = (n) => {
-  if (n <= 10) return CN_NUMS[n];
-  if (n < 20) return '十' + (n % 10 > 0 ? CN_NUMS[n % 10] : '');
-  const tens = Math.floor(n / 10);
-  const rem = n % 10;
-  return CN_NUMS[tens] + '十' + (rem > 0 ? CN_NUMS[rem] : '');
-};
+function extractChapterHeadingTitle(content) {
+  const match = String(content || '').match(/^#\s+(.+?)\s*$/m);
+  return match ? match[1].trim() : '';
+}
+
+function resolveChapterTitle({ metadataTitle, content, fallbackTitle } = {}) {
+  const explicitTitle = String(metadataTitle || '').trim();
+  if (explicitTitle) return explicitTitle;
+  const headingTitle = extractChapterHeadingTitle(content);
+  if (headingTitle) return headingTitle;
+  return String(fallbackTitle || '').trim();
+}
+
+function getChapterSaveTitle(chapter, content) {
+  return resolveChapterTitle({
+    content,
+    fallbackTitle: chapter?._title || '',
+  });
+}
 
 function parseMarkdownOutline(content) {
   if (!content) return [];
@@ -121,51 +175,85 @@ function App() {
     }
   }, []);
 
+  const applySavedChapterSnapshot = useCallback((chapterId, snapshot, options = {}) => {
+    if (!chapterId || !snapshot) return;
+    const { content, isContentLoaded, isDirty = false } = options;
+    setNovel((currentNovel) => ({
+      ...currentNovel,
+      volumes: currentNovel.volumes.map((volume) => ({
+        ...volume,
+        sections: volume.sections.map((section) => ({
+          ...section,
+          chapters: section.chapters.map((chapter) => {
+            if (chapter.id !== chapterId) return chapter;
+            const next = {
+              ...chapter,
+              isDirty,
+              _title: snapshot.title || '',
+              displayName: snapshot.displayName || chapter.displayName || chapter.fileName,
+              volume: snapshot.volume ?? chapter.volume ?? null,
+              section: snapshot.section ?? chapter.section ?? null,
+            };
+            if (typeof content === 'string') next.content = content;
+            if (typeof isContentLoaded === 'boolean') next.isContentLoaded = isContentLoaded;
+            return next;
+          }),
+        })),
+      })),
+    }));
+  }, []);
+
+  const refreshAllChapterDisplayNames = useCallback(async (novelId, baseNovel) => {
+    const sourceNovel = baseNovel || novel;
+    const chapters = [];
+    sourceNovel.volumes.forEach((volume) => {
+      volume.sections.forEach((section) => {
+        section.chapters.forEach((chapter) => {
+          chapters.push(chapter);
+        });
+      });
+    });
+    if (!novelId || !window.mana?.novel?.computeChapterDisplayName || chapters.length === 0) return;
+
+    const sortedChapters = [...chapters].sort((a, b) => (a.fileName || '').localeCompare(b.fileName || ''));
+    const displayNames = await Promise.all(sortedChapters.map((chapter, index) =>
+      window.mana.novel.computeChapterDisplayName(novelId, index + 1, chapter._title || '')
+    ));
+    const byId = new Map(sortedChapters.map((chapter, index) => [chapter.id, displayNames[index] || chapter.displayName || chapter.fileName]));
+
+    setNovel((currentNovel) => ({
+      ...currentNovel,
+      volumes: currentNovel.volumes.map((volume) => ({
+        ...volume,
+        sections: volume.sections.map((section) => ({
+          ...section,
+          chapters: section.chapters.map((chapter) => ({
+            ...chapter,
+            displayName: byId.get(chapter.id) || chapter.displayName || chapter.fileName,
+          })),
+        })),
+      })),
+    }));
+  }, [novel]);
+
   // Sync the novel tree (volumes/sections/chapters) from the project directory on disk
   async function syncNovelTreeFromDisk(novelEntry) {
     if (!novelEntry?.dir || !window.mana) return;
     try {
-      // Read naming rule for display name computation
-      let namingRule = '第{n}章';
-      let namingSep = '：';
-      try {
-        const cfg = await window.mana.novel.getChapterNaming(novelEntry.id);
-        if (cfg?.rule) { namingRule = cfg.rule; namingSep = cfg.separator || '：'; }
-      } catch {}
+      const chapterMetaEntries = await window.mana.novel.listChapterMetas(novelEntry.id);
 
-      // List chapter files from the novel's chapters/ dir
-      const files = await window.mana.novel.listChapters(novelEntry.id);
-      const chapterMetaEntries = await Promise.all((files || []).map(async (file) => {
-        const name = typeof file === 'string' ? file : file.name || file.fileName || '';
-        if (!name.endsWith('.md')) return null;
-        try {
-          const meta = await window.mana.novel.readChapterMeta(novelEntry.id, name);
-          return {
-            fileName: name,
-            title: meta?.metadata?.title || meta?.headingTitle || '',
-            volume: meta?.metadata?.volume ?? null,
-            section: meta?.metadata?.section ?? null,
-          };
-        } catch {
-          return null;
-        }
-      }));
-
-      const chapters = chapterMetaEntries
+      const chapters = (chapterMetaEntries || [])
         .filter(Boolean)
         .sort((a, b) => a.fileName.localeCompare(b.fileName))
         .map((chapterMeta, index) => {
-          const titleForDisplay = chapterMeta.title || chapterMeta.fileName;
-          let displayName = namingRule.replace('{n}', index + 1).replace('{cn}', toChineseNum(index + 1));
-          if (titleForDisplay) displayName += namingSep + titleForDisplay;
           return {
             id: `ch-${chapterMeta.fileName}-${Date.now()}-${index}`,
             fileName: chapterMeta.fileName,
             content: '',
             isContentLoaded: false,
             isDirty: false,
-            _title: chapterMeta.title || '',
-            displayName,
+            _title: resolveChapterTitle({ metadataTitle: chapterMeta.title }),
+            displayName: chapterMeta.displayName || chapterMeta.fileName,
             volume: chapterMeta.volume,
             section: chapterMeta.section,
           };
@@ -343,9 +431,6 @@ function App() {
     if (!activeNovelId || !window.mana?.novel?.readChapter) return entry.chapter.content || '';
 
     const content = await window.mana.novel.readChapter(activeNovelId, entry.chapter.fileName);
-    const headingMatch = (content || '').match(/^#\s+(.+)/m);
-    const headingTitle = headingMatch ? headingMatch[1].trim() : '';
-
     setNovel((currentNovel) => ({
       ...currentNovel,
       volumes: currentNovel.volumes.map((volume) => ({
@@ -354,7 +439,10 @@ function App() {
           ...section,
           chapters: section.chapters.map((chapter) => {
             if (chapter.id !== chapterId) return chapter;
-            const nextTitle = chapter._title || headingTitle || '';
+            const nextTitle = resolveChapterTitle({
+              content,
+              fallbackTitle: chapter._title || '',
+            });
             let nextDisplayName = chapter.displayName || chapter.fileName;
             if (nextTitle) {
               if (/[:：]/.test(nextDisplayName)) nextDisplayName = nextDisplayName.replace(/[:：].*$/, `：${nextTitle}`);
@@ -388,23 +476,15 @@ function App() {
         const activeEntry = await mana.novel.active();
         if (!activeEntry?.id) return;
         const meta = await mana.novel.readChapterMeta(activeEntry.id, data.name);
-        let title = data.title || data.name;
-        if (meta?.metadata?.title) title = meta.metadata.title;
         const content = await mana.novel.readChapter(activeEntry.id, data.name);
-        if (!meta?.metadata?.title && content) {
-          const m = content.match(/^#\s+(.+)/);
-          if (m) title = m[1].trim();
-        }
-        let namingRule = '第{n}章';
-        let namingSep = '：';
-        try {
-          const cfg = await mana.novel.getChapterNaming(activeEntry.id);
-          if (cfg?.rule) { namingRule = cfg.rule; namingSep = cfg.separator || '：'; }
-        } catch {}
+        const title = resolveChapterTitle({
+          metadataTitle: meta?.title || meta?.metadata?.title || data.title,
+          content,
+          fallbackTitle: existing?.chapter?._title || '',
+        });
         const sorted = [...new Set([...chapterEntries.map(e => e.chapter.fileName), data.name])].sort((a, b) => a.localeCompare(b));
         const seq = sorted.indexOf(data.name) + 1;
-        let displayName = namingRule.replace('{n}', seq).replace('{cn}', toChineseNum(seq));
-        if (title) displayName += namingSep + title;
+        const displayName = await mana.novel.computeChapterDisplayName(activeEntry.id, seq, title);
         const nextChapter = {
           id: existing?.chapter?.id || `ch-${data.name}-${Date.now()}`,
           fileName: data.name,
@@ -413,8 +493,8 @@ function App() {
           isDirty: false,
           _title: title,
           displayName,
-          volume: meta?.metadata?.volume || null,
-          section: meta?.metadata?.section || null,
+          volume: meta?.volume ?? meta?.metadata?.volume ?? null,
+          section: meta?.section ?? meta?.metadata?.section ?? null,
         };
         setNovel(prev => {
           const volumes = prev.volumes.map(v => ({
@@ -426,14 +506,16 @@ function App() {
                 : [...s.chapters, nextChapter].sort((a, b) => a.fileName.localeCompare(b.fileName)),
             })),
           }));
-          return { ...prev, volumes };
+          const nextNovel = { ...prev, volumes };
+          refreshAllChapterDisplayNames(activeEntry.id, nextNovel).catch(() => {});
+          return nextNovel;
         });
       } catch (err) {
         console.error('[App] incremental chapter sync failed:', err);
       }
     });
     return cleanup;
-  }, [chapterEntries]);
+  }, [chapterEntries, refreshAllChapterDisplayNames]);
 
   // Persist volume/section tree structure to novel.json
   const syncStructureToMeta = (novelData) => {
@@ -596,9 +678,9 @@ function App() {
       isDirty: false,
     };
 
-    setNovel((n) => ({
-      ...n,
-      volumes: n.volumes.map((volume) => {
+    const nextNovel = {
+      ...novel,
+      volumes: novel.volumes.map((volume) => {
         if (volume.id !== volumeId) return volume;
         return {
           ...volume,
@@ -609,7 +691,10 @@ function App() {
           ),
         };
       }),
-    }));
+    };
+
+    setNovel(() => nextNovel);
+    refreshAllChapterDisplayNames(activeNovelId, nextNovel).catch(() => {});
     setOpenChapterIds((ids) => (ids.includes(chapter.id) ? ids : [...ids, chapter.id]));
     setActiveEditorTab(`${TAB_PREFIX}${chapter.id}`);
     // Persist: write empty file to disk
@@ -626,9 +711,9 @@ function App() {
       if (chapterEntry?.chapter?.fileName && activeNovelId && window.mana?.novel?.saveChapter) {
         const ch = chapterEntry.chapter;
         if (ch.isContentLoaded && ch.isDirty) {
-          const titleMatch = (ch.content || '').match(/^#\s+(.+)/);
-          const chapTitle = titleMatch ? titleMatch[1].trim() : (ch._title || '');
+          const chapTitle = getChapterSaveTitle(ch, ch.content);
           window.mana.novel.saveChapter(activeNovelId, ch.fileName, ch.content, { title: chapTitle })
+            .then((saved) => applySavedChapterSnapshot(chapterId, saved, { content: ch.content, isContentLoaded: true, isDirty: false }))
             .catch(() => {});
         }
       }
@@ -707,14 +792,13 @@ function App() {
     );
     if (!ok) return;
     const deletedChapterIds = volume.sections.flatMap((s) => s.chapters.map((c) => c.id));
-    setNovel((n) => {
-      const updated = {
-        ...n,
-        volumes: n.volumes.filter((v) => v.id !== volumeId),
-      };
-      syncStructureToMeta(updated);
-      return updated;
-    });
+    const updated = {
+      ...novel,
+      volumes: novel.volumes.filter((v) => v.id !== volumeId),
+    };
+    setNovel(updated);
+    syncStructureToMeta(updated);
+    refreshAllChapterDisplayNames(activeNovelId, updated).catch(() => {});
     removeDeletedChapterIdsFromTabs(deletedChapterIds);
   };
 
@@ -754,21 +838,20 @@ function App() {
     );
     if (!ok) return;
     const deletedChapterIds = section.chapters.map((c) => c.id);
-    setNovel((n) => {
-      const updated = {
-        ...n,
-        volumes: n.volumes.map((v) =>
-          v.id !== volumeId
-            ? v
-            : {
-                ...v,
-                sections: v.sections.filter((s) => s.id !== sectionId),
-              }
-        ),
-      };
-      syncStructureToMeta(updated);
-      return updated;
-    });
+    const updated = {
+      ...novel,
+      volumes: novel.volumes.map((v) =>
+        v.id !== volumeId
+          ? v
+          : {
+              ...v,
+              sections: v.sections.filter((s) => s.id !== sectionId),
+            }
+      ),
+    };
+    setNovel(updated);
+    syncStructureToMeta(updated);
+    refreshAllChapterDisplayNames(activeNovelId, updated).catch(() => {});
     removeDeletedChapterIdsFromTabs(deletedChapterIds);
   };
 
@@ -801,6 +884,7 @@ function App() {
       try {
         const content = await ensureChapterContentLoaded(chapterId);
         window.mana?.novel?.saveChapter(activeNovelId, chapter.fileName, content, { title: raw })
+          .then((saved) => applySavedChapterSnapshot(chapterId, saved, { content, isContentLoaded: true, isDirty: false }))
           .catch(() => {});
       } catch {
         // ignore eager title persistence failures
@@ -816,16 +900,18 @@ function App() {
     const ok = window.confirm(confirmText);
     if (!ok) return;
 
-    setNovel((n) => ({
-      ...n,
-      volumes: n.volumes.map((v) => ({
+    const updated = {
+      ...novel,
+      volumes: novel.volumes.map((v) => ({
         ...v,
         sections: v.sections.map((s) => ({
           ...s,
           chapters: s.chapters.filter((c) => c.id !== chapterId),
         })),
       })),
-    }));
+    };
+    setNovel(updated);
+    refreshAllChapterDisplayNames(activeNovelId, updated).catch(() => {});
     removeDeletedChapterIdsFromTabs([chapterId]);
     // Delete file from disk
     if (chapter.fileName && window.mana?.fs?.deleteFile) {
@@ -843,6 +929,8 @@ function App() {
   const [editorSelection, setEditorSelection] = useState({ text: '', start: 0, end: 0 });
   const [editorHasFocus, setEditorHasFocus] = useState(false);
   const [editorScroll, setEditorScroll] = useState({ top: 0, left: 0 });
+  const [editorContextMenu, setEditorContextMenu] = useState(null);
+  const [editorAiStatus, setEditorAiStatus] = useState(null);
   const isResizingRightPanelRef = useRef(false);
   const [isRightPanelResizeHover, setIsRightPanelResizeHover] = useState(false);
   const [isRightPanelResizing, setIsRightPanelResizing] = useState(false);
@@ -919,21 +1007,9 @@ function App() {
     clearTimeout(window[key]);
     if (!silent) setSaveStatus('saving');
     try {
-      const titleMatch = content.match(/^#\s+(.+)/);
-      const chapTitle = titleMatch ? titleMatch[1].trim() : (entry.chapter._title || '');
-      await window.mana.novel.saveChapter(activeNovelId, name, content, { title: chapTitle });
-      setNovel((currentNovel) => ({
-        ...currentNovel,
-        volumes: currentNovel.volumes.map((volume) => ({
-          ...volume,
-          sections: volume.sections.map((section) => ({
-            ...section,
-            chapters: section.chapters.map((chapter) => (
-              chapter.id === activeChapterId ? { ...chapter, isDirty: false } : chapter
-            )),
-          })),
-        })),
-      }));
+      const chapTitle = getChapterSaveTitle(entry.chapter, content);
+      const saved = await window.mana.novel.saveChapter(activeNovelId, name, content, { title: chapTitle });
+      applySavedChapterSnapshot(activeChapterId, saved, { content, isContentLoaded: true, isDirty: false });
       if (!silent) {
         setSaveStatus('saved');
         showSaveToast('success', '已保存到磁盘');
@@ -948,7 +1024,7 @@ function App() {
       console.error('[editor-save]', reason);
       throw err;
     }
-  }, [activeChapterId, activeNovelId, activeChapter, chapterMap, showSaveToast]);
+  }, [activeChapterId, activeNovelId, activeChapter, chapterMap, showSaveToast, applySavedChapterSnapshot]);
 
   const manualSave = useCallback(async () => {
     try {
@@ -981,19 +1057,8 @@ function App() {
       window[key] = setTimeout(async () => {
         if (window.mana?.novel?.saveChapter) {
           try {
-            await window.mana.novel.saveChapter(activeNovelId, name, content);
-            setNovel((currentNovel) => ({
-              ...currentNovel,
-              volumes: currentNovel.volumes.map((volume) => ({
-                ...volume,
-                sections: volume.sections.map((section) => ({
-                  ...section,
-                  chapters: section.chapters.map((chapter) => (
-                    chapter.id === activeChapterId ? { ...chapter, isDirty: false } : chapter
-                  )),
-                })),
-              })),
-            }));
+            const saved = await window.mana.novel.saveChapter(activeNovelId, name, content, { title: getChapterSaveTitle(chapterEntry.chapter, content) });
+            applySavedChapterSnapshot(activeChapterId, saved, { content, isContentLoaded: true, isDirty: false });
             setSaveStatus(null);
           } catch {
             setSaveStatus('save-failed');
@@ -1016,27 +1081,16 @@ function App() {
       const name = chapterEntry.chapter.fileName;
       const content = saveContentRef.current;
       if (!content) return;
-      window.mana?.novel?.saveChapter(activeNovelId, name, content)
-        .then(() => {
-          setNovel((currentNovel) => ({
-            ...currentNovel,
-            volumes: currentNovel.volumes.map((volume) => ({
-              ...volume,
-              sections: volume.sections.map((section) => ({
-                ...section,
-                chapters: section.chapters.map((chapter) => (
-                  chapter.id === activeChapterId ? { ...chapter, isDirty: false } : chapter
-                )),
-              })),
-            })),
-          }));
+      window.mana?.novel?.saveChapter(activeNovelId, name, content, { title: getChapterSaveTitle(chapterEntry.chapter, content) })
+        .then((saved) => {
+          applySavedChapterSnapshot(activeChapterId, saved, { content, isContentLoaded: true, isDirty: false });
           setSaveStatus(null);
         })
         .catch(() => setSaveStatus('save-failed'));
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, [activeNovelId, activeChapterId, chapterMap]);
+  }, [activeNovelId, activeChapterId, chapterMap, applySavedChapterSnapshot]);
 
   useEffect(() => {
     setEditorSelection({ text: '', start: 0, end: 0 });
@@ -1064,6 +1118,43 @@ function App() {
     const text = target.value.substring(start, end);
     setEditorSelection({ text, start, end });
   };
+
+  useEffect(() => {
+    if (!editorContextMenu) return undefined;
+    const close = () => setEditorContextMenu(null);
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') close();
+    };
+    window.addEventListener('pointerdown', close);
+    window.addEventListener('resize', close);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('resize', close);
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [editorContextMenu]);
+
+  const openEditorContextMenu = useCallback((event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    handleTextSelect(event);
+    const target = event.currentTarget;
+    const start = target.selectionStart || 0;
+    const end = target.selectionEnd || start;
+    const selectedText = target.value.substring(start, end);
+    const x = Math.min(event.clientX, Math.max(8, window.innerWidth - EDITOR_CONTEXT_MENU_WIDTH - 8));
+    const y = Math.min(event.clientY, Math.max(8, window.innerHeight - 260));
+    setEditorContextMenu({
+      x,
+      y,
+      hasSelection: end > start && !!selectedText.trim(),
+      start,
+      end,
+    });
+  }, []);
 
   const overlaySelection = useMemo(() => {
     if (!activeChapter) return null;
@@ -1239,6 +1330,96 @@ function App() {
     setEditorSelection({ text: '', start: nextPos, end: nextPos });
     return `Text inserted successfully (${text.length} chars)`;
   };
+
+  const buildEditorAiUserPrompt = useCallback((action, range, customInstruction = '') => {
+    const current = activeChapter?.content || '';
+    const before = current.substring(Math.max(0, range.start - 1800), range.start);
+    const after = current.substring(range.end, Math.min(current.length, range.end + 900));
+    const selectedText = current.substring(range.start, range.end);
+    const instruction = customInstruction || action.instruction;
+    const lines = [
+      instruction,
+      '',
+      `当前章节：${activeChapter?.displayName || activeChapter?.fileName || '未命名章节'}`,
+    ];
+    if (before) lines.push('', '光标/选区前文：', before);
+    if (selectedText) lines.push('', '选中文本：', selectedText);
+    if (after) lines.push('', '选区/光标后文：', after);
+    return lines.join('\n');
+  }, [activeChapter]);
+
+  const cleanEditorAiOutput = (text) => {
+    let output = String(text || '').trim();
+    output = output.replace(/^```(?:\w+)?\s*/u, '').replace(/\s*```$/u, '').trim();
+    return output;
+  };
+
+  const runEditorAiAction = useCallback(async (actionId, customInstruction = '') => {
+    const action = EDITOR_AI_ACTIONS[actionId];
+    if (!action || !activeChapter) return;
+    setEditorContextMenu(null);
+    let range;
+    try {
+      range = resolveEditorSelectionRange(action.mode === 'insert' ? 'insert' : 'replace');
+      if (action.requiresSelection && !String(range.text || '').trim()) {
+        throw new Error('请先选中需要处理的文本');
+      }
+    } catch (err) {
+      showSaveToast('error', err?.message || String(err));
+      return;
+    }
+
+    setEditorAiStatus(action.label);
+    try {
+      await flushActiveChapterToDisk({ silent: true });
+      const client = createRemoteAIClient();
+      const result = await client.completeForAgent(
+        action.mode === 'insert' ? 'chapter_draft' : 'agent5',
+        [
+          { role: 'system', content: EDITOR_AI_SYSTEM_PROMPT },
+          { role: 'user', content: buildEditorAiUserPrompt(action, range, customInstruction) },
+        ],
+        { expectJson: false }
+      );
+      const output = cleanEditorAiOutput(result);
+      if (!output) throw new Error('AI 没有返回可插入的正文');
+      const current = activeChapter.content || '';
+      const insertionPoint = action.mode === 'insert' ? range.end : range.start;
+      const safeStart = Math.max(0, Math.min(insertionPoint, current.length));
+      const safeEnd = action.mode === 'insert'
+        ? safeStart
+        : Math.max(safeStart, Math.min(range.end, current.length));
+      if (action.mode !== 'insert' && current.substring(safeStart, safeEnd) !== range.text) {
+        throw new Error('选中文本已变化，请重新选中后再试');
+      }
+      const nextContent = current.substring(0, safeStart) + output + current.substring(safeEnd);
+      updateActiveChapterContent(nextContent);
+      const nextPos = safeStart + output.length;
+      if (action.mode === 'insert') {
+        pendingEditorSelectionRef.current = { start: nextPos, end: nextPos };
+      } else {
+        pendingEditorSelectionRef.current = { start: safeStart, end: nextPos };
+      }
+      setEditorSelection({ text: '', start: nextPos, end: nextPos });
+      showSaveToast('success', `${action.label}完成`);
+    } catch (err) {
+      showSaveToast('error', `${action.label}失败：${err?.message || String(err)}`);
+    } finally {
+      setEditorAiStatus(null);
+    }
+  }, [
+    activeChapter,
+    buildEditorAiUserPrompt,
+    flushActiveChapterToDisk,
+    resolveEditorSelectionRange,
+    showSaveToast,
+  ]);
+
+  const runCustomEditorAiAction = useCallback(async () => {
+    const instruction = await window.mana?.prompt?.show?.('告诉 AI 如何处理选中文本:', '改得更有张力，但保持剧情不变');
+    if (instruction == null || !instruction.trim()) return;
+    await runEditorAiAction('rewrite', `按用户要求处理选中文本：${instruction.trim()}。只输出处理后的正文，不要解释。`);
+  }, [runEditorAiAction]);
 
   const editorContext = useMemo(() => {
     const base = {
@@ -1652,6 +1833,7 @@ function App() {
                     className="relative z-10 flex-1 h-full w-full resize-none bg-transparent outline-none text-gray-300 leading-relaxed p-4 font-mono text-sm"
                     value={activeEditor.content}
                     onChange={(e) => updateActiveChapterContent(e.target.value)}
+                    onContextMenu={openEditorContextMenu}
                     onSelect={handleTextSelect}
                     onClick={handleTextSelect}
                     onKeyUp={handleTextSelect}
@@ -1668,8 +1850,58 @@ function App() {
                     onScroll={(e) => setEditorScroll({ top: e.target.scrollTop, left: e.target.scrollLeft })}
                     placeholder={t('app.markdownInputPlaceholder')}
                   />
+                  {editorContextMenu ? (
+                    <div
+                      className="fixed z-50 w-[220px] overflow-hidden rounded border border-vscode-panel-border bg-[#252526] py-1 text-xs text-gray-200 shadow-2xl"
+                      style={{ left: editorContextMenu.x, top: editorContextMenu.y }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      role="menu"
+                    >
+                      {[
+                        'rewrite',
+                        'expand',
+                        'shorten',
+                        'deAi',
+                        'strongerScene',
+                      ].map((actionId) => {
+                        const action = EDITOR_AI_ACTIONS[actionId];
+                        const disabled = editorAiStatus || (action.requiresSelection && !editorContextMenu.hasSelection);
+                        return (
+                          <button
+                            key={actionId}
+                            type="button"
+                            className={`flex w-full items-center justify-between px-3 py-1.5 text-left ${disabled ? 'cursor-not-allowed text-gray-500' : 'hover:bg-vscode-active-item hover:text-white'}`}
+                            disabled={!!disabled}
+                            onClick={() => runEditorAiAction(actionId)}
+                          >
+                            <span>{action.label}</span>
+                          </button>
+                        );
+                      })}
+                      <div className="my-1 h-px bg-vscode-panel-border" />
+                      <button
+                        type="button"
+                        className={`flex w-full items-center justify-between px-3 py-1.5 text-left ${editorAiStatus ? 'cursor-not-allowed text-gray-500' : 'hover:bg-vscode-active-item hover:text-white'}`}
+                        disabled={!!editorAiStatus}
+                        onClick={() => runEditorAiAction('continue')}
+                      >
+                        <span>{EDITOR_AI_ACTIONS.continue.label}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`flex w-full items-center justify-between px-3 py-1.5 text-left ${editorAiStatus || !editorContextMenu.hasSelection ? 'cursor-not-allowed text-gray-500' : 'hover:bg-vscode-active-item hover:text-white'}`}
+                        disabled={!!editorAiStatus || !editorContextMenu.hasSelection}
+                        onClick={runCustomEditorAiAction}
+                      >
+                        <span>自定义 AI 修改...</span>
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="h-6 border-t border-vscode-panel-border flex items-center px-2 gap-2 shrink-0 bg-vscode-sidebar/50">
+                  {editorAiStatus ? (
+                    <span className="text-[10px] text-blue-300">{editorAiStatus}中...</span>
+                  ) : null}
                   {saveStatus === 'save-failed' ? (
                     <span className="text-[10px] text-rose-400 flex items-center gap-1">
                       保存失败
@@ -1680,9 +1912,9 @@ function App() {
                           if (entry?.chapter?.fileName && activeNovelId) {
                             setSaveStatus('saving');
                             try {
-                              const titleMatch = ((activeChapter.content) || '').match(/^#\s+(.+)/);
-                              const chapTitle = titleMatch ? titleMatch[1].trim() : (entry.chapter._title || '');
-                              await window.mana.novel.saveChapter(activeNovelId, entry.chapter.fileName, activeChapter.content, { title: chapTitle });
+                              const chapTitle = getChapterSaveTitle(entry.chapter, activeChapter.content);
+                              const saved = await window.mana.novel.saveChapter(activeNovelId, entry.chapter.fileName, activeChapter.content, { title: chapTitle });
+                              applySavedChapterSnapshot(activeChapterId, saved, { content: activeChapter.content, isContentLoaded: true, isDirty: false });
                               setSaveStatus('saved');
                               setTimeout(() => setSaveStatus(null), 2000);
                             } catch { setSaveStatus('save-failed'); }

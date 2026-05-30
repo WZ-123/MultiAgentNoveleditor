@@ -103,7 +103,13 @@ async function run(handle, opts = {}) {
       abortSignal: abortController.signal,
     });
     handle.runId = r.runId;
-    return { output: r.output, transcript: r.transcript, runId: r.runId };
+    return {
+      output: r.output,
+      transcript: r.transcript,
+      runId: r.runId,
+      stopReason: r.stopReason,
+      truncated: r.truncated,
+    };
   }
 
   // pipeline mode

@@ -1,0 +1,18 @@
+[benchmark] MANA_USER_DATA_ROOT= /Users/potablewater/Library/Application Support/multi-agent-novel-assistant/MultiAgentNovelAssistant
+[benchmark] project dir= /Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026
+[benchmark] wrote 6 character stubs
+
+[benchmark] Phase 1: search + fetch probes...
+[searchEngine] sources: Bing 搜索: 错误(fetch failed) | 萌娘百科: 5条 | Fandom Wiki: 0条 | Wikipedia: 0条 → total 5 results
+  probe 黑袍纠察队/祖国人: results=5 pageLen=3016 sphere=western-en
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 4条 | Fandom Wiki: 0条 | Wikipedia: 0条 → total 9 results
+  probe 黑袍纠察队/比利·布彻尔: results=9 pageLen=0 sphere=western-en
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 2条 | Fandom Wiki: 0条 | Wikipedia: 0条 → total 7 results
+  probe 黑袍纠察队/休伊·坎贝尔: results=7 pageLen=3016 sphere=western-en
+[searchEngine] sources: Bing 搜索: 4条 | 萌娘百科: 5条 | Fandom Wiki: 0条 | Wikipedia: 0条 → total 9 results
+  probe 黑袍纠察队/星光: results=9 pageLen=21443 sphere=western-en
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Fandom Wiki: 0条 | Wikipedia: 0条 → total 10 results
+  probe 黑袍纠察队/玄色: results=10 pageLen=3016 sphere=western-en
+[searchEngine] sources: Bing 搜索: 3条 | 萌娘百科: 3条 | Fandom Wiki: 0条 | Wikipedia: 0条 → total 6 results
+  probe 黑袍纠察队/梅芙女王: results=6 pageLen=3016 sphere=western-en
+[benchmark] report written: /Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/benchmark-report-famous-western-acg.json

@@ -20,8 +20,15 @@
  *   6. Translate if source language ≠ user language
  */
 
-const { searchCharacter, fetchBestPage } = require('./searchEngine');
+const { searchCharacter, fetchBestPage, fetchWebPage, sourcePriority } = require('./searchEngine');
 const { detectSphere, searchLanguage } = require('./culturalSphere');
+const {
+  parseSkinBlocks,
+  parseWutheringWavesProfile,
+  collectSkinFollowUpUrls,
+  pageHasMultipleSkins,
+  mergeSkinArrays,
+} = require('./wikiContentParser');
 const providerManager = require('../providerManager');
 const modelAliases = require('../modelAliases');
 const appConfig = require('../store/appConfig');
@@ -56,7 +63,274 @@ function _parseJson(raw) {
   return null;
 }
 
-async function _extractFromPage(charName, pageText, targetLang) {
+/** 提取结果与目标角色/作品明显不符时拒绝写入 */
+function _validateWebInfo(charName, fanworkName, webInfo, pageMeta = {}) {
+  if (!webInfo || typeof webInfo !== 'object') return false;
+  const blob = JSON.stringify(webInfo);
+  const quotes = String(webInfo.quotes || '');
+  const appearance = String(webInfo.appearance || '');
+
+  const rules = [
+    { name: /尼可·?莱恩|尼可莱恩/, forbid: /莱卡恩|维多利亚家政|执事莱卡恩|狼希人/i },
+    { name: /布伦妮/, forbid: /布伦希尔德|碧蓝航线/i },
+    { name: /洛恩/, fanwork: /原神/, forbid: /冯·莱卡恩|绝区零/i },
+  ];
+  for (const rule of rules) {
+    if (rule.name.test(charName) && rule.forbid.test(blob)) return false;
+    if (rule.fanwork && rule.fanwork.test(fanworkName) && rule.forbid.test(blob)) return false;
+  }
+
+  if (/未明确提及|^[-—\s]*$/.test(appearance) && !webInfo.personality && !webInfo.hairColor) {
+    return false;
+  }
+
+  const pageTitle = String(pageMeta.title || '');
+  if (pageTitle && fanworkName && pageTitle === fanworkName && !pageTitle.includes(charName)) {
+    return false;
+  }
+
+  if (quotes && charName) {
+    const otherFranchise = [
+      { work: '绝区零', token: '莱卡恩' },
+      { work: '碧蓝航线', token: '布伦希尔德' },
+    ];
+    for (const item of otherFranchise) {
+      if (fanworkName !== item.work && quotes.includes(item.token) && !charName.includes(item.token)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function _normalizeForMatch(s) {
+  return String(s || '')
+    .replace(/[·・.\s]/g, '')
+    .replace(/[（）()]/g, '')
+    .toLowerCase();
+}
+
+function _fieldInPageText(fieldVal, pageText) {
+  const val = String(fieldVal || '').trim();
+  if (!val || val.length < 2) return true;
+  const page = _normalizeForMatch(pageText);
+  const core = _normalizeForMatch(val);
+  if (page.includes(core)) return true;
+  const tokens = val.split(/[、，,/\s]+/).filter((t) => t.length >= 2);
+  return tokens.some((t) => page.includes(_normalizeForMatch(t)));
+}
+
+/** 完整度与页面锚定校验 */
+function _validateCompleteness(charName, webInfo, pageText) {
+  if (!webInfo) return { ok: false, reason: 'extract-empty' };
+  const appearance = String(webInfo.appearance || '').trim();
+  const quotes = String(webInfo.quotes || '').trim();
+  const hair = String(webInfo.hairColor || '').trim();
+  const eyes = String(webInfo.eyeColor || '').trim();
+  const height = String(webInfo.height || '').trim();
+
+  if (!appearance && !hair && !eyes && !String(webInfo.personality || '').trim()) {
+    return { ok: false, reason: 'extract-empty' };
+  }
+  const hasQuotes = quotes || /台词|语录|口癖/.test(appearance);
+  const hasPersonality = String(webInfo.personality || '').trim().length > 20;
+  if (!hasQuotes && !hasPersonality && !appearance) return { ok: false, reason: 'extract-empty' };
+
+  const hasHeight = height || String(webInfo.figure || '').trim() || /身高|体型|cm|米|体重/.test(appearance);
+  const hairUnknown = /发型未明确|发色未明确|发色未知/.test(appearance);
+  const eyeUnknown = /瞳色未明确|眼色未明确|眼睛.*未明确|未明确.*瞳色|未明确.*眼色/.test(appearance);
+  const heightUnknown = /身高.*未明确|未明确.*身高|体型未明确/.test(appearance);
+  if (!hair && !/发|毛色|发色|头发/.test(appearance) && !hairUnknown) {
+    return { ok: false, reason: 'incomplete-base' };
+  }
+  if (!eyes && !/瞳|眼色|眼睛|眸|眼眸/.test(appearance) && !eyeUnknown) return { ok: false, reason: 'incomplete-base' };
+  if (!hasHeight && !heightUnknown) return { ok: false, reason: 'incomplete-base' };
+  if (!hasQuotes && !hasPersonality) return { ok: false, reason: 'incomplete-base' };
+
+  for (const [field, val] of [['hairColor', hair], ['eyeColor', eyes], ['height', height]]) {
+    if (!val || val.length < 2) continue;
+    if (/未明确|未知|不详/.test(val)) continue;
+    if (_fieldInPageText(val, pageText)) continue;
+    if (appearance.includes(val) || (appearance.length > 40 && _fieldInPageText(val, appearance))) continue;
+    return { ok: false, reason: 'extract-rejected' };
+  }
+
+  const webSkins = _parseSkins(webInfo.skins);
+  const parsedPageSkins = parseSkinBlocks(pageText);
+  if (pageHasMultipleSkins(pageText) && parsedPageSkins.length >= 2) {
+    if (webSkins.length < 2) return { ok: false, reason: 'incomplete-skins' };
+    for (const skin of webSkins) {
+      if (!skin.name || !skin.outfit) return { ok: false, reason: 'incomplete-skins' };
+      if (!skin.story && !skin.quotes) return { ok: false, reason: 'incomplete-skins' };
+    }
+  }
+
+  return { ok: true, reason: 'success' };
+}
+
+function _mergeMissingWebInfo(webInfo, fallback) {
+  const merged = { ...(webInfo || {}) };
+  for (const [field, val] of Object.entries(fallback || {})) {
+    const curr = String(merged[field] || '').trim();
+    const next = String(val || '').trim();
+    if (!curr && next) merged[field] = next;
+  }
+  const fallbackAppearance = String(fallback?.appearance || '').trim();
+  const appearance = String(merged.appearance || '').trim();
+  if (fallbackAppearance && appearance && !/未明确.*(?:发色|瞳色|身高)|(?:发色|瞳色|身高).*未明确/.test(appearance)) {
+    merged.appearance = `${appearance}\n${fallbackAppearance}`;
+  }
+  return merged;
+}
+
+function _dropUnanchoredScalarFields(webInfo, pageText) {
+  const next = { ...(webInfo || {}) };
+  for (const field of ['hairColor', 'eyeColor', 'height']) {
+    const val = String(next[field] || '').trim();
+    if (!val || val.length < 2) continue;
+    if (_fieldInPageText(val, pageText)) continue;
+    if (String(next.appearance || '').includes(val)) continue;
+    next[field] = '';
+  }
+  return next;
+}
+
+function _countSparseCoreFields(webInfo) {
+  const fields = ['hairColor', 'eyeColor', 'height', 'personality', 'background', 'quotes'];
+  return fields.filter((field) => !String(webInfo?.[field] || '').trim()).length;
+}
+
+function _needsSupplementalSources(primarySource, webInfo, completeness) {
+  if (!webInfo) return true;
+  if (!completeness?.ok && ['incomplete-base', 'extract-empty'].includes(completeness.reason)) return true;
+  if (primarySource === 'bangumi' && _countSparseCoreFields(webInfo) >= 2) return true;
+  return false;
+}
+
+function _mergeSupplementalWebInfo(baseInfo, supplementalInfo) {
+  const merged = { ...(baseInfo || {}) };
+  for (const field of ['appearance', 'personality', 'background', 'hairColor', 'eyeColor', 'height', 'figure', 'moeTraits', 'quotes']) {
+    const curr = String(merged[field] || '').trim();
+    const next = String(supplementalInfo?.[field] || '').trim();
+    if (!curr && next) merged[field] = next;
+  }
+
+  const baseSkins = _parseSkins(merged.skins);
+  const supplementalSkins = _parseSkins(supplementalInfo?.skins);
+  if (baseSkins.length === 0 && supplementalSkins.length > 0) {
+    merged.skins = supplementalSkins;
+  }
+
+  const baseAppearance = String(baseInfo?.appearance || '').trim();
+  const nextAppearance = String(supplementalInfo?.appearance || '').trim();
+  if (baseAppearance && nextAppearance && baseAppearance !== nextAppearance && !baseAppearance.includes(nextAppearance)) {
+    merged.appearance = `${baseAppearance}\n${nextAppearance}`;
+  }
+  return merged;
+}
+
+async function _extractViaSpecificSource(sourceId, ch, { charName, fanworkName, sphere, srchLang, userLang, onProgress }) {
+  const searchRes = await _retry(() => searchCharacter({
+    charName,
+    fanworkName,
+    userLang: srchLang,
+    fanworkSphere: sphere,
+    preferredEngine: sourceId,
+    originalName: ch.originalName || '',
+  }), 1, `searchCharacter-${sourceId}(${charName})`);
+  const results = searchRes.results || [];
+  if (!results.length) return null;
+
+  const pagePayload = await _retry(
+    () => fetchBestPage(results, srchLang, {
+      charName,
+      fanworkName,
+      nativeCharName: searchRes.nativeCharName || charName,
+    }),
+    1,
+    `fetchBestPage-${sourceId}(${charName})`
+  );
+  if (!pagePayload?.text) return null;
+
+  const fullPageText = await _appendSkinPages(pagePayload, fanworkName);
+  const pageSkins = parseSkinBlocks(fullPageText);
+  let webInfo = await _retry(
+    () => _extractFromPage(charName, fullPageText, userLang, pageSkins),
+    1,
+    `extractFromPage-${sourceId}(${charName})`
+  );
+  const wutheringFallback = parseWutheringWavesProfile(fullPageText, charName);
+  if (!webInfo && Object.keys(wutheringFallback).length) {
+    webInfo = wutheringFallback;
+  }
+  if (!webInfo) return null;
+  if (Object.keys(wutheringFallback).length) {
+    webInfo = _mergeMissingWebInfo(webInfo, wutheringFallback);
+  }
+  webInfo = _dropUnanchoredScalarFields(webInfo, fullPageText);
+  if (!_validateWebInfo(charName, fanworkName, webInfo, pagePayload)) return null;
+
+  const completeness = _validateCompleteness(charName, webInfo, fullPageText);
+  onProgress?.({ charName, status: 'extracting', message: `补源检测 ${sourceId}: ${completeness.reason}` });
+  return { sourceId, searchRes, results, pagePayload, fullPageText, webInfo, completeness };
+}
+
+async function _supplementFromAlternateSources(ch, primary, ctx = {}) {
+  const {
+    fanworkName, sphere, srchLang, userLang, onProgress, charName,
+  } = ctx;
+  const ordered = sourcePriority(sphere, srchLang)
+    .filter((id) => !['bing', 'duckduckgo'].includes(id))
+    .filter((id) => id !== primary.pagePayload?.source);
+
+  let mergedInfo = { ...(primary.webInfo || {}) };
+  let evidencePages = [{ source: primary.pagePayload?.source || '', url: primary.pagePayload?.url || '' }];
+  let latestCompleteness = primary.completeness;
+
+  for (const sourceId of ordered) {
+    if (!_needsSupplementalSources(primary.pagePayload?.source, mergedInfo, latestCompleteness)) break;
+    onProgress?.({ charName, status: 'searching', message: `字段偏少，尝试补源: ${sourceId}` });
+    let supplemental;
+    try {
+      supplemental = await _extractViaSpecificSource(sourceId, ch, { charName, fanworkName, sphere, srchLang, userLang, onProgress });
+    } catch {
+      supplemental = null;
+    }
+    if (!supplemental) continue;
+    mergedInfo = _mergeSupplementalWebInfo(mergedInfo, supplemental.webInfo);
+    latestCompleteness = _validateCompleteness(charName, mergedInfo, `${primary.fullPageText}\n${supplemental.fullPageText}`);
+    evidencePages.push({ source: supplemental.pagePayload?.source || sourceId, url: supplemental.pagePayload?.url || '' });
+  }
+
+  return { webInfo: mergedInfo, completeness: latestCompleteness, evidencePages };
+}
+
+async function _appendSkinPages(pagePayload, fanworkName) {
+  const base = pagePayload?.text || '';
+  const url = pagePayload?.url || '';
+  if (!base || !url) return base;
+
+  let htmlSource = base;
+  try {
+    const raw = await fetchWebPage(url, { maxChars: 48000 });
+    if (raw.ok && raw.text) htmlSource = raw.text;
+  } catch { /* use existing text */ }
+
+  const followUrls = collectSkinFollowUpUrls(htmlSource, url);
+  const chunks = [base.slice(0, 12000)];
+  for (const skinUrl of followUrls) {
+    try {
+      const sub = await fetchWebPage(skinUrl, { maxChars: 4000 });
+      if (sub.ok && sub.text.length > 80) {
+        chunks.push(`\n--- 时装子页 ${skinUrl} ---\n${sub.text}`);
+      }
+    } catch { /* skip */ }
+  }
+  return chunks.join('\n').slice(0, 24000);
+}
+
+async function _extractFromPage(charName, pageText, targetLang, pageSkins = []) {
   if (!pageText || pageText.length < 100) return null;
   const { provider, tier } = await _resolveProvider();
   const needTranslate = targetLang && !targetLang.startsWith('zh');
@@ -71,9 +345,11 @@ async function _extractFromPage(charName, pageText, targetLang) {
   "personality": "性格特征（具体表现，不要标签）",
   "background": "角色背景故事",
   "moeTraits": "萌点列表（逗号分隔，如：黑长直、腹黑、巨乳、傲娇）",
-  "quotes": "代表性台词（分号分隔，最多3句）",
-  "skins": "皮肤/不同时期信息（格式：皮肤名|服装妆造|故事背景|适用场景；多个皮肤用分号分隔）"
+  "quotes": "常服/默认形态代表性台词（分号分隔，最多3句）",
+  "skins": [{"name":"皮肤名","outfit":"妆造与服装","story":"剧情背景","quotes":"该皮肤代表性台词"}]
 }
+
+也可将 skins 输出为字符串：皮肤名|妆造|故事|台词；多套用分号分隔（与 JSON 数组二选一）。
 
 注意：
 - 重点关注官方设定，包括性格、发色、瞳色、萌点、台词、背景故事
@@ -86,14 +362,20 @@ async function _extractFromPage(charName, pageText, targetLang) {
 - 优先从页面实际内容提取；未明确提及的信息留空
 
 页面内容：
-${pageText.slice(0, 12000)}`;
+${pageText.slice(0, 24000)}`;
 
   try {
     const result = await provider.sendMessage({
       system: '', messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }], tools: [], tier,
     });
     const textBlock = (result.content || []).find((b) => b.type === 'text');
-    return _parseJson(textBlock?.text || '');
+    const parsed = _parseJson(textBlock?.text || '');
+    if (!parsed) return null;
+    const llmSkins = _parseSkins(parsed.skins);
+    if (pageSkins.length || llmSkins.length) {
+      parsed.skins = mergeSkinArrays(pageSkins, llmSkins);
+    }
+    return parsed;
   } catch (err) {
     console.error('[enricher] AI extraction failed for', charName, ':', err.message);
     return null;
@@ -233,9 +515,10 @@ async function _enrichOneCharacterWithLLM(ch, { fanworkName, userLang, onProgres
             preferredEngine: 'all'
           });
           lastSearchResults = searchRes.results || [];
-          pageText = lastSearchResults.length > 0
-            ? await fetchBestPage(lastSearchResults, userLang)
-            : '';
+          const pagePayload = lastSearchResults.length > 0
+            ? await fetchBestPage(lastSearchResults, userLang, { charName, fanworkName })
+            : { text: '' };
+          pageText = pagePayload?.text || '';
           const resultContent = pageText
             ? `页面内容（来源: ${lastSearchResults[0]?.source || '?'} | 标题: ${lastSearchResults[0]?.title || '?'}）:\n${pageText.slice(0, 8000)}`
             : `未找到相关页面。`;
@@ -292,6 +575,29 @@ function _getFanworkName(worldOutput) {
  * @param {Array<()=>Promise<any>>} tasks
  * @param {number} limit
  */
+/**
+ * Retry an async function with exponential backoff.
+ * @param {()=>Promise<any>} fn
+ * @param {number} maxRetries
+ * @param {string} label - for logging
+ */
+async function _retry(fn, maxRetries = 2, label = '') {
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxRetries) {
+        const delay = 1000 * Math.pow(2, attempt);
+        console.error(`[enricher] ${label || 'retry'} failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms:`, err.message);
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+  }
+  throw lastError;
+}
+
 async function _runWithConcurrency(tasks, limit) {
   if (limit <= 0) limit = 1;
   const results = [];
@@ -300,15 +606,13 @@ async function _runWithConcurrency(tasks, limit) {
     const task = tasks[i];
     const p = Promise.resolve().then(() => task());
     results.push(p);
-    if (tasks.length >= limit) {
-      const e = p.then(() => {
-        const idx = executing.indexOf(e);
-        if (idx >= 0) executing.splice(idx, 1);
-      });
-      executing.push(e);
-      if (executing.length >= limit) {
-        await Promise.race(executing);
-      }
+    const e = p.then(() => {
+      const idx = executing.indexOf(e);
+      if (idx >= 0) executing.splice(idx, 1);
+    });
+    executing.push(e);
+    if (executing.length >= limit) {
+      await Promise.race(executing);
     }
   }
   return Promise.all(results);
@@ -333,7 +637,7 @@ function _formatSourceDetails(sourceDetails) {
   return lines.join('\n');
 }
 
-async function _enrichOneCharacter(ch, { fanworkName, sphere, srchLang, preferredEngine, userLang, onProgress }) {
+async function _enrichOneCharacter(ch, { fanworkName, sphere, srchLang, preferredEngine, userLang, onProgress, searchCache }) {
   const charName = ch.name || '';
   if (!charName) {
     onProgress?.({ charName: ch.id || '?', status: 'skipped', message: '无角色名' });
@@ -342,7 +646,23 @@ async function _enrichOneCharacter(ch, { fanworkName, sphere, srchLang, preferre
 
   onProgress?.({ charName, status: 'searching', message: `搜索: ${charName} @《${fanworkName}》` });
 
-  let searchRes = await searchCharacter({ charName, fanworkName, userLang: srchLang, fanworkSphere: sphere, preferredEngine });
+  // Check in-memory cache for this batch
+  const cacheKey = `${fanworkName}:${charName}:${srchLang}:${preferredEngine}`;
+  let searchRes;
+  if (searchCache?.has(cacheKey)) {
+    searchRes = searchCache.get(cacheKey);
+    onProgress?.({ charName, status: 'searching', message: `命中缓存: ${charName}` });
+  } else {
+    searchRes = await _retry(() => searchCharacter({
+      charName,
+      fanworkName,
+      userLang: srchLang,
+      fanworkSphere: sphere,
+      preferredEngine,
+      originalName: ch.originalName || '',
+    }), 2, `searchCharacter(${charName})`);
+    if (searchCache) searchCache.set(cacheKey, searchRes);
+  }
   let results = searchRes.results || [];
   let searchErrors = searchRes.errors || [];
   let allSourceDetails = searchRes.sourceDetails || [];
@@ -359,7 +679,7 @@ async function _enrichOneCharacter(ch, { fanworkName, sphere, srchLang, preferre
     const fbSphere = fallbackSpheres[sphere] || 'global';
     console.error(`[enricher] ${charName}: primary sphere returned ${results.length} results, trying fallback sphere ${fbSphere}`);
     onProgress?.({ charName, status: 'searching', message: `回退搜索 sphere=${fbSphere}` });
-    const fbRes = await searchCharacter({ charName, fanworkName, userLang: 'en', fanworkSphere: fbSphere, preferredEngine: 'all' });
+    const fbRes = await _retry(() => searchCharacter({ charName, fanworkName, userLang: 'en', fanworkSphere: fbSphere, preferredEngine: 'all' }), 2, `searchCharacter-fb(${charName})`);
     if (fbRes.results.length > 0) results = fbRes.results;
     searchErrors = searchErrors.concat(fbRes.errors || []);
     if (fbRes.sourceDetails?.length) {
@@ -373,7 +693,7 @@ async function _enrichOneCharacter(ch, { fanworkName, sphere, srchLang, preferre
   if (!results.length) {
     console.error(`[enricher] ${charName}: all cultural sources failed, trying global DuckDuckGo`);
     onProgress?.({ charName, status: 'searching', message: '回退搜索 DuckDuckGo' });
-    const ddRes = await searchCharacter({ charName, fanworkName, userLang: 'en', fanworkSphere: 'global', preferredEngine: 'duckduckgo' });
+    const ddRes = await _retry(() => searchCharacter({ charName, fanworkName, userLang: 'en', fanworkSphere: 'global', preferredEngine: 'duckduckgo' }), 2, `searchCharacter-ddg(${charName})`);
     results = ddRes.results;
     searchErrors = searchErrors.concat(ddRes.errors || []);
     if (ddRes.sourceDetails?.length) {
@@ -393,25 +713,125 @@ async function _enrichOneCharacter(ch, { fanworkName, sphere, srchLang, preferre
 
   onProgress?.({ charName, status: 'fetching', message: `获取页面: ${results[0]?.source} | 标题: ${results[0]?.title || '?'}` });
 
-  // Fetch best page content
-  const pageText = await fetchBestPage(results, srchLang);
-  if (!pageText) {
+  let pagePayload = await _retry(
+    () => fetchBestPage(results, srchLang, {
+      charName,
+      fanworkName,
+      nativeCharName: searchRes.nativeCharName || charName,
+    }),
+    2,
+    `fetchBestPage(${charName})`
+  );
+  if (!pagePayload?.text) {
+    try {
+      onProgress?.({ charName, status: 'searching', message: '页面为空，回退 Bing 精确搜索' });
+      const bingRes = await _retry(
+        () => searchCharacter({ charName, fanworkName, userLang: srchLang, fanworkSphere: sphere, preferredEngine: 'bing' }),
+        1,
+        `searchCharacter-bing(${charName})`
+      );
+      if (bingRes.results?.length) {
+        pagePayload = await _retry(
+          () => fetchBestPage(bingRes.results, srchLang, { charName, fanworkName }),
+          1,
+          `fetchBestPage-bing(${charName})`
+        );
+        if (pagePayload?.text) results = results.concat(bingRes.results || []);
+      }
+    } catch { /* keep original failure */ }
+  }
+  if (!pagePayload?.text) {
     onProgress?.({ charName, status: 'failed', message: '页面获取失败' });
     return { ch, merged: null, status: 'fetch-failed' };
   }
 
+  const fullPageText = await _appendSkinPages(pagePayload, fanworkName);
+  const pageSkins = parseSkinBlocks(fullPageText);
+
+  onProgress?.({
+    charName,
+    status: 'fetching',
+    message: `已抓取: ${pagePayload.source} | ${pagePayload.title || '?'} | 时装块=${pageSkins.length}`,
+  });
+
   onProgress?.({ charName, status: 'extracting', message: 'AI提取角色信息' });
 
-  // AI extract from page
-  const webInfo = await _extractFromPage(charName, pageText, userLang);
+  let webInfo = await _retry(
+    () => _extractFromPage(charName, fullPageText, userLang, pageSkins),
+    2,
+    `extractFromPage(${charName})`
+  );
+  const wutheringFallback = parseWutheringWavesProfile(fullPageText, charName);
   if (!webInfo) {
-    onProgress?.({ charName, status: 'failed', message: 'AI提取失败' });
-    return { ch, merged: null, status: 'extract-failed' };
+    if (Object.keys(wutheringFallback).length) {
+      webInfo = wutheringFallback;
+    } else {
+      onProgress?.({ charName, status: 'failed', message: 'AI提取失败' });
+      return { ch, merged: null, status: 'extract-failed' };
+    }
+  }
+  if (Object.keys(wutheringFallback).length) {
+    webInfo = _mergeMissingWebInfo(webInfo, wutheringFallback);
+  }
+  webInfo = _dropUnanchoredScalarFields(webInfo, fullPageText);
+
+  if (!_validateWebInfo(charName, fanworkName, webInfo, pagePayload)) {
+    onProgress?.({ charName, status: 'failed', message: '提取内容与角色/作品不匹配，已拒绝写入' });
+    const rejected = { ...ch, _enrichmentStatus: 'extract-rejected', _enrichmentSource: pagePayload.source || '' };
+    return { ch: rejected, merged: null, status: 'extract-rejected' };
   }
 
-  // Merge (novel takes priority)
-  const sourceTag = `sphere=${sphere} sources=${results.map(r => r.source).filter((v,i,a)=>a.indexOf(v)===i).join(',')}`;
+  let completeness = _validateCompleteness(charName, webInfo, fullPageText);
+  let supplementalSources = [];
+  if (_needsSupplementalSources(pagePayload.source, webInfo, completeness)) {
+    const supplemented = await _supplementFromAlternateSources(ch, {
+      webInfo,
+      completeness,
+      pagePayload,
+      fullPageText,
+    }, {
+      fanworkName,
+      sphere,
+      srchLang,
+      userLang,
+      onProgress,
+      charName,
+    });
+    webInfo = supplemented.webInfo;
+    completeness = supplemented.completeness;
+    supplementalSources = supplemented.evidencePages
+      .map((p) => p.source)
+      .filter(Boolean)
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .filter((v) => v !== pagePayload.source);
+    if (supplemented.evidencePages.length > 1) {
+      onProgress?.({
+        charName,
+        status: 'extracting',
+        message: `已进行交叉补源: ${supplemented.evidencePages.map((p) => p.source).join(' -> ')}`,
+      });
+    }
+  }
+  if (!completeness.ok && completeness.reason === 'extract-rejected') {
+    onProgress?.({ charName, status: 'failed', message: '字段无法在页面中锚定，已拒绝' });
+    const rejected = { ...ch, _enrichmentStatus: 'extract-rejected', _enrichmentSource: pagePayload.source || '' };
+    return { ch: rejected, merged: null, status: 'extract-rejected' };
+  }
+  if (!completeness.ok && completeness.reason === 'incomplete-skins') {
+    onProgress?.({ charName, status: 'failed', message: '页面含多套时装但提取不完整' });
+    const rejected = { ...ch, _enrichmentStatus: 'incomplete-skins', _enrichmentSource: pagePayload.source || '' };
+    return { ch: rejected, merged: null, status: 'incomplete-skins' };
+  }
+  if (!completeness.ok) {
+    onProgress?.({ charName, status: 'failed', message: `字段不完整: ${completeness.reason}` });
+    const rejected = { ...ch, _enrichmentStatus: completeness.reason, _enrichmentSource: pagePayload.source || '' };
+    return { ch: rejected, merged: null, status: completeness.reason };
+  }
+
+  const sourceTag = `sphere=${sphere} sources=${results.map(r => r.source).filter((v,i,a)=>a.indexOf(v)===i).join(',')} page=${pagePayload.source}${supplementalSources.length ? ` supplement=${supplementalSources.join(',')}` : ''}`;
   const merged = _mergeWebInfo(ch, webInfo, sourceTag, charName, onProgress, fanworkName);
+  merged._pageSnapshot = fullPageText.slice(0, 8000);
+  merged._pageUrl = pagePayload.url || '';
   const mergeStatus = merged._enrichmentStatus === 'extract-empty' ? 'extract-empty' : 'success';
   return { ch, merged, status: mergeStatus };
 }
@@ -452,7 +872,7 @@ async function enrichCharacters(characters, worldOutput, userLang = 'zh-CN', opt
   try {
     const cfg = await appConfig.load();
     preferredEngine = cfg?.searchEngine || 'auto';
-    concurrency = cfg?.enrichmentConcurrency ?? 10;
+    concurrency = cfg?.enrichmentConcurrency ?? 3;
     enrichmentMode = cfg?.enrichmentMode || 'traditional';
   } catch { /* use default */ }
 
@@ -462,10 +882,13 @@ async function enrichCharacters(characters, worldOutput, userLang = 'zh-CN', opt
   console.error(`[enricher] mode=${enrichmentMode} processing ${characters.length} characters with concurrency=${concurrency}`);
   onProgress?.({ charName: '_all', status: 'searching', message: `使用${enrichmentMode === 'llm' ? 'LLM智能' : '传统'}搜索模式` });
 
-  // 4. Skip original characters and process the rest concurrently
+  // 4. In-memory search cache for this batch (avoids duplicate searches within the same enrichment run)
+  const searchCache = new Map();
+
+  // 5. Skip original characters and process the rest concurrently
   const enrichFn = enrichmentMode === 'llm'
     ? (ch) => _enrichOneCharacterWithLLM(ch, { fanworkName, userLang, onProgress })
-    : (ch) => _enrichOneCharacter(ch, { fanworkName, sphere, srchLang, preferredEngine, userLang, onProgress });
+    : (ch) => _enrichOneCharacter(ch, { fanworkName, sphere, srchLang, preferredEngine, userLang, onProgress, searchCache });
   const tasks = characters.map((ch) => () => {
     if (ch.isOriginal === true) {
       onProgress?.({ charName: ch.name || ch.id || '?', status: 'skipped', message: '原创角色，跳过补全' });
@@ -502,4 +925,10 @@ async function enrichCharacters(characters, worldOutput, userLang = 'zh-CN', opt
   return enriched;
 }
 
-module.exports = { enrichCharacters };
+module.exports = {
+  enrichCharacters,
+  _validateWebInfo,
+  _validateCompleteness,
+  _parseSkins,
+  _fieldInPageText,
+};

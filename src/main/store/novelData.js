@@ -647,6 +647,84 @@ async function queryTimeline(novelDir, { participant, chapterRef, since, until }
   });
 }
 
+function chapterOrderKey(chapterRef) {
+  const text = String(chapterRef || '');
+  const match = text.match(/chapter-(\d+)([a-z]*)\.md$/i);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  const base = Number(match[1]) || 0;
+  const suffix = String(match[2] || '').toLowerCase();
+  let suffixOffset = 0;
+  for (let i = 0; i < suffix.length; i++) {
+    suffixOffset += (suffix.charCodeAt(i) - 96) / Math.pow(100, i + 1);
+  }
+  return base + suffixOffset;
+}
+
+function dedupeTimelineEvents(events) {
+  const byKey = new Map();
+  for (const event of events || []) {
+    const normalized = normalizeTimelineEvent(event, event || {});
+    byKey.set(timelineSemanticKey(normalized), normalized);
+  }
+  return Array.from(byKey.values());
+}
+
+async function validateTimelineCoverage(novelDir, events) {
+  const chapters = (await listChapters(novelDir)).map((chapter) => chapter.name).sort();
+  const chapterSet = new Set(chapters);
+  const refs = Array.from(new Set((events || []).map((event) => event?.chapterRef).filter(Boolean)));
+  const validRefs = refs.filter((ref) => chapterSet.has(ref));
+  const orphanChapterRefs = refs.filter((ref) => !chapterSet.has(ref)).sort();
+  const missingChapterRefs = [];
+
+  if (validRefs.length >= 2) {
+    const refIndexes = validRefs.map((ref) => chapters.indexOf(ref)).filter((index) => index >= 0);
+    const min = Math.min(...refIndexes);
+    const max = Math.max(...refIndexes);
+    const refSet = new Set(validRefs);
+    for (let i = min; i <= max; i++) {
+      const chapterName = chapters[i];
+      if (chapterName && !refSet.has(chapterName)) missingChapterRefs.push(chapterName);
+    }
+  }
+
+  return { missingChapterRefs, orphanChapterRefs };
+}
+
+async function syncTimelineEventsForChapter(novelDir, chapterRef, events) {
+  if (!chapterRef) throw new Error('syncTimelineEventsForChapter requires chapterRef');
+  const np = ensureNovelLayout(novelDir);
+  const incoming = dedupeTimelineEvents((Array.isArray(events) ? events : []).map((event) => ({
+    ...(event || {}),
+    chapterRef,
+  })));
+
+  return withMutex(np.timelineEvents, async () => {
+    const beforeEvents = await readJsonl(np.timelineEvents);
+    const kept = beforeEvents.filter((event) => event?.chapterRef !== chapterRef);
+    const withOrder = [...kept, ...incoming].map((event, index) => ({
+      event: normalizeTimelineEvent(event, event || {}),
+      index,
+    }));
+    withOrder.sort((a, b) => {
+      const byChapter = chapterOrderKey(a.event.chapterRef) - chapterOrderKey(b.event.chapterRef);
+      return byChapter || (a.index - b.index);
+    });
+    const nextEvents = withOrder.map((entry) => entry.event);
+    const content = nextEvents.map((event) => JSON.stringify(event)).join('\n');
+    await fs.mkdir(path.dirname(np.timelineEvents), { recursive: true });
+    await fs.writeFile(np.timelineEvents, content ? `${content}\n` : '', 'utf8');
+    const validation = await validateTimelineCoverage(novelDir, nextEvents);
+    return {
+      before: beforeEvents.length,
+      after: nextEvents.length,
+      replacedChapterRef: chapterRef,
+      synced: incoming.length,
+      validation,
+    };
+  });
+}
+
 // ---------------- Summaries ----------------
 
 async function appendSummary(novelDir, { chapterRef, summary, supplementMarkdown }) {
@@ -883,6 +961,16 @@ function _sceneNodeToMd(node, i) {
   if (node.needBackground) meta.push(`- 需背景`); // terse: no extra space
   if (meta.length) lines.push(...meta);
   if (node.summary) lines.push('', node.summary);
+  if (node.actualSummary) {
+    lines.push('', '### 写后进展', '', String(node.actualSummary));
+  }
+  if (Array.isArray(node.actualBeats) && node.actualBeats.length) {
+    lines.push('', '### 关键落点');
+    for (const beat of node.actualBeats) {
+      const text = _cleanStr(beat);
+      if (text) lines.push(`- ${text}`);
+    }
+  }
   return lines.join('\n');
 }
 
@@ -1232,6 +1320,30 @@ function _extractHeadingTitle(text) {
   return match ? match[1].trim() : '';
 }
 
+function resolveChapterTitle({ metadataTitle, content, fallbackTitle } = {}) {
+  const explicitTitle = _cleanStr(metadataTitle);
+  if (explicitTitle) return explicitTitle;
+  const headingTitle = _extractHeadingTitle(content || '');
+  if (headingTitle) return headingTitle;
+  return _cleanStr(fallbackTitle);
+}
+
+function _extractChapterMetaFromHead(head, name) {
+  if (head == null) return null;
+  const { metadata } = parseFrontmatter(head);
+  const normalizedMeta = metadata || null;
+  const headingTitle = _extractHeadingTitle(head);
+  const title = resolveChapterTitle({ metadataTitle: normalizedMeta?.title, content: head, fallbackTitle: '' });
+  return {
+    metadata: normalizedMeta,
+    fileName: name,
+    headingTitle,
+    title,
+    volume: normalizedMeta?.volume ?? null,
+    section: normalizedMeta?.section ?? null,
+  };
+}
+
 /**
  * Read only frontmatter of a chapter file (reads first 2KB).
  * Also returns a lightweight heading fallback for legacy files without frontmatter.
@@ -1240,14 +1352,17 @@ function _extractHeadingTitle(text) {
 async function readChapterMeta(novelDir, name) {
   const np = novelPaths(novelDir);
   const filePath = path.join(np.chapters, name);
-  const fm = await readFrontmatterFromFile(filePath);
-  const head = await _readChapterHead(filePath, fm?.bodyStart || 0, 4096);
-  if (head == null && !fm) return null;
-  return {
-    metadata: fm?.metadata || null,
-    fileName: name,
-    headingTitle: _extractHeadingTitle(head || ''),
-  };
+  const head = await _readChapterHead(filePath, 0, 4096);
+  return _extractChapterMetaFromHead(head, name);
+}
+
+async function listChapterMetas(novelDir) {
+  const chapters = await listChapters(novelDir);
+  const entries = await Promise.all(chapters.map(async (chapter) => {
+    const head = await _readChapterHead(chapter.path, 0, 4096);
+    return _extractChapterMetaFromHead(head, chapter.name);
+  }));
+  return entries.filter(Boolean).sort((a, b) => a.fileName.localeCompare(b.fileName));
 }
 
 async function writeChapter(novelDir, name, content) {
@@ -1299,7 +1414,7 @@ function _findLiteralRanges(haystack, needle) {
 }
 
 function _normalizeMatchChar(rawChar) {
-  if (/[ -]/u.test(rawChar) && rawChar !== '\n' && rawChar !== '\t' && rawChar !== '\r') {
+  if (/[\u0000-\u001f]/u.test(rawChar) && rawChar !== '\n' && rawChar !== '\t' && rawChar !== '\r') {
     return rawChar;
   }
   if ('“”„‟〝〞＂'.includes(rawChar)) return '"';
@@ -1515,8 +1630,8 @@ async function replaceChapterText(novelDir, name, targetText, replacementText, o
   }
   if (matchCount !== resolved.expectedMatchCount) {
     const contextualHint = options.beforeContext || options.afterContext
-      ? ' The provided context still matched multiple locations; narrow it further or switch to replace_text_near_cursor.'
-      : ' Include beforeContext/afterContext from the surrounding sentences, ask the user to select the exact occurrence, or place the cursor next to it and then use replace_text_near_cursor.';
+      ? ' The provided context still matched multiple locations; switch to replace_text_near_cursor or narrow it further.'
+      : ' Use replace_text_near_cursor after placing the cursor next to the intended occurrence, ask the user to select the exact text, or include tighter beforeContext/afterContext from surrounding sentences.';
     throw new Error(`targetText matched ${matchCount} times; expected ${resolved.expectedMatchCount}.${contextualHint}`);
   }
 
@@ -1843,13 +1958,13 @@ module.exports = {
   // assets
   listAssets, readAsset, upsertAsset, grantAsset, revokeAsset, applyAssetPatch,
   // timeline
-  listTimeline, appendTimelineEvent, updateTimelineEvent, replaceTimeline, dedupeTimeline, queryTimeline,
+  listTimeline, appendTimelineEvent, updateTimelineEvent, replaceTimeline, dedupeTimeline, queryTimeline, syncTimelineEventsForChapter,
   // summaries
   appendSummary, readSummary,
   // style
   readStyleMemory, appendStyleMemory, writeStyleMemory,
   // chapters
-  listChapters, readChapter, readChapterRaw, readChapterWithMeta, readChapterMeta,
+  listChapters, listChapterMetas, readChapter, readChapterRaw, readChapterWithMeta, readChapterMeta, resolveChapterTitle,
   writeChapter, writeChapterWithMeta, replaceChapterText, applyChapterPatch, computeNextInsertNameForNovel,
   // outlines
   readOutlineNodes, writeOutlineNodes, writeOutlineNodesToHierarchy,

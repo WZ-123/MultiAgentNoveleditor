@@ -7,6 +7,7 @@ const appConfig = require('../store/appConfig');
 
 const DEVICE_SEED = 'mana-device-v1';
 const VERIFY_ENDPOINT = '/api/v1/auth/verify';
+const VERIFY_TIMEOUT_MS = 8000;
 
 function getDeviceId() {
   const host = os.hostname() || 'unknown-host';
@@ -73,6 +74,10 @@ async function verifyLicense(options = {}) {
   }
 
   const deviceId = getDeviceId();
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  const timeout = controller
+    ? setTimeout(() => controller.abort(new Error('auth_verify_timeout')), VERIFY_TIMEOUT_MS)
+    : null;
 
   try {
     const res = await fetch(`${relayUrl}${VERIFY_ENDPOINT}`, {
@@ -81,8 +86,10 @@ async function verifyLicense(options = {}) {
         'Content-Type': 'application/json',
         'X-Relay-Api-Key': relayApiKey,
       },
+      signal: controller?.signal,
       body: JSON.stringify({ code: authCode, deviceId }),
     });
+    if (timeout) clearTimeout(timeout);
 
     const data = await res.json().catch(() => ({}));
 
@@ -120,17 +127,22 @@ async function verifyLicense(options = {}) {
       deviceRegistered: data.deviceRegistered,
     };
   } catch (err) {
+    if (timeout) clearTimeout(timeout);
     // Network error: allow if cache is within 3-day grace period
     const gracePeriod = 3 * 24 * 60 * 60 * 1000;
     if (cachedUntil > now - gracePeriod) {
       return { valid: true, offline: true, reason: 'network_error', verifiedUntil: license.verifiedUntil };
     }
 
-    const message = `网络错误，无法验证授权：${err.message}`;
+    const isTimeout = err?.name === 'AbortError' || err?.message === 'auth_verify_timeout';
+    const reason = isTimeout ? 'timeout' : 'network_error';
+    const message = isTimeout
+      ? `网络超时，${VERIFY_TIMEOUT_MS / 1000} 秒内无法完成授权验证，请稍后重试`
+      : `网络错误，无法验证授权：${err.message}`;
     if (!silent) {
       dialog.showErrorBox('授权验证失败', message);
     }
-    return { valid: false, reason: 'network_error', message };
+    return { valid: false, reason, message };
   }
 }
 

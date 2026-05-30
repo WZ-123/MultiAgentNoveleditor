@@ -71,8 +71,48 @@ async function runProviderManagerRegressionTest() {
     } else {
       fail('PM2_provider_upgrade_is_persisted_to_disk', JSON.stringify(diskAfterLoad));
     }
+
+    const originalFetch = global.fetch;
+    const fetchCalls = [];
+    global.fetch = async (url, options) => {
+      fetchCalls.push({ url, headers: options?.headers || {} });
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          data: [
+            {
+              id: 'deepseek-v4-pro',
+              display_name: 'DeepSeek V4 Pro',
+              context_window: 1024000,
+              max_output_tokens: 8192,
+              supports_thinking: true,
+              thinking_budget: 32000,
+            },
+          ],
+        }),
+      };
+    };
+    const discovered = await providerManager.discoverModels('DeepSeek V4 Pro');
+    global.fetch = originalFetch;
+
+    const firstCall = fetchCalls[0] || {};
+    const model = discovered.models?.[0];
+    if (
+      discovered.ok &&
+      firstCall.url === 'https://api.deepseek.com/anthropic/v1/models' &&
+      firstCall.headers?.['x-api-key'] === 'sk-test' &&
+      model?.contextWindow === 1024000 &&
+      model?.maxOutputTokens === 8192 &&
+      model?.supportsThinking === true &&
+      model?.thinkingBudget === 32000
+    ) {
+      pass('PM3_discover_models_uses_protocol_headers_and_metadata', 'Anthropic-compatible discovery preserves model capability metadata');
+    } else {
+      fail('PM3_discover_models_uses_protocol_headers_and_metadata', JSON.stringify({ discovered, fetchCalls }));
+    }
   } catch (err) {
-    fail('PM3_harness', err?.message || String(err));
+    fail('PM4_harness', err?.message || String(err));
   } finally {
     try {
       await fs.rm(userRoot, { recursive: true, force: true });

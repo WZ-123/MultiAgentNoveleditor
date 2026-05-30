@@ -1,6 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { User, Globe, Book, Pen, Calendar, ChevronRight, ChevronDown } from 'lucide-react';
 
+const TOOL_REFRESH_SECTIONS = {
+  create_character: ['characters'],
+  update_character: ['characters'],
+  delete_character: ['characters'],
+  update_world: ['world'],
+  append_timeline: ['timeline'],
+  update_timeline: ['timeline'],
+  sync_chapter_timeline: ['timeline'],
+  dedupe_timeline: ['timeline'],
+  write_outline_nodes: ['outline'],
+  append_style_memory: ['style'],
+};
+
 /**
  * Browses the active novel's characters, world, timeline, outline, and style.
  * Displayed in the sidebar below the chapter tree.
@@ -31,12 +44,8 @@ export function NovelDataBrowser({ onOpenTab }) {
     return () => { cancelled = true; clearInterval(iv); };
   }, [mana, activeNovel?.id]);
 
-  const loadSection = useCallback(async (key) => {
+  const loadSectionData = useCallback(async (key) => {
     if (!mana?.novel || !activeNovel?.id) return;
-    if (openSection === key) { setOpenSection(null); return; }
-    setOpenSection(key);
-    if (sectionData[key]) return; // already loaded
-
     setLoading((prev) => ({ ...prev, [key]: true }));
     try {
       const nid = activeNovel.id;
@@ -75,7 +84,33 @@ export function NovelDataBrowser({ onOpenTab }) {
       console.error(`[NovelDataBrowser] load ${key} failed:`, err);
     }
     setLoading((prev) => ({ ...prev, [key]: false }));
-  }, [mana, activeNovel, openSection, sectionData]);
+  }, [mana, activeNovel]);
+
+  const loadSection = useCallback(async (key) => {
+    if (!mana?.novel || !activeNovel?.id) return;
+    if (openSection === key) { setOpenSection(null); return; }
+    setOpenSection(key);
+    if (sectionData[key]) return; // already loaded
+    await loadSectionData(key);
+  }, [mana, activeNovel, openSection, sectionData, loadSectionData]);
+
+  useEffect(() => {
+    if (!mana?.chatAgent?.onEvent) return undefined;
+    const off = mana.chatAgent.onEvent((payload) => {
+      if (!payload || payload.kind !== 'tool_result' || payload.data?.isError) return;
+      const sectionsToRefresh = TOOL_REFRESH_SECTIONS[payload.data?.name] || [];
+      if (!sectionsToRefresh.length) return;
+      setSectionData((prev) => {
+        const next = { ...prev };
+        for (const key of sectionsToRefresh) delete next[key];
+        return next;
+      });
+      if (openSection && sectionsToRefresh.includes(openSection)) {
+        loadSectionData(openSection);
+      }
+    });
+    return () => { try { off(); } catch { /* ignore */ } };
+  }, [mana, openSection, loadSectionData]);
 
   if (!activeNovel?.id) {
     return (
@@ -135,8 +170,8 @@ export function NovelDataBrowser({ onOpenTab }) {
         <div className="px-4 pb-1 max-h-48 overflow-y-auto">
           {data.map((ev, i) => (
             <div key={ev.id || i} className="py-0.5 text-[10px] border-b border-vscode-panel-border/30 last:border-0">
-              <span className="text-gray-400">{s(ev.timestamp || ev.title || '?')}</span>
-              <span className="text-gray-500 ml-1">{s(ev.event || ev.title || '').slice(0, 100)}</span>
+              <span className="text-gray-400">{s(ev.when || ev.timestamp || ev.title || '?')}</span>
+              <span className="text-gray-500 ml-1">{s(ev.description || ev.event || ev.title || '').slice(0, 100)}</span>
             </div>
           ))}
         </div>

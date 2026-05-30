@@ -25,6 +25,21 @@ function notifyChapterChanged(name, action, title) {
   }
 }
 
+async function buildChapterSaveSnapshot(id, novelRoot, fileName, metadata) {
+  const chapters = await novelData.listChapters(novelRoot);
+  const sorted = chapters.map((chapter) => chapter.name).sort((a, b) => a.localeCompare(b));
+  const seq = Math.max(1, sorted.indexOf(fileName) + 1);
+  const rule = await novelsStore.getChapterNamingRule(id);
+  const title = metadata?.title || '';
+  return {
+    title,
+    volume: metadata?.volume ?? null,
+    section: metadata?.section ?? null,
+    seq,
+    displayName: novelData.computeChapterDisplayName(rule.rule, seq, rule.separator, title),
+  };
+}
+
 function notifyActiveNovelChanged(entry, action) {
   try {
     const { webContents } = require('electron');
@@ -117,6 +132,22 @@ function registerNovelIpc() {
     return novelData.listChapters(np.root);
   }));
 
+  ipcMain.handle('mana:novel:listChapterMetas', safeIpc(async (_e, { id }) => {
+    const np = await novelsStore.pathsFor(id);
+    const chapters = await novelData.listChapterMetas(np.root);
+    const rule = await novelsStore.getChapterNamingRule(id);
+    return chapters.map((chapter, index) => ({
+      ...chapter,
+      seq: index + 1,
+      displayName: novelData.computeChapterDisplayName(
+        rule.rule,
+        index + 1,
+        rule.separator,
+        chapter.title || ''
+      ),
+    }));
+  }));
+
   ipcMain.handle('mana:novel:readChapter', safeIpc(async (_e, { id, name }) => {
     const np = await novelsStore.pathsFor(id);
     return novelData.readChapter(np.root, name);
@@ -131,15 +162,25 @@ function registerNovelIpc() {
       if (finalMeta.volume == null && existing.metadata.volume != null) finalMeta.volume = existing.metadata.volume;
       if (finalMeta.section == null && existing.metadata.section != null) finalMeta.section = existing.metadata.section;
     }
-    // Auto-extract title from # heading in content
-    if (!finalMeta.title && content) {
-      const m = content.match(/^#\s+(.+)/m);
-      if (m) finalMeta.title = m[1].trim();
+    const resolvedTitle = novelData.resolveChapterTitle({
+      metadataTitle: finalMeta.title,
+      content,
+      fallbackTitle: existing?.metadata?.title || existing?.headingTitle || '',
+    });
+    if (resolvedTitle) {
+      finalMeta.title = resolvedTitle;
+    } else if ('title' in finalMeta) {
+      delete finalMeta.title;
     }
     const result = await novelData.writeChapterWithMeta(np.root, name, content, finalMeta);
+    const snapshot = await buildChapterSaveSnapshot(id, np.root, result.name || name, finalMeta);
     notifyChapterChanged(result.name || name, 'updated', finalMeta.title || existing?.metadata?.title || null);
     await maybeLogOffline({ type: 'chapter', action: 'update', targetId: name, targetName: name, payload: { name, content: content?.slice(0, 500) }, novelId: id });
-    return result;
+    return {
+      ...result,
+      ...snapshot,
+      metadata: finalMeta,
+    };
   }));
 
   ipcMain.handle('mana:novel:deleteChapter', safeIpc(async (_e, { id, name }) => {
@@ -167,6 +208,11 @@ function registerNovelIpc() {
     const displayName = novelData.computeChapterDisplayName(rule.rule, seq, rule.separator);
     const fileName = `chapter-${String(seq).padStart(3, '0')}.md`;
     return { seq, fileName, displayName };
+  }));
+
+  ipcMain.handle('mana:novel:computeChapterDisplayName', safeIpc(async (_e, { id, seq, title }) => {
+    const rule = await novelsStore.getChapterNamingRule(id);
+    return novelData.computeChapterDisplayName(rule.rule, seq, rule.separator, title || '');
   }));
 
   ipcMain.handle('mana:novel:readChapterMeta', safeIpc(async (_e, { id, name }) => {

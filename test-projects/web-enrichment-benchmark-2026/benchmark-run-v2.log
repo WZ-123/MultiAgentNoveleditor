@@ -1,0 +1,305 @@
+[benchmark] MANA_USER_DATA_ROOT= /Users/potablewater/Library/Application Support/multi-agent-novel-assistant/MultiAgentNovelAssistant
+[benchmark] project dir= /Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026
+[benchmark] wrote 36 character stubs
+
+[benchmark] Phase 1: search + fetch probes...
+[searchEngine] sources: Biligame Wiki: 5条 | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 15 results
+  probe 碧蓝航线/戈达·冯·贝格海姆: results=15 pageLen=399 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 5条 | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 15 results
+  probe 碧蓝航线/优妮可欧伊: results=15 pageLen=347 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 5条 | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 15 results
+  probe 碧蓝航线/彰武: results=15 pageLen=29657 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 碧蓝航线/肇和: results=10 pageLen=19642 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 碧蓝航线/应瑞: results=10 pageLen=14379 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 碧蓝航线/宁海: results=10 pageLen=27111 sphere=east-asian-cn
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 蔚蓝档案/三千留: results=10 pageLen=11302 sphere=east-asian-jp
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 蔚蓝档案/月夜: results=10 pageLen=15475 sphere=east-asian-jp
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 蔚蓝档案/律: results=10 pageLen=5921 sphere=east-asian-jp
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 蔚蓝档案/冰室濑名: results=10 pageLen=14113 sphere=east-asian-jp
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 蔚蓝档案/宇泽玲纱: results=10 pageLen=10150 sphere=east-asian-jp
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 蔚蓝档案/天见凉: results=10 pageLen=0 sphere=east-asian-jp
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 原神/尼可·莱恩: results=10 pageLen=0 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 原神/洛恩: results=10 pageLen=12000 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 原神/布伦妮: results=10 pageLen=2892 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 原神/蓝砚: results=10 pageLen=23740 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 原神/伊安珊: results=10 pageLen=29167 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 原神/赛索斯: results=10 pageLen=23669 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 崩坏：星穹铁道/刃: results=10 pageLen=20055 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 崩坏：星穹铁道/昔涟: results=10 pageLen=6720 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 崩坏：星穹铁道/白厄: results=10 pageLen=11210 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 崩坏：星穹铁道/阿兰: results=10 pageLen=9433 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 崩坏：星穹铁道/希露瓦: results=10 pageLen=11408 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 崩坏：星穹铁道/米沙: results=10 pageLen=12000 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 绝区零/普罗米娅: results=10 pageLen=5234 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 绝区零/星徽·比利: results=10 pageLen=0 sphere=east-asian-cn
+[searchEngine] sources: Bing 搜索: 5条 | Biligame Wiki: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 15 results
+  probe 绝区零/卢西娅: results=15 pageLen=2701 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 绝区零/可琳: results=10 pageLen=8517 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 绝区零/安东: results=10 pageLen=7223 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 绝区零/波可娜: results=10 pageLen=9358 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 鸣潮/绯雪: results=10 pageLen=3681 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 鸣潮/达妮娅: results=10 pageLen=1488 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 鸣潮/西格莉卡: results=10 pageLen=1950 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 鸣潮/丹瑾: results=10 pageLen=11694 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 鸣潮/白芷: results=10 pageLen=8702 sphere=east-asian-cn
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+  probe 鸣潮/渊武: results=10 pageLen=7134 sphere=east-asian-cn
+
+[benchmark] Phase 2: enrichCharacters (traditional mode)...
+
+[benchmark] enriching work="碧蓝航线" (6 chars)...
+[enricher] fanwork="碧蓝航线" sphere="east-asian-cn" (东亚（中国）, known)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 彰武: 获取页面: bing | 标题: biligame.comhttps://wiki.biligame.com › blhx › 彰武
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 宁海: 获取页面: moegirl | 标题: 碧蓝航线:宁海
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 戈达·冯·贝格海姆: 获取页面: moegirl | 标题: 碧蓝航线:圣地亚哥
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 优妮可欧伊: 获取页面: moegirl | 标题: 碧蓝航线 微速前行
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 应瑞: 获取页面: moegirl | 标题: 碧蓝航线:应瑞
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 肇和: 获取页面: moegirl | 标题: 碧蓝航线:肇和
+    [fetching] 肇和: 已抓取: moegirl | 碧蓝航线:肇和
+    [extracting] 肇和: AI提取角色信息
+    [fetching] 宁海: 已抓取: moegirl | 碧蓝航线:宁海
+    [extracting] 宁海: AI提取角色信息
+    [fetching] 应瑞: 已抓取: moegirl | 碧蓝航线:应瑞
+    [extracting] 应瑞: AI提取角色信息
+    [fetching] 彰武: 已抓取: bing | zhangwu.gov.cnhttps://www.zhangwu.gov.cn
+    [extracting] 彰武: AI提取角色信息
+    [fetching] 优妮可欧伊: 已抓取: bing | bilibili.comhttps://www.bilibili.com › video
+    [extracting] 优妮可欧伊: AI提取角色信息
+    [fetching] 戈达·冯·贝格海姆: 已抓取: bing | bilibili.comhttps://www.bilibili.com › video
+    [extracting] 戈达·冯·贝格海姆: AI提取角色信息
+    [failed] 彰武: 提取内容与角色/作品不匹配，已拒绝写入
+    [failed] 优妮可欧伊: 提取内容与角色/作品不匹配，已拒绝写入
+    [failed] 戈达·冯·贝格海姆: 提取内容与角色/作品不匹配，已拒绝写入
+    [success] 宁海: 补全成功 appearance=true personality=false hair=true eyes=true skins=9
+    [success] 肇和: 补全成功 appearance=true personality=true hair=true eyes=true skins=2
+    [failed] 应瑞: AI提取失败
+[enricher] 6 个角色 → 2 补全成功, 4 失败/跳过
+  done in 51.0s
+
+[benchmark] enriching work="蔚蓝档案" (6 chars)...
+[enricher] fanwork="蔚蓝档案" sphere="east-asian-jp" (东亚（日本）, known)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 冰室濑名: 获取页面: moegirl | 标题: 冰室濑奈
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 月夜: 获取页面: moegirl | 标题: 蔚蓝档案/电视动画
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 天见凉: 获取页面: moegirl | 标题: 蔚蓝档案/电视动画
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 律: 获取页面: moegirl | 标题: 我们的任务
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 三千留: 获取页面: moegirl | 标题: 千鸟三千留
+[searchEngine] sources: Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 宇泽玲纱: 获取页面: moegirl | 标题: 宇泽玲纱
+    [fetching] 月夜: 已抓取: moegirl | 蔚蓝档案/电视动画
+    [extracting] 月夜: AI提取角色信息
+    [fetching] 宇泽玲纱: 已抓取: moegirl | 宇泽玲纱
+    [extracting] 宇泽玲纱: AI提取角色信息
+    [fetching] 律: 已抓取: moegirl | 我们的任务
+    [extracting] 律: AI提取角色信息
+    [fetching] 冰室濑名: 已抓取: moegirl | 冰室濑奈
+    [extracting] 冰室濑名: AI提取角色信息
+    [fetching] 三千留: 已抓取: moegirl | 千鸟三千留
+    [extracting] 三千留: AI提取角色信息
+    [failed] 天见凉: 页面获取失败
+    [failed] 律: 提取内容与角色/作品不匹配，已拒绝写入
+    [failed] 月夜: 提取内容与角色/作品不匹配，已拒绝写入
+    [success] 三千留: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 宇泽玲纱: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 冰室濑名: 补全成功 appearance=true personality=true hair=true eyes=true skins=2
+[enricher] 6 个角色 → 3 补全成功, 3 失败/跳过
+  done in 43.9s
+
+[benchmark] enriching work="原神" (6 chars)...
+[enricher] fanwork="原神" sphere="east-asian-cn" (东亚（中国）, known)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 蓝砚: 获取页面: moegirl | 标题: 蓝砚
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 赛索斯: 获取页面: moegirl | 标题: 赛索斯
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 尼可·莱恩: 获取页面: moegirl | 标题: 冯·莱卡恩
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 伊安珊: 获取页面: moegirl | 标题: 伊安珊
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 洛恩: 获取页面: bing | 标题: biligame.comhttps://wiki.biligame.com › ys › 洛恩
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 布伦妮: 获取页面: bing | 标题: biligame.comhttps://wiki.biligame.com › ys › 布伦妮 › 攻略
+    [fetching] 赛索斯: 已抓取: moegirl | 赛索斯
+    [extracting] 赛索斯: AI提取角色信息
+    [fetching] 蓝砚: 已抓取: moegirl | 蓝砚
+    [extracting] 蓝砚: AI提取角色信息
+    [fetching] 伊安珊: 已抓取: moegirl | 伊安珊
+    [extracting] 伊安珊: AI提取角色信息
+    [fetching] 布伦妮: 已抓取: bing | qq.comhttps://news.qq.com › rain
+    [extracting] 布伦妮: AI提取角色信息
+    [failed] 尼可·莱恩: 页面获取失败
+    [fetching] 洛恩: 已抓取: bing | honeyhunterworld.comhttps://gensh.honeyhunterworld.com
+    [extracting] 洛恩: AI提取角色信息
+    [success] 赛索斯: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 布伦妮: 补全成功 appearance=true personality=false hair=false eyes=false skins=0
+    [success] 洛恩: 补全成功 appearance=false personality=true hair=false eyes=false skins=1
+    [success] 蓝砚: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 伊安珊: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+[enricher] 6 个角色 → 5 补全成功, 1 失败/跳过
+  done in 32.0s
+
+[benchmark] enriching work="崩坏：星穹铁道" (6 chars)...
+[enricher] fanwork="崩坏：星穹铁道" sphere="east-asian-cn" (东亚（中国）, known)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 白厄: 获取页面: moegirl | 标题: 白厄
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 米沙: 获取页面: bing | 标题: biligame.comhttps://wiki.biligame.com › sr › 米沙
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 刃: 获取页面: moegirl | 标题: 崩坏：星穹铁道/介绍文本
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 昔涟: 获取页面: moegirl | 标题: 昔涟
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 希露瓦: 获取页面: moegirl | 标题: 希露瓦·朗道
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 阿兰: 获取页面: moegirl | 标题: 阿兰(星穹铁道)
+    [fetching] 白厄: 已抓取: moegirl | 白厄
+    [extracting] 白厄: AI提取角色信息
+    [fetching] 昔涟: 已抓取: moegirl | 昔涟
+    [extracting] 昔涟: AI提取角色信息
+    [fetching] 刃: 已抓取: moegirl | 崩坏：星穹铁道/介绍文本
+    [extracting] 刃: AI提取角色信息
+    [fetching] 希露瓦: 已抓取: moegirl | 希露瓦·朗道
+    [extracting] 希露瓦: AI提取角色信息
+    [fetching] 阿兰: 已抓取: moegirl | 阿兰(星穹铁道)
+    [extracting] 阿兰: AI提取角色信息
+    [fetching] 米沙: 已抓取: bing | moegirl.ukhttps://moegirl.uk › 米沙
+    [extracting] 米沙: AI提取角色信息
+    [failed] 刃: 提取内容与角色/作品不匹配，已拒绝写入
+    [success] 希露瓦: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 昔涟: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 阿兰: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 米沙: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 白厄: 补全成功 appearance=true personality=true hair=true eyes=true skins=4
+[enricher] 6 个角色 → 5 补全成功, 1 失败/跳过
+  done in 38.4s
+
+[benchmark] enriching work="绝区零" (6 chars)...
+[enricher] fanwork="绝区零" sphere="east-asian-cn" (东亚（中国）, known)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 可琳: 获取页面: moegirl | 标题: 可琳·威克斯
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 波可娜: 获取页面: moegirl | 标题: 波可娜·费雷尼
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 普罗米娅: 获取页面: bing | 标题: biligame.comhttps://wiki.biligame.com › zzz › 普罗米娅
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 星徽·比利: 获取页面: moegirl | 标题: 星徽骑士
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 卢西娅: 获取页面: bing | 标题: biligame.comhttps://wiki.biligame.com › zzz › 卢西娅
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 安东: 获取页面: moegirl | 标题: 安东·伊万诺夫
+    [fetching] 安东: 已抓取: moegirl | 安东·伊万诺夫
+    [extracting] 安东: AI提取角色信息
+    [fetching] 波可娜: 已抓取: moegirl | 波可娜·费雷尼
+    [extracting] 波可娜: AI提取角色信息
+    [fetching] 可琳: 已抓取: moegirl | 可琳·威克斯
+    [extracting] 可琳: AI提取角色信息
+    [fetching] 卢西娅: 已抓取: bing | gamersky.comhttps://www.gamersky.com › handbook
+    [extracting] 卢西娅: AI提取角色信息
+    [fetching] 普罗米娅: 已抓取: bing | 17173.comhttps://news.17173.com › content
+    [extracting] 普罗米娅: AI提取角色信息
+    [failed] 星徽·比利: 页面获取失败
+    [failed] 普罗米娅: 提取内容与角色/作品不匹配，已拒绝写入
+    [failed] 卢西娅: 提取内容与角色/作品不匹配，已拒绝写入
+    [success] 可琳: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 安东: 补全成功 appearance=true personality=true hair=true eyes=true skins=1
+    [success] 波可娜: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+[enricher] 6 个角色 → 3 补全成功, 3 失败/跳过
+  done in 31.3s
+
+[benchmark] enriching work="鸣潮" (6 chars)...
+[enricher] fanwork="鸣潮" sphere="east-asian-cn" (东亚（中国）, known)
+[enricher] mode=traditional processing 6 characters with concurrency=10
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 西格莉卡: 获取页面: bing | 标题: fandom.comhttps://wutheringwaves.fandom.com › zh › wiki › 西格莉卡
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 渊武: 获取页面: moegirl | 标题: 渊武
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 绯雪: 获取页面: bing | 标题: biligame.comhttps://wiki.biligame.com › wutheringwaves › 共鸣者 › 绯雪
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 达妮娅: 获取页面: bing | 标题: fandom.comhttps://wutheringwaves.fandom.com › zh › wiki › 达妮娅
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 白芷: 获取页面: moegirl | 标题: 白芷
+[searchEngine] sources: Biligame Wiki: 错误(non-json response (<!doctype html><html lang=zh-CN><meta ch...)) | Bing 搜索: 5条 | 萌娘百科: 5条 | Wikipedia: 错误(fetch failed) → total 10 results
+    [fetching] 丹瑾: 获取页面: moegirl | 标题: 丹瑾
+    [fetching] 丹瑾: 已抓取: moegirl | 丹瑾
+    [extracting] 丹瑾: AI提取角色信息
+    [fetching] 白芷: 已抓取: moegirl | 白芷
+    [extracting] 白芷: AI提取角色信息
+    [fetching] 渊武: 已抓取: moegirl | 渊武
+    [extracting] 渊武: AI提取角色信息
+    [fetching] 达妮娅: 已抓取: bing | taptap.cnhttps://www.taptap.cn › moment
+    [extracting] 达妮娅: AI提取角色信息
+    [fetching] 绯雪: 已抓取: bing | taptap.cnhttps://www.taptap.cn › moment
+    [extracting] 绯雪: AI提取角色信息
+    [fetching] 西格莉卡: 已抓取: bing | biligame.comhttps://wiki.biligame.com › wutheringwaves › 共鸣者 › 西格...
+    [extracting] 西格莉卡: AI提取角色信息
+    [success] 渊武: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [failed] 达妮娅: 提取内容与角色/作品不匹配，已拒绝写入
+    [failed] 绯雪: 提取内容与角色/作品不匹配，已拒绝写入
+    [success] 丹瑾: 补全成功 appearance=true personality=true hair=true eyes=true skins=0
+    [success] 白芷: 补全成功 appearance=true personality=true hair=true eyes=true skins=1
+    [success] 西格莉卡: 补全成功 appearance=true personality=true hair=false eyes=false skins=1
+[enricher] 6 个角色 → 4 补全成功, 2 失败/跳过
+  done in 27.4s
+
+[benchmark] === SUMMARY ===
+{
+  "statusCounts": {
+    "extract-rejected": 10,
+    "success": 22,
+    "extract-failed": 1,
+    "fetch-failed": 3
+  },
+  "avgFilledFields": 4.39,
+  "successRate": 61.1,
+  "searchProbeNoPage": 3,
+  "searchProbeNoResults": 0
+}
+[benchmark] full report: /Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/benchmark-report.json
+[benchmark] novel registered as: novel-web-enrichment-benchmark-2026

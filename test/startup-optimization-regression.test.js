@@ -39,15 +39,27 @@ async function runStartupOptimizationRegressionTest() {
     assert.equal(legacyMeta.headingTitle, '序章');
     pass('SOR1_read_chapter_meta_extracts_heading_without_frontmatter', 'lightweight chapter metadata reads can now recover the leading H1 for legacy files');
 
+    const batchMeta = await novelData.listChapterMetas(tmpNovelDir);
+    assert.equal(batchMeta.length, 1);
+    assert.equal(batchMeta[0].fileName, 'chapter-001.md');
+    assert.equal(batchMeta[0].headingTitle, '序章');
+    assert.equal(batchMeta[0].title, '序章');
+    assert.equal(batchMeta[0].volume, null);
+    assert.equal(batchMeta[0].section, null);
+    pass('SOR1b_list_chapter_metas_batches_startup_reads', 'chapter metadata can now be collected in one main-process sweep for startup hydration');
+
     const appCode = await fs.readFile(path.join(ROOT, 'src/App.jsx'), 'utf8');
     const syncStart = appCode.indexOf('async function syncNovelTreeFromDisk');
     const syncEnd = appCode.indexOf('  const chapterEntries = useMemo', syncStart);
     const syncBlock = appCode.slice(syncStart, syncEnd);
-    assert.ok(syncBlock.includes('readChapterMeta'));
+    assert.ok(syncBlock.includes('listChapterMetas'));
+    assert.ok(syncBlock.includes('chapterMeta.displayName'));
+    assert.equal(syncBlock.includes('readChapterMeta('), false);
     assert.equal(syncBlock.includes('readChapter('), false);
+    assert.equal(appCode.includes('function buildChapterDisplayName('), false);
     assert.ok(appCode.includes('const ensureChapterContentLoaded = useCallback(async (chapterId) => {'));
     assert.ok(appCode.includes('await ensureChapterContentLoaded(chapterId);'));
-    pass('SOR2_app_syncs_tree_from_metadata_and_loads_body_on_open', 'startup sync now avoids eager full chapter reads and defers body loading until open/write paths');
+    pass('SOR2_app_syncs_tree_from_batched_metadata_and_loads_body_on_open', 'startup sync now batches chapter metadata reads, uses main-process display names, and defers body loading until open/write paths');
 
     const mainIndexCode = await fs.readFile(path.join(ROOT, 'src/main/index.js'), 'utf8');
     const initStart = mainIndexCode.indexOf('async function initBackend()');
@@ -62,7 +74,10 @@ async function runStartupOptimizationRegressionTest() {
     assert.ok(mainIndexCode.includes('dagsStore.ensureBuiltinSeeds(),'));
 
     const mainCode = await fs.readFile(path.join(ROOT, 'main.js'), 'utf8');
-    assert.ok(mainCode.includes('backend.startDeferredStartup?.().catch'));
+    const createWindowIndex = mainCode.indexOf('await createWindow();');
+    const deferredIndex = mainCode.indexOf('backend.startDeferredStartup?.().catch');
+    assert.ok(createWindowIndex >= 0);
+    assert.ok(deferredIndex > createWindowIndex);
     pass('SOR3_main_process_defers_noncritical_startup_work', 'seed/quota/worker cleanup tasks now run after createWindow instead of blocking initBackend');
   } catch (err) {
     fail('SOR_harness', err && err.stack ? err.stack : String(err));

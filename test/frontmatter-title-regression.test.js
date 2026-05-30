@@ -21,6 +21,7 @@ async function runFrontmatterTitleRegressionTest() {
     parseFrontmatter,
     readFrontmatterFromFileSync,
   } = require(path.join(ROOT, 'src/main/store/frontmatter'));
+  const { resolveChapterTitle } = require(path.join(ROOT, 'src/main/store/novelData'));
 
   const sampleBody = '正文第一段。\n\n正文第二段。';
   const tmpRoot = path.join(ROOT, 'tmp-test-frontmatter-title-regression');
@@ -53,8 +54,29 @@ async function runFrontmatterTitleRegressionTest() {
     } else {
       fail('F3_read_frontmatter_from_file_sync_title', JSON.stringify(fm));
     }
+
+    const resolvedFromHeading = resolveChapterTitle({ content: '# 雨夜\n\n正文', fallbackTitle: '旧标题' });
+    if (resolvedFromHeading === '雨夜') {
+      pass('F4_resolve_title_prefers_heading_over_fallback');
+    } else {
+      fail('F4_resolve_title_prefers_heading_over_fallback', resolvedFromHeading);
+    }
+
+    const resolvedFromMetadata = resolveChapterTitle({ metadataTitle: '前置标题', content: '# 雨夜\n\n正文', fallbackTitle: '旧标题' });
+    if (resolvedFromMetadata === '前置标题') {
+      pass('F5_resolve_title_prefers_metadata_over_heading');
+    } else {
+      fail('F5_resolve_title_prefers_metadata_over_heading', resolvedFromMetadata);
+    }
+
+    const resolvedFromFallback = resolveChapterTitle({ content: '没有标题行', fallbackTitle: '旧标题' });
+    if (resolvedFromFallback === '旧标题') {
+      pass('F6_resolve_title_falls_back_when_content_has_no_heading');
+    } else {
+      fail('F6_resolve_title_falls_back_when_content_has_no_heading', resolvedFromFallback);
+    }
   } catch (err) {
-    fail('F4_harness', err && err.stack ? err.stack : String(err));
+    fail('F7_harness', err && err.stack ? err.stack : String(err));
   } finally {
     try {
       await fs.rm(tmpRoot, { recursive: true, force: true });

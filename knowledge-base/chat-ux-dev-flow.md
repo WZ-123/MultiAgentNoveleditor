@@ -8,7 +8,39 @@
 3. 错误恢复是否可靠
 4. 驱动切换（direct-api ↔ claude-code）不影响体验
 
+强制规则：只要改动涉及聊天相关功能，就必须在模拟聊天环境中测试完整聊天链路，至少验证一次消息发送、事件分发、UI 渲染或错误展示。只跑 MCP 工具层、store 层、或子代理层测试，不算完成聊天功能验证。
+
 ## 架构要点
+
+### 查询软件内 AI 聊天记录
+
+排查聊天问题时，默认先看软件自己的聊天存档，不要先看 Copilot/Claude 对话转录。软件内聊天记录由 [src/main/store/chatHistory.js](src/main/store/chatHistory.js) 持久化，根路径由 [src/main/store/paths.js](src/main/store/paths.js) 的 paths().root 决定，存储结构固定为：
+
+```
+<userData>/chat-threads/
+  index.json
+  thread-*.json
+```
+
+查询步骤：
+1. 先打开 chat-threads/index.json，按 title、updatedAt、novelId 找目标线程。
+2. 再打开对应的 thread-*.json，看 messages、currentNodeId 和每条 assistant message 上的 toolCalls。
+3. 排查 MCP/聊天异常时，以 thread-*.json 里的真实 toolCalls 为准，不要用和 Copilot 的对话记录代替。
+
+当前 macOS 常见路径：
+1. 开发环境：~/Library/Application Support/MultiAgentNovelAssistant-dev/MultiAgentNovelAssistant/chat-threads/
+2. 生产环境：~/Library/Application Support/multi-agent-novel-assistant/MultiAgentNovelAssistant/chat-threads/
+
+命令行快速查询示例：
+1. 列出线程索引：cat ~/Library/Application\ Support/MultiAgentNovelAssistant-dev/MultiAgentNovelAssistant/chat-threads/index.json
+2. 按标题筛线程：rg '拿去ai味工具审查2-6章|为第五章去除一下AI味' ~/Library/Application\ Support/MultiAgentNovelAssistant-dev/MultiAgentNovelAssistant/chat-threads/index.json
+3. 打开指定线程：cat ~/Library/Application\ Support/MultiAgentNovelAssistant-dev/MultiAgentNovelAssistant/chat-threads/thread-xxxxx.json
+4. 只看工具调用：rg 'toolCalls|review_de_ai_style|apply_chapter_patch|replace_chapter_text|spawn_subagent' ~/Library/Application\ Support/MultiAgentNovelAssistant-dev/MultiAgentNovelAssistant/chat-threads/thread-xxxxx.json
+
+最常见的取证入口：
+1. index.json：确认到底是哪一条会话。
+2. thread-xxx.json：按时间顺序看 user/assistant/toolCalls。
+3. 如果用户反馈“你看的不是这条聊天”，先回到 index.json 对线程标题和时间，再继续分析。
 
 ### 事件流路径
 
@@ -113,10 +145,10 @@ main.js               — --test-chat 标志入口
 ## 修复循环流程
 
 1. **先写测试** — 从当前 bug 场景提炼测试用例
-2. **运行测试** — 确认测试失败（红）
+2. **运行聊天环境测试** — 在模拟聊天环境中确认当前场景失败（红），不能只跑工具层测试替代
 3. **读代码定位** — 追踪事件流路径，找到根因
 4. **修复** — 修改最少的代码使测试通过
-5. **运行测试** — 确认测试通过（绿）
+5. **重跑聊天环境测试** — 确认聊天链路测试通过（绿）
 6. **回归** — 运行 `bash test/ui-e2e.sh` 和 `bash test/chat-e2e.sh`
 7. **手动验证** — 启动应用，实际使用聊天功能
 8. **循环** — 直到所有测试通过
@@ -126,6 +158,7 @@ main.js               — --test-chat 标志入口
 - [ ] `bash test/ui-e2e.sh` ✅ 全部通过
 - [ ] `bash test/chat-e2e.sh` ✅ 全部通过
 - [ ] `npx vite build` ✅ 构建通过
+- [ ] 至少有一条测试运行在模拟聊天环境中，验证的是真实聊天链路，不是单独工具层
 - [ ] 手动：聊天输入文字，流式文字正常显示
 - [ ] 手动：工具调用卡片正常显示（折叠/展开）
 - [ ] 手动：断流/错误情况下 UI 显示合理错误信息

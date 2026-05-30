@@ -28,6 +28,7 @@ export function ProviderSettingsPanel() {
 
   const [expandedProviders, setExpandedProviders] = useState(new Set());
   const [modelForm, setModelForm] = useState({ providerId: '', id: '', name: '', contextWindow: 200000 });
+  const [discoverNotice, setDiscoverNotice] = useState('');
 
   const [aliases, setAliases] = useState([]);
   const [aliasLoading, setAliasLoading] = useState(false);
@@ -61,18 +62,24 @@ export function ProviderSettingsPanel() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  const refreshMcpTools = useCallback(async () => {
+    if (!mana?.mcp?.listTools) return;
+    await mana.mcp.listTools();
+  }, [mana]);
+
   const handleUse = useCallback(async (name) => {
     setBusyAction(`use:${name}`);
     setError('');
     try {
       await mana.ccs.use(name);
+      await refreshMcpTools();
       await refresh();
     } catch (err) {
       setError(err?.message || String(err));
     } finally {
       setBusyAction('');
     }
-  }, [mana, refresh]);
+  }, [mana, refresh, refreshMcpTools]);
 
   const handleRemove = useCallback(async (name) => {
     if (!confirm(`确认删除供应商 "${name}"？此操作只影响配置文件，不会删除任何 API key。`)) return;
@@ -80,22 +87,42 @@ export function ProviderSettingsPanel() {
     setError('');
     try {
       await mana.ccs.remove(name);
+      await refreshMcpTools();
       await refresh();
     } catch (err) {
       setError(err?.message || String(err));
     } finally {
       setBusyAction('');
     }
-  }, [mana, refresh]);
+  }, [mana, refresh, refreshMcpTools]);
 
-  const handleAdd = useCallback(async () => {
+  const upsertDiscoveredModels = useCallback(async (providerName, models) => {
+    let count = 0;
+    for (const m of models || []) {
+      if (!m?.id) continue;
+      await mana.ccs.addModel(providerName, {
+        id: m.id,
+        name: m.name || m.id,
+        contextWindow: Number(m.contextWindow) || 128000,
+        maxOutputTokens: Number(m.maxOutputTokens) || 4096,
+        supportsThinking: !!m.supportsThinking,
+        thinkingBudget: Number(m.thinkingBudget) || 0,
+        discoveredAt: m.discoveredAt,
+      });
+      count += 1;
+    }
+    return count;
+  }, [mana]);
+
+  const handleAdd = useCallback(async ({ discover = false } = {}) => {
     const { name, type, baseUrl, apiKey } = addForm;
     if (!name.trim()) {
       setError('请填写供应商名称');
       return;
     }
-    setBusyAction('add');
+    setBusyAction(discover ? 'add:discover' : 'add');
     setError('');
+    setDiscoverNotice('');
     try {
       await mana.ccs.add({
         name: name.trim(),
@@ -103,6 +130,16 @@ export function ProviderSettingsPanel() {
         baseUrl: baseUrl.trim() || undefined,
         apiKey: apiKey.trim() || undefined,
       });
+      if (discover) {
+        const res = await mana.ccs.discoverModels(name.trim());
+        if (!res.ok) {
+          setError(res.error || '供应商已添加，但自动检测模型失败');
+        } else {
+          const count = await upsertDiscoveredModels(name.trim(), res.models);
+          setDiscoverNotice(`已从 ${res.endpoint || '模型接口'} 检测并保存 ${count} 个模型。`);
+        }
+      }
+      await refreshMcpTools();
       setAddForm({ name: '', type: 'openai-compat', baseUrl: '', apiKey: '' });
       setShowAddForm(false);
       await refresh();
@@ -111,7 +148,7 @@ export function ProviderSettingsPanel() {
     } finally {
       setBusyAction('');
     }
-  }, [mana, addForm, refresh]);
+  }, [mana, addForm, refresh, refreshMcpTools, upsertDiscoveredModels]);
 
   const toggleExpand = useCallback((providerName) => {
     setExpandedProviders((prev) => {
@@ -136,6 +173,7 @@ export function ProviderSettingsPanel() {
         name: name.trim() || id.trim(),
         contextWindow: Number(contextWindow) || 200000,
       });
+      await refreshMcpTools();
       setModelForm({ providerId: '', id: '', name: '', contextWindow: 200000 });
       await refresh();
     } catch (err) {
@@ -143,7 +181,7 @@ export function ProviderSettingsPanel() {
     } finally {
       setBusyAction('');
     }
-  }, [mana, modelForm, refresh]);
+  }, [mana, modelForm, refresh, refreshMcpTools]);
 
   const handleRemoveModel = useCallback(async (providerName, modelId) => {
     if (!confirm(`确认删除模型 "${modelId}"？`)) return;
@@ -151,17 +189,19 @@ export function ProviderSettingsPanel() {
     setError('');
     try {
       await mana.ccs.removeModel(providerName, modelId);
+      await refreshMcpTools();
       await refresh();
     } catch (err) {
       setError(err?.message || String(err));
     } finally {
       setBusyAction('');
     }
-  }, [mana, refresh]);
+  }, [mana, refresh, refreshMcpTools]);
 
   const handleDiscover = useCallback(async (providerName) => {
     setBusyAction(`discover:${providerName}`);
     setError('');
+    setDiscoverNotice('');
     try {
       const res = await mana.ccs.discoverModels(providerName);
       if (!res.ok) {
@@ -169,14 +209,9 @@ export function ProviderSettingsPanel() {
       } else if (!res.models || res.models.length === 0) {
         setError('未发现可用模型');
       } else {
-        // Add discovered models to the provider
-        for (const m of res.models) {
-          await mana.ccs.addModel(providerName, {
-            id: m.id,
-            name: m.name || m.id,
-            contextWindow: 200000,
-          });
-        }
+        const count = await upsertDiscoveredModels(providerName, res.models);
+        setDiscoverNotice(`已从 ${res.endpoint || '模型接口'} 检测并保存 ${count} 个模型。`);
+        await refreshMcpTools();
         await refresh();
       }
     } catch (err) {
@@ -184,13 +219,38 @@ export function ProviderSettingsPanel() {
     } finally {
       setBusyAction('');
     }
-  }, [mana, refresh]);
+  }, [mana, refresh, refreshMcpTools, upsertDiscoveredModels]);
+
+  const providerOptions = useMemo(() => {
+    return providers.map((p) => ({ id: p.id || p.name, name: p.name, models: p.models || [] }));
+  }, [providers]);
 
   const updateAliasField = useCallback((aliasId, field, value) => {
     setAliases((prev) =>
       prev.map((a) => (a.id === aliasId ? { ...a, [field]: value } : a))
     );
   }, []);
+
+  const updateAliasModel = useCallback((aliasId, modelId) => {
+    setAliases((prev) =>
+      prev.map((alias) => {
+        if (alias.id !== aliasId) return alias;
+        const provider = providerOptions.find((p) => p.id === alias.providerId);
+        const model = provider?.models?.find((m) => m.id === modelId);
+        if (!model) return { ...alias, modelId };
+        return {
+          ...alias,
+          modelId,
+          contextWindow: Number(model.contextWindow) || alias.contextWindow,
+          maxOutputTokens: Number(model.maxOutputTokens) || alias.maxOutputTokens,
+          thinking: model.supportsThinking ? alias.thinking : false,
+          thinkingBudget: model.supportsThinking
+            ? Number(model.thinkingBudget) || alias.thinkingBudget || 16000
+            : 0,
+        };
+      })
+    );
+  }, [providerOptions]);
 
   const handleSaveAliases = useCallback(async () => {
     setAliasSaving(true);
@@ -219,10 +279,6 @@ export function ProviderSettingsPanel() {
       setAliasSaving(false);
     }
   }, [mana, refresh]);
-
-  const providerOptions = useMemo(() => {
-    return providers.map((p) => ({ id: p.id || p.name, name: p.name, models: p.models || [] }));
-  }, [providers]);
 
   const renderProviderRow = (p) => {
     const isActive = p.active;
@@ -301,6 +357,8 @@ export function ProviderSettingsPanel() {
                       <span className="font-mono text-gray-400">{m.id}</span>
                       {m.name !== m.id && <span className="ml-1 text-gray-500">({m.name})</span>}
                       <span className="ml-2 text-gray-600">ctx={m.contextWindow || '?'}</span>
+                      {m.maxOutputTokens ? <span className="ml-1 text-gray-600">out={m.maxOutputTokens}</span> : null}
+                      {m.supportsThinking ? <span className="ml-1 text-primary-400">thinking</span> : null}
                     </div>
                     <Button
                       size="sm"
@@ -355,14 +413,14 @@ export function ProviderSettingsPanel() {
                 <Button
                   size="sm"
                   variant="flat"
-                  isIconOnly
                   onPress={() => handleDiscover(p.name)}
                   isDisabled={!!busyAction}
                   isLoading={busyAction === `discover:${p.name}`}
-                  aria-label="自动发现"
-                  title="自动发现"
+                  startContent={<Wand2 size={12} />}
+                  aria-label="检测模型"
+                  title="检测模型"
                 >
-                  <Wand2 size={12} />
+                  检测模型
                 </Button>
               )}
             </div>
@@ -407,10 +465,18 @@ export function ProviderSettingsPanel() {
       <Input
         size="sm"
         label="Base URL"
-        placeholder="https://api.anthropic.com（留空使用默认）"
+        placeholder="例如 https://api.openai.com/v1 或 https://api.anthropic.com"
         className="font-mono"
         value={addForm.baseUrl}
-        onChange={(e) => setAddForm((s) => ({ ...s, baseUrl: e.target.value }))}
+        onChange={(e) => {
+          const baseUrl = e.target.value;
+          const lower = baseUrl.toLowerCase();
+          setAddForm((s) => ({
+            ...s,
+            baseUrl,
+            type: lower.includes('anthropic') ? 'anthropic' : s.type,
+          }));
+        }}
       />
       <Input
         size="sm"
@@ -428,11 +494,22 @@ export function ProviderSettingsPanel() {
         <Button
           size="sm"
           color="primary"
-          onPress={handleAdd}
+          onPress={() => handleAdd({ discover: false })}
           isLoading={busyAction === 'add'}
           isDisabled={!addForm.name.trim() || !!busyAction}
         >
           添加
+        </Button>
+        <Button
+          size="sm"
+          color="primary"
+          variant="flat"
+          startContent={<Wand2 size={12} />}
+          onPress={() => handleAdd({ discover: true })}
+          isLoading={busyAction === 'add:discover'}
+          isDisabled={!addForm.name.trim() || !addForm.apiKey.trim() || !!busyAction}
+        >
+          添加并检测模型
         </Button>
       </div>
     </div>
@@ -469,7 +546,7 @@ export function ProviderSettingsPanel() {
             <select
               className="w-full text-xs bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-gray-200"
               value={alias.modelId || ''}
-              onChange={(e) => updateAliasField(alias.id, 'modelId', e.target.value)}
+              onChange={(e) => updateAliasModel(alias.id, e.target.value)}
             >
               <option value="">-- 选择模型 --</option>
               {models.map((m) => (
@@ -567,6 +644,11 @@ export function ProviderSettingsPanel() {
           {error ? (
             <div className="border border-rose-500/40 bg-rose-500/10 rounded px-3 py-2 text-xs text-rose-300">
               {error}
+            </div>
+          ) : null}
+          {discoverNotice ? (
+            <div className="border border-emerald-500/40 bg-emerald-500/10 rounded px-3 py-2 text-xs text-emerald-200">
+              {discoverNotice}
             </div>
           ) : null}
 
@@ -680,7 +762,7 @@ export function ProviderSettingsPanel() {
                   如需为单个 Subagent 配置不同的模型 / Tier，请在上方 Alias 区域调整对应 tier 的映射。
                 </p>
                 <p>
-                  自动发现仅支持 OpenAI-compatible 接口（/v1/models）。Anthropic 模型需手动维护。
+                  检测模型会按协议尝试常见模型列表接口，并优先使用供应商返回的上下文、输出上限与思考能力字段；供应商未返回时会按模型 ID 使用保守默认值。
                 </p>
               </div>
             </>

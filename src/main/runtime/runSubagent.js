@@ -19,6 +19,7 @@ const openaiCompat = require('./providers/openaiCompat');
 const providerManager = require('../providerManager');
 const modelAliases = require('../modelAliases');
 const subagentsStore = require('../store/subagents');
+const { buildSystemTimePromptBlock } = require('./systemTime');
 
 let builtinSubagentsReadyPromise = null;
 
@@ -49,13 +50,25 @@ async function resolveTier({ subagent, tierOverride }) {
   if (!provider.apiKey) throw new Error(`AI 服务商 API Key 未设置`);
   const modelId = alias?.modelId || provider.models?.[0]?.id || '';
   if (!modelId) throw new Error(`没有配置 AI 模型`);
+  const isWriting = (subagent.tags || []).includes('writing') || subagent.id === 'sa-writer';
+  const maxTokens = Math.max(
+    Number(alias?.maxOutputTokens) || 8192,
+    isWriting ? 8192 : 4096
+  );
   return {
     tierName,
     type: providerManager.inferProviderType(provider),
     baseUrl: provider.baseUrl || '',
     model: modelId,
     apiKey: provider.apiKey,
-    extra: provider.extra || {},
+    extra: {
+      ...(provider.extra || {}),
+      maxTokens,
+      ...(alias?.temperature != null ? { temperature: alias.temperature } : {}),
+    },
+    thinking: alias?.thinking
+      ? { type: 'enabled', budget_tokens: alias.thinkingBudget || 16000 }
+      : undefined,
   };
 }
 
@@ -138,6 +151,7 @@ async function runSubagent(opts = {}) {
   } catch (err) {
     console.error('[runSubagent] skill injection failed:', err.message);
   }
+  systemPrompt += '\n\n---\n' + buildSystemTimePromptBlock();
   const messages = inputToMessages(input);
 
   let tools;
@@ -152,7 +166,11 @@ async function runSubagent(opts = {}) {
 
   const transcript = [...messages];
   let lastTextOutput = '';
+  let lastStopReason = 'end_turn';
   const maxTurns = subagent.runtimeHints?.maxTurns || 8;
+  const isWriting = (subagent.tags || []).includes('writing') || subagent.id === 'sa-writer';
+  let continuationCount = 0;
+  const maxContinuations = isWriting ? 3 : 1;
   let turnIdx = 0;
 
   await eventBus.emit({ runId, pipelineRunId, nodeId, subagentId, kind: 'running', data: { tier: tier.tierName, model: tier.model } });
@@ -184,13 +202,30 @@ async function runSubagent(opts = {}) {
       throw err;
     }
 
+    lastStopReason = result.stopReason || 'end_turn';
     const assistantMsg = { role: 'assistant', content: result.content || [] };
     transcript.push(assistantMsg);
     const tx = extractText(result.content);
-    if (tx) lastTextOutput = tx;
+    if (tx) {
+      lastTextOutput = continuationCount > 0 && lastTextOutput
+        ? `${lastTextOutput}\n${tx}`
+        : tx;
+    }
 
     const toolUses = findToolUses(result.content);
     if (!toolUses.length) {
+      if (lastStopReason === 'max_tokens' && continuationCount < maxContinuations) {
+        continuationCount += 1;
+        transcript.push({
+          role: 'user',
+          content: [{
+            type: 'text',
+            text: '上一段输出因模型长度上限被截断。请从末尾无缝续写，不要重复已写内容，不要加说明或前言。',
+          }],
+        });
+        turnIdx += 1;
+        continue;
+      }
       break;
     }
     if (!mcpClient) {
@@ -244,7 +279,12 @@ async function runSubagent(opts = {}) {
     data: { turns: turnIdx + 1 },
   });
 
-  return { runId, output: lastTextOutput, transcript };
+  const truncated = lastStopReason === 'max_tokens';
+  let output = lastTextOutput;
+  if (truncated && output) {
+    output += '\n\n[系统提示] 生成因输出 token 上限仍未写完。请再次调用本子代理续写，或拆成更小的写作任务。';
+  }
+  return { runId, output, transcript, stopReason: lastStopReason, truncated };
 }
 
 const activeRuns = new Map();

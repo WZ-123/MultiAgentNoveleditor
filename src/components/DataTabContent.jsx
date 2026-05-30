@@ -66,9 +66,16 @@ async function buildOutlineTree(mana, novelDir) {
   return tree;
 }
 
+const DATA_REFRESH_TOOL_NAMES = {
+  characters: new Set(['create_character', 'update_character', 'delete_character']),
+  world: new Set(['update_world']),
+  timeline: new Set(['append_timeline', 'update_timeline', 'sync_chapter_timeline', 'dedupe_timeline']),
+  outline: new Set(['write_outline_nodes']),
+  style: new Set(['append_style_memory']),
+};
+
 export function DataTabContent({ dataType, novelId }) {
   const mana = typeof window !== 'undefined' ? window.mana : null;
-  const characterRefreshToolNames = new Set(['create_character', 'update_character', 'delete_character']);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -151,11 +158,13 @@ export function DataTabContent({ dataType, novelId }) {
   }, [mana, novelId, dataType, refreshKey]);
 
   useEffect(() => {
-    if (dataType !== 'characters' || !novelId || !mana?.chatAgent?.onEvent) return undefined;
+    if (!novelId || !mana?.chatAgent?.onEvent) return undefined;
+    const refreshToolNames = DATA_REFRESH_TOOL_NAMES[dataType];
+    if (!refreshToolNames) return undefined;
     const off = mana.chatAgent.onEvent((payload) => {
       if (!payload || payload.kind !== 'tool_result') return;
       const toolName = payload.data?.name;
-      if (payload.data?.isError || !characterRefreshToolNames.has(toolName)) return;
+      if (payload.data?.isError || !refreshToolNames.has(toolName)) return;
       setRefreshKey((key) => key + 1);
     });
     return () => { try { off(); } catch { /* ignore */ } };

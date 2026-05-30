@@ -45,7 +45,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   // ---- Thread management ----
   const [threads, setThreads] = useState([]);
   const [activeThreadId, setActiveThreadId] = useState(null);
-  const [showSidebar, setShowSidebar] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
 
   // ---- Message state ----
   const [messages, setMessages] = useState([]);
@@ -69,6 +69,10 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
   // ---- Tool result expand/collapse ----
   const [expandedResults, setExpandedResults] = useState({});
+
+  // ---- Write chapter confirmation ----
+  const [pendingWriteChapter, setPendingWriteChapter] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackTitle, setFeedbackTitle] = useState('');
   const [feedbackDescription, setFeedbackDescription] = useState('');
@@ -187,6 +191,10 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   // ====== Create / switch thread ======
   async function createThread() {
     if (!mana?.chatHistory) return;
+    if (isBusy) {
+      setError('AI 正在回复中，请先停止生成或等待完成后再新建对话。');
+      return;
+    }
     try {
       const t = await mana.chatHistory.createThread({
         title: '新对话',
@@ -200,6 +208,11 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   }
 
   async function switchThread(threadId) {
+    if (threadId === activeThreadId) return;
+    if (isBusy) {
+      setError('AI 正在回复中，请先停止生成或等待完成后再切换对话。');
+      return;
+    }
     // Close old session
     if (sessionId && mana?.chatAgent) {
       try { await mana.chatAgent.closeSession(sessionId); } catch { /* ignore */ }
@@ -240,16 +253,35 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   }
 
   async function deleteThread(e, threadId) {
-    e.stopPropagation();
+    e?.stopPropagation?.();
     if (!mana?.chatHistory) return;
+    if (threadId === activeThreadId && isBusy) {
+      setError('AI 正在回复中，请先停止生成或等待完成后再删除当前对话。');
+      return;
+    }
     const ok = window.confirm('确定要删除这个对话吗？');
     if (!ok) return;
     try {
       await mana.chatHistory.deleteThread(threadId);
-      setThreads((prev) => prev.filter((t) => t.id !== threadId));
+      const remainingThreads = threads.filter((t) => t.id !== threadId);
+      setThreads(remainingThreads);
       if (activeThreadId === threadId) {
+        if (sessionId && mana?.chatAgent) {
+          try { await mana.chatAgent.closeSession(sessionId); } catch { /* ignore */ }
+        }
+        if (offEventRef.current) {
+          try { offEventRef.current(); } catch { /* ignore */ }
+          offEventRef.current = null;
+        }
+        setSessionId(null);
         setActiveThreadId(null);
         setMessages([]);
+        setError('');
+        setThinkingText('');
+        setEditingId(null);
+        if (remainingThreads.length > 0) {
+          await switchThread(remainingThreads[0].id);
+        }
       }
     } catch (err) {
       setError(err?.message || String(err));
@@ -328,18 +360,15 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
         setThinkingText((t) => t + (ev.data.delta || ''));
         break;
       case 'tool_use': {
-        let finalizedMsg = null;
         setMessages((prev) => {
           const last = prev[prev.length - 1];
           if (last && last.role === 'assistant' && last.isStreaming) {
             const next = [...prev];
             next[next.length - 1] = { ...last, isStreaming: false };
-            finalizedMsg = next[next.length - 1];
             return appendToolUseMessage(next, ev.data, Date.now());
           }
           return appendToolUseMessage(prev, ev.data, Date.now());
         });
-        if (finalizedMsg) persistMessage(finalizedMsg);
         break;
       }
       case 'tool_result':
@@ -399,6 +428,14 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
         if (finalizedMsg) persistMessage(finalizedMsg);
         break;
       }
+      case 'awaiting_write_chapter_confirmation':
+        setPendingWriteChapter(ev.data || null);
+        setRejectReason('');
+        break;
+      case 'write_chapter_resolved':
+        setPendingWriteChapter(null);
+        setRejectReason('');
+        break;
       default:
         break;
     }
@@ -568,9 +605,11 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
         try { await mana.chatAgent.closeSession(sessionId); } catch { /* ignore */ }
       }
       if (mana?.chatAgent?.createSession) {
-        const r = await mana.chatAgent.createSession({ editorContext, messages: [], threadId: activeThreadId });
+        const r = await mana.chatAgent.createSession({ editorContext, messages: localMsgs, threadId: activeThreadId });
         setSessionId(r.sessionId);
       }
+      setStatus('idle');
+      setThinkingText('');
     } catch (err) {
       setError(err?.message || String(err));
     }
@@ -727,7 +766,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
       <div className="flex-1 flex flex-col h-full min-w-0">
         {/* Toolbar */}
         <div className="h-9 border-b border-vscode-panel-border flex items-center px-2 justify-between shrink-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
               className="text-gray-400 hover:text-white p-1"
@@ -736,7 +775,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
             >
               {showSidebar ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
             </button>
-            <span className="text-xs font-bold text-gray-400 truncate">
+            <span className="text-xs font-bold text-gray-400 truncate min-w-0">
               {activeThread?.title || 'AI 助手'}
             </span>
             {activeThread?.edited && (
@@ -761,22 +800,32 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
             )}
             <button
               type="button"
-              className="text-gray-500 hover:text-gray-300 text-[10px] px-1"
+              className="text-gray-500 hover:text-gray-300 text-[10px] px-1 disabled:opacity-40"
               onClick={createThread}
               title="新建对话"
+              disabled={isBusy}
             >
               <Plus size={12} />
             </button>
             {activeThreadId && (
               <button
                 type="button"
-                className="text-gray-500 hover:text-rose-400 text-[10px] px-1"
+                className="text-gray-500 hover:text-rose-400 text-[10px] px-1 disabled:opacity-40"
                 onClick={() => deleteThread({ stopPropagation: () => {} }, activeThreadId)}
                 title="删除当前对话"
+                disabled={isBusy}
               >
                 <Trash2 size={12} />
               </button>
             )}
+            <button
+              type="button"
+              className="text-emerald-500 hover:text-emerald-300 text-[10px] px-1"
+              onClick={openFeedbackModal}
+              title="反馈 AI 聊天问题"
+            >
+              <AlertCircle size={12} />
+            </button>
           </div>
         </div>
 
@@ -804,8 +853,8 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
                     <div className="text-amber-400 text-xs font-medium mb-1">
                       {m.status === 'running' ? `调用: ${m.name}...` : `调用: ${m.name}`}
                     </div>
-                    {m.input && (
-                      <pre className="text-gray-400 text-[11px] overflow-x-hidden whitespace-pre-wrap break-words">
+                    {m.input && expandedResults[m.id] && (
+                      <pre className="text-gray-400 text-[11px] overflow-x-hidden whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
                         {JSON.stringify(m.input, null, 2)}
                       </pre>
                     )}
@@ -816,19 +865,19 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
                             {m.result}
                           </pre>
                         ) : (
-                          <div className={`mt-1 text-[11px] ${m.isError ? 'text-rose-400' : 'text-green-400'}`}>
+                          <div className={`mt-1 text-[11px] leading-relaxed ${m.isError ? 'text-rose-400' : 'text-green-400'}`}>
                             {m.isError
-                              ? `错误: ${m.result?.slice(0, 500)}`
-                              : `结果: ${m.result?.slice(0, 500)}${m.result?.length > 500 ? '...' : ''}`}
+                              ? `错误: ${m.result?.slice(0, 180)}`
+                              : `结果预览: ${m.result?.slice(0, 180)}${m.result?.length > 180 ? '…（完整内容请点「查看详情」）' : ''}`}
                           </div>
                         )}
-                        {m.result?.length > 500 && (
+                        {(m.input || m.result?.length > 180) && (
                           <button
                             type="button"
                             className="text-[10px] text-blue-400 hover:text-blue-300 mt-0.5"
                             onClick={() => setExpandedResults(prev => ({ ...prev, [m.id]: !prev[m.id] }))}
                           >
-                            {expandedResults[m.id] ? '折叠' : '展开全部'}
+                            {expandedResults[m.id] ? '折叠' : '查看详情'}
                           </button>
                         )}
                       </div>
@@ -959,6 +1008,94 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
           </div>
         )}
 
+        {/* Write Chapter Confirmation Card */}
+        {pendingWriteChapter && (
+          <div className="px-3 py-3 border-t border-amber-500/30 bg-amber-500/10 shrink-0">
+            <div className="flex items-center gap-1.5 mb-2">
+              <AlertCircle size={12} className="text-amber-400" />
+              <span className="text-xs font-bold text-amber-300">章节写入请求</span>
+            </div>
+            <div className="text-xs text-gray-300 mb-2">
+              AI 请求写入章节：
+              <span className="text-amber-200 font-medium ml-1">
+                {pendingWriteChapter.title || pendingWriteChapter.name || '未命名章节'}
+              </span>
+              {pendingWriteChapter.contentLength > 0 && (
+                <span className="text-gray-500 ml-1">
+                  ({pendingWriteChapter.contentLength} 字)
+                </span>
+              )}
+            </div>
+            {pendingWriteChapter.contentPreview && (
+              <pre className="mb-3 text-[11px] bg-black/30 rounded p-2 max-h-24 overflow-hidden text-gray-400 whitespace-pre-wrap">
+                {pendingWriteChapter.contentPreview}
+                {pendingWriteChapter.contentLength > 500 && '...'}
+              </pre>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="px-3 py-1.5 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-500"
+                onClick={() => {
+                  setInput('确认写入这一章');
+                  setPendingWriteChapter(null);
+                }}
+              >
+                确认写入
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1.5 text-xs rounded bg-gray-600 text-gray-200 hover:bg-gray-500"
+                onClick={() => {
+                  setInput('拒绝写入');
+                  setPendingWriteChapter(null);
+                }}
+              >
+                拒绝
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1.5 text-xs rounded bg-rose-800/60 text-rose-200 hover:bg-rose-700/60"
+                onClick={() => setRejectReason(rejectReason ? '' : ' ')}
+              >
+                拒绝并说明理由
+              </button>
+            </div>
+            {rejectReason !== '' && (
+              <div className="mt-3 flex flex-col gap-2">
+                <textarea
+                  className="bg-vscode-sidebar border border-vscode-panel-border rounded p-2 text-xs text-gray-200 w-full resize-y min-h-[60px]"
+                  placeholder="请说明拒绝理由..."
+                  value={rejectReason === ' ' ? '' : rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  autoFocus
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    className="px-2 py-1 text-[10px] rounded bg-gray-600 text-gray-200 hover:bg-gray-500"
+                    onClick={() => setRejectReason('')}
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    className="px-2 py-1 text-[10px] rounded bg-rose-700 text-rose-100 hover:bg-rose-600"
+                    onClick={() => {
+                      const reason = (rejectReason === ' ' ? '' : rejectReason).trim();
+                      setInput(reason ? `拒绝写入，理由是：${reason}` : '拒绝写入');
+                      setPendingWriteChapter(null);
+                      setRejectReason('');
+                    }}
+                  >
+                    发送拒绝
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Input */}
         <div className="p-2 border-t border-vscode-panel-border shrink-0">
           {feedbackNotice && (
@@ -976,23 +1113,11 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
               </div>
             </div>
           )}
-          <div className="mb-2 rounded border border-emerald-500/30 bg-emerald-500/10 p-2">
-            <button
-              type="button"
-              className="w-full rounded bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500"
-              onClick={openFeedbackModal}
-            >
-              一键反馈问题
-            </button>
-            <div className="mt-1 text-[11px] text-emerald-200/90">
-              遇到 AI 聊天问题时，点击即可快速提交反馈。
-            </div>
-          </div>
-          <div className="flex gap-2 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1.5">
+          <div className="flex items-end gap-2 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1.5">
             <input
               type="text"
               placeholder="向 AI 提问…"
-              className="bg-transparent border-none outline-none flex-1 text-sm text-gray-200 placeholder-gray-600"
+              className="h-6 bg-transparent border-none outline-none flex-1 text-sm leading-6 text-gray-200 placeholder-gray-600"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}

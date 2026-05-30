@@ -45,6 +45,7 @@ const isRealFullChainTest = process.argv.includes('--test-real-full-chain');
 const isChatTimelineRegressionTest = process.argv.includes('--test-chat-timeline-regression');
 const isChatReplaceRegressionTest = process.argv.includes('--test-chat-replace-regression');
 const isChatOutlineUiRegressionTest = process.argv.includes('--test-chat-outline-ui-regression');
+const isChatDeAiUiRegressionTest = process.argv.includes('--test-chat-de-ai-ui-regression');
 const isChatFeedbackUiRegressionTest = process.argv.includes('--test-chat-feedback-ui-regression');
 const isChatSelectionSyncRegressionTest = process.argv.includes('--test-chat-selection-sync-regression');
 const isChatFeedbackFeishuE2ETest = process.argv.includes('--test-chat-feedback-feishu-e2e');
@@ -61,6 +62,7 @@ const isAutomatedTest = isUiTest
   || isChatTimelineRegressionTest
   || isChatReplaceRegressionTest
   || isChatOutlineUiRegressionTest
+  || isChatDeAiUiRegressionTest
   || isChatFeedbackUiRegressionTest
   || isChatSelectionSyncRegressionTest
   || isChatFeedbackFeishuE2ETest
@@ -68,6 +70,10 @@ const isAutomatedTest = isUiTest
   || isUserE2ETest
   || isCharacterCardUiTest
   || isDataTabEditUiTest;
+
+if (isChatDeAiUiRegressionTest) {
+  process.env.MANA_USE_STDIO_MCP = '0';
+}
 
 async function createWindow () {
   const mainWindow = new BrowserWindow({
@@ -257,6 +263,26 @@ async function createWindow () {
         try {
           const { runChatOutlineUiRegressionTest } = require('./test/chat-outline-ui-e2e.js');
           const results = await runChatOutlineUiRegressionTest(mainWindow);
+          process.exit(results.failed > 0 ? 1 : 0);
+        } catch (err) {
+          console.error('TEST_FAIL harness_error:', err.message || String(err));
+          process.exit(1);
+        }
+      });
+      mainWindow.webContents.once('did-fail-load', (_e, code, desc) => {
+        clearTimeout(timeout);
+        reject(new Error(`Page load failed: ${code} ${desc}`));
+      });
+      mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+    });
+  } else if (isChatDeAiUiRegressionTest) {
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Page load timeout')), 15000);
+      mainWindow.webContents.once('did-finish-load', async () => {
+        clearTimeout(timeout);
+        try {
+          const { runChatDeAiUiRegressionTest } = require('./test/chat-de-ai-ui-e2e.js');
+          const results = await runChatDeAiUiRegressionTest(mainWindow);
           process.exit(results.failed > 0 ? 1 : 0);
         } catch (err) {
           console.error('TEST_FAIL harness_error:', err.message || String(err));
@@ -475,10 +501,10 @@ if (isFlowTest) {
       }, 5000);
     }
 
+    await createWindow();
     backend.startDeferredStartup?.().catch((err) => {
       console.error('[main] deferred startup scheduling failed', err);
     });
-    await createWindow();
 
     app.on('activate', async function () {
       if (BrowserWindow.getAllWindows().length === 0) await createWindow();
