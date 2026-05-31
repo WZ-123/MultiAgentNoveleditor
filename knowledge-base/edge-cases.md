@@ -197,6 +197,20 @@
 - **是否要修复**: 需要修复
 - **已修复**: ✅ 2026-05-06 — MAX_SESSIONS=10，超限时淘汰最旧的会话
 
+### EC-18: Chatbox 整理结果不是有效 JSON
+- **场景**: provider 返回前后说明文字、Markdown 代码围栏、JSON5、尾随逗号、字符串内部裸换行、截断 JSON 或未闭合代码围栏
+- **影响**: 导入停在“解析文件”，用户只看到“AI 返回的 Chatbox 整理结果不是有效 JSON”
+- **修复建议**: `chatboxDraftExtractor.parseJsonFromText()` 必须多阶段解析与修复，失败时带批次序号/标题/原始输出片段；长篇分批不能回退成单次超长请求
+- **是否要修复**: 需要修复
+- **已修复**: ✅ 2026-05-31 — 支持标准 JSON、fenced JSON、平衡对象、JSON5、本地裸换行/控制字符/尾随逗号修复、截断围栏修复、一次 AI JSON 修复重试；回归覆盖 `/Users/potablewater/Downloads/森林大美食家.html` 的 143 条消息/11 批次基线
+
+### EC-19: 角色卡文件名与卡内 id/name 不一致
+- **场景**: 旧导入或手工编辑产生 `characters/char-legacy-import.json`，但 JSON 内部 `id/name` 是列表中显示的名字，如“和少妇”
+- **影响**: `list_characters` 能看到角色，但 `delete_character({ id: "和少妇" })` 报 `character not found`
+- **修复建议**: 角色读取/删除不能只按文件名查找；应先尝试 `{id}.json`，找不到再扫描卡内 `id/name/originalName/aliases`
+- **是否要修复**: 需要修复
+- **已修复**: ✅ 2026-05-31 — `novelData.readCharacter/deleteCharacter` 支持按内部 id/name/alias 反查真实文件；`delete_character` MCP 使用底层解析结果删除并返回被删角色摘要
+
 ---
 
 ## 组件状态矩阵
@@ -211,4 +225,4 @@
 | chapter tree | - | ✅ "暂无卷" | - | ✅ 章节树 |
 | editor | - | ✅ 欢迎/引导 | - | ✅ textarea |
 
-已修复: 23/23 (EC-13、EC-14 均已实现并测试通过)
+已修复: 25/25 (EC-13、EC-14、EC-18、EC-19 均已实现并测试通过)

@@ -175,7 +175,8 @@
       "Bash(node test/de-ai-tool-regression.test.js)",
       "Bash(node test/chat-de-ai-routing-regression.test.js)",
       "Bash(node test/chat-outline-intent-regression.test.js)",
-      "Bash(node test/anthropic-tool-schema-regression.test.js)"
+      "Bash(node test/anthropic-tool-schema-regression.test.js)",
+      "Bash(MANA_USER_DATA_ROOT='__TRACKED_VAR__/Library/Application Support/multi-agent-novel-assistant/MultiAgentNovelAssistant' scripts/with-electron-proxy.sh node scripts/run-enrichment-benchmark.js --roster=test-projects/web-enrichment-benchmark-2026/roster-famous-jp-acg.json --report=test-projects/web-enrichment-benchmark-2026/benchmark-report-famous-jp-acg.json --skip-enrich)"
     ],
     "additionalDirectories": [
       "/Users/potablewater/.claude/plans",

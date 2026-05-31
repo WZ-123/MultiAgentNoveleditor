@@ -62,6 +62,7 @@ function _novelPaths(projectDir) {
     style: path.join(projectDir, 'style'),
     factions: path.join(projectDir, 'factions'),
     summaries: path.join(projectDir, 'summaries'),
+    sources: path.join(projectDir, 'sources'),
   };
 }
 
@@ -75,6 +76,7 @@ async function _ensureNovelLayout(np) {
   await fs.mkdir(np.style, { recursive: true });
   await fs.mkdir(np.factions, { recursive: true });
   await fs.mkdir(np.summaries, { recursive: true });
+  await fs.mkdir(np.sources, { recursive: true });
 }
 
 // ---------- Fingerprint ----------
@@ -152,10 +154,21 @@ async function createStagingProject({ sourceFiles, chapters, metadata, targetNov
       expiresAt,
       targetNovelId: targetNovelId || null,
       status: 'active', // 'active' | 'discarded' | 'merged' | 'promoted'
+      ...(metadata?.importMeta || {}),
     },
     fanwork: metadata?.fanwork || { hasFanwork: null, referencedWorks: [] },
   };
   await writeJson(np.novelJson, novelMeta);
+  if (metadata?.importMeta) {
+    await writeJson(path.join(np.sources, 'import-source.json'), {
+      sourceFiles: sourceFiles || [],
+      importMeta: metadata.importMeta,
+      writtenAt: now,
+    });
+  }
+  if (metadata?.analysisHints) {
+    await fs.writeFile(path.join(np.sources, 'analysis-hints.md'), metadata.analysisHints, 'utf8');
+  }
 
   // Write chapters
   for (let i = 0; i < chapters.length; i++) {
@@ -380,6 +393,18 @@ async function promoteToNovel(importId, { title, dir }) {
   const novelJsonPath = path.join(targetDir, 'novel.json');
   const novelMeta = await readJson(novelJsonPath, {});
   delete novelMeta.importMeta;
+  if (staging.novelMeta?.importMeta?.sourceType === 'chatbox-html') {
+    const { sourceType, sourceFiles, importedAt, messageCount, sessionTitles, extractedAt, notes } = staging.novelMeta.importMeta;
+    novelMeta.importMeta = {
+      sourceType,
+      sourceFiles: sourceFiles || [],
+      importedAt: importedAt || new Date().toISOString(),
+      messageCount: messageCount || 0,
+      sessionTitles: sessionTitles || [],
+      extractedAt: extractedAt || '',
+      notes: notes || '',
+    };
+  }
   novelMeta.id = result.id;
   novelMeta.title = title || novelMeta.title;
   await writeJson(novelJsonPath, novelMeta);

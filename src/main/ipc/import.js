@@ -26,15 +26,16 @@ function safeIpc(handler) {
 }
 
 function registerImportIpc() {
-  // Pick novel files (.md, .txt, .epub)
+  // Pick novel files (.md, .txt, .epub, Chatbox .html)
   ipcMain.handle('mana:import:pickFiles', safeIpc(async () => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile', 'multiSelections'],
       filters: [
-        { name: 'Novel Files', extensions: ['md', 'txt', 'epub', 'markdown'] },
+        { name: 'Novel Files', extensions: ['md', 'txt', 'epub', 'html', 'htm', 'markdown'] },
         { name: 'Markdown', extensions: ['md', 'markdown'] },
         { name: 'Text', extensions: ['txt'] },
         { name: 'EPUB', extensions: ['epub'] },
+        { name: 'Chatbox HTML', extensions: ['html', 'htm'] },
         { name: 'All Files', extensions: ['*'] },
       ],
     });

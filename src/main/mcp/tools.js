@@ -280,6 +280,15 @@ function _coerceUpdateCharacterArgs(args) {
   return { id, patch };
 }
 
+function _coerceDeleteCharacterArgs(args) {
+  const payload = _mergeRawArgs(args, 'delete_character', (direct) => {
+    return !!_cleanText(direct.id || direct.characterId);
+  });
+  const id = _cleanText(payload.id || payload.characterId);
+  if (!id) throw new Error('delete_character requires a valid id');
+  return { id };
+}
+
 function _coerceWorldWriteArgs(args, action = 'update_world') {
   const payload = args && typeof args === 'object' ? { ...args } : {};
   const hadPlaces = _hasOwn(payload, 'places');
@@ -1683,6 +1692,35 @@ const TOOLS = [
       const payload = _coerceUpdateCharacterArgs(args);
       const written = await novelData.patchCharacter(dir, payload.id, payload.patch || {});
       return textResult({ ok: true, character: written });
+    },
+  },
+  {
+    name: 'delete_character',
+    description: '删除一个角色卡（需用户确认）。会先确认角色存在，再删除 characters/{id}.json。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: '角色ID。也兼容 characterId。' },
+        characterId: { type: 'string', description: '角色ID别名。' },
+      },
+      required: ['id'],
+    },
+    requiresConfirmation: true,
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      const payload = _coerceDeleteCharacterArgs(args);
+      const existing = await novelData.deleteCharacter(dir, payload.id);
+      if (!existing) throw new Error(`character not found: ${payload.id}`);
+      return textResult({
+        ok: true,
+        deleted: {
+          id: existing.id,
+          name: existing.name,
+          aliases: existing.aliases,
+          role: existing.role,
+          faction: existing.faction,
+        },
+      });
     },
   },
   {

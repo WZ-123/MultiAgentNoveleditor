@@ -79,6 +79,63 @@ async function runToolHardeningRegressionTest() {
     assert.equal(updatedCharacter.arc?.beats?.end, '主动醒来');
     pass('TH1_update_character_deep_merges_nested_patch', 'nested objects keep untouched keys while patch updates and __delete removals both apply');
 
+    const deleteCharacterTool = getToolByName('delete_character');
+    assert.ok(deleteCharacterTool);
+    assert.equal(deleteCharacterTool.requiresConfirmation, true);
+    await novelData.writeCharacter(novelDir, {
+      id: 'trash-role',
+      name: '误识别片段',
+      role: '应删除',
+    });
+    const deleteCharacterResult = await deleteCharacterTool.handler(
+      { characterId: 'trash-role' },
+      { novelDir, novel: { id: 'novel-hardening' } }
+    );
+    const deleteCharacterPayload = JSON.parse(deleteCharacterResult.content[0].text);
+    const deletedCharacter = await novelData.readCharacter(novelDir, 'trash-role');
+
+    assert.equal(deleteCharacterPayload.ok, true);
+    assert.equal(deleteCharacterPayload.deleted.id, 'trash-role');
+    assert.equal(deletedCharacter, null);
+    let missingCharacterError = null;
+    try {
+      await deleteCharacterTool.handler(
+        { id: 'trash-role' },
+        { novelDir, novel: { id: 'novel-hardening' } }
+      );
+    } catch (err) {
+      missingCharacterError = err;
+    }
+    assert.match(String(missingCharacterError?.message || ''), /character not found: trash-role/);
+    pass('TH1b_delete_character_removes_existing_card_only', 'delete_character removes one card, requires confirmation, and rejects missing ids');
+
+    const np = require(path.join(ROOT, 'src/main/store/paths')).novelPaths(novelDir);
+    await fs.mkdir(np.characters, { recursive: true });
+    const legacyFile = path.join(np.characters, 'char-legacy-import.json');
+    await fs.writeFile(legacyFile, JSON.stringify({
+      schemaVersion: 1,
+      id: '和少妇',
+      name: '和少妇',
+      role: '',
+    }, null, 2), 'utf8');
+    const listedLegacy = await novelData.listCharacters(novelDir);
+    assert.equal(listedLegacy.some((ch) => ch.id === '和少妇'), true);
+    const deleteLegacyResult = await deleteCharacterTool.handler(
+      { id: '和少妇' },
+      { novelDir, novel: { id: 'novel-hardening' } }
+    );
+    const deleteLegacyPayload = JSON.parse(deleteLegacyResult.content[0].text);
+    let legacyStillExists = true;
+    try {
+      await fs.access(legacyFile);
+    } catch {
+      legacyStillExists = false;
+    }
+    assert.equal(deleteLegacyPayload.ok, true);
+    assert.equal(deleteLegacyPayload.deleted.id, '和少妇');
+    assert.equal(legacyStillExists, false);
+    pass('TH1c_delete_character_resolves_listed_id_when_filename_differs', 'delete_character can delete legacy/imported cards whose JSON id differs from the filename');
+
     const applyWorldPatchTool = getToolByName('apply_world_patch');
     assert.ok(applyWorldPatchTool);
     const seedWorld = {

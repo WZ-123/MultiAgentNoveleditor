@@ -1,6 +1,6 @@
 # MCP 工具参考
 
-MultiAgentNovelAssistant 通过 MCP 协议暴露 32 个工具，供 Claude Code 等 AI 客户端调用。
+MultiAgentNovelAssistant 通过 MCP 协议暴露 63 个工具，供 Claude Code 等 AI 客户端调用。
 
 ## 角色管理
 
@@ -11,6 +11,7 @@ MultiAgentNovelAssistant 通过 MCP 协议暴露 32 个工具，供 Claude Code 
 | `read_character_context` | 读取场景过滤后的角色信息。参数：`id`(必填), `sceneContext`, `needBackground`, `outfit` | 否 |
 | `create_character` | 创建新角色卡。参数：`name`(必填), `aliases`, `faction`, `role`, `attributes`, `relationships`, `arc`, `bio` | **是** |
 | `update_character` | 修改角色字段。参数：`id`(必填), `patch`(必填) | **是** |
+| `delete_character` | 删除角色卡。参数：`id`(必填，兼容 `characterId`)。会先按文件名查找，找不到再按卡内 `id/name/originalName/aliases` 反查真实文件 | **是** |
 
 ## 大纲管理
 

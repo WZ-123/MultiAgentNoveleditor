@@ -1,6 +1,6 @@
 # 开发进度追踪
 
-最后更新：2026-05-24
+最后更新：2026-05-31
 
 ## 当前阶段
 
@@ -11,6 +11,83 @@
 
 
 ## 里程碑
+
+### 2026-05-31 — Chatbox HTML 导入、角色识别清理、角色删除 MCP
+
+#### 背景
+
+用户通过 Chatbox 反复与 AI 修订同一段剧情，导出的 HTML 不能按普通文本直接拼接：旧版正文、修订指令、模型寒暄和结构说明会混在一起。首版实现后暴露出几个关键问题：
+
+- 长篇 Chatbox 导入章节不全，或 AI 返回坏 JSON 导致解析阶段失败
+- 角色分析把“第一部分”“第五阶段”“金发碧眼”“和舞蹈生”“陈可的上”等非人名短语当作角色
+- 日式汉字姓名、假名姓名、俄语/西里尔姓名容易被漏掉
+- 导入流程中“跳过补全/上一步/下一步”存在状态机卡死体验
+- MCP 缺少删除角色卡工具；旧导入脏数据中还存在“文件名”和“角色卡内部 id/name”不一致，导致列表里能看到但删除时报 `character not found`
+
+#### 已实现
+
+**Chatbox HTML 导入**
+
+- 支持 `.html/.htm` 导入，识别 Chatbox 导出的 `SYSTEM/USER/ASSISTANT` 消息块。
+- 新增 Chatbox 对话整理器：从完整对话中提取“最终采用稿”，不简单拼接最后几条 assistant 回复。
+- 长篇 Chatbox 按分段批次整理，默认并发 3 个批次，保留输出顺序。
+- JSON 解析链加固：标准 JSON、fenced JSON、前后说明文字、JSON5、尾随逗号、裸换行、截断/未闭合代码围栏、本地修复、一次 AI JSON 修复重试。
+- 错误诊断带批次序号/标题/主进程日志片段，UI 只显示简短错误。
+- Staging/Promote 保留轻量 `importMeta.sourceType = "chatbox-html"` 和来源摘要，不把完整原始 HTML 塞进 `novel.json`。
+
+**导入分析与角色识别**
+
+- Chatbox 导入后的角色分析不再把整篇正文一股脑塞给人物分析任务；先按分片抽取候选人名，再合并同一角色的重复 name/alias。
+- 支持中文姓名、日式汉字姓名、日文假名、英文名、俄语/西里尔姓名。
+- 新增本地“明显不是人名”反证过滤，拦截章节/阶段/部分名、动作短语、结构词、外貌描述、职业泛称和模型生成的 synthetic id。
+- `飞鸟马时`、`调月莉音`、`上野茜`、`レム`、`Катюша`、`Иван Петров` 作为回归样例保留，防止误杀非中文常见姓名。
+- 角色卡写盘前统一走 `_sanitizeCharacterCards()`，fallback 从大纲/线索抽名也必须二次过滤。
+- 大纲/文风分析清理模型寒暄和畸形标题，减少“好的，以下是……”进入数据页。
+
+**导入 UI 流程**
+
+- 修复 `character-review` 阶段“跳过补全”误回到上一步的问题：跳过补全后进入 `analysis-done`，新建项目继续完成导入，已有项目进入冲突检测。
+- “上一步”返回后不再把用户锁在只能跳过的状态。
+
+**MCP 角色删除**
+
+- 新增 `delete_character` MCP 工具，`requiresConfirmation: true`。
+- 支持参数 `id`，兼容 `characterId`。
+- 删除前确认角色存在，返回被删除角色的 `id/name/aliases/role/faction` 摘要。
+- 底层 `novelData.readCharacter/deleteCharacter` 支持通过文件名、卡内 `id`、`name`、`originalName`、`aliases` 反查真实 JSON 文件，修复“列表里存在但删除时报 not found”的旧脏数据问题。
+
+#### 关键文件
+
+| 文件 | 说明 |
+|---|---|
+| [src/main/import/chatboxParser.js](../src/main/import/chatboxParser.js) | Chatbox HTML 消息解析 |
+| [src/main/import/chatboxDraftExtractor.js](../src/main/import/chatboxDraftExtractor.js) | Chatbox 最终稿整理、分批、JSON 修复 |
+| [src/main/import/fileParser.js](../src/main/import/fileParser.js) | `.html/.htm` 导入入口 |
+| [src/main/import/analyzer.js](../src/main/import/analyzer.js) | 分片候选人名抽取、角色分析聚焦材料、角色卡清理 |
+| [src/components/ImportNovelPanel.jsx](../src/components/ImportNovelPanel.jsx) | 导入 UI 状态机与 Chatbox 文案 |
+| [src/main/mcp/tools.js](../src/main/mcp/tools.js) | `delete_character` MCP 工具 |
+| [src/main/store/novelData.js](../src/main/store/novelData.js) | 角色卡按内部 id/name/alias 反查真实文件 |
+| [knowledge-base/chatbox-import.md](chatbox-import.md) | Chatbox 导入策略与回归说明 |
+
+#### 验证
+
+- `node test/chatbox-import-regression.test.js`：28/28 passed
+- `node test/import-analyzer-cleanup-regression.test.js`：11/11 passed
+- `node test/import-full-flow-test.js`：23/23 passed
+- `node test/tool-hardening-regression.test.js`：12/12 passed
+- `node test/anthropic-tool-schema-regression.test.js`：2/2 passed
+- `node --check src/main/import/analyzer.js src/main/import/chatboxDraftExtractor.js src/main/import/fileParser.js src/main/mcp/tools.js src/main/store/novelData.js`
+- `npx vite build`：通过；仍有既有 CSS minify/chunk size warning
+- 真实样本 `/Users/potablewater/Downloads/森林大美食家.html`：
+  - Chatbox 原始解析：143 条消息、68 条 assistant 回复、11 个整理批次
+  - 真实 provider smoke：曾成功越过解析阶段并输出多章；并发/JSON 修复后不再出现“不是有效 JSON”直接失败
+
+#### 后续注意
+
+- 不要重新退回“白名单姓名表”路线；人名识别应由 AI 分片提名 + 本地反证过滤 + alias 合并组成。
+- 分片提名时不要把全篇正文一次性塞给人物分析 agent；每次只给 source hints + 当前分片，最后合并重复角色。
+- 对 Chatbox 坏 JSON、空批次、截断围栏必须保持回归覆盖，不能把责任推给 provider。
+- 删除角色卡时不能假设文件名等于角色 id；历史导入和手工编辑都可能造成不一致。
 
 ### 2026-05-24 — Windows 打包/安装验证脚本补齐
 

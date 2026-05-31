@@ -1,6 +1,6 @@
 # 角色联网补全系统文档
 
-最后更新：2026-05-27
+最后更新：2026-05-31
 
 ## 1. 系统定位
 
@@ -8,6 +8,9 @@
 
 > 基准测试、补充 roster、回归循环的操作手册见：
 > [knowledge-base/character-enrichment-benchmark-loop.md](/Users/potablewater/Desktop/MultiAgentNovelAssistant/knowledge-base/character-enrichment-benchmark-loop.md)
+>
+> 最新补源测试用例与验收记录（含东亚与欧美文化圈）见：
+> [knowledge-base/latest-east-asian-enrichment-test-case.md](/Users/potablewater/Desktop/MultiAgentNovelAssistant/knowledge-base/latest-east-asian-enrichment-test-case.md)
 >
 > 欧美文化圈**通用层**验收集（保留 BWiki 等特化轨，欧美走通用搜索）见：
 > [knowledge-base/western-enrichment-benchmark.md](/Users/potablewater/Desktop/MultiAgentNovelAssistant/knowledge-base/western-enrichment-benchmark.md)
@@ -17,6 +20,7 @@
 - **批量操作**：支持一次性标记多个角色的原创/二创属性，避免逐个操作
 - **多作品支持**：同一部小说可能引用多部原作（crossover），每个角色可独立选择归属作品
 - **搜索透明**：详细记录每个角色的搜索源、查询语句和结果片段，防止 AI 幻觉
+- **候选姓名先行**：Chatbox/长篇导入时，人物分析前先分片抽取候选姓名，再用本地反证过滤剔除章节名、动作短语、外貌描述和 synthetic id；不得把全文直接丢给人物分析任务
 
 ---
 
@@ -302,3 +306,4 @@ const [characterMarks, setCharacterMarks] = useState([
 | `preload.js` | IPC 桥接暴露 |
 | `knowledge-base/western-enrichment-benchmark.md` | 欧美通用轨 benchmark 规则与 smoke 实测 |
 | `knowledge-base/character-enrichment-benchmark-loop.md` | Benchmark 循环手册（双轨策略） |
+| `knowledge-base/chatbox-import.md` | Chatbox 导入最终稿整理、角色候选识别与旧脏数据删除规则 |

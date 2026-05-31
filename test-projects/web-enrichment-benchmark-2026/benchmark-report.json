@@ -1,738 +1,268 @@
 {
-  "startedAt": "2026-05-29T04:02:35.196Z",
+  "startedAt": "2026-05-30T03:59:18.205Z",
   "novelId": "novel-web-enrichment-benchmark-2026",
   "projectDir": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026",
-  "characterCount": 36,
+  "characterCount": 6,
   "args": {
     "concurrency": 3,
-    "onlyWork": null,
-    "rosterPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/roster-famous-jp-acg.json",
-    "skipEnrich": true
+    "onlyWork": "鸣潮",
+    "reportPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/benchmark-report.json",
+    "rosterPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/roster.json",
+    "skipEnrich": false
   },
   "searchProbes": [
     {
-      "name": "博丽灵梦",
-      "work": "东方Project",
+      "name": "绯雪",
+      "work": "鸣潮",
       "tag": "latest",
-      "sphere": "east-asian-jp",
-      "searchMs": 132245,
-      "resultCount": 10,
+      "sphere": "east-asian-cn",
+      "searchMs": 131463,
+      "resultCount": 17,
       "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
+        "biligame",
+        "biligame",
+        "biligame"
       ],
       "topTitles": [
-        "博丽灵梦(东方Project旧作)",
-        "博丽灵梦",
-        "博丽灵梦(西方Project)"
+        "共鸣者/绯雪",
+        "共鸣者",
+        "名词注释/武霜·居合"
       ],
-      "pageLen": 8153,
-      "pageSource": "moegirl"
+      "pageLen": 57293,
+      "pageSource": "biligame"
     },
     {
-      "name": "雾雨魔理沙",
-      "work": "东方Project",
+      "name": "达妮娅",
+      "work": "鸣潮",
       "tag": "latest",
-      "sphere": "east-asian-jp",
-      "searchMs": 131847,
-      "resultCount": 10,
+      "sphere": "east-asian-cn",
+      "searchMs": 136454,
+      "resultCount": 13,
       "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "雾雨魔理沙(东方Project旧作)",
-        "雾雨魔理沙的父亲",
-        "雾雨魔理沙"
-      ],
-      "pageLen": 9337,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "魂魄妖梦",
-      "work": "东方Project",
-      "tag": "obscure",
-      "sphere": "east-asian-jp",
-      "searchMs": 357615,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "魂魄妖梦",
-        "魂魄妖忌",
-        "魂魄妖姬"
-      ],
-      "pageLen": 25773,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "十六夜咲夜",
-      "work": "东方Project",
-      "tag": "obscure",
-      "sphere": "east-asian-jp",
-      "searchMs": 132179,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "十六夜咲夜",
-        "十六夜咲夜/附加文档",
-        "咲夜布兰多"
-      ],
-      "pageLen": 24691,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "古明地觉",
-      "work": "东方Project",
-      "tag": "mid",
-      "sphere": "east-asian-jp",
-      "searchMs": 132599,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "古明地觉",
-        "古明地觉的情操教育",
-        "古明地恋"
-      ],
-      "pageLen": 15405,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "西行寺幽幽子",
-      "work": "东方Project",
-      "tag": "mid",
-      "sphere": "east-asian-jp",
-      "searchMs": 132288,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "西行寺幽幽子",
-        "东方萃梦想",
-        "外界(东方Project)"
-      ],
-      "pageLen": 23031,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "阿尔托莉雅·潘德拉贡",
-      "work": "Fate/stay night",
-      "tag": "latest",
-      "sphere": "east-asian-jp",
-      "searchMs": 133603,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "阿尔托莉雅·潘德拉贡 Alter",
-        "阿尔托莉雅·潘德拉贡",
-        "武内崇"
-      ],
-      "pageLen": 58801,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "远坂凛",
-      "work": "Fate/stay night",
-      "tag": "latest",
-      "sphere": "east-asian-jp",
-      "searchMs": 132375,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "远坂凛(Fate/EXTRA)",
-        "远坂凛",
-        "剧场版 Fate/stay night UNLIMITED BLADE WORKS"
-      ],
-      "pageLen": 3556,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "间桐樱",
-      "work": "Fate/stay night",
-      "tag": "obscure",
-      "sphere": "east-asian-jp",
-      "searchMs": 132928,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "间桐樱",
-        "间桐樱(Fate/EXTRA)",
-        "剧场版 Fate/stay night UNLIMITED BLADE WORKS"
-      ],
-      "pageLen": 18801,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "美狄亚",
-      "work": "Fate/stay night",
-      "tag": "obscure",
-      "sphere": "east-asian-jp",
-      "searchMs": 133007,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "美狄亚(Fate)",
-        "美狄亚",
-        "美狄亚(神话人物)"
-      ],
-      "pageLen": 9325,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "卫宫士郎",
-      "work": "Fate/stay night",
-      "tag": "mid",
-      "sphere": "east-asian-jp",
-      "searchMs": 134443,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "英灵卫宫",
-        "剧场版 Fate/stay night UNLIMITED BLADE WORKS",
-        "Fate/stay night Unlimited Blade Works"
-      ],
-      "pageLen": 37570,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "库·丘林",
-      "work": "Fate/stay night",
-      "tag": "mid",
-      "sphere": "east-asian-jp",
-      "searchMs": 133967,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "库·丘林(Fate)",
-        "库·丘林",
-        "库·丘林(Fate/Prototype)"
-      ],
-      "pageLen": 50244,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "吹雪",
-      "work": "舰队Collection",
-      "tag": "latest",
-      "sphere": "east-asian-jp",
-      "searchMs": 132317,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "舰队Collection:吹雪",
-        "吹雪",
-        "吹雪 加油"
-      ],
-      "pageLen": 29625,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "岛风",
-      "work": "舰队Collection",
-      "tag": "latest",
-      "sphere": "east-asian-jp",
-      "searchMs": 132977,
-      "resultCount": 5,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "舰队Collection:岛风",
-        "舰队Collection/西方海域",
-        "舰队Collection/西南诸岛海域"
-      ],
-      "pageLen": 20424,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "时雨",
-      "work": "舰队Collection",
-      "tag": "obscure",
-      "sphere": "east-asian-jp",
-      "searchMs": 133953,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "舰队Collection:时雨",
-        "时雨(歌曲)",
-        "时雨"
-      ],
-      "pageLen": 26007,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "夕立",
-      "work": "舰队Collection",
-      "tag": "obscure",
-      "sphere": "east-asian-jp",
-      "searchMs": 132248,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "舰队Collection:夕立",
-        "夕立",
-        "穿越暴风雨"
-      ],
-      "pageLen": 32132,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "金刚",
-      "work": "舰队Collection",
-      "tag": "mid",
-      "sphere": "east-asian-jp",
-      "searchMs": 134980,
-      "resultCount": 5,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "舰队Collection:金刚",
-        "金刚",
-        "舰队Collection:衣阿华"
-      ],
-      "pageLen": 26623,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "赤城",
-      "work": "舰队Collection",
-      "tag": "mid",
-      "sphere": "east-asian-jp",
-      "searchMs": 136074,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
+        "biligame",
+        "biligame",
         "bing"
       ],
       "topTitles": [
-        "舰队Collection:赤城",
-        "赤城",
-        "moegirl.org.cnhttps://mzh.moegirl.org.cn › 赤城"
+        "共鸣者/达妮娅",
+        "达妮娅 | 鸣潮 Wiki | Fandom",
+        "fandom.comhttps://wutheringwaves.fandom.com › zh › wiki › 达妮娅"
       ],
-      "pageLen": 30987,
-      "pageSource": "moegirl"
+      "pageLen": 10282,
+      "pageSource": "biligame"
     },
     {
-      "name": "上条当麻",
-      "work": "魔法禁书目录",
-      "tag": "latest",
-      "sphere": "east-asian-jp",
-      "searchMs": 132305,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "上条当麻",
-        "魔法禁书目录炭",
-        "魔法禁书目录/时间线"
-      ],
-      "pageLen": 33539,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "茵蒂克丝",
-      "work": "魔法禁书目录",
-      "tag": "latest",
-      "sphere": "east-asian-jp",
-      "searchMs": 133429,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "茵蒂克丝",
-        "某日常的茵蒂克丝",
-        "魔法禁书目录炭"
-      ],
-      "pageLen": 18099,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "一方通行",
-      "work": "魔法禁书目录",
+      "name": "丹瑾",
+      "work": "鸣潮",
       "tag": "obscure",
-      "sphere": "east-asian-jp",
-      "searchMs": 132771,
-      "resultCount": 5,
+      "sphere": "east-asian-cn",
+      "searchMs": 131453,
+      "resultCount": 17,
       "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
+        "biligame",
+        "biligame",
+        "biligame"
       ],
       "topTitles": [
-        "某科学的一方通行",
-        "某偶像的一方通行大人",
-        "魔法禁书目录炭"
+        "共鸣者/丹瑾",
+        "共鸣者/丹瑾/语音",
+        "道具/丹瑾的回音频段"
       ],
-      "pageLen": 26581,
-      "pageSource": "moegirl"
+      "pageLen": 14950,
+      "pageSource": "biligame"
     },
     {
-      "name": "神裂火织",
-      "work": "魔法禁书目录",
+      "name": "白芷",
+      "work": "鸣潮",
       "tag": "obscure",
-      "sphere": "east-asian-jp",
-      "searchMs": 133566,
-      "resultCount": 10,
+      "sphere": "east-asian-cn",
+      "searchMs": 131071,
+      "resultCount": 17,
       "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
+        "biligame",
+        "biligame",
+        "biligame"
       ],
       "topTitles": [
-        "神裂火织",
-        "魔法禁书目录炭",
-        "魔法禁书目录/时间线"
+        "共鸣者/白芷",
+        "共鸣者/白芷/语音",
+        "道具/白芷的回音频段"
       ],
-      "pageLen": 7081,
-      "pageSource": "moegirl"
+      "pageLen": 16212,
+      "pageSource": "biligame"
     },
     {
-      "name": "御坂美琴",
-      "work": "魔法禁书目录",
+      "name": "今汐",
+      "work": "鸣潮",
       "tag": "mid",
-      "sphere": "east-asian-jp",
-      "searchMs": 134247,
-      "resultCount": 10,
+      "sphere": "east-asian-cn",
+      "searchMs": 131837,
+      "resultCount": 17,
       "topSources": [
-        "moegirl",
-        "moegirl",
+        "biligame",
+        "biligame",
         "moegirl"
       ],
       "topTitles": [
-        "御坂美琴",
-        "御坂10032号",
-        "魔法禁书目录炭"
+        "共鸣者/今汐",
+        "共鸣者/今汐/语音",
+        "今汐"
       ],
-      "pageLen": 41464,
-      "pageSource": "moegirl"
+      "pageLen": 21554,
+      "pageSource": "biligame"
     },
     {
-      "name": "白井黑子",
-      "work": "魔法禁书目录",
+      "name": "长离",
+      "work": "鸣潮",
       "tag": "mid",
-      "sphere": "east-asian-jp",
-      "searchMs": 132416,
-      "resultCount": 10,
+      "sphere": "east-asian-cn",
+      "searchMs": 131338,
+      "resultCount": 17,
       "topSources": [
-        "moegirl",
-        "moegirl",
+        "biligame",
+        "biligame",
         "moegirl"
       ],
       "topTitles": [
-        "白井黑子",
-        "新井里美",
-        "魔法禁书目录炭"
+        "共鸣者/长离",
+        "共鸣者/长离/语音",
+        "长离"
       ],
-      "pageLen": 12501,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "芙莉莲",
-      "work": "葬送的芙莉莲",
-      "tag": "latest",
-      "sphere": "east-asian-jp",
-      "searchMs": 132627,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "葬送的芙莉莲",
-        "莉涅(葬送的芙莉莲)",
-        "芙莉莲"
-      ],
-      "pageLen": 26271,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "菲伦",
-      "work": "葬送的芙莉莲",
-      "tag": "latest",
-      "sphere": "east-asian-jp",
-      "searchMs": 132589,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "芙莉莲",
-        "莉涅(葬送的芙莉莲)",
-        "葬送的芙莉莲/魔法介绍"
-      ],
-      "pageLen": 8065,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "修塔尔克",
-      "work": "葬送的芙莉莲",
-      "tag": "obscure",
-      "sphere": "east-asian-jp",
-      "searchMs": 138190,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "芙莉莲",
-        "莉涅(葬送的芙莉莲)",
-        "葬送的芙莉莲/魔法介绍"
-      ],
-      "pageLen": 26271,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "欣梅尔",
-      "work": "葬送的芙莉莲",
-      "tag": "obscure",
-      "sphere": "east-asian-jp",
-      "searchMs": 136951,
-      "resultCount": 5,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "梅特黛",
-        "休塔尔克",
-        "李蝉妃"
-      ],
-      "pageLen": 0,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "费伦",
-      "work": "葬送的芙莉莲",
-      "tag": "mid",
-      "sphere": "east-asian-jp",
-      "searchMs": 132418,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "菲伦",
-        "赞泽",
-        "奥尔登卿"
-      ],
-      "pageLen": 2158,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "阿乌拉",
-      "work": "葬送的芙莉莲",
-      "tag": "mid",
-      "sphere": "east-asian-jp",
-      "searchMs": 132427,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "阿乌拉",
-        "莉涅(葬送的芙莉莲)",
-        "葬送的芙莉莲/魔法介绍"
-      ],
-      "pageLen": 3319,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "灶门炭治郎",
-      "work": "鬼灭之刃",
-      "tag": "latest",
-      "sphere": "east-asian-jp",
-      "searchMs": 134323,
-      "resultCount": 5,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "灶门炭治郎",
-        "灶门炭彦",
-        "灶门炭十郎"
-      ],
-      "pageLen": 12205,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "我妻善逸",
-      "work": "鬼灭之刃",
-      "tag": "latest",
-      "sphere": "east-asian-jp",
-      "searchMs": 132349,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "我妻善逸",
-        "我妻善照",
-        "我妻灯子"
-      ],
-      "pageLen": 6611,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "嘴平伊之助",
-      "work": "鬼灭之刃",
-      "tag": "obscure",
-      "sphere": "east-asian-jp",
-      "searchMs": 132463,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "嘴平伊之助",
-        "嘴平琴叶",
-        "嘴平青叶"
-      ],
-      "pageLen": 6512,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "胡蝶忍",
-      "work": "鬼灭之刃",
-      "tag": "obscure",
-      "sphere": "east-asian-jp",
-      "searchMs": 132342,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "胡蝶忍",
-        "胡蝶香奈惠",
-        "剧场版 鬼灭之刃 无限城篇"
-      ],
-      "pageLen": 7775,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "灶门祢豆子",
-      "work": "鬼灭之刃",
-      "tag": "mid",
-      "sphere": "east-asian-jp",
-      "searchMs": 132564,
-      "resultCount": 10,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "灶门祢豆子",
-        "灶门祢豆子之歌",
-        "灶门葵枝"
-      ],
-      "pageLen": 5281,
-      "pageSource": "moegirl"
-    },
-    {
-      "name": "富冈义勇",
-      "work": "鬼灭之刃",
-      "tag": "mid",
-      "sphere": "east-asian-jp",
-      "searchMs": 132273,
-      "resultCount": 5,
-      "topSources": [
-        "moegirl",
-        "moegirl",
-        "moegirl"
-      ],
-      "topTitles": [
-        "富冈义勇",
-        "富冈义一",
-        "富冈茑子"
-      ],
-      "pageLen": 5996,
-      "pageSource": "moegirl"
+      "pageLen": 19801,
+      "pageSource": "biligame"
     }
   ],
-  "enrichResults": [],
+  "enrichResults": [
+    {
+      "id": "鸣潮-绯雪-latest",
+      "name": "绯雪",
+      "sourceWork": "鸣潮",
+      "tag": "latest",
+      "status": "success",
+      "source": "sphere=east-asian-cn sources=biligame,bing,moegirl page=biligame",
+      "filledFields": [
+        "appearance",
+        "personality",
+        "background",
+        "quotes"
+      ],
+      "filledCount": 4,
+      "appearancePreview": "BWiki 页面未明确提及发色、瞳色、身高/体型。基本资料显示：属性为冷凝；武器为迅刀；战斗风格包括主力输出 共鸣解放伤害 霜渐；出生地为苇原；势力为共鸣能力 预求身；共鸣能力为预求身。",
+      "personalityPreview": "来自苇原的灼樱巫女，现今以特别对策组唯一成员的身份在拉海洛停留。页面定位信息显示其属性为冷凝；武器为迅刀；战斗风格包括主力输出 共鸣解放伤害 霜渐；出生地为苇原；势力为共鸣能力 预求身；共鸣能力为预求身。",
+      "skinsCount": 1,
+      "pageSnapshotLen": 8000,
+      "pageUrl": "https://wiki.biligame.com/wutheringwaves/%E5%85%B1%E9%B8%A3%E8%80%85%2F%E7%BB%AF%E9%9B%AA"
+    },
+    {
+      "id": "鸣潮-达妮娅-latest",
+      "name": "达妮娅",
+      "sourceWork": "鸣潮",
+      "tag": "latest",
+      "status": "success",
+      "source": "sphere=east-asian-cn sources=biligame,bing,moegirl page=biligame",
+      "filledFields": [
+        "appearance",
+        "personality",
+        "background",
+        "moeTraits",
+        "quotes"
+      ],
+      "filledCount": 5,
+      "appearancePreview": "页面未明确提及发色、瞳色、身高/体型。基本资料显示：属性为热熔；武器为音感仪。",
+      "personalityPreview": "终日懒散，喜欢摸鱼打瞌睡，常用温柔的笑容面对他人。",
+      "skinsCount": 0,
+      "pageSnapshotLen": 8000,
+      "pageUrl": "https://wuthering.gg/zh-Hans/characters/denia"
+    },
+    {
+      "id": "鸣潮-丹瑾-obscure",
+      "name": "丹瑾",
+      "sourceWork": "鸣潮",
+      "tag": "obscure",
+      "status": "success",
+      "source": "sphere=east-asian-cn sources=biligame,moegirl,bing page=biligame",
+      "filledFields": [
+        "appearance",
+        "personality",
+        "background",
+        "quotes"
+      ],
+      "filledCount": 4,
+      "appearancePreview": "BWiki 页面未明确提及发色、瞳色、身高/体型。基本资料显示：属性为湮灭；武器为迅刀；战斗风格包括快速协奏 湮灭伤害加深；出生地为势力 瑝珑；势力为瑝珑；共鸣能力为绯光剑影。",
+      "personalityPreview": "在危险区域行走时泰然自若，面对流寇时表现出从容与机智；对铁匠礼貌谦逊；不擅长接受平白无故的好意，但会通过回礼表达感谢；在追踪仇人过程中表现出耐心与执着，同时顺手解救被拐儿童，展现出正义感与同情心。",
+      "skinsCount": 0,
+      "pageSnapshotLen": 8000,
+      "pageUrl": "https://wiki.biligame.com/wutheringwaves/%E5%85%B1%E9%B8%A3%E8%80%85%2F%E4%B8%B9%E7%91%BE"
+    },
+    {
+      "id": "鸣潮-白芷-obscure",
+      "name": "白芷",
+      "sourceWork": "鸣潮",
+      "tag": "obscure",
+      "status": "success",
+      "source": "sphere=east-asian-cn sources=biligame,moegirl,bing page=biligame",
+      "filledFields": [
+        "appearance",
+        "personality",
+        "background",
+        "quotes"
+      ],
+      "filledCount": 4,
+      "appearancePreview": "白芷身着裁剪合适的科考套装（昙生妙华），最大程度保证行动便利。页面未提供发色、瞳色、身高/体型的明确描述。\nBWiki 页面未明确提及发色、瞳色、身高/体型。基本资料显示：属性为冷凝；武器为音感仪；战斗风格包括生存治疗 协同攻击 伤害加深；",
+      "personalityPreview": "白芷性格沉静，在科研中表现出极强的条理性与规划性，专注于回音生态研究，言语客观疏离，给人以难以接近的印象，但实际对他人抱有纯粹的好奇与关怀。",
+      "skinsCount": 1,
+      "pageSnapshotLen": 8000,
+      "pageUrl": "https://wiki.biligame.com/wutheringwaves/%E5%85%B1%E9%B8%A3%E8%80%85%2F%E7%99%BD%E8%8A%B7"
+    },
+    {
+      "id": "鸣潮-今汐-mid",
+      "name": "今汐",
+      "sourceWork": "鸣潮",
+      "tag": "mid",
+      "status": "success",
+      "source": "sphere=east-asian-cn sources=biligame,moegirl,bing page=biligame",
+      "filledFields": [
+        "appearance",
+        "personality",
+        "background",
+        "quotes"
+      ],
+      "filledCount": 4,
+      "appearancePreview": "BWiki 页面未明确提及发色、瞳色、身高/体型。基本资料显示：属性为衍射；武器为长刃；战斗风格包括主力输出 共鸣技能伤害；出生地为势力 瑝珑；势力为瑝珑；共鸣能力为寒尽觉春生。",
+      "personalityPreview": "今令尹今汐，万丈天光被她化作点点辉芒，温柔地照亮人们的愿望。页面定位信息显示其属性为衍射；武器为长刃；战斗风格包括主力输出 共鸣技能伤害；出生地为势力 瑝珑；势力为瑝珑；共鸣能力为寒尽觉春生。",
+      "skinsCount": 0,
+      "pageSnapshotLen": 8000,
+      "pageUrl": "https://wiki.biligame.com/wutheringwaves/%E5%85%B1%E9%B8%A3%E8%80%85%2F%E4%BB%8A%E6%B1%90"
+    },
+    {
+      "id": "鸣潮-长离-mid",
+      "name": "长离",
+      "sourceWork": "鸣潮",
+      "tag": "mid",
+      "status": "success",
+      "source": "sphere=east-asian-cn sources=biligame,moegirl,bing page=biligame",
+      "filledFields": [
+        "appearance",
+        "personality",
+        "background",
+        "quotes"
+      ],
+      "filledCount": 4,
+      "appearancePreview": "BWiki 页面未明确提及发色、瞳色、身高/体型。基本资料显示：属性为热熔；武器为迅刀；战斗风格包括主力输出 共鸣技能伤害 热熔伤害加深 共鸣解放伤害加深；出生地为势力 瑝珑；势力为瑝珑；共鸣能力为丹煌离火。",
+      "personalityPreview": "待人温和，对上下级一视同仁；独处时自带不怒自威的气势；目光温和而具有洞察力，仿佛能看穿他人想法。",
+      "skinsCount": 0,
+      "pageSnapshotLen": 8000,
+      "pageUrl": "https://wiki.biligame.com/wutheringwaves/%E5%85%B1%E9%B8%A3%E8%80%85%2F%E9%95%BF%E7%A6%BB"
+    }
+  ],
   "summary": {
-    "skippedEnrich": true
-  }
+    "statusCounts": {
+      "success": 6
+    },
+    "avgFilledFields": 4.17,
+    "successRate": 100,
+    "searchProbeNoPage": 0,
+    "searchProbeNoResults": 0
+  },
+  "finishedAt": "2026-05-30T04:14:50.387Z"
 }

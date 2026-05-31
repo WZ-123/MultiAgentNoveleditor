@@ -79,6 +79,11 @@ const TASK_PROMPTS = {
 - \`originalName\`：如果角色在小说中的名字与原作官方名字不同，填写原作标准名字；否则留空字符串。
 - 不要自行判断角色是否为原创，这些字段由用户在导入后手动补充。
 
+**姓名识别规则（必须严格遵守）：**
+1. 优先使用文本和导入线索中明确出现的姓名，如“陈可”“刘燕君”等。
+2. 不要把“金发女孩”“空姐”“主角”“尸体”“少女”等描述性称呼作为 name；如果确实没有姓名，可把描述写入 appearance 或 aliases，并将 name 留为最稳定的称呼。
+3. 同一人物既有姓名又有描述时，name 必须使用姓名，描述写入 aliases/appearance。
+
 **主角识别规则（必须严格遵守）：**
 1. 如果文本是第一人称叙述（"我"的视角），叙述者必定是主角，protagonist 必须为 true。
 2. 如果文本是第三人称叙述，从以下线索判断主角：
@@ -124,7 +129,7 @@ const TASK_PROMPTS = {
 4. \`possibleFanworkOf\`：如果 \`isFanwork\` 为 true，填写最主要的原作名称（单部）或填写 "多作品 crossover"。如果不是二创，填 null。
 
 注意：只输出 JSON 对象，不要额外文字。`,
-  outline: `从以下小说文本中提取剧情大纲，用 Markdown 格式输出以下内容。如果这篇小说看起来是已有作品的二创/同人，在开头注明。
+  outline: `从以下小说文本中提取剧情大纲，用 Markdown 格式输出以下内容。如果这篇小说看起来是已有作品的二创/同人，在开头注明。不要输出“好的”“以下是”等寒暄或解释，直接从指定标题开始。
 
 ## 原作识别
 如果这是同人或二创作品，注明可能的原作名称（影视/游戏/动漫/漫画/小说）及判断依据。如果不是就写"原创作品"。
@@ -162,7 +167,7 @@ const TASK_PROMPTS = {
 
 ## 未解悬念
 列出文本中尚未解决的悬念，供后续创作参考。`,
-  style: `分析以下小说的写作风格特征与作者创作意图，用 Markdown 输出：
+  style: `分析以下小说的写作风格特征与作者创作意图，用 Markdown 输出。不要输出“好的”“以下是”等寒暄或解释，直接从指定标题开始：
 
 ## 叙述视角
 第一人称/第三人称/多视角切换等。
@@ -218,20 +223,28 @@ function _buildChunkContext(prevResults) {
   return context.join('\n');
 }
 
-async function _runTaskForChunk({ runId, provider, tier, task, chunkText, chunkIndex, chunkCount, chunkTitle, contextNote }) {
+async function _runTaskForChunk({ runId, provider, tier, task, chunkText, chunkIndex, chunkCount, chunkTitle, contextNote, sourceHints }) {
   const label = chunkCount > 1 ? `${task.label} [第 ${chunkIndex + 1}/${chunkCount} 片]` : task.label;
 
   try {
     eventBus.emit({ runId, subagentId: 'sa-import-analyzer', kind: 'running', data: { label, chunkIndex, chunkCount, chunkTitle } });
 
     let prompt = TASK_PROMPTS[task.id];
+    let analysisText = chunkText;
+    if (sourceHints && ['characters', 'factions', 'timeline', 'world', 'outline'].includes(task.id)) {
+      prompt = `【导入对话中的用户设定/大纲线索】\n${sourceHints}\n\n请优先利用以上线索中的角色姓名、地点、章节规划和用户最终修改意见；不要把“金发女孩”“空姐”“主角”等描述性称呼当成姓名，除非文本确实没有姓名。\n\n${prompt}`;
+    }
+    if (sourceHints && task.id === 'characters') {
+      analysisText = _buildCharacterFocusedText(sourceHints, chunkText);
+      prompt = `下面的文本是从 Chatbox 对话中提取的“人物分析专用材料”，不是完整小说正文。你必须只围绕其中明确出现的候选姓名建立角色卡；不要新增职务、视角、描述性外观或变量名角色。\n\n${prompt}`;
+    }
     if (contextNote) {
       prompt = `【上下文】${contextNote}\n\n${prompt}`;
     }
 
     const result = await provider.sendMessage({
       system: '',
-      messages: [{ role: 'user', content: [{ type: 'text', text: `${prompt}\n\n${chunkText}` }] }],
+      messages: [{ role: 'user', content: [{ type: 'text', text: `${prompt}\n\n${analysisText}` }] }],
       tools: [],
       tier,
     });
@@ -248,9 +261,159 @@ async function _runTaskForChunk({ runId, provider, tier, task, chunkText, chunkI
   }
 }
 
-async function _analyzeSingleChunk({ provider, tier, chunk, chunkIndex, chunkCount, contextNote, runIdMap }) {
+async function _extractCandidateNamesForText(provider, tier, sourceHints, chunkText, chunkIndex = 0, chunkCount = 1) {
+  const hintText = String(sourceHints || '').slice(0, 12000);
+  const storyText = String(chunkText || '').slice(0, CHUNK_SIZE);
+  if (!hintText && !storyText) return [];
+  const prompt = `请从以下导入材料中抽取“角色姓名候选”。只输出 JSON 数组，不要解释，不要 Markdown。
+
+输出格式：
+[
+  {"name":"标准姓名","aliases":["同一人物的别名/称呼"],"evidence":"最短证据"}
+]
+
+规则：
+- 只输出文本中明确出现的角色姓名/人名，包括中文姓名、日式汉字姓名、假名名、英文名、俄文/西里尔名、幻想系姓名。
+- 不要输出章节标题、阶段名、部分名、动作短语、外貌描述、职业称呼、主角/女主/男主/空姐/少女等泛称。
+- 如果同一人物有姓名和描述，name 用姓名，描述写入 aliases。
+- 不确定是不是人名时不要输出。
+
+当前片段：第 ${chunkIndex + 1}/${chunkCount} 片
+
+导入线索：
+${hintText}
+
+当前整理正文片段：
+${storyText}`;
+
+  try {
+    const result = await provider.sendMessage({
+      system: '',
+      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
+      tools: [],
+      tier,
+    });
+    const textBlock = (result.content || []).find((b) => b.type === 'text');
+    const parsed = _parseJsonArray(textBlock?.text || '');
+    return _normalizeCandidateNameItems(parsed).slice(0, 120);
+  } catch (err) {
+    console.error('[analyzer] AI candidate name extraction failed:', err.message);
+    return [];
+  }
+}
+
+function _normalizeCandidateNameItems(items) {
+  const normalized = [];
+  for (const item of items || []) {
+    if (typeof item === 'string') {
+      const name = _cleanCandidateName(item);
+      if (name) normalized.push({ name, aliases: [], evidence: '' });
+      continue;
+    }
+    if (!item || typeof item !== 'object') continue;
+    const name = _cleanCandidateName(item.name || item.id || item.originalName);
+    if (!name) continue;
+    const aliases = Array.isArray(item.aliases)
+      ? item.aliases.map(_cleanCandidateName).filter(Boolean)
+      : [];
+    normalized.push({
+      name,
+      aliases: [...new Set(aliases.filter((alias) => alias !== name))],
+      evidence: String(item.evidence || '').trim().slice(0, 120),
+    });
+  }
+  return normalized;
+}
+
+function _cleanCandidateName(raw) {
+  const text = String(raw || '')
+    .replace(/^[\s"'“”‘’「」『』《》]+|[\s"'“”‘’「」『』《》]+$/g, '')
+    .trim();
+  if (text.length < 2 || text.length > 80) return '';
+  if (_isDefinitelyNonPersonName(text)) return '';
+  if (/^(?:主角|女主|男主|少女|女孩|空姐|乘客|众人|阶段|部分|章节|正文|故事|角色|人物)$/.test(text)) return '';
+  return text;
+}
+
+function _candidateKey(name) {
+  return String(name || '')
+    .toLowerCase()
+    .replace(/[\s·・=_.\-—'“”"‘’「」『』《》（）()]+/g, '');
+}
+
+function _mergeCandidateNameItems(items) {
+  const byKey = new Map();
+  const aliasToKey = new Map();
+  for (const item of _normalizeCandidateNameItems(items)) {
+    const keys = [item.name, ...(item.aliases || [])].map(_candidateKey).filter(Boolean);
+    const existingKey = keys.find((key) => aliasToKey.has(key));
+    const primaryKey = existingKey ? aliasToKey.get(existingKey) : _candidateKey(item.name);
+    if (!primaryKey) continue;
+    const current = byKey.get(primaryKey) || { name: item.name, aliases: [], evidence: '' };
+    for (const alias of [item.name, ...(item.aliases || [])]) {
+      const cleaned = _cleanCandidateName(alias);
+      if (cleaned && cleaned !== current.name && !current.aliases.includes(cleaned)) current.aliases.push(cleaned);
+    }
+    if (!current.evidence && item.evidence) current.evidence = item.evidence;
+    byKey.set(primaryKey, current);
+    for (const key of keys) aliasToKey.set(key, primaryKey);
+  }
+  return [...byKey.values()];
+}
+
+async function _mergeCandidateNamesWithAi(provider, tier, candidateItems) {
+  const merged = _mergeCandidateNameItems(candidateItems).slice(0, 240);
+  if (merged.length <= 1) return merged.map((item) => item.name);
+  const prompt = `下面是从不同分片抽取到的角色姓名候选，可能有同一角色重复出现或别名。请合并为唯一角色姓名列表。
+
+只输出 JSON 字符串数组，不要解释，不要 Markdown。
+
+合并规则：
+- 同一人物的别名/译名/简称只保留最适合作为角色卡 name 的一个标准姓名。
+- 不要输出章节标题、阶段名、部分名、动作短语、职业称呼或外貌描述。
+- 不确定是否同一人物时保留为两个名字，不要强行合并。
+
+候选：
+${JSON.stringify(merged, null, 2)}`;
+
+  try {
+    const result = await provider.sendMessage({
+      system: '',
+      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
+      tools: [],
+      tier,
+    });
+    const textBlock = (result.content || []).find((b) => b.type === 'text');
+    const parsed = _parseJsonArray(textBlock?.text || '');
+    const names = parsed.map(_cleanCandidateName).filter(Boolean);
+    if (names.length > 0) return [...new Set(names)].slice(0, 180);
+  } catch (err) {
+    console.error('[analyzer] AI candidate name merge failed:', err.message);
+  }
+  return merged.map((item) => item.name).slice(0, 180);
+}
+
+async function _extractCandidateNamesWithAi(provider, tier, sourceHints, chunks) {
+  const chunkList = Array.isArray(chunks) && chunks.length > 0
+    ? chunks
+    : [{ text: String(chunks || '') }];
+  const candidates = [];
+  for (let i = 0; i < chunkList.length; i++) {
+    const chunkNames = await _extractCandidateNamesForText(provider, tier, sourceHints, chunkList[i].text || '', i, chunkList.length);
+    candidates.push(...chunkNames);
+  }
+  return _mergeCandidateNamesWithAi(provider, tier, candidates);
+}
+
+function _appendCandidateNamesToHints(sourceHints, candidateNames) {
+  const names = [...new Set((candidateNames || []).map((name) => String(name || '').trim()).filter(Boolean))];
+  if (names.length === 0) return sourceHints;
+  return `${sourceHints || ''}\n\n## AI候选角色姓名\n${names.map((name) => `- ${name}`).join('\n')}`.trim();
+}
+
+async function _analyzeSingleChunk({ provider, tier, chunk, chunkIndex, chunkCount, contextNote, runIdMap, sourceHints }) {
   const promises = TASK_DEFS.map((task) =>
-    _runTaskForChunk({ runId: runIdMap[task.id], provider, tier, task, chunkText: chunk.text, chunkIndex, chunkCount, chunkTitle: chunk.title, contextNote })
+    _runTaskForChunk({ runId: runIdMap[task.id], provider, tier, task, chunkText: chunk.text, chunkIndex, chunkCount, chunkTitle: chunk.title, contextNote, sourceHints })
   );
   return Promise.all(promises);
 }
@@ -276,8 +439,20 @@ async function startAnalyses(stagingDir) {
     throw new Error('读取章节文件失败: ' + err.message);
   }
   if (!fullText.trim()) return { runIds: [], taskIds: [] };
+  let sourceHints = '';
+  try {
+    sourceHints = await fs.readFile(path.join(stagingDir, 'sources', 'analysis-hints.md'), 'utf8');
+    sourceHints = sourceHints.slice(0, 30000);
+  } catch {
+    sourceHints = '';
+  }
 
   const { provider, tier } = await resolveProvider();
+  const analysisChunks = fullText.length > MAX_TEXT_CHARS ? splitIntoChunks(fullText, CHUNK_SIZE) : [{ title: '全文', text: fullText }];
+  const candidateNames = sourceHints ? await _extractCandidateNamesWithAi(provider, tier, sourceHints, analysisChunks) : [];
+  if (candidateNames.length > 0) {
+    sourceHints = _appendCandidateNamesToHints(sourceHints, candidateNames);
+  }
 
   // Short text: single batch
   if (fullText.length <= MAX_TEXT_CHARS) {
@@ -287,10 +462,10 @@ async function startAnalyses(stagingDir) {
       const runId = `import-${task.id}-${Date.now().toString(36)}`;
       runIds.push(runId);
       taskIds.push(task.id);
-      return _runTaskForChunk({ runId, provider, tier, task, chunkText: fullText, chunkIndex: 0, chunkCount: 1, chunkTitle: '全文' });
+      return _runTaskForChunk({ runId, provider, tier, task, chunkText: fullText, chunkIndex: 0, chunkCount: 1, chunkTitle: '全文', sourceHints });
     });
 
-    _pending.set(stagingDir, { promise: Promise.all(promises), chunkMode: false, chunkCount: 1 });
+    _pending.set(stagingDir, { promise: Promise.all(promises), chunkMode: false, chunkCount: 1, sourceHints });
     return { runIds, taskIds };
   }
 
@@ -316,7 +491,7 @@ async function startAnalyses(stagingDir) {
       taskIds.push(task.id);
     }
 
-    const promise = _analyzeSingleChunk({ provider, tier, chunk, chunkIndex: ci, chunkCount: chunks.length, contextNote, runIdMap });
+    const promise = _analyzeSingleChunk({ provider, tier, chunk, chunkIndex: ci, chunkCount: chunks.length, contextNote, runIdMap, sourceHints });
     chunkPromises.push(
       promise.then((results) => {
         // Collect results for this chunk into the accumulator for next chunk's context
@@ -336,7 +511,7 @@ async function startAnalyses(stagingDir) {
     );
   }
 
-  _pending.set(stagingDir, { promise: Promise.all(chunkPromises), chunkMode: true, chunkCount: chunks.length, chunkResults: allResults });
+  _pending.set(stagingDir, { promise: Promise.all(chunkPromises), chunkMode: true, chunkCount: chunks.length, chunkResults: allResults, sourceHints });
   return { runIds, taskIds, chunkMode: true, chunkCount: chunks.length };
 }
 
@@ -348,7 +523,7 @@ async function finalizeAnalyses(stagingDir) {
   const pending = _pending.get(stagingDir);
   if (!pending) return { characters: 0, outline: '', lore: '', style: '' };
 
-  const { promise, chunkMode, chunkCount, chunkResults: prebuilt } = pending;
+  const { promise, chunkMode, chunkCount, chunkResults: prebuilt, sourceHints = '' } = pending;
   _pending.delete(stagingDir);
 
   let results;
@@ -411,16 +586,34 @@ async function finalizeAnalyses(stagingDir) {
         console.error('[analyzer] characters parsed count:', chars.length);
         charCount = chars.length;
         // If characters task returned nothing, try to extract names from the outline output
-        if (charCount === 0 && resultsByTask.outline?.output) {
-          const fallbackNames = _extractNamesFromOutline(resultsByTask.outline.output);
-          for (const name of fallbackNames) {
-            await fs.writeFile(path.join(outDir, `${name}.json`), JSON.stringify({ id: name, name, role: '' }, null, 2), 'utf8');
+        if (charCount === 0 && (sourceHints || resultsByTask.outline?.output)) {
+          const fallbackNames = _extractNamesFromOutline(`${sourceHints}\n\n${resultsByTask.outline?.output || ''}`);
+          const fallbackChars = _sanitizeCharacterCards(
+            fallbackNames.map((name) => ({ id: name, name, role: '' })),
+            sourceHints
+          );
+          for (const ch of fallbackChars) {
+            await fs.writeFile(path.join(outDir, `${ch.name}.json`), JSON.stringify(ch, null, 2), 'utf8');
           }
-          charCount = fallbackNames.length;
+          charCount = fallbackChars.length;
         } else {
+          if (sourceHints) {
+            const supplementNames = _extractNamesFromOutline(sourceHints);
+            const existingNameKeys = new Set(chars.map((ch) => _normalizePersonName(ch.name || ch.id)).filter(Boolean));
+            for (const name of supplementNames) {
+              const key = _normalizePersonName(name);
+              if (key && !existingNameKeys.has(key)) {
+                chars.push({ id: name, name, role: '' });
+                existingNameKeys.add(key);
+              }
+            }
+            charCount = chars.length;
+          }
+          const sanitizedChars = _sanitizeCharacterCards(chars, sourceHints);
+          charCount = sanitizedChars.length;
           // No longer auto-enrich during import; enrichment happens in character-review step
           const usedNames = new Set();
-          for (const ch of chars) {
+          for (const ch of sanitizedChars) {
             let baseName = ch.id || ch.name || 'char';
             let fname = baseName;
             let dupIdx = 1;
@@ -446,8 +639,9 @@ async function finalizeAnalyses(stagingDir) {
         };
         await fs.writeFile(path.join(outDir, 'meta.json'), JSON.stringify(meta, null, 2), 'utf8');
       } else if (r.taskId === 'outline') {
-        outlineLen = r.output.length;
-        await fs.writeFile(path.join(outDir, 'main.md'), r.output, 'utf8');
+        const cleaned = _cleanAnalysisMarkdown(r.output);
+        outlineLen = cleaned.length;
+        await fs.writeFile(path.join(outDir, 'main.md'), cleaned, 'utf8');
       } else if (r.taskId === 'factions') {
         const factions = _parseJsonArray(r.output);
         factionCount = factions.length;
@@ -455,15 +649,19 @@ async function finalizeAnalyses(stagingDir) {
           await fs.writeFile(path.join(outDir, `${f.name || Math.random().toString(36).slice(2)}.json`), JSON.stringify(f, null, 2), 'utf8');
         }
       } else if (r.taskId === 'timeline') {
-        const events = _parseJsonArray(r.output);
+        let events = _parseJsonArray(r.output);
+        if (events.length === 0 && resultsByTask.outline?.output) {
+          events = _extractTimelineFromOutline(resultsByTask.outline.output);
+        }
         timelineCount = events.length;
         if (events.length > 0) {
           const lines = events.map((e) => JSON.stringify(e)).join('\n');
           await fs.writeFile(path.join(outDir, 'events.jsonl'), lines + '\n', 'utf8');
         }
       } else if (r.taskId === 'style') {
-        styleLen = r.output.length;
-        await fs.writeFile(path.join(outDir, 'memory.md'), r.output, 'utf8');
+        const cleaned = _cleanAnalysisMarkdown(r.output);
+        styleLen = cleaned.length;
+        await fs.writeFile(path.join(outDir, 'memory.md'), cleaned, 'utf8');
       }
     } catch (err) {
       console.error(`[analyzer] write ${r.taskId} failed:`, err.message);
@@ -479,9 +677,22 @@ async function finalizeAnalyses(stagingDir) {
  */
 function _extractNamesFromOutline(outlineText) {
   const names = [];
+  const source = String(outlineText || '');
+  const directPatterns = [
+    /(?:主角|男主|女主|空姐|少女|女孩|角色|姓名|名字)[：:为叫是\s“"]*([\u4e00-\u9fa5]{2,4})/g,
+    /^\s*(?:[-•*]\s*)?(?:\*\*)?([\u4e00-\u9fa5]{2,4})(?:\*\*)?(?:（[^）]{0,12}）|\([^)]{0,12}\))?[：:]/gm,
+    /^\s*([\u4e00-\u9fa5]{2,4})\s*$/gm,
+  ];
+  for (const pattern of directPatterns) {
+    let match;
+    while ((match = pattern.exec(source))) {
+      const name = _normalizePersonName(match[1]);
+      if (name) names.push(name);
+    }
+  }
   // Match markdown list items that look like character names:
   // "- 张三" or "- 张三（主角）" or "- 张三和李四"
-  const items = outlineText.match(/[-•*]\s+([^\n]+)/g) || [];
+  const items = source.match(/[-•*]\s+([^\n]+)/g) || [];
   for (const item of items) {
     // Remove list marker and trim
     const clean = item.replace(/^[-•*]\s*/, '').trim();
@@ -489,12 +700,319 @@ function _extractNamesFromOutline(outlineText) {
     const parts = clean.split(/[、,，&＆/]/).map((s) => s.replace(/[（(].*[）)]/g, '').trim()).filter(Boolean);
     for (const p of parts) {
       // Filter out non-name text (relationship descriptions, etc.)
-      if (p.length >= 2 && p.length <= 12 && !/^[是关于和与的了对不在有以及或]$/.test(p)) {
-        names.push(p);
+      const name = _normalizePersonName(p);
+      if (name) {
+        names.push(name);
       }
     }
   }
+  names.push(..._extractTrustedCjkNamesFromHints(source));
+  names.push(..._extractNonChineseNamesFromHints(source));
   return [...new Set(names)];
+}
+
+function _extractTrustedCjkNamesFromHints(sourceHints) {
+  const source = String(sourceHints || '');
+  const names = [];
+  const candidateSection = source.match(/##\s*AI候选角色姓名([\s\S]*?)(?=\n##\s+|$)/);
+  const lines = (candidateSection ? candidateSection[1] : source).split(/\n+/);
+  for (const line of lines) {
+    if (!candidateSection && !/(?:角色|人物|姓名|名字|主角|女主|男主|人名|日本|日式)/.test(line)) continue;
+    const chunks = line.match(/[\u4e00-\u9fa5]{2,4}/g) || [];
+    for (const chunk of chunks) {
+      const name = _normalizePersonName(chunk) || _normalizeTrustedCjkName(chunk, source);
+      if (name) names.push(name);
+    }
+  }
+  return [...new Set(names)];
+}
+
+function _normalizePersonName(raw) {
+  const text = String(raw || '')
+    .replace(/^[\s"'“”‘’]+|[\s"'“”‘’]+$/g, '')
+    .replace(/[（(].*[）)]/g, '')
+    .replace(/[的地得之]$/g, '')
+    .trim();
+  if (text.length < 2 || text.length > 4) return '';
+  if (_isDefinitelyNonPersonName(text)) return '';
+  if (/^(主角|男主|女主|空姐|少女|女孩|金发|金发女孩|乘客|尸体|死者|众人|飞机|章节|故事|文本|原作|关系|暗线|明线|冲突|伏笔|悬念|角色)$/.test(text)) return '';
+  if (/^[是关于和与的了对不在有以及或]+$/.test(text)) return '';
+  if (!_looksLikeChinesePersonName(text)) return '';
+  return text;
+}
+
+const COMMON_SINGLE_SURNAMES = new Set('赵钱孙李周吴郑王冯陈褚卫蒋沈韩杨朱秦尤许何吕施张孔曹严华金魏陶姜戚谢邹喻柏水窦章云苏潘葛奚范彭郎鲁韦昌马苗凤花方俞任袁柳鲍史唐费廉岑薛雷贺倪汤滕殷罗毕郝邬安常乐于时傅皮卞齐康伍余元卜顾孟平黄和穆萧尹姚邵湛汪祁毛禹狄米贝明臧计伏成戴谈宋庞熊纪舒屈项祝董梁杜阮蓝闵席季麻强贾路娄危江童颜郭梅盛林刁钟徐邱骆高夏蔡田胡凌霍虞万支柯昝管卢莫经房裘缪干解应宗丁宣邓郁单杭洪包诸左石崔吉龚程嵇邢裴陆荣翁荀羊於惠甄曲家封芮羿储靳汲邴糜松井段富巫乌焦巴弓牧隗山谷车侯宓蓬全郗班仰秋仲伊宫宁仇栾暴甘斜厉戎祖武符刘景詹束龙叶幸司韶郜黎蓟薄印宿白怀蒲邰从鄂索咸籍赖卓蔺屠蒙池乔阴胥能苍双闻莘党翟谭贡劳逄姬申扶堵冉宰郦雍郤璩桑桂濮牛寿通边扈燕冀浦尚农温别庄晏柴瞿阎充慕连茹习宦艾鱼容向古易慎戈廖庾终暨居衡步都耿满弘匡国文寇广禄阙东欧利师巩聂关荆司迟游竺权逯盖益桓公仉督晋楚闫法汝鄢涂钦岳帅缑亢况后有琴商牟佘佴伯赏墨哈谯笪年爱阳佟第五言福'.split(''));
+const COMMON_COMPOUND_SURNAMES = [
+  '欧阳', '太史', '端木', '上官', '司马', '东方', '独孤', '南宫', '万俟', '闻人', '夏侯', '诸葛',
+  '尉迟', '公羊', '赫连', '澹台', '皇甫', '宗政', '濮阳', '公冶', '太叔', '申屠', '公孙', '慕容',
+  '仲孙', '钟离', '长孙', '宇文', '司徒', '鲜于', '司空', '闾丘', '子车', '亓官', '司寇', '巫马',
+  '公西', '颛孙', '壤驷', '公良', '漆雕', '乐正', '宰父', '谷梁', '拓跋', '夹谷', '轩辕', '令狐',
+  '段干', '百里', '呼延', '东郭', '南门', '羊舌', '微生', '公户', '公玉', '公仪', '梁丘', '公仲',
+  '公上', '公门', '公山', '公坚', '左丘', '公伯', '西门', '公祖', '第五', '公乘', '贯丘', '公皙',
+  '南荣', '东里', '东宫', '仲长', '子书', '子桑', '即墨', '达奚', '褚师',
+];
+const COMMON_JP_SURNAME_PREFIXES = [
+  '佐藤', '铃木', '高桥', '田中', '伊藤', '渡边', '山本', '中村', '小林', '加藤', '吉田', '山田',
+  '佐佐木', '山口', '松本', '井上', '木村', '林', '清水', '斋藤', '山崎', '森', '池田', '桥本',
+  '阿部', '石川', '山下', '中岛', '石井', '前田', '藤田', '冈田', '后藤', '长谷川', '村上',
+  '近藤', '上野', '神谷', '白井', '黑川', '星野', '七海', '朝仓', '藤原', '橘',
+];
+const NON_NAME_BIGRAMS = /^(一样|一片|一行|一边|一下|一声|一个|一种|一些|这里|那里|这个|那个|以及|然后|只是|已经|开始|继续|突然|仿佛|空气|身体|下体|下手|从背|奸淫|空白|人将|只剩|之前|之后|其中|所以|但是|因为|如果|可以|没有|不是|就是|所有|每个|这些|那些|她们|他们|我们|你们|时候|声音|目光|脸上|身上|心里|眼前|周围|基地|房间|舱门|飞机|冰原|雪地|章节|正文|版本|部分|阶段|计划|主动)/;
+
+function _isDefinitelyNonPersonName(name) {
+  const text = String(name || '').trim();
+  if (!text) return true;
+  if (/^第[一二三四五六七八九十百千万零\d]+(?:部分|阶段|章|章节|节|幕|卷|次|回)$/.test(text)) return true;
+  if (/^(?:第一|第二|第三|第四|第五|第六|第七|第八|第九|第十)(?:部分|阶段|章|章节|节|幕|卷)$/.test(text)) return true;
+  if (/^(?:部分|阶段|章节|正文|故事|候选|姓名|角色|人物|主要人物|关系|计划|任务|目标|流程|版本|片段|大纲|文风|分析|确认)$/.test(text)) return true;
+  if (/^(?:和|与|及|跟|同|对|把|被|将|让|能|都|又|再|已|在|从|向|到|为|以|这|那)[\u4e00-\u9fa5]{1,5}$/.test(text)) return true;
+  if (/[\u4e00-\u9fa5]+[的地得之][\u4e00-\u9fa5]+/.test(text)) return true;
+  if (/^(?:金发|银发|黑发|白发|蓝发|红发|碧眼|黑眼|蓝眼|红眼|长发|短发|舞蹈生|空姐|少女|女孩|乘客|尸体|死者)/.test(text)) return true;
+  if (/(?:主动|计划|阶段|部分|章节|正文|候选|补全|联网|识别|抽取|整理|分析|选择|导入|确认|开始|继续|已经|没有|过去|过世|拿过|能去|将机|去主|不是|上一步|下一步)/.test(text)) return true;
+  return false;
+}
+
+function _looksLikeChinesePersonName(name) {
+  const text = String(name || '').trim();
+  if (!/^[\u4e00-\u9fa5]{2,4}$/.test(text)) return false;
+  if (_isDefinitelyNonPersonName(text)) return false;
+  if (NON_NAME_BIGRAMS.test(text)) return false;
+  if (COMMON_COMPOUND_SURNAMES.some((surname) => text.startsWith(surname) && text.length > surname.length)) return true;
+  if (COMMON_JP_SURNAME_PREFIXES.some((surname) => text.startsWith(surname) && text.length > surname.length)) return true;
+  return COMMON_SINGLE_SURNAMES.has(text[0]);
+}
+
+function _slugFromName(name) {
+  const text = String(name || '').trim();
+  if (!text) return '';
+  if (/^[a-z][a-z0-9_-]*$/i.test(text)) return text.toLowerCase();
+  return text.replace(/[^\w\u4e00-\u9fa5.-]/g, '_');
+}
+
+function _isGenericRoleName(name) {
+  const text = String(name || '').trim();
+  return /^(我|主角|男主|女主|叙述者|乘客|旅客|空姐|空乘|乘务员|机长|副驾驶|驾驶员|尸体|死者|女孩|少女|小女孩|金发女孩|金发小女孩|众人|孩子|女性|男人|女人)$/.test(text);
+}
+
+function _isSyntheticId(id, sourceHints) {
+  const text = String(id || '').trim();
+  if (!text) return true;
+  if (/^(wo|i|me|narrator|protagonist|main|mainchar|char|character|unknown|kongjie\d*|stewardess\d*|flightattendant\d*|black_?stocking_?attendant|jizhang|fujizhang|captain|first_?officer|copilot)$/i.test(text)) {
+    return true;
+  }
+  if (/^(?:black|blonde|golden|female|male|young|dead|flight|stocking|attendant|captain|first|officer|protagonist|narrator)[a-z0-9_-]*$/i.test(text)
+    && !String(sourceHints || '').toLowerCase().includes(text.toLowerCase())) return true;
+  if (/^[a-z]+[0-9]+$/i.test(text) && !String(sourceHints || '').toLowerCase().includes(text.toLowerCase())) {
+    return true;
+  }
+  return false;
+}
+
+function _nameAppearsInHints(name, sourceHints) {
+  const text = String(name || '').trim();
+  if (!text) return false;
+  return String(sourceHints || '').toLowerCase().includes(text.toLowerCase());
+}
+
+function _normalizeTrustedCjkName(raw, sourceHints = '') {
+  const text = String(raw || '')
+    .replace(/^[\s"'“”‘’]+|[\s"'“”‘’]+$/g, '')
+    .replace(/[（(].*[）)]/g, '')
+    .replace(/[的地得之]$/g, '')
+    .trim();
+  if (!/^[\u4e00-\u9fa5]{2,4}$/.test(text)) return '';
+  if (_isGenericRoleName(text)) return '';
+  if (_isDefinitelyNonPersonName(text)) return '';
+  if (NON_NAME_BIGRAMS.test(text)) return '';
+  if (!_nameAppearsInHints(text, sourceHints)) return '';
+  return text;
+}
+
+function _sanitizeCharacterCards(chars, sourceHints = '') {
+  const result = [];
+  const seen = new Set();
+  const hasSourceHints = Boolean(String(sourceHints || '').trim());
+  const trustedNames = new Set([
+    ..._extractNamesFromOutline(sourceHints),
+    ..._extractLatinNamesFromHints(sourceHints),
+    ..._extractNonChineseNamesFromHints(sourceHints),
+  ].filter(Boolean));
+
+  for (const raw of chars || []) {
+    if (!raw || typeof raw !== 'object') continue;
+    const id = String(raw.id || '').trim();
+    let name = String(raw.name || '').trim();
+    const protagonist = raw.protagonist === true;
+
+    if (!name && protagonist && /^(wo|i|me|narrator|protagonist|main|mainchar)?$/i.test(id)) {
+      name = '我（主角）';
+    } else if (!name && /^[\u4e00-\u9fa5]{2,4}$/.test(id) && !_isGenericRoleName(id) && _normalizePersonName(id)) {
+      name = id;
+    } else if (!name && !_isSyntheticId(id, sourceHints) && _nameAppearsInHints(id, sourceHints)) {
+      name = id;
+    } else if (!name && !_isSyntheticId(id, sourceHints) && /^[\u4e00-\u9fa5]{2,4}$/.test(id) && _normalizePersonName(id)) {
+      name = id;
+    }
+
+    if (name === '我' || name === '主角' || name === '叙述者') {
+      if (protagonist) name = '我（主角）';
+    }
+
+    const normalizedChinese = _normalizePersonName(name);
+    const normalizedTrustedCjk = normalizedChinese || _normalizeTrustedCjkName(name, sourceHints);
+    const hasTrustedChineseName = normalizedTrustedCjk && (!hasSourceHints || trustedNames.has(normalizedTrustedCjk) || _nameAppearsInHints(normalizedTrustedCjk, sourceHints));
+    const normalizedForeign = _normalizeTrustedForeignName(name);
+    const hasTrustedForeignName = normalizedForeign && (!hasSourceHints || trustedNames.has(normalizedForeign) || _nameAppearsInHints(normalizedForeign, sourceHints));
+    const isNarrator = name === '我（主角）';
+    if (!isNarrator && _isDefinitelyNonPersonName(name)) continue;
+    if (!isNarrator && !hasTrustedChineseName && !hasTrustedForeignName) continue;
+    if (!isNarrator && _isGenericRoleName(name)) continue;
+    if (!name && _isSyntheticId(id, sourceHints)) continue;
+
+    const finalName = isNarrator ? name : (hasTrustedChineseName ? normalizedTrustedCjk : normalizedForeign);
+    const key = finalName.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    result.push({
+      ...raw,
+      id: !_isSyntheticId(id, sourceHints) ? id : (_slugFromName(finalName) || `char-${result.length + 1}`),
+      name: finalName,
+    });
+  }
+
+  return result;
+}
+
+function _cleanAnalysisMarkdown(text) {
+  let cleaned = String(text || '').trim();
+  cleaned = cleaned
+    .replace(/^(好的|当然|以下是|下面是)[^\n]*(?:分析|大纲|提取|整理)[^\n]*\n+/i, '')
+    .replace(/^---+\n+/, '')
+    .replace(/^#{3,6}\s*##\s+/gm, '## ')
+    .replace(/^#{4,6}\s*###\s+/gm, '### ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  return cleaned;
+}
+
+function _extractTimelineFromOutline(outlineText) {
+  const source = _cleanAnalysisMarkdown(outlineText);
+  const sectionMatch = source.match(/##\s*章节概要([\s\S]*?)(?=\n##\s+|$)/);
+  const section = sectionMatch ? sectionMatch[1] : source;
+  const events = [];
+  const lines = section.split(/\n+/);
+  for (const line of lines) {
+    const trimmed = line.replace(/^[-*•]\s*/, '').replace(/^\d+[.、]\s*/, '').trim();
+    if (!trimmed || trimmed.length < 6) continue;
+    const bold = trimmed.match(/^\*\*([^*]+)\*\*[：:]\s*(.+)$/);
+    const colon = trimmed.match(/^([^：:]{2,30})[：:]\s*(.+)$/);
+    const title = (bold?.[1] || colon?.[1] || '').trim();
+    const event = (bold?.[2] || colon?.[2] || trimmed).trim();
+    if (!event || /原作识别|故事梗概|主要人物关系|冲突设定|伏笔|悬念/.test(event)) continue;
+    events.push({
+      id: `evt-${events.length + 1}`,
+      timestamp: title || `章节概要 ${events.length + 1}`,
+      title: title || event.slice(0, 24),
+      event,
+      type: 'plot',
+      importance: 'major',
+      involvedCharacters: [],
+    });
+    if (events.length >= 80) break;
+  }
+  return events;
+}
+
+function _extractLatinNamesFromHints(sourceHints) {
+  const names = [];
+  const pattern = /\b[A-Z][A-Za-z][A-Za-z'-]{1,30}\b/g;
+  let match;
+  while ((match = pattern.exec(String(sourceHints || '')))) {
+    const name = match[0];
+    if (/^(Chatbox|Markdown|JSON|USER|ASSISTANT|SYSTEM|AI)$/i.test(name)) continue;
+    names.push(name);
+  }
+  return [...new Set(names)];
+}
+
+function _extractNonChineseNamesFromHints(sourceHints) {
+  const source = String(sourceHints || '');
+  const names = [];
+  let match;
+
+  const kanaPattern = /[\u30A0-\u30FFー]{2,24}(?:[・=][\u30A0-\u30FFー]{2,24}){0,3}/g;
+  while ((match = kanaPattern.exec(source))) {
+    const name = _normalizeTrustedForeignName(match[0]);
+    if (name) names.push(name);
+  }
+
+  const cyrillicPattern = /(?:^|[^\p{Script=Cyrillic}])(\p{Lu}\p{Script=Cyrillic}{1,24}(?:[ -]\p{Lu}\p{Script=Cyrillic}{1,24}){0,2})(?=$|[^\p{Script=Cyrillic}])/gu;
+  while ((match = cyrillicPattern.exec(source))) {
+    const name = _normalizeTrustedForeignName(match[1]);
+    if (name) names.push(name);
+  }
+
+  return [...new Set(names)];
+}
+
+function _normalizeTrustedForeignName(raw) {
+  const text = String(raw || '')
+    .replace(/^[\s"'“”‘’「」『』《》]+|[\s"'“”‘’「」『』《》]+$/g, '')
+    .trim();
+  if (text.length < 2 || text.length > 80) return '';
+  if (/^(Chatbox|Markdown|JSON|USER|ASSISTANT|SYSTEM|AI)$/i.test(text)) return '';
+  if (/^[A-Z][A-Z_]{2,}$/.test(text)) return '';
+  if (/^[\u30A0-\u30FFー・=]+$/.test(text)) return text;
+  if (/^\p{Lu}\p{Script=Cyrillic}{1,24}(?:[ -]\p{Lu}\p{Script=Cyrillic}{1,24}){0,2}$/u.test(text)) return text;
+  if (/^[A-Z][A-Za-z][A-Za-z .'-]{0,40}$/.test(text)) return text;
+  return '';
+}
+
+function _buildCharacterFocusedText(sourceHints, chunkText, maxChars = 22000) {
+  const candidateNames = [
+    ..._extractNamesFromOutline(sourceHints),
+    ..._extractLatinNamesFromHints(sourceHints),
+    ..._extractNonChineseNamesFromHints(sourceHints),
+  ];
+  const uniqueCandidates = [...new Set(candidateNames)].filter(Boolean);
+  const lines = [];
+  lines.push('## 候选角色姓名');
+  lines.push(uniqueCandidates.length > 0 ? uniqueCandidates.map((name) => `- ${name}`).join('\n') : '- （无明确候选姓名）');
+  lines.push('\n## 用户设定/大纲线索');
+  lines.push(String(sourceHints || '').slice(0, 12000));
+
+  const source = String(chunkText || '');
+  const snippets = [];
+  for (const name of uniqueCandidates) {
+    const needle = String(name || '').trim();
+    if (!needle) continue;
+    const lowerSource = source.toLowerCase();
+    const lowerNeedle = needle.toLowerCase();
+    let index = lowerSource.indexOf(lowerNeedle);
+    let count = 0;
+    while (index >= 0 && count < 3) {
+      const start = Math.max(0, index - 350);
+      const end = Math.min(source.length, index + needle.length + 550);
+      snippets.push(`### ${needle}\n${_redactSyntheticCharacterTokens(source.slice(start, end).trim())}`);
+      index = lowerSource.indexOf(lowerNeedle, index + lowerNeedle.length);
+      count++;
+    }
+  }
+
+  if (snippets.length > 0) {
+    lines.push('\n## 正文中候选姓名附近片段');
+    lines.push(snippets.join('\n\n'));
+  }
+
+  return lines.join('\n\n').slice(0, maxChars);
+}
+
+function _redactSyntheticCharacterTokens(text) {
+  return String(text || '')
+    .replace(/\b(?:black_?stocking_?attendant|first_?officer|flight_?attendant|protagonist|narrator|captain|copilot)\b/gi, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
 }
 
 function _parseJsonArray(raw) {
@@ -573,4 +1091,30 @@ async function extractCharacters(text) {
   return _parseJsonArray(textBlock?.text || '');
 }
 
-module.exports = { startAnalyses, finalizeAnalyses, extractCharacters, resolveProvider };
+module.exports = {
+  startAnalyses,
+  finalizeAnalyses,
+  extractCharacters,
+  resolveProvider,
+  _internal: {
+    _cleanAnalysisMarkdown,
+    _extractTimelineFromOutline,
+    _extractNamesFromOutline,
+    _extractCandidateNamesWithAi,
+    _extractCandidateNamesForText,
+    _normalizeCandidateNameItems,
+    _mergeCandidateNameItems,
+    _mergeCandidateNamesWithAi,
+    _appendCandidateNamesToHints,
+    _normalizePersonName,
+    _isDefinitelyNonPersonName,
+    _looksLikeChinesePersonName,
+    _extractTrustedCjkNamesFromHints,
+    _normalizeTrustedCjkName,
+    _extractNonChineseNamesFromHints,
+    _normalizeTrustedForeignName,
+    _redactSyntheticCharacterTokens,
+    _sanitizeCharacterCards,
+    _buildCharacterFocusedText,
+  },
+};

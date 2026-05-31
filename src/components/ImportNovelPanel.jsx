@@ -85,6 +85,12 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
       const result = await mana.import.parseFiles(filePaths);
       chaptersRef.current = result.chapters || [];
       setParsed(result);
+      if (!projectName.trim()) {
+        const fallbackTitle = result.metadata?.title
+          || filePaths[0]?.split('/').pop()?.replace(/\.[^.]+$/, '')
+          || '';
+        setProjectName(fallbackTitle.replace(/[/\\?%*:|"<>]/g, ''));
+      }
 
       // Check for duplicate import
       if (mana?.import?.checkDuplicate) {
@@ -130,6 +136,8 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
     const name = projectName.trim() || 'untitled';
     return projectParentDir ? `${projectParentDir}/${name}` : '';
   };
+
+  const hasChatboxHtml = filePaths.some((fp) => /\.(?:html|htm)$/i.test(fp || ''));
 
   async function handlePickProjectParentDir() {
     if (!mana?.fs?.pickDirectory) { setError('文件系统 API 不可用'); return; }
@@ -312,6 +320,19 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
     setAnalyzing(false);
   }
 
+  async function handleContinueAfterAnalysis() {
+    if (fanworkMeta.hasFanwork === true && importResult?.importId) {
+      await loadCharactersForReview(importResult.importId);
+      setStep('character-review');
+      return;
+    }
+    if (targetMode === 'existing') {
+      await handleDetectConflicts();
+      return;
+    }
+    setStep('done');
+  }
+
   function handleConfirmImport() {
     if (targetMode === 'existing' && !targetNovelId) {
       setError('请选择一个现有项目');
@@ -392,6 +413,10 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
     } catch (err) {
       console.error('[import] saveStagingCharacters failed:', err);
     }
+    if (targetMode === 'existing') {
+      await handleDetectConflicts();
+      return;
+    }
     // Promote and finish
     if (targetMode === 'new' && projectParentDir && projectName.trim()) {
       const promoted = await handlePromoteToNovel(importResult.importId);
@@ -404,7 +429,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
         return;
       }
     }
-    setStep('analysis-done');
+    setStep('done');
   }
 
   async function handleReuseExisting() {
@@ -512,7 +537,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
 
           {step === 'select' && (
             <div className="space-y-3">
-              <p className="text-gray-500">选择要导入的小说文件。支持 Markdown (.md)、纯文本 (.txt) 和 EPUB (.epub) 格式，可多选。</p>
+              <p className="text-gray-500">选择要导入的小说文件。支持 Markdown (.md)、纯文本 (.txt)、EPUB (.epub) 和 Chatbox HTML (.html) 格式，可多选。</p>
               <button
                 type="button"
                 onClick={handlePickFiles}
@@ -540,7 +565,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
                   className="px-3 py-1.5 bg-blue-700 text-white rounded hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
                 >
                   {loading ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                  解析文件
+                  {loading && hasChatboxHtml ? '正在整理 Chatbox 对话最终稿' : '解析文件'}
                 </button>
               </div>
             </div>
@@ -946,7 +971,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setStep('analysis')}
+                    onClick={() => setStep('analysis-done')}
                     disabled={enriching}
                     className="px-3 py-1.5 text-gray-400 hover:text-gray-200 disabled:opacity-40"
                   >
@@ -1010,19 +1035,19 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
               {targetMode === 'existing' ? (
                 <button
                   type="button"
-                  onClick={handleDetectConflicts}
+                  onClick={handleContinueAfterAnalysis}
                   disabled={loading}
                   className="w-full px-3 py-1.5 bg-amber-700 text-white rounded hover:bg-amber-600 disabled:opacity-40"
                 >
-                  {loading ? '检测中...' : '继续 → 冲突检测与合并模式'}
+                  {fanworkMeta.hasFanwork === true ? '下一步 → 角色归属标记' : (loading ? '检测中...' : '继续 → 冲突检测与合并模式')}
                 </button>
               ) : (
                 <button
                   type="button"
-                  onClick={() => { setStep('done'); }}
+                  onClick={handleContinueAfterAnalysis}
                   className="w-full px-3 py-1.5 bg-blue-700 text-white rounded hover:bg-blue-600"
                 >
-                  查看导入结果
+                  {fanworkMeta.hasFanwork === true ? '下一步 → 角色归属标记' : '查看导入结果'}
                 </button>
               )}
             </div>

@@ -1,0 +1,104 @@
+{
+  "startedAt": "2026-05-30T09:15:43.425Z",
+  "novelId": "novel-web-enrichment-benchmark-2026",
+  "projectDir": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026",
+  "characterCount": 2,
+  "args": {
+    "concurrency": 3,
+    "onlyWork": null,
+    "reportPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/benchmark-report-single-character.json",
+    "rosterPath": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026/roster-single-character.json",
+    "skipEnrich": false
+  },
+  "searchProbes": [
+    {
+      "name": "食蜂操祈",
+      "work": "魔法禁书目录",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 12476,
+      "resultCount": 2,
+      "topSources": [
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "食蜂操祈",
+        "食蜂派阀"
+      ],
+      "pageLen": 874,
+      "pageSource": "bangumi"
+    },
+    {
+      "name": "爱丽丝菲尔",
+      "work": "Fate/stay night",
+      "tag": "latest",
+      "sphere": "east-asian-jp",
+      "searchMs": 6829,
+      "resultCount": 3,
+      "topSources": [
+        "bangumi",
+        "bangumi",
+        "bangumi"
+      ],
+      "topTitles": [
+        "爱丽丝菲尔·冯·爱因兹贝伦",
+        "爱丽丝菲尔〔天之衣〕",
+        "爱丽丝菲尔·冯·爱因兹贝伦 (Prisma☆Illya)"
+      ],
+      "pageLen": 506,
+      "pageSource": "bangumi"
+    }
+  ],
+  "enrichResults": [
+    {
+      "id": "魔法禁书目录-食蜂操祈-latest",
+      "name": "食蜂操祈",
+      "sourceWork": "魔法禁书目录",
+      "tag": "latest",
+      "status": "success",
+      "source": "sphere=east-asian-jp sources=bangumi page=bangumi",
+      "filledFields": [
+        "appearance",
+        "hairColor",
+        "height",
+        "figure",
+        "personality",
+        "background",
+        "moeTraits"
+      ],
+      "filledCount": 7,
+      "appearancePreview": "金色长发，眼睛有闪亮色泽，身高168cm（初二），身材姣好。常背一个女性包包，内装作为能力施放媒介的遥控器。默认服装未明确说明，通常为常盘台女子中学校服。",
+      "personalityPreview": "个性腹黑，有对部下使用能力恶作剧的行为；君临常盘台的女王大人；不善运动；因过去经历导致对周围人们不信任。",
+      "skinsCount": 0,
+      "pageSnapshotLen": 874,
+      "pageUrl": "https://chii.in/character/17949"
+    },
+    {
+      "id": "fate-stay-night-爱丽丝菲尔-latest",
+      "name": "爱丽丝菲尔",
+      "sourceWork": "Fate/stay night",
+      "tag": "latest",
+      "status": "incomplete-base",
+      "source": "bangumi",
+      "filledFields": [],
+      "filledCount": 0,
+      "appearancePreview": "",
+      "personalityPreview": "",
+      "skinsCount": 0,
+      "pageSnapshotLen": 0,
+      "pageUrl": ""
+    }
+  ],
+  "summary": {
+    "statusCounts": {
+      "success": 1,
+      "incomplete-base": 1
+    },
+    "avgFilledFields": 3.5,
+    "successRate": 50,
+    "searchProbeNoPage": 0,
+    "searchProbeNoResults": 0
+  },
+  "finishedAt": "2026-05-30T09:17:19.213Z"
+}

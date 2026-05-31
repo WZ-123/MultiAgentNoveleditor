@@ -15,6 +15,8 @@
 
 const fs = require('node:fs').promises;
 const path = require('node:path');
+const chatboxParser = require('./chatboxParser');
+const chatboxDraftExtractor = require('./chatboxDraftExtractor');
 
 const CHAPTER_PATTERNS = [
   /^第[一二三四五六七八九十百千万零\d]+章/,
@@ -191,6 +193,30 @@ async function parseNovelFile(filePath) {
   if (ext === '.epub') return parseEpub(filePath);
 
   const text = await fs.readFile(filePath, 'utf8');
+  if ((ext === '.html' || ext === '.htm') && chatboxParser.isLikelyChatboxHtml(text)) {
+    const transcript = chatboxParser.parseChatboxHtml(text);
+    if (!transcript.messages.some((msg) => msg.role === 'assistant')) {
+      throw new Error('Chatbox HTML 中没有可整理的 assistant 回复');
+    }
+    const extracted = await chatboxDraftExtractor.extractFinalDraftFromChatbox(transcript);
+    const analysisHints = chatboxParser.buildAnalysisHints(transcript);
+    return {
+      chapters: extracted.chapters,
+      metadata: {
+        title: extracted.title || transcript.title || transcript.sessionTitles?.[0] || path.basename(filePath, ext),
+        analysisHints,
+        importMeta: {
+          sourceType: transcript.sourceType,
+          messageCount: transcript.messages.length,
+          sessionTitles: transcript.sessionTitles,
+          extractedAt: new Date().toISOString(),
+          notes: extracted.notes || '',
+          analysisHintChars: analysisHints.length,
+        },
+      },
+    };
+  }
+
   const chapters = splitIntoChapters(text);
   return { chapters, metadata: {} };
 }
@@ -198,15 +224,30 @@ async function parseNovelFile(filePath) {
 async function parseNovelFiles(filePaths) {
   const allChapters = [];
   let metadata = {};
+  const mergedImportMeta = {};
   const sorted = [...filePaths].sort((a, b) => a.localeCompare(b));
 
   for (const fp of sorted) {
     const result = await parseNovelFile(fp);
     if (result.metadata?.title && !metadata.title) metadata = result.metadata;
+    if (result.metadata?.analysisHints) {
+      metadata.analysisHints = [metadata.analysisHints, result.metadata.analysisHints].filter(Boolean).join('\n\n---\n\n');
+    }
+    if (result.metadata?.importMeta) {
+      mergedImportMeta.sourceType = mergedImportMeta.sourceType || result.metadata.importMeta.sourceType;
+      mergedImportMeta.messageCount = (mergedImportMeta.messageCount || 0) + (result.metadata.importMeta.messageCount || 0);
+      mergedImportMeta.extractedAt = mergedImportMeta.extractedAt || result.metadata.importMeta.extractedAt;
+      mergedImportMeta.notes = [mergedImportMeta.notes, result.metadata.importMeta.notes].filter(Boolean).join('\n');
+      mergedImportMeta.sessionTitles = [
+        ...(mergedImportMeta.sessionTitles || []),
+        ...(result.metadata.importMeta.sessionTitles || []),
+      ];
+    }
     allChapters.push(...result.chapters);
   }
 
+  if (mergedImportMeta.sourceType) metadata.importMeta = mergedImportMeta;
   return { chapters: allChapters, metadata };
 }
 
-module.exports = { parseNovelFile, parseNovelFiles };
+module.exports = { parseNovelFile, parseNovelFiles, splitIntoChapters };

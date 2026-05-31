@@ -263,9 +263,42 @@ async function listCharacters(novelDir) {
   return out;
 }
 
-async function readCharacter(novelDir, id) {
+async function resolveCharacterFile(novelDir, id) {
+  const key = _cleanStr(id);
+  if (!key) return null;
   const np = novelPaths(novelDir);
-  return normalizeCharacter(await readJson(path.join(np.characters, `${id}.json`), null));
+  const direct = path.join(np.characters, `${key}.json`);
+  try {
+    await fs.access(direct);
+    const character = normalizeCharacter(await readJson(direct, null));
+    return { file: direct, fileId: key, character };
+  } catch (err) {
+    if (err.code !== 'ENOENT') throw err;
+  }
+
+  const wanted = key.toLowerCase();
+  const files = (await listJsonFiles(np.characters)).sort();
+  for (const file of files) {
+    const fileId = path.basename(file, '.json');
+    const character = normalizeCharacter(await readJson(file, null));
+    if (!character) continue;
+    const keys = [
+      fileId,
+      character.id,
+      character.name,
+      character.originalName,
+      ...(Array.isArray(character.aliases) ? character.aliases : []),
+    ].map((value) => _cleanStr(value).toLowerCase()).filter(Boolean);
+    if (keys.includes(wanted)) {
+      return { file, fileId, character };
+    }
+  }
+  return null;
+}
+
+async function readCharacter(novelDir, id) {
+  const resolved = await resolveCharacterFile(novelDir, id);
+  return resolved?.character || null;
 }
 
 async function writeCharacter(novelDir, character) {
@@ -286,8 +319,10 @@ async function patchCharacter(novelDir, id, patch) {
 }
 
 async function deleteCharacter(novelDir, id) {
-  const np = novelPaths(novelDir);
-  await deleteFile(path.join(np.characters, `${id}.json`));
+  const resolved = await resolveCharacterFile(novelDir, id);
+  if (!resolved) return null;
+  await deleteFile(resolved.file);
+  return resolved.character || null;
 }
 
 // ---------------- Assets ----------------
