@@ -72,6 +72,15 @@ async function prepare(spec) {
     throw new Error('directApi.prepare: dag required for pipeline mode');
   }
   const abortController = new AbortController();
+  // Wire external abortSignal (e.g. from AbortSignal.timeout() in callers)
+  // through to the local AbortController so it propagates to fetch/stream.
+  if (spec.abortSignal && typeof spec.abortSignal.addEventListener === 'function') {
+    spec.abortSignal.addEventListener('abort', () => {
+      if (!abortController.signal.aborted) {
+        abortController.abort(spec.abortSignal.reason || new DOMException('timeout', 'TimeoutError'));
+      }
+    }, { once: true });
+  }
   return {
     driverId: id,
     runId: runId || null,

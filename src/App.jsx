@@ -21,6 +21,7 @@ import { SkillSettings } from '@/components/SkillSettings.jsx';
 import { OfflineSyncDialog } from '@/components/OfflineSyncDialog.jsx';
 import { ImportNovelPanel } from '@/components/ImportNovelPanel.jsx';
 import { ImportMergePanel } from '@/components/ImportMergePanel.jsx';
+import { SearchPanel } from '@/components/SearchPanel.jsx';
 import { NovelDataBrowser } from '@/components/NovelDataBrowser.jsx';
 import { DataTabContent } from '@/components/DataTabContent.jsx';
 import { countMeaningfulCharacters } from '@/domain/text.js';
@@ -423,6 +424,15 @@ function App() {
     chapterEntries.forEach((entry) => m.set(entry.chapter.id, entry));
     return m;
   }, [chapterEntries]);
+
+  // Reverse map: fileName → chapterId for search navigation
+  const fileNameToChapterId = useMemo(() => {
+    const m = {};
+    for (const [id, entry] of chapterMap) {
+      if (entry.chapter.fileName) m[entry.chapter.fileName] = id;
+    }
+    return m;
+  }, [chapterMap]);
 
   const ensureChapterContentLoaded = useCallback(async (chapterId) => {
     const entry = chapterMap.get(chapterId);
@@ -1137,6 +1147,25 @@ function App() {
     };
   }, [editorContextMenu]);
 
+  // Global keyboard shortcut: Ctrl+F / Cmd+F to open search sidebar
+  // Intercepts even when editor textarea is focused (overrides browser "find in page")
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      const isMac = navigator.platform.toLowerCase().includes('mac');
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+      if (modifier && e.key === 'f') {
+        e.preventDefault();
+        setActiveSidebarItem('search');
+        // Auto-focus the search input after React renders
+        requestAnimationFrame(() => {
+          document.getElementById('search-input')?.focus();
+        });
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   const openEditorContextMenu = useCallback((event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -1740,12 +1769,24 @@ function App() {
         ) : (
           <>
             <div className="h-9 px-4 flex items-center text-xs font-bold tracking-wide uppercase text-gray-400">
-              {activeSidebarItem === 'search' && t('app.search')}
               {activeSidebarItem === 'source-control' && t('app.sourceControl')}
               {activeSidebarItem === 'settings' && t('app.settings')}
               {activeSidebarItem === 'pipeline' && 'Pipeline'}
             </div>
             <div className="flex-1 overflow-y-auto">
+              {activeSidebarItem === 'search' && (
+                <SearchPanel
+                  novelId={activeNovelId}
+                  onOpenChapter={(fileName) => {
+                    const id = fileNameToChapterId[fileName];
+                    if (id) {
+                      openChapterInEditor(id);
+                    }
+                  }}
+                  onOpenCharacter={(id) => openDataInEditor('character', id)}
+                  onSwitchSidebar={() => setActiveSidebarItem('explorer')}
+                />
+              )}
               {activeSidebarItem === 'settings' && (
                 <div className="text-sm px-2 py-2">
                   <AppSettingsPanel

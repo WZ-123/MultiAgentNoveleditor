@@ -50,6 +50,14 @@ async function resolveTier({ subagent, tierOverride }) {
   if (!provider.apiKey) throw new Error(`AI 服务商 API Key 未设置`);
   const modelId = alias?.modelId || provider.models?.[0]?.id || '';
   if (!modelId) throw new Error(`没有配置 AI 模型`);
+  // Validate URL format early — catch protocol/typo errors before the
+  // fetch call, avoiding unnecessary retry timeouts.
+  const baseUrl = provider.baseUrl || '';
+  if (baseUrl) {
+    try { new URL(baseUrl); } catch (_) {
+      throw new Error(`AI 服务商 API 地址无效：${baseUrl}`);
+    }
+  }
   const isWriting = (subagent.tags || []).includes('writing') || subagent.id === 'sa-writer';
   const maxTokens = Math.max(
     Number(alias?.maxOutputTokens) || 8192,

@@ -551,19 +551,27 @@ async function callTool({ name, arguments: args, runId, toolUseId, subagentId, n
     const novelId = activeNovel.id || null;
     const novelDir = activeNovel.dir || null;
     console.error('[mcp/serverManager] callTool injecting:', { name, novelId, novelDir });
-    const result = await c.callTool({
-      name,
-      arguments: args || {},
-      _meta: {
-        mana_runId: runId || null,
-        mana_subagentId: subagentId || null,
-        mana_nodeId: nodeId || null,
-        mana_toolUseId: toolUseId || null,
-        mana_autoConfirm: autoConfirm ? true : undefined,
-        mana_activeNovelId: novelId,
-        mana_activeNovelDir: novelDir,
+    // Timeout: 5min — must be > provider's per-attempt timeout (120s × 2 retries)
+    // to avoid racing retries: client timeout would waste server work and orphan
+    // the child process.
+    const MCP_TOOL_TIMEOUT = 300_000;
+    const result = await c.callTool(
+      {
+        name,
+        arguments: args || {},
+        _meta: {
+          mana_runId: runId || null,
+          mana_subagentId: subagentId || null,
+          mana_nodeId: nodeId || null,
+          mana_toolUseId: toolUseId || null,
+          mana_autoConfirm: autoConfirm ? true : undefined,
+          mana_activeNovelId: novelId,
+          mana_activeNovelDir: novelDir,
+        },
       },
-    });
+      undefined,
+      { timeout: MCP_TOOL_TIMEOUT }
+    );
     _notifyChapterMutation(name, args || {}, result);
     // Normalize: SDK returns {content, isError?, structuredContent?}
     return { content: result.content || [], isError: !!result.isError };

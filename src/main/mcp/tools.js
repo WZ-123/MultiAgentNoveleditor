@@ -186,11 +186,17 @@ async function _reviewChapterDeAiStyle(chapterName, focus, ctx) {
   payload.chapterName = chapterName;
   payload.focus = _cleanText(focus);
 
+  // Overall hard timeout for the subagent call (4 min). This matches the
+  // MCP SDK client's timeout (5 min) with margin, and prevents the server
+  // from hanging orphaned when the client disconnects.
+  const QUALITY_REVIEW_TIMEOUT_MS = 240_000;
+  const timeoutSignal = AbortSignal.timeout(QUALITY_REVIEW_TIMEOUT_MS);
   const workflowOrchestrator = require('../runtime/workflowOrchestrator');
   const result = await workflowOrchestrator.runWorkflow({
     mode: 'subagent',
     subagentId: 'sa-prose-quality',
     input: JSON.stringify(payload),
+    abortSignal: timeoutSignal,
     novelContext: ctx?.novel
       ? { novelId: ctx.novel.id || null, novelDir: ctx.novelDir || null }
       : undefined,
@@ -962,6 +968,43 @@ const TOOLS = [
       return textResult({ hits });
     },
   },
+  {
+    name: 'search_novel',
+    description: 'Search the active novel project for text across chapters (full content + display names), character cards, world lore, and timeline events. Supports Chinese, English, and normalized (NFKC/fullwidth) text matching. Returns structured results with snippets, source references, and navigation targets.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search text (Chinese, English, mixed; case-insensitive, NFKC-normalized)' },
+        categories: {
+          type: 'array', items: { type: 'string', enum: ['chapters','characters','world','timeline'] },
+          description: 'Categories to search. Default: all four. Specify a subset to narrow scope.',
+        },
+        maxResultsPerCategory: { type: 'number', description: 'Maximum results returned per category. Default 10, max 50.' },
+      },
+      required: ['query'],
+    },
+    requiresConfirmation: false,
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      const searchEngine = require('../search/searchEngine');
+      const query = String(args.query || '').trim();
+      if (!query) throw new Error('search_novel: query is required');
+      const categories = Array.isArray(args.categories) ? args.categories : ['chapters', 'characters', 'world', 'timeline'];
+      const maxPer = Math.min(args.maxResultsPerCategory || 10, 50);
+      const results = await searchEngine.searchNovel(dir, query, { categories, maxResultsPerCategory: maxPer });
+      const counts = {};
+      for (const r of results) {
+        const type = r.type || 'other';
+        counts[type] = (counts[type] || 0) + 1;
+      }
+      return textResult({
+        query,
+        resultCount: results.length,
+        categoryCounts: counts,
+        results: results.slice(0, 50),
+      });
+    },
+  },
 
   // ---------------- WRITE (auto) ----------------
   {
@@ -1170,6 +1213,21 @@ const TOOLS = [
     },
   },
   {
+    name: 'list_chapter_displays',
+    description: '返回所有章节的 {name, fileName, displayName, seq}，按显示排列。用于理解用户说的"第七章"对应哪个文件。AI MUST use this tool when the user refers to chapters by display name / ordinal (e.g. "第七章", "第3章", "前三章") rather than inferring from list_chapters + get_chapter_naming_rule alone.',
+    inputSchema: { type: 'object', properties: {} },
+    handler: async (_args, ctx) => {
+      const dir = requireNovel(ctx);
+      const list = await novelData.listChaptersWithDisplay(dir);
+      return textResult(list.map((ch, idx) => ({
+        name: ch.name,
+        fileName: ch.name,
+        displayName: ch.displayName || ch.name,
+        seq: idx + 1,
+      })));
+    },
+  },
+  {
     name: 'de_ai_ify',
     description: '调用专门的去 AI 味改写器，对给定中文小说片段做去套话、去八股、保留原意的自然化改写。',
     inputSchema: {
@@ -1252,6 +1310,7 @@ const TOOLS = [
         mode: 'subagent',
         subagentId: 'sa-character-consistency-reviewer',
         input: JSON.stringify(payload),
+        abortSignal: AbortSignal.timeout(240_000),
         novelContext: ctx?.novel
           ? { novelId: ctx.novel.id || null, novelDir: ctx.novelDir || null }
           : undefined,

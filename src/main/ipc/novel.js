@@ -420,6 +420,15 @@ function registerNovelIpc() {
 
     return { characters: chars.length, wordCount, wordCountWan };
   }));
+
+  // ---- Search across novel project ----
+  ipcMain.handle('mana:novel:search', safeIpc(async (_e, { id, query, options }) => {
+    if (!id) throw new Error('No novel ID provided');
+    if (!query || !query.trim()) return [];
+    const np = await novelsStore.pathsFor(id);
+    const searchEngine = require('../search/searchEngine');
+    return searchEngine.searchNovel(np.root, query.trim(), options || {});
+  }));
 }
 
 module.exports = { registerNovelIpc };

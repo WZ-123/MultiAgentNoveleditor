@@ -132,6 +132,7 @@ const novel = {
   writeStyleMemory: (id, text) => invoke('mana:novel:writeStyleMemory', { id, text }),
   enrichCharacters: (id, fanworkName, characterIds, runId) => invoke('mana:novel:enrichCharacters', { id, fanworkName, characterIds, runId }),
   regenerateCharacters: (id, confirmed) => invoke('mana:novel:regenerateCharacters', { id, confirmed }),
+  search: (id, query, options) => invoke('mana:novel:search', { id, query, options }),
 };
 
 const mcp = {

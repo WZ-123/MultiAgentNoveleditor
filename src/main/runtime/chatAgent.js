@@ -493,6 +493,7 @@ function buildCommonRules({ useDriver = false, hasActiveNovel = false } = {}) {
     lines.push('10. When auditing AI 味 / 套话 / 八股, do not say you manually reviewed the chapter(s). You must call `review_de_ai_style` before giving findings; if the user also wants a concrete rewrite sample, call `de_ai_ify` on one flagged excerpt.');
     lines.push('11. For world lore or place-table tweaks, prefer `apply_world_patch` over `update_world` unless you are intentionally replacing the whole world block.');
     lines.push('12. For multi-step asset handoff changes, prefer `apply_asset_patch` over many separate `grant_asset`/`revoke_asset` calls. When editing from a prior asset read, include that asset\'s `baseGrantedTo` snapshot.');
+    lines.push('12b. When the user refers to chapters by ordinal display names (e.g. "第七章", "第3章", "前三章", "从第五章到第八章"), call `list_chapter_displays` FIRST to get the definitive mapping between display names and filenames. Do NOT infer the mapping from `list_chapters` + `get_chapter_naming_rule` alone — the file order may differ from the display order due to insertions, deletions, or custom naming.');
   }
   lines.push('13. When given a research task (e.g., searching for character info, verifying facts), continue using tools until you have gathered sufficient information. Do not stop after a single search if the results are incomplete or ambiguous.');
   lines.push('14. WebSearch automatically fetches and includes page content from the best wiki/encyclopedia result. You do NOT need to call WebFetch for URLs returned by WebSearch unless you need content from a specific non-wiki URL.');
@@ -510,7 +511,7 @@ async function buildSystemPrompt(editorContext, useDriver, mcpFallbackNovelId, w
     '## Current Editor State',
   ];
   if (ctx.title) {
-    lines.push('- Open document: ' + ctx.title);
+    lines.push('- Open document: ' + (ctx.chapterDisplayName || ctx.title));
     lines.push('- Document type: ' + (ctx.type || 'unknown'));
   } else {
     lines.push('- No document is currently open.');
@@ -929,7 +930,7 @@ function parseChapterOrdinal(token) {
   return total + current;
 }
 
-function extractRequestedChapterNames(text, chapterNames) {
+function extractRequestedChapterNames(text, chapterNames, displayList) {
   const source = safeStr(text);
   const list = Array.isArray(chapterNames) ? chapterNames : [];
   const ordered = list.slice().sort((left, right) => left.localeCompare(right, 'en'));
@@ -943,6 +944,83 @@ function extractRequestedChapterNames(text, chapterNames) {
     addName(match[0]);
   }
 
+  // Try display-name matching first when displayList is available.
+  // This is more accurate than ordinal indexing when chapters have
+  // been inserted, deleted, or filename order ≠ display order.
+  if (Array.isArray(displayList) && displayList.length > 0) {
+    const displayMap = new Map();
+    for (const entry of displayList) {
+      if (entry.name) displayMap.set(entry.name, entry);
+    }
+
+    // Build a lookup: for each ordinal (1-99), find the entry whose displayName
+    // starts with "第X章" or "第{cn}章" — this captures both "第7章" and "第七章".
+    const ordinalToName = new Map();
+    for (const entry of displayList) {
+      const dn = entry.displayName || '';
+      // Match patterns like "第7章：" or "第七章：" or "第7章" or "第七章"
+      const m = dn.match(/^第\s*([零〇一二两三四五六七八九十百千\d]+)\s*章/u);
+      if (m) {
+        const ordinal = parseChapterOrdinal(m[1]);
+        if (Number.isFinite(ordinal) && ordinal > 0) {
+          ordinalToName.set(ordinal, entry.name);
+        }
+      }
+    }
+
+    // Helper: resolve ordinal → name via displayList
+    function resolveViaDisplayList(ordinal) {
+      if (!Number.isFinite(ordinal) || ordinal < 1) return undefined;
+      // First try ordinalToName (parsed from displayName)
+      if (ordinalToName.has(ordinal)) {
+        return ordinalToName.get(ordinal);
+      }
+      // Fallback: use seq field if it matches
+      for (const entry of displayList) {
+        if (entry.seq === ordinal && entry.name) return entry.name;
+      }
+      // Final fallback: ordinal index in the ordered filename list
+      return ordered[ordinal - 1];
+    }
+
+    // Display-name-aware range & single matching for "第X章" patterns
+    for (const match of source.matchAll(/第\s*([零〇一二两三四五六七八九十百千\d]+)\s*章\s*(?:到|至|[-~—–])\s*第?\s*([零〇一二两三四五六七八九十百千\d]+)\s*章/gu)) {
+      const start = parseChapterOrdinal(match[1]);
+      const end = parseChapterOrdinal(match[2]);
+      if (!Number.isFinite(start) || !Number.isFinite(end)) continue;
+      const lower = Math.max(1, Math.min(start, end));
+      const upper = Math.max(start, end);
+      for (let index = lower; index <= upper; index += 1) {
+        const name = resolveViaDisplayList(index);
+        if (name) addName(name);
+      }
+    }
+
+    for (const match of source.matchAll(/(?:第\s*)?([零〇一二两三四五六七八九十百千\d]+)\s*(?:章)?\s*(?:到|至|[-~—–])\s*(?:第\s*)?([零〇一二两三四五六七八九十百千\d]+)\s*章/gu)) {
+      const start = parseChapterOrdinal(match[1]);
+      const end = parseChapterOrdinal(match[2]);
+      if (!Number.isFinite(start) || !Number.isFinite(end)) continue;
+      const lower = Math.max(1, Math.min(start, end));
+      const upper = Math.max(start, end);
+      for (let index = lower; index <= upper; index += 1) {
+        const name = resolveViaDisplayList(index);
+        if (name) addName(name);
+      }
+    }
+
+    for (const match of source.matchAll(/第\s*([零〇一二两三四五六七八九十百千\d]+)\s*章/gu)) {
+      const ordinal = parseChapterOrdinal(match[1]);
+      if (!Number.isFinite(ordinal) || ordinal < 1) continue;
+      const name = resolveViaDisplayList(ordinal);
+      if (name) addName(name);
+    }
+
+    // If we found any results via display-list matching, return them
+    // without falling through to the ordinal-index fallback.
+    if (resolved.length > 0) return resolved;
+  }
+
+  // Fallback: ordinal-index matching (original logic)
   for (const match of source.matchAll(/第\s*([零〇一二两三四五六七八九十百千\d]+)\s*章\s*(?:到|至|[-~—–])\s*第?\s*([零〇一二两三四五六七八九十百千\d]+)\s*章/gu)) {
     const start = parseChapterOrdinal(match[1]);
     const end = parseChapterOrdinal(match[2]);
@@ -1270,7 +1348,16 @@ async function maybeHandleDeAiChapterReviewAutomation(session, userText) {
   }
 
   const allChapterNames = Array.isArray(parseTextJson(listResult.text)) ? parseTextJson(listResult.text) : [];
-  const requestedChapterNames = extractRequestedChapterNames(intent.focus, allChapterNames);
+
+  // Fetch display names for more accurate ordinal → file mapping
+  let displayList = null;
+  const displayResult = await callMcpTool('list_chapter_displays', {});
+  if (!displayResult.isError) {
+    const parsed = parseTextJson(displayResult.text);
+    if (Array.isArray(parsed)) displayList = parsed;
+  }
+
+  const requestedChapterNames = extractRequestedChapterNames(intent.focus, allChapterNames, displayList);
   if (!requestedChapterNames.length && intent.fallbackChapterName) {
     requestedChapterNames.push(intent.fallbackChapterName);
   }

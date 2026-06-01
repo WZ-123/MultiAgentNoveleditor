@@ -136,30 +136,42 @@ async function* streamSse(response, abortSignal) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buf = '';
-  while (true) {
-    if (abortSignal?.aborted) {
+  // Wire abortSignal to cancel the reader mid-read, preventing hangs when
+  // the server stalls mid-stream (reader.read() would otherwise hang forever).
+  const onAbort = () => { try { reader.cancel(); } catch (_) {} };
+  if (abortSignal) {
+    if (abortSignal.aborted) {
       try { await reader.cancel(); } catch (_) {}
       throw new DOMException('aborted', 'AbortError');
     }
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += decoder.decode(value, { stream: true });
-    let idx;
-    while ((idx = buf.indexOf('\n\n')) !== -1) {
-      const block = buf.slice(0, idx);
-      buf = buf.slice(idx + 2);
-      const lines = block.split('\n');
-      let dataPayload = '';
-      for (const line of lines) {
-        if (line.startsWith('data:')) dataPayload += line.slice(5).trim();
+    abortSignal.addEventListener('abort', onAbort, { once: true });
+  }
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) !== -1) {
+        const block = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        const lines = block.split('\n');
+        let dataPayload = '';
+        for (const line of lines) {
+          if (line.startsWith('data:')) dataPayload += line.slice(5).trim();
+        }
+        if (!dataPayload || dataPayload === '[DONE]') continue;
+        try {
+          const obj = JSON.parse(dataPayload);
+          yield obj;
+        } catch (_) {
+          // malformed line — skip
+        }
       }
-      if (!dataPayload || dataPayload === '[DONE]') continue;
-      try {
-        const obj = JSON.parse(dataPayload);
-        yield obj;
-      } catch (_) {
-        // malformed line — skip
-      }
+    }
+  } finally {
+    if (abortSignal) {
+      abortSignal.removeEventListener('abort', onAbort);
     }
   }
 }

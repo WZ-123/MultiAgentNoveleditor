@@ -292,6 +292,10 @@ process.on('uncaughtException', (err) => {
   sendToParent({ type: 'error', message: err.message || String(err) });
   setTimeout(() => gracefulExit(1), 50).unref?.();
 });
+process.on('unhandledRejection', (err) => {
+  sendToParent({ type: 'error', message: `Unhandled Rejection: ${err?.message || String(err)}` });
+  setTimeout(() => gracefulExit(1), 50).unref?.();
+});
 
 // Allow running directly: `node server.js` or via fork.
 if (require.main === module) {
