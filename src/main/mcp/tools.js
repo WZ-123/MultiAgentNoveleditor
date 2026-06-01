@@ -1687,6 +1687,34 @@ const TOOLS = [
     },
   },
   {
+    name: 'delete_timeline_events',
+    description: '按 event id 删除时间线事件。一次可删多个，指定 ids 数组即可。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: '要删除的事件 ID 数组，如 ["evt-1","evt-2"]',
+        },
+      },
+      required: ['ids'],
+    },
+    requiresConfirmation: true,
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      const ids = Array.isArray(args.ids) ? args.ids.map((id) => String(id).trim()).filter(Boolean) : [];
+      if (!ids.length) throw new Error('delete_timeline_events requires a non-empty ids array');
+      const all = await novelData.listTimeline(dir);
+      const before = all.length;
+      const remaining = all.filter((ev) => !ids.includes(ev.id));
+      const removed = before - remaining.length;
+      if (!removed) return textResult({ ok: true, removed: 0, message: 'No matching events found.' });
+      await novelData.replaceTimeline(dir, remaining);
+      return textResult({ ok: true, removed, before, after: remaining.length });
+    },
+  },
+  {
     name: 'append_summary',
     description: '为某章追加摘要 + 设定补充 markdown（直接落盘）。',
     inputSchema: {
