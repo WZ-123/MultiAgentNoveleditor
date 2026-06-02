@@ -22,7 +22,7 @@
  * load and persist a `layout` map when the user moves nodes.
  */
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 const BUILTIN_DAGS = [
   // ---------- 写作质量最优 · 大纲 ----------
@@ -64,16 +64,23 @@ const BUILTIN_DAGS = [
     entryNodeIds: ['n_writer'],
     nodes: [
       { id: 'n_writer', kind: 'subagent', subagentId: 'sa-writer', label: '章节撰写 (sonnet)' },
-      { id: 'n_parallel_check', kind: 'parallel', children: ['n_style', 'n_quality'], label: '并行检查' },
+      { id: 'n_parallel_check', kind: 'parallel', children: ['n_character', 'n_timeline', 'n_style', 'n_quality'], label: '并行硬检查' },
+      { id: 'n_character', kind: 'subagent', subagentId: 'sa-character-reviewer', label: '逻辑 / 人设校验 (opus)' },
+      { id: 'n_timeline', kind: 'subagent', subagentId: 'sa-timeline-guardian', label: '时空校验 (opus)' },
       { id: 'n_style', kind: 'subagent', subagentId: 'sa-style-checker', label: '文风一致性 (haiku)' },
       { id: 'n_quality', kind: 'subagent', subagentId: 'sa-prose-quality', label: '行文质量 (haiku)' },
+      { id: 'n_gate', kind: 'gate', expr: 'no_issues', label: '若无 issues/annotations 则放行' },
+      { id: 'n_revise', kind: 'subagent', subagentId: 'sa-writer', label: '按审查意见修订 (sonnet)' },
       { id: 'n_human', kind: 'human', label: '人工审阅' },
       { id: 'n_lore', kind: 'subagent', subagentId: 'sa-lore-updater', label: '本章总结 / 设定回写 (opus)' },
       { id: 'n_out', kind: 'output', label: '输出章节' },
     ],
     edges: [
       { from: 'n_writer', to: 'n_parallel_check' },
-      { from: 'n_parallel_check', to: 'n_human' },
+      { from: 'n_parallel_check', to: 'n_gate' },
+      { from: 'n_gate', to: 'n_human', when: 'pass' },
+      { from: 'n_gate', to: 'n_revise', when: 'block' },
+      { from: 'n_revise', to: 'n_parallel_check' },
       { from: 'n_human', to: 'n_lore' },
       { from: 'n_lore', to: 'n_out' },
     ],
@@ -114,14 +121,21 @@ const BUILTIN_DAGS = [
     entryNodeIds: ['n_writer'],
     nodes: [
       { id: 'n_writer', kind: 'subagent', subagentId: 'sa-writer', tierOverride: 'haiku', label: '章节撰写 (haiku)' },
-      { id: 'n_quality', kind: 'subagent', subagentId: 'sa-prose-quality', tierOverride: 'haiku', label: '行文质量 (haiku)' },
+      { id: 'n_parallel_check', kind: 'parallel', children: ['n_character', 'n_timeline'], label: '并行硬检查' },
+      { id: 'n_character', kind: 'subagent', subagentId: 'sa-character-reviewer', tierOverride: 'haiku', label: '逻辑 / 人设校验 (haiku)' },
+      { id: 'n_timeline', kind: 'subagent', subagentId: 'sa-timeline-guardian', tierOverride: 'sonnet', label: '时空校验 (sonnet)' },
+      { id: 'n_gate', kind: 'gate', expr: 'no_issues', label: '若无 issues 则放行' },
+      { id: 'n_revise', kind: 'subagent', subagentId: 'sa-writer', tierOverride: 'haiku', label: '按硬伤修订 (haiku)' },
       { id: 'n_human', kind: 'human', label: '人工审阅' },
       { id: 'n_lore', kind: 'subagent', subagentId: 'sa-lore-updater', tierOverride: 'haiku', label: '本章总结 (haiku)' },
       { id: 'n_out', kind: 'output', label: '输出章节' },
     ],
     edges: [
-      { from: 'n_writer', to: 'n_quality' },
-      { from: 'n_quality', to: 'n_human' },
+      { from: 'n_writer', to: 'n_parallel_check' },
+      { from: 'n_parallel_check', to: 'n_gate' },
+      { from: 'n_gate', to: 'n_human', when: 'pass' },
+      { from: 'n_gate', to: 'n_revise', when: 'block' },
+      { from: 'n_revise', to: 'n_parallel_check' },
       { from: 'n_human', to: 'n_lore' },
       { from: 'n_lore', to: 'n_out' },
     ],

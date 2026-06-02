@@ -61,14 +61,19 @@ function buildInputForNode(dag, nodeId, nodeOutputs, userInput) {
   return JSON.stringify(obj);
 }
 
-function tryParseIssues(text) {
+function tryParseReviewFindings(text) {
   if (!text) return null;
-  if (typeof text === 'object') return Array.isArray(text.issues) ? text.issues : null;
+  if (typeof text === 'object') {
+    if (Array.isArray(text.issues)) return text.issues;
+    if (Array.isArray(text.annotations)) return text.annotations;
+    return null;
+  }
   // strip code fences if present
   const cleaned = String(text).replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
   try {
     const obj = JSON.parse(cleaned);
     if (obj && Array.isArray(obj.issues)) return obj.issues;
+    if (obj && Array.isArray(obj.annotations)) return obj.annotations;
   } catch {
     // fall through — try to find first JSON object in the text
     const m = cleaned.match(/\{[\s\S]*\}/);
@@ -76,6 +81,7 @@ function tryParseIssues(text) {
       try {
         const obj = JSON.parse(m[0]);
         if (obj && Array.isArray(obj.issues)) return obj.issues;
+        if (obj && Array.isArray(obj.annotations)) return obj.annotations;
       } catch { /* ignore */ }
     }
   }
@@ -97,10 +103,10 @@ function evaluateGate(dag, gateNode, nodeOutputs) {
         candidates.push(upstream);
       }
       for (const c of candidates) {
-        const issues = tryParseIssues(c);
-        if (issues != null) {
+        const findings = tryParseReviewFindings(c);
+        if (findings != null) {
           foundAny = true;
-          if (issues.length > 0) return 'block';
+          if (findings.length > 0) return 'block';
         }
       }
     }
@@ -249,7 +255,17 @@ async function runPipeline(opts = {}) {
               });
             }
           }
-          output = { decision, revisions: gateRevisions[nodeId] || 0 };
+          const upstream = {};
+          for (const e of getIncomingEdges(dag, nodeId)) {
+            upstream[e.from] = nodeOutputs[e.from] ?? null;
+          }
+          const context = {};
+          for (const [outputNodeId, value] of Object.entries(nodeOutputs)) {
+            const outputNode = getNode(dag, outputNodeId);
+            if (outputNode?.kind === 'gate') continue;
+            context[outputNodeId] = value;
+          }
+          output = { decision, revisions: gateRevisions[nodeId] || 0, upstream, context };
           nodeOutputs[nodeId] = output;
           nextEdges = getOutgoingEdges(dag, nodeId).filter((e) => e.when === decision);
           await eventBus.emitPipeline({
@@ -361,4 +377,11 @@ function listActivePipelines() {
   }));
 }
 
-module.exports = { runPipeline, cancelPipeline, resumePipeline, listActivePipelines };
+module.exports = {
+  runPipeline,
+  cancelPipeline,
+  resumePipeline,
+  listActivePipelines,
+  _testBuildInputForNode: buildInputForNode,
+  _testEvaluateGate: evaluateGate,
+};

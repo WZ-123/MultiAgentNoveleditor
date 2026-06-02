@@ -7,6 +7,8 @@ const workflowOrchestrator = require('./workflowOrchestrator');
 const { getActiveNovelContext } = require('./activeNovelContext');
 const { runSubagent } = require('./runSubagent');
 
+const MAX_AUTO_REVIEW_REVISIONS = 1;
+
 function parseJsonFromText(text) {
   const raw = String(text || '').trim();
   if (!raw) throw new Error('章节模型未返回内容');
@@ -63,7 +65,74 @@ function createDraftMcpClient() {
   };
 }
 
-function buildDraftInput({ mode, userText, pendingChapterDraft, targetChapter, editorContext }) {
+function parseToolText(result) {
+  return Array.isArray(result?.content)
+    ? result.content.map((item) => item?.type === 'text' ? item.text : JSON.stringify(item)).join('\n')
+    : (typeof result === 'string' ? result : JSON.stringify(result || {}));
+}
+
+function parseTargetChapterIndex(chapterName) {
+  const match = String(chapterName || '').match(/chapter-(\d+)/i);
+  return match ? Number(match[1]) : null;
+}
+
+function matchesTargetChapterNode(node, targetChapter) {
+  const parsedChapterIndex = parseTargetChapterIndex(targetChapter?.name);
+  if (node?.chapterRef && node.chapterRef === targetChapter.name) return true;
+  if (node?.writtenChapterRef && node.writtenChapterRef === targetChapter.name) return true;
+  if (parsedChapterIndex != null && Number(node?.chapterIndex) === parsedChapterIndex) return true;
+  return false;
+}
+
+async function buildCompactWritingContext(targetChapter) {
+  const context = {};
+  try {
+    const outlineResult = await mcpClient.callTool({ name: 'read_outline_nodes', arguments: {}, autoConfirm: true });
+    const outlinePayload = parseJsonFromText(parseToolText(outlineResult));
+    const nodes = Array.isArray(outlinePayload?.nodes) ? outlinePayload.nodes : [];
+    const matchingNodes = nodes
+      .filter((node) => matchesTargetChapterNode(node, targetChapter))
+      .slice(0, 8)
+      .map((node) => ({
+        id: node.id,
+        title: node.title || '',
+        summary: node.summary || '',
+        characters: Array.isArray(node.characters) ? node.characters : [],
+        location: node.location || '',
+        setting: node.setting || '',
+        pov: node.pov || '',
+        chapterIndex: node.chapterIndex ?? null,
+      }));
+    if (matchingNodes.length) context.outlineNodes = matchingNodes;
+  } catch { /* compact context is an optimization, not a blocker */ }
+
+  try {
+    const timelineResult = await mcpClient.callTool({ name: 'query_timeline', arguments: {}, autoConfirm: true });
+    const timelinePayload = parseJsonFromText(parseToolText(timelineResult));
+    const events = Array.isArray(timelinePayload?.events) ? timelinePayload.events : [];
+    const targetIndex = parseTargetChapterIndex(targetChapter?.name);
+    const relevantEvents = events
+      .filter((event) => {
+        if (!event?.chapterRef) return false;
+        const eventIndex = parseTargetChapterIndex(event.chapterRef);
+        if (targetIndex == null || eventIndex == null) return event.chapterRef === targetChapter.name;
+        return eventIndex >= targetIndex - 2 && eventIndex <= targetIndex + 1;
+      })
+      .slice(-12)
+      .map((event) => ({
+        chapterRef: event.chapterRef,
+        when: event.when || '',
+        where: event.where || '',
+        participants: Array.isArray(event.participants) ? event.participants : [],
+        description: event.description || '',
+      }));
+    if (relevantEvents.length) context.nearbyTimeline = relevantEvents;
+  } catch { /* compact context is an optimization, not a blocker */ }
+
+  return Object.keys(context).length ? context : null;
+}
+
+function buildDraftInput({ mode, userText, pendingChapterDraft, targetChapter, editorContext, compactContext }) {
   const lines = [
     `模式：${mode === 'revise' ? '已有章节草稿修订' : '新章节草稿生成'}`,
     `目标文件：${targetChapter.name}`,
@@ -77,6 +146,10 @@ function buildDraftInput({ mode, userText, pendingChapterDraft, targetChapter, e
   if (editorContext?.selectedText) {
     lines.push('', '当前选中文本：', editorContext.selectedText);
     lines.push('说明：这次修订必须围绕这段已划选正文展开，不要跳到别的章节，也不要直接落盘。');
+  }
+  if (compactContext) {
+    lines.push('', '系统预装的紧凑写作上下文（优先使用，避免重复查询无关资料）：');
+    lines.push(JSON.stringify(compactContext, null, 2));
   }
   lines.push(
     '',
@@ -187,6 +260,58 @@ function buildReviewInput({ mode, userText, draft }) {
       text: draft.text,
     },
   }, null, 2);
+}
+
+function buildIssueRevisionInput({ mode, userText, draft, issues, revisionIndex }) {
+  const issueLines = (Array.isArray(issues) ? issues : [])
+    .filter((issue) => !issue.reviewIncomplete)
+    .map((issue, index) => `${index + 1}. [${reviewLabel(issue.sourceAgent)}] ${issue.summary}${issue.detail ? `：${issue.detail}` : ''}`)
+    .join('\n');
+  return [
+    `模式：${mode === 'revise' ? '已有章节草稿修订' : '新章节草稿生成'}`,
+    `自动修订轮次：${revisionIndex}`,
+    `目标文件：${draft.name}`,
+    `显示名：${draft.displayName}`,
+    '',
+    '原始用户需求：',
+    userText,
+    '',
+    '当前草稿：',
+    draft.text,
+    '',
+    '审查发现的明确问题：',
+    issueLines || '无',
+    '',
+    '修订要求：',
+    '- 只针对上述人设/逻辑/时空硬伤做必要修订。',
+    '- 保留原有章节标题、核心剧情、人物关系和叙事视角。',
+    '- 不要新增无关支线，不要为了修订反复查询完整人设卡；只有输入信息不足以修复硬伤时，才按需使用精简上下文工具。',
+    '- 输出仍然只允许 JSON：{"title":"章节标题","summary":"一句话摘要","text":"完整章节正文"}。',
+  ].join('\n');
+}
+
+function hasActionableReviewIssues(issues) {
+  const list = Array.isArray(issues) ? issues : [];
+  return list.some((issue) => !issue.reviewIncomplete);
+}
+
+async function runWriterDraft(input, draftSystemPrompt, abortSignal) {
+  try {
+    return ((await runSubagent({
+      subagentId: 'sa-writer',
+      input,
+      abortSignal,
+      userLang: 'zh-CN',
+      mcpClient: createDraftMcpClient(),
+      systemPromptOverride: draftSystemPrompt,
+    })).output || '');
+  } catch (err) {
+    const message = err?.message || String(err);
+    if (!/没有可用的 AI 服务商|API Key 未设置|No provider configured|Provider API key is missing/.test(message)) {
+      throw err;
+    }
+    return runDraftViaWorkflow(input, draftSystemPrompt, abortSignal);
+  }
 }
 
 async function runDraftViaWorkflow(input, draftSystemPrompt, abortSignal) {
@@ -328,48 +453,46 @@ async function suggestTargetChapter(pendingChapterDraft, editorContext) {
 
 async function generateChapterDraft({ mode, userText, pendingChapterDraft, editorContext, abortSignal }) {
   const targetChapter = await suggestTargetChapter(pendingChapterDraft, editorContext);
-  const input = buildDraftInput({ mode, userText, pendingChapterDraft, targetChapter, editorContext });
+  const compactContext = await buildCompactWritingContext(targetChapter);
+  const input = buildDraftInput({ mode, userText, pendingChapterDraft, targetChapter, editorContext, compactContext });
   const writer = await subagentsStore.getSubagent('sa-writer');
   const draftSystemPrompt = buildDraftSystemPrompt(writer?.systemPrompt || '');
-  let draftOutput = '';
-  try {
-    draftOutput = (await runSubagent({
-      subagentId: 'sa-writer',
-      input,
-      abortSignal,
-      userLang: 'zh-CN',
-      mcpClient: createDraftMcpClient(),
-      systemPromptOverride: draftSystemPrompt,
-    })).output || '';
-  } catch (err) {
-    const message = err?.message || String(err);
-    if (!/没有可用的 AI 服务商|API Key 未设置|No provider configured|Provider API key is missing/.test(message)) {
-      throw err;
-    }
-    draftOutput = await runDraftViaWorkflow(input, draftSystemPrompt, abortSignal);
-  }
+  let draftOutput = await runWriterDraft(input, draftSystemPrompt, abortSignal);
 
-  const draft = normalizeDraft(draftOutput, targetChapter);
-  const reviewInput = buildReviewInput({ mode, userText, draft });
+  let draft = normalizeDraft(draftOutput, targetChapter);
   const characterReviewer = await subagentsStore.getSubagent('sa-character-reviewer');
   const timelineReviewer = await subagentsStore.getSubagent('sa-timeline-guardian');
-  const [characterIssues, timelineIssues] = await Promise.all([
-    runReviewerWithFallback(
-      'sa-character-reviewer',
-      reviewInput,
-      'character_world',
-      buildReviewerSystemPrompt(characterReviewer?.systemPrompt || '', 'character_world'),
-      abortSignal
-    ),
-    runReviewerWithFallback(
-      'sa-timeline-guardian',
-      reviewInput,
-      'timeline',
-      buildReviewerSystemPrompt(timelineReviewer?.systemPrompt || '', 'timeline'),
-      abortSignal
-    ),
-  ]);
-  const blockingIssues = [...characterIssues, ...timelineIssues];
+  let blockingIssues = [];
+  for (let revisionIndex = 0; revisionIndex <= MAX_AUTO_REVIEW_REVISIONS; revisionIndex += 1) {
+    const reviewInput = buildReviewInput({ mode, userText, draft });
+    const [characterIssues, timelineIssues] = await Promise.all([
+      runReviewerWithFallback(
+        'sa-character-reviewer',
+        reviewInput,
+        'character_world',
+        buildReviewerSystemPrompt(characterReviewer?.systemPrompt || '', 'character_world'),
+        abortSignal
+      ),
+      runReviewerWithFallback(
+        'sa-timeline-guardian',
+        reviewInput,
+        'timeline',
+        buildReviewerSystemPrompt(timelineReviewer?.systemPrompt || '', 'timeline'),
+        abortSignal
+      ),
+    ]);
+    blockingIssues = [...characterIssues, ...timelineIssues];
+    if (!hasActionableReviewIssues(blockingIssues) || revisionIndex >= MAX_AUTO_REVIEW_REVISIONS) break;
+    const revisionInput = buildIssueRevisionInput({
+      mode,
+      userText,
+      draft,
+      issues: blockingIssues,
+      revisionIndex: revisionIndex + 1,
+    });
+    draftOutput = await runWriterDraft(revisionInput, draftSystemPrompt, abortSignal);
+    draft = normalizeDraft(draftOutput, targetChapter);
+  }
   const reviseFromSelection = mode === 'revise'
     && !pendingChapterDraft?.text
     && !!String(editorContext?.selectedText || '').trim();
@@ -385,4 +508,5 @@ module.exports = {
   generateChapterDraft,
   _testBuildChapterAssistantText: buildAssistantText,
   _testBuildChapterReviewFailureIssue: buildReviewFailureIssue,
+  _testBuildIssueRevisionInput: buildIssueRevisionInput,
 };

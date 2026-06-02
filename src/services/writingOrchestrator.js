@@ -2,6 +2,8 @@ import { createId } from '@/domain/ids.js';
 import { joinParagraphs, splitIntoParagraphs } from '@/domain/text.js';
 import { WRITING_PHASE } from '@/domain/types.js';
 import {
+  AGENT2_SYSTEM,
+  AGENT3_SYSTEM,
   AGENT4_SYSTEM,
   AGENT5_SYSTEM,
   AGENT6_SYSTEM,
@@ -215,6 +217,45 @@ function mergeQualityAnnotations(primary, fallback) {
   return out;
 }
 
+function buildChapterHardReviewSystem(baseSystem, sourceLabel) {
+  return [
+    baseSystem,
+    '',
+    '当前任务是审查章节正文草稿，而不是大纲。',
+    sourceLabel === 'timeline'
+      ? '重点检查时间顺序、昼夜时段、人物移动距离、交通时间、消息传播先后。'
+      : '重点检查人物动机、关系、说话方式、既有状态、世界观硬设定和因果链。',
+    '你会收到 paragraphs，每段含 id/index/text/prevText/nextText。',
+    '若问题能定位到段落，请在 issue 中附带 paragraphIds；若跨段，请列出所有相关段落。',
+    '只报告足以影响本章定稿的硬伤；没有问题就返回空 issues。',
+    '只输出 JSON：{ "issues": [ { "summary": "一句话问题", "detail": "可选细节", "paragraphIds": ["段落id"] } ] }。',
+  ].join('\n');
+}
+
+function normalizeIssueAnnotations(paragraphs, rawIssues, kind) {
+  const ids = new Set(paragraphs.map((p) => p.id));
+  const firstParagraphId = paragraphs[0]?.id;
+  const out = [];
+  for (const issue of Array.isArray(rawIssues) ? rawIssues : []) {
+    const paragraphIds = Array.isArray(issue?.paragraphIds)
+      ? issue.paragraphIds.map((id) => String(id || '')).filter((id) => ids.has(id))
+      : [];
+    const targets = paragraphIds.length ? paragraphIds : (firstParagraphId ? [firstParagraphId] : []);
+    const summary = String(issue?.summary || '').trim();
+    const detail = String(issue?.detail || '').trim();
+    if (!summary && !detail) continue;
+    for (const paragraphId of targets) {
+      out.push({
+        id: createId('ql'),
+        paragraphId,
+        kind,
+        note: `${summary}${detail ? `：${detail}` : ''}`,
+      });
+    }
+  }
+  return out;
+}
+
 /**
  * @param {WritingSessionState} state
  */
@@ -309,22 +350,63 @@ export async function runAgent5Quality(state) {
     };
   }
   try {
-    const raw = await client.completeForAgent(
-      'agent5',
-      [
-        { role: 'system', content: AGENT5_SYSTEM },
-        {
-          role: 'user',
-          content: JSON.stringify(buildQualityReviewPayload(state.paragraphs)),
-        },
-      ],
-      { expectJson: true }
-    );
+    const reviewPayload = buildQualityReviewPayload(state.paragraphs);
+    const [raw, characterRaw, timelineRaw] = await Promise.all([
+      client.completeForAgent(
+        'agent5',
+        [
+          { role: 'system', content: AGENT5_SYSTEM },
+          {
+            role: 'user',
+            content: JSON.stringify(reviewPayload),
+          },
+        ],
+        { expectJson: true }
+      ),
+      client.completeForAgent(
+        'agent2',
+        [
+          { role: 'system', content: buildChapterHardReviewSystem(AGENT2_SYSTEM, 'character_world') },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              outline: state.outlineMarkdown,
+              characterContext: state.characterContext,
+              ...reviewPayload,
+            }),
+          },
+        ],
+        { expectJson: true }
+      ),
+      client.completeForAgent(
+        'agent3',
+        [
+          { role: 'system', content: buildChapterHardReviewSystem(AGENT3_SYSTEM, 'timeline') },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              outline: state.outlineMarkdown,
+              ...reviewPayload,
+            }),
+          },
+        ],
+        { expectJson: true }
+      ),
+    ]);
     const data = parseJsonFromModelText(raw);
     const modelAnnotations = normalizeQualityAnnotations(state.paragraphs, data.annotations);
+    const characterIssues = parseJsonFromModelText(characterRaw);
+    const timelineIssues = parseJsonFromModelText(timelineRaw);
+    const hardAnnotations = [
+      ...normalizeIssueAnnotations(state.paragraphs, characterIssues.issues, 'logic_consistency'),
+      ...normalizeIssueAnnotations(state.paragraphs, timelineIssues.issues, 'timeline_consistency'),
+    ];
     const crossParagraphAnnotations = detectCrossParagraphQualityAnnotations(state.paragraphs)
       .map((annotation) => ({ ...annotation, id: createId('ql') }));
-    const qualityAnnotations = mergeQualityAnnotations(modelAnnotations, crossParagraphAnnotations);
+    const qualityAnnotations = mergeQualityAnnotations(
+      [...modelAnnotations, ...hardAnnotations],
+      crossParagraphAnnotations
+    );
     return {
       ...state,
       phase: WRITING_PHASE.AGENT5,
