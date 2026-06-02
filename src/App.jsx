@@ -260,6 +260,21 @@ function App() {
           };
         });
 
+      // Compute correct display names immediately (listChapterMetas doesn't
+      // include displayName, so we'd otherwise show raw filenames until
+      // refreshAllChapterDisplayNames runs).
+      if (chapters.length > 0 && window.mana?.novel?.computeChapterDisplayName) {
+        const sorted = [...chapters].sort((a, b) => (a.fileName || '').localeCompare(b.fileName || ''));
+        const displayNames = await Promise.all(sorted.map((ch, i) =>
+          window.mana.novel.computeChapterDisplayName(novelEntry.id, i + 1, ch._title || '')
+        ));
+        const byId = new Map(sorted.map((ch, i) => [ch.id, displayNames[i] || ch.displayName]));
+        for (const ch of chapters) {
+          const dn = byId.get(ch.id);
+          if (dn) ch.displayName = dn;
+        }
+      }
+
       if (chapters.length > 0) {
         // Restore volume/section structure from novel.json
         let structure = null;
