@@ -108,7 +108,7 @@ async function runChatWritingIntentRegressionTest() {
       models: [{ id: 'writing-regression-model' }],
     });
     modelAliases.getAlias = async () => ({
-      id: 'sonnet',
+      id: 'opus',
       providerId: null,
       modelId: 'writing-regression-model',
       maxOutputTokens: 512,

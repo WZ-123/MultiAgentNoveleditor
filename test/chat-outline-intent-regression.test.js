@@ -73,6 +73,7 @@ async function runChatOutlineIntentRegressionTest() {
   const chatHistory = require(path.join(ROOT, 'src/main/store/chatHistory'));
   const novelData = require(path.join(ROOT, 'src/main/store/novelData'));
   const outlineDraftService = require(path.join(ROOT, 'src/main/runtime/outlineDraftService'));
+  const chapterDraftService = require(path.join(ROOT, 'src/main/runtime/chapterDraftService'));
 
   const originalGetActiveProvider = providerManager.getActiveProvider;
   const originalGetAlias = modelAliases.getAlias;
@@ -80,6 +81,7 @@ async function runChatOutlineIntentRegressionTest() {
   const originalSendMessage = anthropicProvider.sendMessage;
   const originalOpenAiCompatSendMessage = openaiCompatProvider.sendMessage;
   const originalGenerateOutlineDraft = outlineDraftService.generateOutlineDraft;
+  const originalGenerateChapterDraft = chapterDraftService.generateChapterDraft;
 
   let cleanupRoot = '';
   let sessionId = '';
@@ -87,6 +89,7 @@ async function runChatOutlineIntentRegressionTest() {
   let chatAgent = null;
   let providerCallCount = 0;
   const outlineCalls = [];
+  const chapterCalls = [];
 
   try {
     const seeded = await seedNovel(ROOT);
@@ -152,6 +155,21 @@ async function runChatOutlineIntentRegressionTest() {
       };
     };
 
+    chapterDraftService.generateChapterDraft = async ({ mode, userText, pendingChapterDraft }) => {
+      chapterCalls.push({ mode, userText, hadPendingDraft: !!pendingChapterDraft });
+      return {
+        draft: {
+          name: 'chapter-004.md',
+          displayName: '第4章',
+          title: '直播驱魔',
+          summary: '楚岚按照新大纲进入直播驱魔段落。',
+          text: '第四章草稿正文。',
+        },
+        blockingIssues: [],
+        assistantText: '我已按专用写作流程生成第四章草稿，先不写入项目。',
+      };
+    };
+
     const chatAgentPath = path.join(ROOT, 'src/main/runtime/chatAgent');
     delete require.cache[require.resolve(chatAgentPath)];
     chatAgent = require(chatAgentPath);
@@ -202,12 +220,49 @@ async function runChatOutlineIntentRegressionTest() {
       fail('O5_confirm_writes_outline_then_switches_phase', JSON.stringify({ phase: sessionAfterConfirm?.workflowPhase, pending: !!sessionAfterConfirm?.pendingOutlineDraft, outlineAfterConfirm }));
     }
 
+    const chainThread = await chatHistory.createThread({ title: '确认后续写回归', novelId: seeded.entry.id });
+    const chainSessionId = chatAgent.createSession({
+      editorContext: { novelId: seeded.entry.id, chapterCount: 3, novelTitle: '聊天大纲意图回归小说' },
+      messages: [],
+      threadId: chainThread.id,
+    });
+    const chainSession = chatAgent.getSession(chainSessionId);
+    chainSession.pendingOutlineDraft = {
+      rawMarkdown: '# 总大纲\n\n- 第4章：直播驱魔',
+      nodes: [
+        { id: 'vol-chain', title: '直播卷', summary: '直播驱魔展开', volumeIndex: 1, level: 1 },
+        { id: 'scene-chain-4', title: '直播驱魔', summary: '楚岚在家直播驱魔。', volumeIndex: 1, sectionIndex: 1, chapterIndex: 4, chapterTitle: '直播驱魔' },
+      ],
+    };
+    chainSession.pendingOutlineIssues = [];
+    chainSession.workflowPhase = 'outline';
+    const chapterCallsBeforeChain = chapterCalls.length;
+    await chatAgent.runTurn(chainSessionId, '确认写入。并且按照这个大纲续写第四章');
+    const chainSessionAfter = chatAgent.getSession(chainSessionId);
+    const chainThreadLoaded = await chatHistory.getThread(chainThread.id);
+    const chainBranch = chatHistory.getBranch(chainThreadLoaded);
+    const chainLastAssistant = chainBranch.filter((message) => message.role === 'assistant').slice(-1)[0];
+    if (
+      chainSessionAfter?.workflowPhase === 'writing'
+      && !chainSessionAfter?.pendingOutlineDraft
+      && chainSessionAfter?.pendingChapterDraft?.name === 'chapter-004.md'
+      && chapterCalls.length === chapterCallsBeforeChain + 1
+      && chapterCalls[chapterCalls.length - 1]?.mode === 'create'
+      && /已将当前大纲写入项目/.test(chainLastAssistant?.text || '')
+      && /第四章草稿/.test(chainLastAssistant?.text || '')
+    ) {
+      pass('O7_confirm_outline_can_chain_into_chapter_draft', 'one user turn can confirm the outline and continue into the next chapter draft');
+    } else {
+      fail('O7_confirm_outline_can_chain_into_chapter_draft', JSON.stringify({ chainSessionAfter, chapterCalls, text: chainLastAssistant?.text }));
+    }
+    chatAgent.closeSession(chainSessionId);
+
     const thread = await chatHistory.getThread(threadId);
     const branch = chatHistory.getBranch(thread);
     if (branch.filter((message) => message.role === 'assistant').length === 4) {
-      pass('O6_chat_history_keeps_draft_turns', 'assistant replies persisted for draft/revise/confirm');
+      pass('O8_chat_history_keeps_draft_turns', 'assistant replies persisted for draft/revise/confirm');
     } else {
-      fail('O6_chat_history_keeps_draft_turns', JSON.stringify(branch));
+      fail('O8_chat_history_keeps_draft_turns', JSON.stringify(branch));
     }
 
     const confirmThread = await chatHistory.createThread({ title: '如上请执行确认回归', novelId: seeded.entry.id });
@@ -231,9 +286,9 @@ async function runChatOutlineIntentRegressionTest() {
       && Array.isArray(outlineAfterGenericConfirm?.nodes)
       && outlineAfterGenericConfirm.nodes.length === 3
     ) {
-      pass('O7_generic_execute_confirms_pending_outline', '如上，请执行 deterministically confirmed the pending outline draft');
+      pass('O9_generic_execute_confirms_pending_outline', '如上，请执行 deterministically confirmed the pending outline draft');
     } else {
-      fail('O7_generic_execute_confirms_pending_outline', JSON.stringify({ confirmDraftSession, confirmSavedSession, outlineBeforeGenericConfirm, outlineAfterGenericConfirm }));
+      fail('O9_generic_execute_confirms_pending_outline', JSON.stringify({ confirmDraftSession, confirmSavedSession, outlineBeforeGenericConfirm, outlineAfterGenericConfirm }));
     }
     chatAgent.closeSession(confirmSessionId);
 
@@ -245,9 +300,9 @@ async function runChatOutlineIntentRegressionTest() {
     });
     await chatAgent.runTurn(secondSessionId, '请总结一下当前角色设定');
     if (providerCallCount === 1 && outlineCalls.length === 4) {
-      pass('O8_non_outline_chat_not_misrouted', 'ordinary chat still uses provider path');
+      pass('O10_non_outline_chat_not_misrouted', 'ordinary chat still uses provider path');
     } else {
-      fail('O8_non_outline_chat_not_misrouted', JSON.stringify({ providerCallCount, outlineCalls }));
+      fail('O10_non_outline_chat_not_misrouted', JSON.stringify({ providerCallCount, outlineCalls }));
     }
     chatAgent.closeSession(secondSessionId);
 
@@ -275,13 +330,13 @@ async function runChatOutlineIntentRegressionTest() {
     const sessionAfterBlockedConfirm = chatAgent.getSession(thirdSessionId);
     const outlineAfterBlockedConfirm = await novelData.readOutlineNodes(seeded.dir);
     if (sessionAfterBlockedConfirm?.workflowPhase === 'outline' && sessionAfterBlockedConfirm?.pendingOutlineDraft && Array.isArray(outlineAfterBlockedConfirm?.nodes) && outlineAfterBlockedConfirm.nodes.length === 3) {
-      pass('O9_incomplete_review_blocks_confirmation', 'confirmation is blocked when review is incomplete');
+      pass('O11_incomplete_review_blocks_confirmation', 'confirmation is blocked when review is incomplete');
     } else {
-      fail('O9_incomplete_review_blocks_confirmation', JSON.stringify({ phase: sessionAfterBlockedConfirm?.workflowPhase, pending: !!sessionAfterBlockedConfirm?.pendingOutlineDraft, outlineAfterBlockedConfirm }));
+      fail('O11_incomplete_review_blocks_confirmation', JSON.stringify({ phase: sessionAfterBlockedConfirm?.workflowPhase, pending: !!sessionAfterBlockedConfirm?.pendingOutlineDraft, outlineAfterBlockedConfirm }));
     }
     chatAgent.closeSession(thirdSessionId);
   } catch (err) {
-    fail('O10_harness', err.message || String(err));
+    fail('O12_harness', err.message || String(err));
   } finally {
     providerManager.getActiveProvider = originalGetActiveProvider;
     modelAliases.getAlias = originalGetAlias;
@@ -289,6 +344,7 @@ async function runChatOutlineIntentRegressionTest() {
     anthropicProvider.sendMessage = originalSendMessage;
     openaiCompatProvider.sendMessage = originalOpenAiCompatSendMessage;
     outlineDraftService.generateOutlineDraft = originalGenerateOutlineDraft;
+    chapterDraftService.generateChapterDraft = originalGenerateChapterDraft;
     if (originalElectronCache) {
       require.cache[electronModulePath] = originalElectronCache;
     } else {

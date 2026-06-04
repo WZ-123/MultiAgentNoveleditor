@@ -80,7 +80,7 @@ async function runChatToolRoutingRegressionTest() {
       models: [{ id: 'routing-regression-model' }],
     });
     modelAliases.getAlias = async () => ({
-      id: 'sonnet',
+      id: 'opus',
       providerId: null,
       modelId: 'routing-regression-model',
       maxOutputTokens: 256,

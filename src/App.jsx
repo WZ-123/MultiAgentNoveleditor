@@ -18,6 +18,7 @@ import { LanguageSettings } from '@/components/LanguageSettings.jsx';
 import { StorageSettings } from '@/components/StorageSettings.jsx';
 import { SearchSettings } from '@/components/SearchSettings.jsx';
 import { SkillSettings } from '@/components/SkillSettings.jsx';
+import { WritingSettings } from '@/components/WritingSettings.jsx';
 import { OfflineSyncDialog } from '@/components/OfflineSyncDialog.jsx';
 import { ImportNovelPanel } from '@/components/ImportNovelPanel.jsx';
 import { ImportMergePanel } from '@/components/ImportMergePanel.jsx';
@@ -585,6 +586,7 @@ function App() {
         case 'config-helper': return '配置助手';
         case 'models': return t('settings.llmTitle');
         case 'storage': return '存储空间';
+        case 'writing': return '写作设置';
         case 'search': return '搜索引擎';
         case 'skill': return 'Skill';
         default: return `设置: ${sid}`;
@@ -2210,6 +2212,12 @@ function SettingsTabContent({ settingsId }) {
       return (
         <div className="h-full overflow-y-auto p-6">
           <StorageSettings />
+        </div>
+      );
+    case 'writing':
+      return (
+        <div className="h-full overflow-y-auto p-6">
+          <WritingSettings />
         </div>
       );
     case 'search':

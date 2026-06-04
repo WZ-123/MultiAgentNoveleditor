@@ -360,7 +360,7 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
 
         async function sendPrompt(prompt, doneMarker, options = {}) {
           const input = await waitFor(
-            () => document.querySelector('input[placeholder="向 AI 提问…"]'),
+            () => document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]'),
             'chat input not found'
           );
           input.focus();

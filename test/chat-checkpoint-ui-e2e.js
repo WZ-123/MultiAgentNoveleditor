@@ -185,7 +185,7 @@ async function runChatCheckpointUiRegressionTest(mainWindow) {
 
         selectPhrase(chapterEditor, originalSentence);
 
-        const input = await waitFor(() => document.querySelector('input[placeholder="向 AI 提问…"]'), 'chat input not found');
+        const input = await waitFor(() => document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]'), 'chat input not found');
         input.focus();
         setControlValue(input, '请把我高亮的这句改得更压抑一点，但只改这句。');
         const sendButton = await waitFor(() => {

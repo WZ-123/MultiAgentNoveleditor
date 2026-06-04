@@ -43,6 +43,51 @@ function notifyChapterChanged(name, action, title) {
   }
 }
 
+async function readChapterSnapshot(novelDir, name) {
+  const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
+  const chapterPath = path.join(novelDir, 'chapters', safeName);
+  let exists = true;
+  try {
+    await fs.access(chapterPath);
+  } catch (err) {
+    if (err?.code === 'ENOENT') exists = false;
+    else throw err;
+  }
+  if (!exists) return { content: '', metadata: null, exists: false };
+  try {
+    const snapshot = await novelData.readChapterWithMeta(novelDir, safeName);
+    return { ...snapshot, exists: true };
+  } catch (err) {
+    if (err?.code === 'ENOENT') return { content: '', metadata: null, exists: false };
+    throw err;
+  }
+}
+
+function buildChapterChangePayload(ctx, source, beforeSnapshot, afterSnapshot, result, restoreMode = 'write') {
+  const before = beforeSnapshot || { content: '', metadata: null, exists: false };
+  const after = afterSnapshot || { content: '', metadata: null, exists: true };
+  const chapterName = result?.name || '';
+  const label = after.metadata?.title || before.metadata?.title || chapterName || '未命名章节';
+  const changedFile = {
+    kind: 'chapter',
+    novelId: ctx?.novel?.id || null,
+    chapterName,
+    label,
+    beforeContent: typeof before.content === 'string' ? before.content : '',
+    afterContent: typeof after.content === 'string' ? after.content : '',
+    beforeMetadata: before.metadata || null,
+    afterMetadata: after.metadata || null,
+    restoreMode,
+  };
+  return {
+    checkpoint: {
+      ...changedFile,
+      source,
+    },
+    changedFiles: [changedFile],
+  };
+}
+
 function requireNovel(ctx) {
   if (!ctx?.novelDir) {
     throw new Error('No active novel: this tool requires an open novel.');
@@ -561,6 +606,52 @@ const TOOLS = [
     },
   },
   {
+    name: 'read_character_memory',
+    description: '读取某角色的主观记忆包。记忆代表该角色知道、误解、在意的内容，不等同于客观时间线。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: '角色ID' },
+      },
+      required: ['id'],
+    },
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      const c = await novelData.readCharacter(dir, args.id);
+      if (!c) throw new Error(`character not found: ${args.id}`);
+      return textResult(await novelData.readCharacterMemory(dir, c.id));
+    },
+  },
+  {
+    name: 'patch_character_memory',
+    description: '追加或更新某角色的主观记忆包。只写角色可知道/感受到/误解到的内容，不要写入上帝视角事实。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: '角色ID' },
+        patch: {
+          type: 'object',
+          properties: {
+            lastUpdatedChapterRef: { type: 'string' },
+            factsKnown: { type: 'array', items: { type: 'object' } },
+            emotionalMemory: { type: 'array', items: { type: 'object' } },
+            relationshipDeltas: { type: 'array', items: { type: 'object' } },
+            unresolvedIntentions: { type: 'array', items: { type: 'object' } },
+            privateMisbeliefs: { type: 'array', items: { type: 'object' } },
+          },
+        },
+      },
+      required: ['id', 'patch'],
+    },
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      const c = await novelData.readCharacter(dir, args.id);
+      if (!c) throw new Error(`character not found: ${args.id}`);
+      const memory = await novelData.patchCharacterMemory(dir, c.id, args.patch || {});
+      return textResult({ ok: true, memory });
+    },
+  },
+  {
     name: 'read_outline_nodes',
     description: '读取结构化大纲节点列表（含场景元数据）。level=1 卷, level=2 节, level=3 章。',
     inputSchema: { type: 'object', properties: {} },
@@ -875,14 +966,23 @@ const TOOLS = [
     requiresConfirmation: true,
     handler: async (args, ctx) => {
       const dir = requireNovel(ctx);
+      const beforeSnapshot = await readChapterSnapshot(dir, args.name);
       const result = await novelData.replaceChapterText(dir, args.name, args.targetText, args.replacement, {
         expectedMatchCount: Number.isInteger(args.expectedMatchCount) ? args.expectedMatchCount : 1,
         beforeContext: typeof args.beforeContext === 'string' ? args.beforeContext : '',
         afterContext: typeof args.afterContext === 'string' ? args.afterContext : '',
       });
+      const afterSnapshot = { content: result.content || '', metadata: result.metadata || null, exists: true };
       const title = result.metadata?.title || null;
       notifyChapterChanged(result.name, 'updated', title);
-      return textResult({ ok: true, name: result.name, replacedCount: result.replacedCount, matchCount: result.matchCount, matchStrategy: result.matchStrategy });
+      return textResult({
+        ok: true,
+        name: result.name,
+        replacedCount: result.replacedCount,
+        matchCount: result.matchCount,
+        matchStrategy: result.matchStrategy,
+        ...buildChapterChangePayload(ctx, 'replace_chapter_text', beforeSnapshot, afterSnapshot, result),
+      });
     },
   },
   {
@@ -915,9 +1015,11 @@ const TOOLS = [
     handler: async (args, ctx) => {
       const dir = requireNovel(ctx);
       const payload = _coerceChapterPatchArgs(args);
+      const beforeSnapshot = await readChapterSnapshot(dir, payload.name);
       const result = await novelData.applyChapterPatch(dir, payload.name, payload.edits, {
         baseContent: payload.baseContent,
       });
+      const afterSnapshot = { content: result.content || '', metadata: result.metadata || null, exists: true };
       const title = result.metadata?.title || null;
       notifyChapterChanged(result.name, 'updated', title);
       return textResult({
@@ -926,6 +1028,7 @@ const TOOLS = [
         editCount: result.editCount,
         replacedCount: result.replacedCount,
         edits: result.edits,
+        ...buildChapterChangePayload(ctx, 'apply_chapter_patch', beforeSnapshot, afterSnapshot, result),
       });
     },
   },
@@ -1141,9 +1244,22 @@ const TOOLS = [
       const writeOptions = _hasOwn(args, 'baseContent')
         ? { baseContent: typeof args.baseContent === 'string' ? args.baseContent : '' }
         : undefined;
+      const beforeSnapshot = await readChapterSnapshot(dir, name);
       await novelData.writeChapterWithMeta(dir, name, args.content, metaObj, writeOptions);
+      const afterSnapshot = await readChapterSnapshot(dir, name);
       notifyChapterChanged(name, 'created', args.title || null);
-      return textResult({ ok: true, name });
+      return textResult({
+        ok: true,
+        name,
+        ...buildChapterChangePayload(
+          ctx,
+          'write_chapter',
+          beforeSnapshot,
+          afterSnapshot,
+          { name },
+          beforeSnapshot.exists === false ? 'delete' : 'write'
+        ),
+      });
     },
   },
   // ---------------- 章节命名规则 (Chapter Naming) ----------------

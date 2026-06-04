@@ -186,9 +186,9 @@ async function editMessage(threadId, messageId, newText) {
 }
 
 /**
- * Revert to a message node: all messages that are descendants of the given
- * node (but not the node itself) are removed. The thread's currentNodeId
- * is set to this node.
+ * Revert to just before a message node: the target message and all of its
+ * descendants are removed. The thread's currentNodeId is set to the target's
+ * parent, or null when reverting before the root message.
  */
 async function revertToNode(threadId, messageId) {
   const thread = await getThread(threadId);
@@ -197,16 +197,16 @@ async function revertToNode(threadId, messageId) {
   const target = messages.find((m) => m.id === messageId);
   if (!target) return null;
 
-  // Build set of ancestor IDs from root to target
+  // Build set of ancestor IDs from root to the target's parent.
   const keepIds = new Set();
-  let cur = target;
+  let cur = target.parentId ? messages.find((m) => m.id === target.parentId) : null;
   while (cur) {
     keepIds.add(cur.id);
     cur = cur.parentId ? messages.find((m) => m.id === cur.parentId) : null;
   }
 
   thread.messages = messages.filter((m) => keepIds.has(m.id));
-  thread.currentNodeId = messageId;
+  thread.currentNodeId = target.parentId || null;
   thread.updatedAt = new Date().toISOString();
   await writeJson(threadPath(threadId), thread);
   _emitChange({ type: 'revert', threadId, messageId, thread });

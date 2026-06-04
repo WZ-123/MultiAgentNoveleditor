@@ -9,6 +9,7 @@ import {
   HardDrive,
   Search,
   Book,
+  PenLine,
 } from 'lucide-react';
 
 // One row per category. The settings UI itself lives in the main editor area —
@@ -55,6 +56,12 @@ function buildCategories(t) {
     //   desc: t('settings.llmDesc') || 'API Key、Provider、各 Agent 的模型与 Tier 绑定。',
     //   Icon: KeyRound,
     // },
+    {
+      sid: 'writing',
+      title: '写作设置',
+      desc: '默认写作模式与角色驱动写作交互强度。',
+      Icon: PenLine,
+    },
     {
       sid: 'storage',
       title: '存储空间',

@@ -6,6 +6,8 @@ const subagentsStore = require('../store/subagents');
 const workflowOrchestrator = require('./workflowOrchestrator');
 const { getActiveNovelContext } = require('./activeNovelContext');
 const { runSubagent } = require('./runSubagent');
+const appConfig = require('../store/appConfig');
+const chapterRoleplayService = require('./chapterRoleplayService');
 
 const MAX_AUTO_REVIEW_REVISIONS = 1;
 
@@ -132,7 +134,7 @@ async function buildCompactWritingContext(targetChapter) {
   return Object.keys(context).length ? context : null;
 }
 
-function buildDraftInput({ mode, userText, pendingChapterDraft, targetChapter, editorContext, compactContext }) {
+function buildDraftInput({ mode, userText, pendingChapterDraft, targetChapter, editorContext, compactContext, roleplayPlan, profileWarnings }) {
   const lines = [
     `模式：${mode === 'revise' ? '已有章节草稿修订' : '新章节草稿生成'}`,
     `目标文件：${targetChapter.name}`,
@@ -151,6 +153,17 @@ function buildDraftInput({ mode, userText, pendingChapterDraft, targetChapter, e
     lines.push('', '系统预装的紧凑写作上下文（优先使用，避免重复查询无关资料）：');
     lines.push(JSON.stringify(compactContext, null, 2));
   }
+  if (roleplayPlan) {
+    lines.push('', '角色驱动写作计划（只采用 director approved beats，不要直接照搬 actor 原始提案）：');
+    lines.push(JSON.stringify(roleplayPlan, null, 2));
+    lines.push(
+      '角色驱动约束：writer 只可润色、连缀、补足 approvedBeats 的叙事过渡；不得新增改变大纲结果的重大动机、行动或情报公开。'
+    );
+  }
+  if (Array.isArray(profileWarnings) && profileWarnings.length) {
+    lines.push('', '角色资料不足警告（用户已选择忽略继续；正文应采用保守写法，避免强行写死缺失信息）：');
+    lines.push(JSON.stringify(profileWarnings, null, 2));
+  }
   lines.push(
     '',
     '如果用户给的是剧情方向、人物关系推进、时空/因果约束或桥段要求，你要先产出一版完整修订草稿，再交给审查流程，不要直接做字面替换。',
@@ -161,6 +174,33 @@ function buildDraftInput({ mode, userText, pendingChapterDraft, targetChapter, e
   if (mode === 'revise' && pendingChapterDraft?.text) {
     lines.push('', '当前草稿：', pendingChapterDraft.text);
   }
+  return lines.join('\n');
+}
+
+function formatProfileGateText(profileGate) {
+  const missing = Array.isArray(profileGate?.missingCharacters) ? profileGate.missingCharacters : [];
+  const lines = [
+    '角色驱动写作已暂停：当前出场角色资料不足。',
+    '',
+    '为了让 actor subagent 能稳定代入角色，需要先处理这些缺口：',
+  ];
+  if (!missing.length) {
+    lines.push('- 未检测到可用的出场角色资料。');
+  } else {
+    for (const item of missing) {
+      const fields = [
+        ...(Array.isArray(item.missingFields) ? item.missingFields.map((field) => `${field} 缺失`) : []),
+        ...(Array.isArray(item.weakFields) ? item.weakFields.map((field) => `${field} 过弱`) : []),
+      ];
+      lines.push(`- ${item.name || item.id}：${fields.join('、') || '资料不足'}`);
+    }
+  }
+  lines.push(
+    '',
+    '你可以选择：',
+    '1. 回复“自动补全角色资料”，我会只按当前场景生成可审阅 patch，不会直接写入。',
+    '2. 回复“忽略角色资料不足并继续写”，我会带着警告进入保守的角色驱动写作。'
+  );
   return lines.join('\n');
 }
 
@@ -451,10 +491,44 @@ async function suggestTargetChapter(pendingChapterDraft, editorContext) {
   };
 }
 
-async function generateChapterDraft({ mode, userText, pendingChapterDraft, editorContext, abortSignal }) {
+async function generateChapterDraft({ mode, userText, pendingChapterDraft, editorContext, abortSignal, roleplayOptions }) {
   const targetChapter = await suggestTargetChapter(pendingChapterDraft, editorContext);
   const compactContext = await buildCompactWritingContext(targetChapter);
-  const input = buildDraftInput({ mode, userText, pendingChapterDraft, targetChapter, editorContext, compactContext });
+  const config = await appConfig.load();
+  const writingConfig = config?.writing || appConfig.DEFAULT_WRITING_CONFIG;
+  let roleplayPlan = null;
+  let profileWarnings = [];
+  if (writingConfig.mode === 'roleplay_driven') {
+    const roleplayResult = await chapterRoleplayService.buildRoleplayPlan({
+      targetChapter,
+      compactContext,
+      interactionLevel: writingConfig.roleplayInteractionLevel || 'director_mediated',
+      ignoreProfileGate: !!roleplayOptions?.ignoreProfileGate,
+      userText,
+      abortSignal,
+    });
+    if (roleplayResult?.status === 'profile_gate_blocked') {
+      return {
+        draft: null,
+        blockingIssues: [],
+        profileGateBlocked: true,
+        profileGate: roleplayResult.profileGate,
+        assistantText: formatProfileGateText(roleplayResult.profileGate),
+      };
+    }
+    roleplayPlan = roleplayResult?.roleplayPlan || null;
+    profileWarnings = Array.isArray(roleplayResult?.profileWarnings) ? roleplayResult.profileWarnings : [];
+  }
+  const input = buildDraftInput({
+    mode,
+    userText,
+    pendingChapterDraft,
+    targetChapter,
+    editorContext,
+    compactContext,
+    roleplayPlan,
+    profileWarnings,
+  });
   const writer = await subagentsStore.getSubagent('sa-writer');
   const draftSystemPrompt = buildDraftSystemPrompt(writer?.systemPrompt || '');
   let draftOutput = await runWriterDraft(input, draftSystemPrompt, abortSignal);
@@ -498,7 +572,12 @@ async function generateChapterDraft({ mode, userText, pendingChapterDraft, edito
     && !!String(editorContext?.selectedText || '').trim();
 
   return {
-    draft,
+    draft: {
+      ...draft,
+      roleplayContext: compactContext || null,
+      roleplayPlan: roleplayPlan || null,
+      profileWarnings,
+    },
     blockingIssues,
     assistantText: buildAssistantText({ mode, draft, blockingIssues, reviseFromSelection }),
   };
@@ -509,4 +588,5 @@ module.exports = {
   _testBuildChapterAssistantText: buildAssistantText,
   _testBuildChapterReviewFailureIssue: buildReviewFailureIssue,
   _testBuildIssueRevisionInput: buildIssueRevisionInput,
+  _testFormatProfileGateText: formatProfileGateText,
 };

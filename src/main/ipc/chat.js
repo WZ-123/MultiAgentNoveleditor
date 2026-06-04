@@ -18,7 +18,7 @@ async function chatComplete({ messages }) {
   const provider = await providerManager.getActiveProvider();
   if (!provider) throw new Error('No active provider configured');
 
-  const alias = await modelAliases.getAlias('sonnet');
+  const alias = await modelAliases.getAlias('opus');
   const modelId = alias?.modelId || provider.models?.[0]?.id || '';
   if (!modelId) throw new Error('No model configured for chat');
 

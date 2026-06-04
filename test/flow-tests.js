@@ -697,15 +697,15 @@ async function runFlowTests() {
     const m2 = { id: 'bm2', role: 'assistant', text: '回复', timestamp: 2, edited: false, parentId: 'bm1' };
     await chatHistoryStore.appendMessage(thread.id, m2);
 
-    // Revert to m1
-    await chatHistoryStore.revertToNode(thread.id, 'bm1');
+    // Revert to before m2
+    await chatHistoryStore.revertToNode(thread.id, 'bm2');
     const loaded = await chatHistoryStore.getThread(thread.id);
     const branch = chatHistoryStore.getBranch(loaded);
 
     await chatHistoryStore.deleteThread(thread.id);
 
     if (branch.length === 1 && branch[0].text === '原始') {
-      pass('P4_revert_branch', 'revert keeps only up to target');
+      pass('P4_revert_branch', 'revert keeps only messages before target');
     } else fail('P4_revert_branch', JSON.stringify(branch.map(m => m.text)));
   } catch (err) { fail('P4_revert_branch', err.message); }
 

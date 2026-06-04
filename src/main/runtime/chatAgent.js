@@ -27,9 +27,11 @@ const { searchWeb, fetchWebPage, fetchBestPage } = require('../import/searchEngi
 const { generateOutlineDraft } = require('./outlineDraftService');
 const { detectOutlineChatIntent, detectOutlineConfirmIntent } = require('./outlineIntent');
 const chapterDraftService = require('./chapterDraftService');
+const chapterRoleplayService = require('./chapterRoleplayService');
 const { detectChapterChatIntent, detectChapterConfirmIntent } = require('./chapterIntent');
 const { splitIntoParagraphs } = require('./chapterCharacterReview');
 const { buildSystemTimePromptBlock, getSystemTimeInfo } = require('./systemTime');
+const appConfig = require('../store/appConfig');
 const { webContents } = require('electron');
 
 // ---------- provider resolution ----------
@@ -41,7 +43,7 @@ function pickProvider(type) {
 }
 
 async function resolveChatProvider() {
-  const alias = await modelAliases.getAlias('sonnet');
+  const alias = await modelAliases.getAlias('opus');
   const providerId = alias?.providerId || null;
   const provider = providerId
     ? await providerManager.getProvider(providerId)
@@ -287,6 +289,8 @@ function createSession({ editorContext, messages, threadId }) {
     pendingOutlineIssues: [],
     pendingChapterDraft: null,
     pendingChapterIssues: [],
+    pendingRoleplayProfileGate: null,
+    pendingRoleplayProfileProposal: null,
     pendingDeAiChapterReview: null,
     pendingWriteChapter: null, // { name, title, content, volumeIndex, sectionIndex, baseContent, toolUseId }
   };
@@ -392,7 +396,9 @@ function generatePhaseRules(phase, { useDriver = false } = {}) {
         '5. Read character context via `read_outline_nodes`, then `read_character` only for needed characters.',
         '6. To write a chapter, first present the chapter plan (name, title, approximate word count, key plot points) and explicitly ask: "确认要写入这一章吗？" You MUST wait for the user to click "确认写入" before making the write_chapter call.',
         '7. NEVER call `write_chapter` without explicit user confirmation. The write_chapter tool is gated and will be blocked until the user manually approves it.',
-        '8. For chapters longer than ~2000 words, use `spawn_subagent` (or `Agent` tool in driver mode) to generate the full chapter text so it is not truncated by the chat turn token limit. Then call `write_chapter` with the generated result.',
+        useDriver
+          ? '8. For chapters longer than ~2000 words, use the `Agent` tool (Claude Code 1.x may surface it as `Task`) to generate the full chapter text so it is not truncated by the chat turn token limit. Then call `write_chapter` with the generated result.'
+          : '8. For chapters longer than ~2000 words, use `spawn_subagent` to generate the full chapter text so it is not truncated by the chat turn token limit. Then call `write_chapter` with the generated result.',
         '9. NEVER use write_outline_nodes for chapter content.',
         '10. AFTER `write_chapter` succeeds, the app automatically syncs summary, chapter-scoped timeline, outline write status, and runs `review_de_ai_style`; do not duplicate those automatic calls unless the user asks for a manual correction.',
         '   a. If you later correct timeline events manually, call `update_timeline` for existing ids instead of appending duplicates.',
@@ -445,7 +451,7 @@ function generatePhaseRules(phase, { useDriver = false } = {}) {
 function buildAvailableToolLines({ useDriver = false, hasActiveNovel = false } = {}) {
   const lines = [];
   if (hasActiveNovel) {
-    lines.push('- Character tools: list_characters, read_character, enrich_character');
+    lines.push('- Character tools: list_characters, read_character, read_character_memory, patch_character_memory, enrich_character');
     lines.push('- Novel data: read_outline, read_outline_nodes, list_chapters, read_chapter, write_chapter, replace_chapter_text, apply_chapter_patch, query_world (preferred) / read_world (legacy alias), apply_world_patch, query_timeline, list_assets, read_asset, read_style_memory, read_skill, list_skills, read_skill_content, search_index');
     lines.push('- Review: review_character_consistency (inspect chapter paragraphs against character cards and report paragraph-level conflicts without editing), review_de_ai_style (inspect one or more chapters for AI-ish cliches and mechanical prose without editing)');
     lines.push('- Rewrite: de_ai_ify (rewrite a Chinese fiction passage to remove AI-ish cliches while preserving meaning)');
@@ -494,6 +500,7 @@ function buildCommonRules({ useDriver = false, hasActiveNovel = false } = {}) {
     lines.push('11. For world lore or place-table tweaks, prefer `apply_world_patch` over `update_world` unless you are intentionally replacing the whole world block.');
     lines.push('12. For multi-step asset handoff changes, prefer `apply_asset_patch` over many separate `grant_asset`/`revoke_asset` calls. When editing from a prior asset read, include that asset\'s `baseGrantedTo` snapshot.');
     lines.push('12b. When the user refers to chapters by ordinal display names (e.g. "第七章", "第3章", "前三章", "从第五章到第八章"), call `list_chapter_displays` FIRST to get the definitive mapping between display names and filenames. Do NOT infer the mapping from `list_chapters` + `get_chapter_naming_rule` alone — the file order may differ from the display order due to insertions, deletions, or custom naming.');
+    lines.push('12c. When answering any question about chapter facts, plot continuity, what happened in a chapter, or how two chapters relate, read the relevant chapter text first via `list_chapter_displays` plus `read_chapter`. Do NOT answer from memory, previous tool previews, draft summaries, or conversation history alone. If you have not read the relevant chapter in this turn, say you need to read it first.');
   }
   lines.push('13. When given a research task (e.g., searching for character info, verifying facts), continue using tools until you have gathered sufficient information. Do not stop after a single search if the results are incomplete or ambiguous.');
   lines.push('14. WebSearch automatically fetches and includes page content from the best wiki/encyclopedia result. You do NOT need to call WebFetch for URLs returned by WebSearch unless you need content from a specific non-wiki URL.');
@@ -627,12 +634,25 @@ function clearPendingChapterDraft(session) {
   session.pendingChapterIssues = [];
 }
 
+function clearPendingRoleplayProfile(session) {
+  session.pendingRoleplayProfileGate = null;
+  session.pendingRoleplayProfileProposal = null;
+}
+
 function clearPendingDeAiChapterReview(session) {
   session.pendingDeAiChapterReview = null;
 }
 
 function clearPendingWriteChapter(session) {
   session.pendingWriteChapter = null;
+}
+
+function isChapterSnapshotMismatch(text) {
+  return /chapter snapshot mismatch/i.test(safeStr(text));
+}
+
+function isForceOverwriteWriteIntent(text) {
+  return /覆盖写入|强制写入|仍然写入|无视快照|覆盖最新版|直接覆盖/u.test(safeStr(text));
 }
 
 async function maybeHandleWriteChapterConfirmation(session, userText, sessionId) {
@@ -645,19 +665,71 @@ async function maybeHandleWriteChapterConfirmation(session, userText, sessionId)
   const confirmPattern = /^(?:确认写入|确认保存|开始写入|写入[这此]|保存[这此]|好的[，。,.\s]*(?:开始|继续)?写|可以[，。,.\s]*(?:开始|继续)?写|行[，。,.\s]*(?:开始|继续)?写|^(?:确认|好的|可以|行|嗯|OK|ok|yes|Yes)$)/u;
   const rejectPattern = /^(?:拒绝写入|不写|不写入|取消写入|别写|先不写|暂停写|等等[再先]写)/u;
 
-  if (confirmPattern.test(text)) {
+  if (pending.staleSnapshotMismatch && !isForceOverwriteWriteIntent(text) && confirmPattern.test(text)) {
+    return {
+      text: [
+        '这次写入请求仍然处于快照冲突状态：目标章节在 AI 读完后又发生过变化。',
+        '',
+        '为了避免覆盖你后来的修改，我不会因为普通“确认”就强行覆盖。',
+        '如果你确实要用这版内容覆盖当前章节，请回复“覆盖写入”。如果想保留最新内容，请让我重新读取章节后再生成。'
+      ].join('\n'),
+      turns: 1,
+      toolCalls: [],
+    };
+  }
+
+  if (confirmPattern.test(text) || (pending.staleSnapshotMismatch && isForceOverwriteWriteIntent(text))) {
     // User confirmed — execute the pending write
-    const result = await callMcpTool('write_chapter', {
+    const writeArgs = {
       name: pending.name || undefined,
       title: pending.title || undefined,
       content: pending.content,
       volumeIndex: pending.volumeIndex,
       sectionIndex: pending.sectionIndex,
-      baseContent: pending.baseContent || undefined,
       insertAfter: pending.insertAfter || undefined,
-    });
+    };
+    if (!isForceOverwriteWriteIntent(text) && pending.baseContent) {
+      writeArgs.baseContent = pending.baseContent;
+    }
+    const result = await callMcpTool('write_chapter', writeArgs);
+
+    if (result.isError && isChapterSnapshotMismatch(result.text)) {
+      session.pendingWriteChapter = {
+        ...pending,
+        staleSnapshotMismatch: true,
+        lastError: result.text,
+      };
+      emitEvent(sessionId, 'awaiting_write_chapter_confirmation', {
+        name: pending.name,
+        title: pending.title,
+        contentPreview: safeStr(pending.content).slice(0, 500),
+        contentLength: safeStr(pending.content).length,
+        warning: '目标章节在读取后发生过变化。可覆盖写入，或重新读取后再生成。',
+      });
+      return {
+        text: [
+          '章节写入被保护机制拦下：目标章节在 AI 读取后又发生过变化。',
+          '',
+          '我已保留这次待写入内容，没有丢掉。',
+          '为了避免覆盖你后来的修改，请选择：',
+          '- 回复“覆盖写入”：用这版内容覆盖当前章节。',
+          '- 回复“重新读取后再写”：我重新读取最新章节，再按当前内容重做。',
+          '- 回复“拒绝写入”：取消这次写入。'
+        ].join('\n'),
+        turns: 1,
+        toolCalls: [{
+          id: pending.toolUseId || 'write-chapter-confirmed',
+          name: 'write_chapter',
+          input: { name: pending.name, title: pending.title },
+          status: 'done',
+          result: result.text,
+          isError: true,
+        }],
+      };
+    }
+
     clearPendingWriteChapter(session);
-    emitEvent(sessionId, 'write_chapter_resolved', { confirmed: true });
+    emitEvent(sessionId, 'write_chapter_resolved', { confirmed: true, isError: result.isError });
 
     const writePayload = parseTextJson(result.text) || {};
     const writtenName = safeStr(writePayload.name || pending.name).trim();
@@ -686,6 +758,26 @@ async function maybeHandleWriteChapterConfirmation(session, userText, sessionId)
         }
       } catch (err) {
         followupNotes.push(`写后同步失败：${err?.message || String(err)}`);
+      }
+
+      try {
+        const config = await appConfig.load();
+        if (config?.writing?.characterMemoryUpdate === 'after_confirmed_write' && pending.roleplayContext) {
+          const memoryResult = await chapterRoleplayService.updateCharacterMemoriesForChapter({
+            draft: {
+              name: writtenName,
+              displayName: pending.title || writtenName,
+              title: pending.title || writtenName,
+              summary: '',
+              text: pending.content,
+            },
+            outlineContext: pending.roleplayContext,
+            abortSignal: session.abortController?.signal || null,
+          });
+          followupNotes.push(`角色记忆更新：${memoryResult.updated || 0} 个角色。`);
+        }
+      } catch (err) {
+        followupNotes.push(`角色记忆更新失败：${err?.message || String(err)}`);
       }
 
       try {
@@ -762,12 +854,142 @@ async function maybeHandleWriteChapterConfirmation(session, userText, sessionId)
     };
   }
 
+  if (pending.staleSnapshotMismatch && /重新读取|重新生成|重新写|重做|保留最新/u.test(text)) {
+    clearPendingWriteChapter(session);
+    emitEvent(sessionId, 'write_chapter_resolved', { confirmed: false, reason: 'snapshot refresh requested' });
+    return {
+      text: '已取消这次旧快照写入请求。请重新提出写作/修改要求，我会先基于最新章节内容再生成，避免覆盖你后来的改动。',
+      turns: 1,
+      toolCalls: [],
+    };
+  }
+
   return null; // Not a confirmation/rejection — proceed to normal AI processing
+}
+
+function isRoleplayAutofillIntent(userText) {
+  return /自动补全|补全角色|生成资料|生成角色资料|完善角色/u.test(safeStr(userText));
+}
+
+function isRoleplayIgnoreIntent(userText) {
+  return /忽略.{0,12}(资料|缺失|不足)|跳过.{0,12}(资料|缺失|不足)|继续写|继续生成|先写/u.test(safeStr(userText));
+}
+
+function isRoleplayPatchConfirmIntent(userText) {
+  return /确认.{0,8}(补全|应用|采用|写入)|应用.{0,8}(补全|patch|建议)|采用.{0,8}(补全|建议)|可以.{0,8}(写入|应用)|就按这个/u.test(safeStr(userText));
+}
+
+function isRoleplayPatchRejectIntent(userText) {
+  return /拒绝|不要|不采用|不应用|取消|先别/u.test(safeStr(userText));
+}
+
+function summarizeProfileProposal(proposal) {
+  const characterPatches = Array.isArray(proposal?.characterPatches) ? proposal.characterPatches : [];
+  const memoryPatches = Array.isArray(proposal?.memoryPatches) ? proposal.memoryPatches : [];
+  const notes = Array.isArray(proposal?.notes) ? proposal.notes : [];
+  const lines = [
+    '已生成角色资料补全建议，暂未写入项目。',
+    '',
+    `角色卡 patch：${characterPatches.length} 个；角色记忆 patch：${memoryPatches.length} 个。`,
+  ];
+  for (const item of characterPatches.slice(0, 6)) {
+    lines.push(`- ${item.characterName || item.characterId}：${Object.keys(item.patch || {}).join('、') || '无字段'}`);
+  }
+  if (notes.length) {
+    lines.push('', '补全说明：');
+    for (const note of notes.slice(0, 6)) lines.push(`- ${safeStr(note)}`);
+  }
+  lines.push('', '请确认是否应用这些补全。你也可以回复“拒绝补全”，或说明要怎么继续修改。');
+  return lines.join('\n');
+}
+
+async function rerunChapterDraftAfterRoleplayGate(session, sessionId, abortSignal, { ignoreProfileGate = false } = {}) {
+  const gate = session.pendingRoleplayProfileGate || {};
+  const originalUserText = gate.originalUserText || gate.userText || '继续生成章节草稿';
+  const originalIntent = gate.originalIntent || detectChapterChatIntent(originalUserText, session);
+  const draftResult = await chapterDraftService.generateChapterDraft({
+    mode: originalIntent.mode || 'new',
+    userText: originalUserText,
+    pendingChapterDraft: session.pendingChapterDraft,
+    editorContext: session.editorContext,
+    abortSignal,
+    roleplayOptions: { ignoreProfileGate },
+  });
+  if (draftResult.profileGateBlocked) {
+    session.pendingRoleplayProfileGate = {
+      ...draftResult.profileGate,
+      originalUserText,
+      originalIntent,
+    };
+    session.pendingRoleplayProfileProposal = null;
+    emitEvent(sessionId, 'awaiting_character_profile_decision', draftResult.profileGate || {});
+    return {
+      text: draftResult.assistantText || '角色资料不足，等待你选择自动补全或忽略继续。',
+      turns: 1,
+      toolCalls: [],
+    };
+  }
+  clearPendingRoleplayProfile(session);
+  session.pendingChapterDraft = draftResult.draft || null;
+  session.pendingChapterIssues = Array.isArray(draftResult.blockingIssues) ? draftResult.blockingIssues : [];
+  session.workflowPhase = 'writing';
+  emitEvent(sessionId, 'character_profile_gate_resolved', {});
+  return {
+    text: draftResult.assistantText || '已生成章节草稿，等待确认。',
+    turns: 1,
+    toolCalls: [],
+  };
+}
+
+async function maybeHandleRoleplayProfilePending(session, userText, sessionId, abortSignal) {
+  if (session.pendingRoleplayProfileProposal) {
+    if (isRoleplayPatchConfirmIntent(userText)) {
+      const applied = await chapterRoleplayService.applyProfileAutofill(session.pendingRoleplayProfileProposal);
+      emitEvent(sessionId, 'character_profile_patch_resolved', { confirmed: true, applied });
+      return rerunChapterDraftAfterRoleplayGate(session, sessionId, abortSignal, { ignoreProfileGate: false });
+    }
+    if (isRoleplayPatchRejectIntent(userText)) {
+      session.pendingRoleplayProfileProposal = null;
+      emitEvent(sessionId, 'character_profile_patch_resolved', { confirmed: false });
+      return {
+        text: '已拒绝这次角色资料补全建议，未写入任何角色卡或记忆。你可以要求我重新补全，或回复“忽略角色资料不足并继续写”。',
+        turns: 1,
+        toolCalls: [],
+      };
+    }
+  }
+
+  if (!session.pendingRoleplayProfileGate) return null;
+
+  if (isRoleplayAutofillIntent(userText)) {
+    const proposal = await chapterRoleplayService.proposeProfileAutofill(
+      session.pendingRoleplayProfileGate,
+      userText,
+      abortSignal
+    );
+    session.pendingRoleplayProfileProposal = proposal;
+    emitEvent(sessionId, 'awaiting_character_profile_patch_confirmation', proposal || {});
+    return {
+      text: summarizeProfileProposal(proposal),
+      turns: 1,
+      toolCalls: [],
+    };
+  }
+
+  if (isRoleplayIgnoreIntent(userText)) {
+    emitEvent(sessionId, 'character_profile_gate_resolved', { ignored: true });
+    return rerunChapterDraftAfterRoleplayGate(session, sessionId, abortSignal, { ignoreProfileGate: true });
+  }
+
+  return null;
 }
 
 async function maybeHandleChapterDraftAutomation(session, userText, sessionId, abortSignal) {
   const activeNovelId = session.editorContext?.novelId || mcpClient.getActiveNovel();
   if (!activeNovelId) return null;
+
+  const pendingRoleplay = await maybeHandleRoleplayProfilePending(session, userText, sessionId, abortSignal);
+  if (pendingRoleplay) return pendingRoleplay;
 
   if (detectChapterConfirmIntent(userText, session)) {
     const incompleteReview = Array.isArray(session.pendingChapterIssues)
@@ -790,6 +1012,7 @@ async function maybeHandleChapterDraftAutomation(session, userText, sessionId, a
       sectionIndex: draft.sectionIndex,
       baseContent: draft.baseContent || '',
       insertAfter: draft.insertAfter || '',
+      roleplayContext: draft.roleplayContext || null,
       toolUseId: 'write-chapter-draft-confirmed',
     };
     const result = await maybeHandleWriteChapterConfirmation(session, '确认写入', sessionId);
@@ -809,6 +1032,22 @@ async function maybeHandleChapterDraftAutomation(session, userText, sessionId, a
     editorContext: session.editorContext,
     abortSignal,
   });
+  if (draftResult.profileGateBlocked) {
+    session.pendingRoleplayProfileGate = {
+      ...draftResult.profileGate,
+      originalUserText: userText,
+      originalIntent: intent,
+    };
+    session.pendingRoleplayProfileProposal = null;
+    emitEvent(sessionId, 'awaiting_character_profile_decision', draftResult.profileGate || {});
+    session.workflowPhase = 'writing';
+    return {
+      text: draftResult.assistantText || '角色资料不足，等待你选择自动补全或忽略继续。',
+      turns: 1,
+      toolCalls: [],
+    };
+  }
+  clearPendingRoleplayProfile(session);
   session.pendingChapterDraft = draftResult.draft || null;
   session.pendingChapterIssues = Array.isArray(draftResult.blockingIssues) ? draftResult.blockingIssues : [];
   session.workflowPhase = 'writing';
@@ -1071,6 +1310,141 @@ function detectDeAiChapterReviewIntent(userText, session) {
     shouldRoute: true,
     focus: text,
     fallbackChapterName: detectOpenChapterName(session?.editorContext),
+  };
+}
+
+function detectChapterFactCheckIntent(userText, session) {
+  const text = safeStr(userText).trim();
+  if (!text) return { shouldRoute: false };
+  const activeNovelId = session?.editorContext?.novelId || mcpClient.getActiveNovel();
+  if (!activeNovelId) return { shouldRoute: false };
+  const mentionsChapter = /chapter-[\w.-]+\.md|第\s*[零〇一二两三四五六七八九十百千\d]+\s*章|第[一二三四五六七八九十百千\d]+章/u.test(text);
+  if (!mentionsChapter) return { shouldRoute: false };
+  const looksLikeChallenge = /怎么|为什么|咋|哪来|哪里|对不上|矛盾|冲突|搞错|错了|不对|蠢|傻|胡说|乱说|混在一起|串了|记错|核对|确认|查一下|到底/u.test(text);
+  const asksChapterFact = /写了什么|讲了什么|发生了什么|内容|剧情|桥段|情节|结尾|开头|中间|伏笔|设定|谁|在哪|什么时候|有没有|是不是|是否|关系|衔接|连续|前后|上一章|下一章|这一章|那一章|总结|概括|复盘|梳理/u.test(text);
+  if (!looksLikeChallenge && !asksChapterFact) return { shouldRoute: false };
+  return { shouldRoute: true, focus: text, isChallenge: looksLikeChallenge };
+}
+
+function extractDisplayTitle(displayName, name) {
+  const text = safeStr(displayName || name).trim();
+  return text
+    .replace(/^第\s*[零〇一二两三四五六七八九十百千\d]+\s*章\s*[：:、\-\s]*/u, '')
+    .replace(/^chapter-[\w.-]+\.md\s*[：:、\-\s]*/iu, '')
+    .trim();
+}
+
+function extractChapterHeading(content, fallback) {
+  const match = safeStr(content).match(/^#\s+(.+)$/m);
+  return match?.[1]?.trim() || fallback || '';
+}
+
+function snippetAround(content, keyword, maxLength = 180) {
+  const text = safeStr(content).replace(/\s+/g, ' ').trim();
+  if (!text) return '';
+  const key = safeStr(keyword).trim();
+  const index = key ? text.indexOf(key) : -1;
+  if (index < 0) return text.slice(0, maxLength);
+  const start = Math.max(0, index - Math.floor(maxLength / 2));
+  const end = Math.min(text.length, start + maxLength);
+  return `${start > 0 ? '...' : ''}${text.slice(start, end)}${end < text.length ? '...' : ''}`;
+}
+
+function buildChapterFactCheckReply({ focus, chapters, isChallenge }) {
+  const lines = [
+    isChallenge
+      ? '你这个质疑是对的，不能靠我刚才那种“印象流”回答。'
+      : '我先按章节映射读取原文，再回答这个章节事实问题。',
+    '',
+    '核对结果如下：',
+  ];
+  for (const chapter of chapters) {
+    const display = chapter.displayName || chapter.name;
+    const title = chapter.heading || chapter.title || '';
+    lines.push('', `- ${display}${title && title !== display ? `：${title}` : ''}`);
+    lines.push(`  证据片段：${chapter.snippet || '未读到可用正文片段'}`);
+  }
+  lines.push(
+    '',
+    isChallenge
+      ? '结论：后续回答应以这些最新章节原文为准。若上一轮把两个章节的剧情混在一起，那是聊天模型没有重新读章节导致的错误；这类问题现在会走强制核对路径。'
+      : '结论：后续回答应以这些最新章节原文为准；没有在原文中核到的内容，我不会当作事实继续发挥。'
+  );
+  if (focus) {
+    lines.push('', `你刚才问的是：${focus}`);
+  }
+  return lines.join('\n');
+}
+
+async function maybeHandleChapterFactCheckAutomation(session, userText) {
+  const intent = detectChapterFactCheckIntent(userText, session);
+  if (!intent.shouldRoute) return null;
+
+  const toolCalls = [];
+  const listResult = await callMcpTool('list_chapters', {});
+  toolCalls.push({
+    id: 'factcheck-list-chapters',
+    name: 'list_chapters',
+    input: {},
+    status: 'done',
+    result: listResult.text,
+    isError: listResult.isError,
+  });
+  if (listResult.isError) {
+    return {
+      text: `章节核对失败：${listResult.text}`,
+      turns: 1,
+      toolCalls,
+    };
+  }
+  const allChapterNames = Array.isArray(parseTextJson(listResult.text)) ? parseTextJson(listResult.text) : [];
+
+  let displayList = null;
+  const displayResult = await callMcpTool('list_chapter_displays', {});
+  toolCalls.push({
+    id: 'factcheck-list-chapter-displays',
+    name: 'list_chapter_displays',
+    input: {},
+    status: 'done',
+    result: displayResult.text,
+    isError: displayResult.isError,
+  });
+  if (!displayResult.isError) {
+    const parsed = parseTextJson(displayResult.text);
+    if (Array.isArray(parsed)) displayList = parsed;
+  }
+
+  const requestedChapterNames = extractRequestedChapterNames(intent.focus, allChapterNames, displayList);
+  if (!requestedChapterNames.length) return null;
+
+  const displayByName = new Map((Array.isArray(displayList) ? displayList : []).map((entry) => [entry.name, entry]));
+  const chapters = [];
+  for (const chapterName of requestedChapterNames.slice(0, 4)) {
+    const readResult = await callMcpTool('read_chapter', { name: chapterName });
+    toolCalls.push({
+      id: `factcheck-read-${chapterName}`,
+      name: 'read_chapter',
+      input: { name: chapterName },
+      status: 'done',
+      result: readResult.isError ? readResult.text : `Read ${chapterName}`,
+      isError: readResult.isError,
+    });
+    const display = displayByName.get(chapterName) || {};
+    const title = extractDisplayTitle(display.displayName, chapterName);
+    const content = readResult.isError ? '' : readResult.text;
+    chapters.push({
+      name: chapterName,
+      displayName: display.displayName || chapterName,
+      title,
+      heading: extractChapterHeading(content, title),
+      snippet: snippetAround(content, title || chapterName),
+    });
+  }
+
+  return {
+    text: buildChapterFactCheckReply({ focus: intent.focus, chapters, isChallenge: intent.isChallenge }),
+    turns: 1,
+    toolCalls,
   };
 }
 
@@ -1437,7 +1811,7 @@ async function persistAssistantTurn(session, result) {
   }
 }
 
-async function maybeHandleOutlineAutomation(session, userText, abortSignal) {
+async function maybeHandleOutlineAutomation(session, userText, sessionId, abortSignal) {
   const activeNovelId = session.editorContext?.novelId || mcpClient.getActiveNovel();
   if (!activeNovelId) return null;
 
@@ -1465,19 +1839,33 @@ async function maybeHandleOutlineAutomation(session, userText, abortSignal) {
     await callMcpTool('write_outline_nodes', { nodes });
     clearPendingOutlineDraft(session);
     session.workflowPhase = 'writing';
+    const confirmToolCall = {
+      id: 'confirm-outline-auto',
+      name: 'confirm_outline',
+      input: {},
+      status: 'done',
+      result: 'Outline confirmed and saved. Switched to writing phase.',
+      isError: false,
+    };
+    const nextChapter = await maybeHandleChapterDraftAutomation(session, userText, sessionId, abortSignal);
+    if (nextChapter) {
+      return {
+        text: [
+          '已将当前大纲写入项目，并切换到写作阶段。',
+          '',
+          nextChapter.text || '',
+        ].filter(Boolean).join('\n'),
+        turns: 1 + (nextChapter.turns || 1),
+        toolCalls: [
+          confirmToolCall,
+          ...(Array.isArray(nextChapter.toolCalls) ? nextChapter.toolCalls : []),
+        ],
+      };
+    }
     return {
       text: '已将当前大纲写入项目，并切换到写作阶段。',
       turns: 1,
-      toolCalls: [
-        {
-          id: 'confirm-outline-auto',
-          name: 'confirm_outline',
-          input: {},
-          status: 'done',
-          result: 'Outline confirmed and saved. Switched to writing phase.',
-          isError: false,
-        },
-      ],
+      toolCalls: [confirmToolCall],
     };
   }
 
@@ -2090,7 +2478,7 @@ async function runTurn(sessionId, userText) {
       return;
     }
 
-    const automated = await maybeHandleOutlineAutomation(session, userText, abortSignal);
+    const automated = await maybeHandleOutlineAutomation(session, userText, sessionId, abortSignal);
     if (automated) {
       session.messages.push(assistantContent([{ type: 'text', text: automated.text || '' }]));
       emitEvent(sessionId, 'turn_done', { text: automated.text, turns: automated.turns });
@@ -2103,6 +2491,14 @@ async function runTurn(sessionId, userText) {
       session.messages.push(assistantContent([{ type: 'text', text: characterReviewAutomated.text || '' }]));
       emitEvent(sessionId, 'turn_done', { text: characterReviewAutomated.text, turns: characterReviewAutomated.turns });
       await persistAssistantTurn(session, characterReviewAutomated);
+      return;
+    }
+
+    const chapterFactCheckAutomated = await maybeHandleChapterFactCheckAutomation(session, userText);
+    if (chapterFactCheckAutomated) {
+      session.messages.push(assistantContent([{ type: 'text', text: chapterFactCheckAutomated.text || '' }]));
+      emitEvent(sessionId, 'turn_done', { text: chapterFactCheckAutomated.text, turns: chapterFactCheckAutomated.turns });
+      await persistAssistantTurn(session, chapterFactCheckAutomated);
       return;
     }
 

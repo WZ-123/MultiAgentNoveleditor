@@ -141,7 +141,7 @@ async function runChatWritingUiRegressionTest(mainWindow) {
       (async () => {
         const startedAt = Date.now();
         while (Date.now() - startedAt < 12000) {
-          const input = document.querySelector('input[placeholder="向 AI 提问…"]');
+          const input = document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]');
           const body = document.body.innerText || '';
           if (input && body.includes('聊天写作 UI 回归小说')) {
             return { ok: true };
@@ -167,7 +167,7 @@ async function runChatWritingUiRegressionTest(mainWindow) {
     const createTurn = await mainWindow.webContents.executeJavaScript(`
       (async () => {
         async function sendChatMessage(text) {
-          const input = document.querySelector('input[placeholder="向 AI 提问…"]');
+          const input = document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]');
           if (!input) return { ok: false, step: 'find_input' };
           const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
           if (setter) setter.call(input, text);

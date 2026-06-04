@@ -44,10 +44,20 @@ async function runChatSessionLifecycleRegressionTest() {
       'deleting the active thread switches to the next persisted thread when one exists'
     );
 
-    assert.ok(source.includes('mana.chatAgent.createSession({ editorContext, messages: localMsgs, threadId: activeThreadId })'));
+    const revertStart = source.indexOf('async function revertToNode(msgId)');
+    const revertEnd = source.indexOf('// ====== Auto-scroll ======', revertStart);
+    const revertBlock = source.slice(revertStart, revertEnd);
+    assert.ok(revertStart >= 0 && revertEnd > revertStart);
+    assert.ok(revertBlock.includes('let localMsgs = [];'));
+    assert.ok(!revertBlock.includes('const localMsgs = expandThreadBranch(thread.branch);'));
+    assert.ok(revertBlock.includes('localMsgs = expandThreadBranch(thread.branch);'));
+    assert.ok(revertBlock.includes('mana.chatAgent.createSession({ editorContext, messages: localMsgs, threadId: activeThreadId })'));
+    assert.ok(source.includes('回退到此句之前'));
+    assert.ok(source.includes('parseToolResultMeta'));
+    assert.ok(source.includes('restoreChangedFile'));
     pass(
       'CSL4_revert_rebuilds_session_from_branch',
-      'reverting a thread rebuilds the agent session from the reverted branch'
+      'reverting before a message rebuilds the agent session and exposes change restore controls'
     );
 
     const toolUseStart = source.indexOf("case 'tool_use':");

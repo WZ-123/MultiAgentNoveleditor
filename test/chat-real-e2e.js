@@ -127,7 +127,7 @@ async function runChatRealE2E(mainWindow) {
         const startedAt = Date.now();
         while (Date.now() - startedAt < 12000) {
           const text = document.body.innerText || '';
-          const input = document.querySelector('input[placeholder="向 AI 提问…"]');
+          const input = document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]');
           if (text.includes('第1章：星夜启程') && !!input) {
             return { ok: true };
           }
@@ -153,7 +153,7 @@ async function runChatRealE2E(mainWindow) {
       (async () => {
         const testPhrase = '请先调用 read_character 读取 id 为 shen-yan 的角色卡，再用中文告诉我他的身份和性格，并明确包含“记仇但守诺”这五个字。';
 
-        const inputCandidates = Array.from(document.querySelectorAll('input[type="text"], input:not([type]), textarea'));
+        const inputCandidates = Array.from(document.querySelectorAll('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"], input[type="text"], input:not([type]), textarea'));
         const chatInput = inputCandidates.find((el) => {
           const rect = el.getBoundingClientRect();
           return rect.width > 120 && rect.height > 20 && ((el.placeholder || '').includes('向 AI 提问') || el.tagName === 'INPUT');

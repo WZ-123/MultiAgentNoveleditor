@@ -65,7 +65,7 @@ async function runChatScrollUiRegressionTest(mainWindow) {
       (async () => {
         const startedAt = Date.now();
         while (Date.now() - startedAt < 12000) {
-          const input = document.querySelector('input[placeholder="向 AI 提问…"]');
+          const input = document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]');
           if (input) return { ok: true };
           const buttons = Array.from(document.querySelectorAll('button'));
           const chatBtn = buttons.find((button) => {

@@ -254,7 +254,7 @@ function normalizeCharacter(character) {
 
 async function listCharacters(novelDir) {
   const np = novelPaths(novelDir);
-  const files = await listJsonFiles(np.characters);
+  const files = (await listJsonFiles(np.characters)).filter((file) => !/\.memory\.json$/i.test(file));
   const out = [];
   for (const f of files) {
     const obj = normalizeCharacter(await readJson(f, null));
@@ -277,7 +277,7 @@ async function resolveCharacterFile(novelDir, id) {
   }
 
   const wanted = key.toLowerCase();
-  const files = (await listJsonFiles(np.characters)).sort();
+  const files = (await listJsonFiles(np.characters)).filter((file) => !/\.memory\.json$/i.test(file)).sort();
   for (const file of files) {
     const fileId = path.basename(file, '.json');
     const character = normalizeCharacter(await readJson(file, null));
@@ -323,6 +323,77 @@ async function deleteCharacter(novelDir, id) {
   if (!resolved) return null;
   await deleteFile(resolved.file);
   return resolved.character || null;
+}
+
+function emptyCharacterMemory(characterId) {
+  return {
+    schemaVersion: 1,
+    characterId: _cleanStr(characterId),
+    lastUpdatedChapterRef: '',
+    factsKnown: [],
+    emotionalMemory: [],
+    relationshipDeltas: [],
+    unresolvedIntentions: [],
+    privateMisbeliefs: [],
+  };
+}
+
+function characterMemoryPath(novelDir, characterId) {
+  const np = novelPaths(novelDir);
+  const safeId = _cleanStr(characterId).replace(/[^\w.\-\u4e00-\u9fff]/gu, '_');
+  return path.join(np.characters, `${safeId}.memory.json`);
+}
+
+function normalizeCharacterMemory(memory, characterId) {
+  const base = emptyCharacterMemory(characterId || memory?.characterId || '');
+  const next = memory && typeof memory === 'object' && !Array.isArray(memory)
+    ? { ...base, ...memory }
+    : base;
+  next.schemaVersion = 1;
+  next.characterId = _cleanStr(next.characterId) || base.characterId;
+  for (const key of ['factsKnown', 'emotionalMemory', 'relationshipDeltas', 'unresolvedIntentions', 'privateMisbeliefs']) {
+    next[key] = Array.isArray(next[key]) ? next[key] : [];
+  }
+  next.lastUpdatedChapterRef = _cleanStr(next.lastUpdatedChapterRef);
+  return next;
+}
+
+async function readCharacterMemory(novelDir, characterId) {
+  const file = characterMemoryPath(novelDir, characterId);
+  const memory = await readJson(file, null);
+  return normalizeCharacterMemory(memory, characterId);
+}
+
+function mergeMemoryArray(existing, incoming, keyPrefix) {
+  const out = Array.isArray(existing) ? [...existing] : [];
+  const seen = new Set(out.map((item) => _cleanStr(item?.id) || JSON.stringify(item)));
+  for (const item of Array.isArray(incoming) ? incoming : []) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+    const id = _cleanStr(item.id) || `${keyPrefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    const next = { ...item, id };
+    const sig = id || JSON.stringify(next);
+    if (seen.has(sig)) continue;
+    seen.add(sig);
+    out.push(next);
+  }
+  return out;
+}
+
+async function writeCharacterMemory(novelDir, memory) {
+  const normalized = normalizeCharacterMemory(memory, memory?.characterId);
+  if (!normalized.characterId) throw new Error('characterMemory.characterId required');
+  await writeJson(characterMemoryPath(novelDir, normalized.characterId), normalized);
+  return normalized;
+}
+
+async function patchCharacterMemory(novelDir, characterId, patch = {}) {
+  const current = await readCharacterMemory(novelDir, characterId);
+  const next = { ...current, ...(patch && typeof patch === 'object' ? patch : {}) };
+  next.characterId = current.characterId || _cleanStr(characterId);
+  for (const key of ['factsKnown', 'emotionalMemory', 'relationshipDeltas', 'unresolvedIntentions', 'privateMisbeliefs']) {
+    next[key] = mergeMemoryArray(current[key], patch?.[key], key);
+  }
+  return writeCharacterMemory(novelDir, next);
 }
 
 // ---------------- Assets ----------------
@@ -1990,6 +2061,7 @@ module.exports = {
   // characters
   normalizeCharacter,
   listCharacters, readCharacter, writeCharacter, patchCharacter, deleteCharacter,
+  readCharacterMemory, writeCharacterMemory, patchCharacterMemory, normalizeCharacterMemory,
   // assets
   listAssets, readAsset, upsertAsset, grantAsset, revokeAsset, applyAssetPatch,
   // timeline

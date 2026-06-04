@@ -5,6 +5,15 @@ const { readJson, writeJson } = require('./jsonStore');
 
 const SCHEMA_VERSION = 2;
 
+const DEFAULT_WRITING_CONFIG = {
+  mode: 'command_driven',
+  roleplayInteractionLevel: 'director_mediated',
+  roleplayProfileGate: 'block_and_ask',
+  roleplayAutofillScope: 'fill_missing_and_weak',
+  roleplayAutofillAlignment: 'current_scene',
+  characterMemoryUpdate: 'after_confirmed_write',
+};
+
 const DEFAULT_DRIVERS = {
   'claude-code-vscode': {
     kind: 'claude-code-vscode',
@@ -48,6 +57,7 @@ const DEFAULT_APP_CONFIG = {
   searchEngine: 'auto',
   enrichmentConcurrency: 10,
   enrichmentMode: 'traditional',
+  writing: DEFAULT_WRITING_CONFIG,
   feishuSync: {
     enabled: true,
     endpointProfile: 'dev',
@@ -115,6 +125,10 @@ function normalizeDrivers(saved) {
   return { drivers: merged, changed };
 }
 
+function normalizeWriting(savedWriting) {
+  return { ...DEFAULT_WRITING_CONFIG, ...(savedWriting && typeof savedWriting === 'object' ? savedWriting : {}) };
+}
+
 async function load() {
   const file = paths().appConfig;
   const data = await readJson(file, null);
@@ -156,6 +170,7 @@ async function load() {
   const next = {
     ...DEFAULT_APP_CONFIG,
     ...data,
+    writing: normalizeWriting(data.writing),
     feishuSync,
     license,
     updater,
@@ -208,8 +223,13 @@ async function save(patch) {
   } else {
     next.updater = current.updater;
   }
+  if (patch && patch.writing) {
+    next.writing = normalizeWriting({ ...current.writing, ...patch.writing });
+  } else {
+    next.writing = current.writing;
+  }
   await writeJson(paths().appConfig, next);
   return next;
 }
 
-module.exports = { load, save, DEFAULT_APP_CONFIG, DEFAULT_DRIVERS, SCHEMA_VERSION };
+module.exports = { load, save, DEFAULT_APP_CONFIG, DEFAULT_DRIVERS, DEFAULT_WRITING_CONFIG, SCHEMA_VERSION };

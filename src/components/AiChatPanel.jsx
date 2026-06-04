@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { appendToolUseMessage, applyToolResultMessage } from '@/components/chatToolState.mjs';
 import { buildQuickFeedbackPayload } from '@/components/chatFeedbackPayload.mjs';
+import { parseToolResultMeta } from '@/components/chatToolResultMeta.mjs';
 import { getRecentRendererLogs, installRecentRendererLogCapture } from '@/components/recentRendererLogs.mjs';
 
 export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTextNearCursor, onInsertTextAtCursor, onBeforeSendMessage }) {
@@ -69,9 +70,13 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
   // ---- Tool result expand/collapse ----
   const [expandedResults, setExpandedResults] = useState({});
+  const [expandedChanges, setExpandedChanges] = useState({});
+  const [restoredChanges, setRestoredChanges] = useState({});
 
   // ---- Write chapter confirmation ----
   const [pendingWriteChapter, setPendingWriteChapter] = useState(null);
+  const [pendingCharacterProfileDecision, setPendingCharacterProfileDecision] = useState(null);
+  const [pendingCharacterProfilePatch, setPendingCharacterProfilePatch] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackTitle, setFeedbackTitle] = useState('');
@@ -139,6 +144,9 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
           setError('');
           setThinkingText('');
           setEditingId(null);
+          setPendingWriteChapter(null);
+          setPendingCharacterProfileDecision(null);
+          setPendingCharacterProfilePatch(null);
           setSessionId(null);
         }
       }
@@ -226,6 +234,9 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
     setError('');
     setThinkingText('');
     setEditingId(null);
+    setPendingWriteChapter(null);
+    setPendingCharacterProfileDecision(null);
+    setPendingCharacterProfilePatch(null);
 
     if (!threadId || !mana?.chatHistory) return;
 
@@ -433,8 +444,24 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
         setRejectReason('');
         break;
       case 'write_chapter_resolved':
-        setPendingWriteChapter(null);
-        setRejectReason('');
+        if (!ev.data?.keepPending) {
+          setPendingWriteChapter(null);
+          setRejectReason('');
+        }
+        break;
+      case 'awaiting_character_profile_decision':
+        setPendingCharacterProfileDecision(ev.data || null);
+        setPendingCharacterProfilePatch(null);
+        break;
+      case 'awaiting_character_profile_patch_confirmation':
+        setPendingCharacterProfilePatch(ev.data || null);
+        break;
+      case 'character_profile_gate_resolved':
+        setPendingCharacterProfileDecision(null);
+        setPendingCharacterProfilePatch(null);
+        break;
+      case 'character_profile_patch_resolved':
+        setPendingCharacterProfilePatch(null);
         break;
       default:
         break;
@@ -592,12 +619,14 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   // ====== Revert to node ======
   async function revertToNode(msgId) {
     if (!activeThreadId || !mana?.chatHistory) return;
-    const ok = window.confirm('确定要回滚到这个节点吗？之后的消息将被删除。');
+    const ok = window.confirm('确定要回退到这句对话之前吗？这句及之后的消息将被删除。');
     if (!ok) return;
+    let localMsgs = [];
     try {
+      setError('');
       const thread = await mana.chatHistory.revertToNode(activeThreadId, msgId);
       if (thread?.branch) {
-        const localMsgs = expandThreadBranch(thread.branch);
+        localMsgs = expandThreadBranch(thread.branch);
         setMessages(localMsgs);
       }
       // Also close and recreate agent session
@@ -705,6 +734,69 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
       setError(msg);
     } finally {
       setFeedbackSubmitting(false);
+    }
+  }
+
+  function countLineChanges(beforeContent, afterContent) {
+    const beforeLines = String(beforeContent || '').split(/\r?\n/);
+    const afterLines = String(afterContent || '').split(/\r?\n/);
+    const max = Math.max(beforeLines.length, afterLines.length);
+    let added = 0;
+    let removed = 0;
+    for (let index = 0; index < max; index += 1) {
+      const beforeLine = beforeLines[index];
+      const afterLine = afterLines[index];
+      if (beforeLine === afterLine) continue;
+      if (beforeLine !== undefined) removed += 1;
+      if (afterLine !== undefined) added += 1;
+    }
+    return { added, removed };
+  }
+
+  function buildChangeKey(messageId, file) {
+    return `${messageId}:${file?.novelId || ''}:${file?.chapterName || ''}`;
+  }
+
+  async function restoreChangedFile(messageId, file) {
+    if (!file?.novelId || !file?.chapterName || !mana?.novel) return;
+    const ok = window.confirm(`确定撤销对 ${file.label || file.chapterName} 的本次修改吗？`);
+    if (!ok) return;
+    const key = buildChangeKey(messageId, file);
+    try {
+      setError('');
+      if (file.restoreMode === 'delete') {
+        await mana.novel.deleteChapter(file.novelId, file.chapterName);
+      } else {
+        await mana.novel.saveChapter(
+          file.novelId,
+          file.chapterName,
+          file.beforeContent || '',
+          file.beforeMetadata || undefined
+        );
+      }
+      setRestoredChanges((prev) => ({ ...prev, [key]: true }));
+    } catch (err) {
+      setError(err?.message || String(err));
+    }
+  }
+
+  function profileFieldLabel(field) {
+    const labels = {
+      personality: '性格',
+      speechStyle: '语言风格',
+      appearance: '外貌',
+      relationships: '关系',
+      storyArc: '角色弧线',
+      characterMemory: '角色记忆',
+    };
+    return labels[field] || field;
+  }
+
+  function profilePatchPreview(patch) {
+    try {
+      return JSON.stringify(patch || {}, null, 2);
+    } catch {
+      return String(patch || '');
     }
   }
 
@@ -844,6 +936,16 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
           {messages.map((m, idx) => {
             if (m.role === 'tool') {
+              const resultMeta = m.status === 'done' && !m.isError ? parseToolResultMeta(m.result || '') : null;
+              const changedFiles = resultMeta?.changedFiles || [];
+              const changedSummary = changedFiles.reduce(
+                (acc, file) => {
+                  const diff = countLineChanges(file.beforeContent, file.afterContent);
+                  return { added: acc.added + diff.added, removed: acc.removed + diff.removed };
+                },
+                { added: 0, removed: 0 }
+              );
+              const changesOpen = !!expandedChanges[m.id];
               return (
                 <div key={m.id || idx} className="flex gap-2 min-w-0">
                   <div className="w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center shrink-0">
@@ -879,6 +981,83 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
                           >
                             {expandedResults[m.id] ? '折叠' : '查看详情'}
                           </button>
+                        )}
+                        {changedFiles.length > 0 && (
+                          <div className="mt-2 border border-vscode-panel-border bg-vscode-sidebar/70 rounded overflow-hidden">
+                            <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+                              <div className="min-w-0">
+                                <div className="text-xs font-semibold text-gray-200">
+                                  已编辑 {changedFiles.length} 个章节
+                                </div>
+                                <div className="text-[10px] text-gray-400">
+                                  <span className="text-green-400">+{changedSummary.added}</span>
+                                  <span className="mx-1"> </span>
+                                  <span className="text-rose-400">-{changedSummary.removed}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  className="text-[10px] px-2 py-1 rounded border border-vscode-panel-border text-gray-200 hover:bg-vscode-active-item"
+                                  onClick={() => setExpandedChanges((prev) => ({ ...prev, [m.id]: !prev[m.id] }))}
+                                >
+                                  {changesOpen ? '收起' : '查看变更'}
+                                </button>
+                                {changedFiles.length === 1 && (
+                                  <button
+                                    type="button"
+                                    className="text-[10px] px-2 py-1 rounded border border-vscode-panel-border text-gray-200 hover:bg-vscode-active-item"
+                                    disabled={!!restoredChanges[buildChangeKey(m.id, changedFiles[0])]}
+                                    onClick={() => restoreChangedFile(m.id, changedFiles[0])}
+                                  >
+                                    {restoredChanges[buildChangeKey(m.id, changedFiles[0])] ? '已撤销' : '撤销'}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            {changesOpen && (
+                              <div className="border-t border-vscode-panel-border">
+                                {changedFiles.map((file) => {
+                                  const changeKey = buildChangeKey(m.id, file);
+                                  const beforePreview = String(file.beforeContent || '').slice(0, 900);
+                                  const afterPreview = String(file.afterContent || '').slice(0, 900);
+                                  return (
+                                    <div key={changeKey} className="border-b last:border-b-0 border-vscode-panel-border">
+                                      <div className="flex items-center justify-between gap-2 px-2 py-1 bg-vscode-active-item/60">
+                                        <div className="text-[11px] text-gray-200 truncate">
+                                          {file.chapterName || file.label}
+                                        </div>
+                                        {changedFiles.length > 1 && (
+                                          <button
+                                            type="button"
+                                            className="text-[10px] px-2 py-0.5 rounded border border-vscode-panel-border text-gray-200 hover:bg-vscode-sidebar"
+                                            disabled={!!restoredChanges[changeKey]}
+                                            onClick={() => restoreChangedFile(m.id, file)}
+                                          >
+                                            {restoredChanges[changeKey] ? '已撤销' : '撤销'}
+                                          </button>
+                                        )}
+                                      </div>
+                                      <div className="grid grid-cols-1 gap-0 text-[10px]">
+                                        <div className="px-2 py-1">
+                                          <div className="mb-0.5 text-rose-300">变更前</div>
+                                          <pre className="max-h-28 overflow-y-auto whitespace-pre-wrap break-words text-gray-400">
+                                            {beforePreview || '（新建章节）'}
+                                          </pre>
+                                        </div>
+                                        <div className="px-2 py-1 border-t border-vscode-panel-border">
+                                          <div className="mb-0.5 text-green-300">变更后</div>
+                                          <pre className="max-h-28 overflow-y-auto whitespace-pre-wrap break-words text-gray-300">
+                                            {afterPreview || '（已删除）'}
+                                          </pre>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     )}
@@ -959,7 +1138,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
                             type="button"
                             className="text-gray-400 hover:text-amber-400 p-0.5"
                             onClick={() => revertToNode(m.id)}
-                            title="回滚到这个节点"
+                            title="回退到此句之前"
                           >
                             <Undo2 size={10} />
                           </button>
@@ -1008,6 +1187,89 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
           </div>
         )}
 
+        {/* Character Profile Gate Card */}
+        {pendingCharacterProfileDecision && (
+          <div className="px-3 py-3 border-t border-sky-500/30 bg-sky-500/10 shrink-0">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Brain size={12} className="text-sky-300" />
+              <span className="text-xs font-bold text-sky-200">角色资料不足</span>
+            </div>
+            <div className="space-y-1.5 mb-3 text-xs text-gray-300">
+              {(pendingCharacterProfileDecision.missingCharacters || []).slice(0, 6).map((item) => {
+                const fields = [
+                  ...((item.missingFields || []).map((field) => `${profileFieldLabel(field)}缺失`)),
+                  ...((item.weakFields || []).map((field) => `${profileFieldLabel(field)}过弱`)),
+                ];
+                return (
+                  <div key={item.id || item.name} className="flex gap-2">
+                    <span className="text-sky-200 shrink-0">{item.name || item.id}</span>
+                    <span className="text-gray-400">{fields.join('、') || '资料不足'}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="px-3 py-1.5 text-xs font-semibold rounded bg-sky-600 text-white hover:bg-sky-500"
+                onClick={() => setInput('自动补全角色资料')}
+              >
+                自动补全
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1.5 text-xs rounded bg-gray-600 text-gray-200 hover:bg-gray-500"
+                onClick={() => setInput('忽略角色资料不足并继续写')}
+              >
+                忽略继续
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Character Profile Patch Card */}
+        {pendingCharacterProfilePatch && (
+          <div className="px-3 py-3 border-t border-cyan-500/30 bg-cyan-500/10 shrink-0">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Wrench size={12} className="text-cyan-300" />
+              <span className="text-xs font-bold text-cyan-200">角色资料补全建议</span>
+            </div>
+            <div className="mb-2 text-xs text-gray-300">
+              角色卡 patch：{(pendingCharacterProfilePatch.characterPatches || []).length} 个，记忆 patch：{(pendingCharacterProfilePatch.memoryPatches || []).length} 个
+            </div>
+            <pre className="mb-3 text-[11px] bg-black/30 rounded p-2 max-h-40 overflow-auto text-gray-300 whitespace-pre-wrap">
+              {profilePatchPreview({
+                characterPatches: pendingCharacterProfilePatch.characterPatches || [],
+                memoryPatches: pendingCharacterProfilePatch.memoryPatches || [],
+                notes: pendingCharacterProfilePatch.notes || [],
+              })}
+            </pre>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="px-3 py-1.5 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-500"
+                onClick={() => setInput('确认应用角色资料补全')}
+              >
+                确认应用
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1.5 text-xs rounded bg-rose-800/60 text-rose-200 hover:bg-rose-700/60"
+                onClick={() => setInput('拒绝角色资料补全')}
+              >
+                拒绝
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1.5 text-xs rounded bg-gray-600 text-gray-200 hover:bg-gray-500"
+                onClick={() => setInput('忽略角色资料不足并继续写')}
+              >
+                忽略继续
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Write Chapter Confirmation Card */}
         {pendingWriteChapter && (
           <div className="px-3 py-3 border-t border-amber-500/30 bg-amber-500/10 shrink-0">
@@ -1032,23 +1294,35 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
                 {pendingWriteChapter.contentLength > 500 && '...'}
               </pre>
             )}
+            {pendingWriteChapter.warning && (
+              <div className="mb-3 text-[11px] text-amber-100 bg-amber-900/30 border border-amber-500/30 rounded p-2">
+                {pendingWriteChapter.warning}
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 className="px-3 py-1.5 text-xs font-semibold rounded bg-emerald-600 text-white hover:bg-emerald-500"
                 onClick={() => {
                   setInput('确认写入这一章');
-                  setPendingWriteChapter(null);
                 }}
               >
                 确认写入
               </button>
+              {pendingWriteChapter.warning && (
+                <button
+                  type="button"
+                  className="px-3 py-1.5 text-xs font-semibold rounded bg-amber-700 text-white hover:bg-amber-600"
+                  onClick={() => setInput('覆盖写入')}
+                >
+                  覆盖写入
+                </button>
+              )}
               <button
                 type="button"
                 className="px-3 py-1.5 text-xs rounded bg-gray-600 text-gray-200 hover:bg-gray-500"
                 onClick={() => {
                   setInput('拒绝写入');
-                  setPendingWriteChapter(null);
                 }}
               >
                 拒绝
@@ -1084,7 +1358,6 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
                     onClick={() => {
                       const reason = (rejectReason === ' ' ? '' : rejectReason).trim();
                       setInput(reason ? `拒绝写入，理由是：${reason}` : '拒绝写入');
-                      setPendingWriteChapter(null);
                       setRejectReason('');
                     }}
                   >
@@ -1114,10 +1387,10 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
             </div>
           )}
           <div className="flex items-end gap-2 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1.5">
-            <input
-              type="text"
+            <textarea
               placeholder="向 AI 提问…"
-              className="h-6 bg-transparent border-none outline-none flex-1 text-sm leading-6 text-gray-200 placeholder-gray-600"
+              rows={3}
+              className="min-h-[4.5rem] w-full resize-none bg-transparent border-none outline-none flex-1 text-sm leading-6 text-gray-200 placeholder-gray-600 overflow-y-auto"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}

@@ -3,11 +3,11 @@
 const CHAPTER_INDEX = '[0-9一二三四五六七八九十百零两]+';
 
 const CREATE_PATTERNS = [
-  new RegExp(`(?:^|\\s)(?:开始|继续|直接|先)?(?:写|撰写|生成|产出)(?:一下)?(?:第${CHAPTER_INDEX}章|这章|这一章|下一章|正文)`),
+  new RegExp(`(?:^|\\s)(?:开始|继续|直接|先)?(?:写|撰写|续写|生成|产出)(?:一下)?(?:第?${CHAPTER_INDEX}章|这章|这一章|下一章|正文)`),
   new RegExp(`第${CHAPTER_INDEX}章.*(?:剧情|内容).*(?:是|为|大概是|大致是|准备写|打算写|写成|展开)`),
-  new RegExp(`(?:根据|按照).*(?:剧情|提纲|梗概|思路).*(?:写成|扩写成).*(?:第${CHAPTER_INDEX}章|正文|章节)`),
+  new RegExp(`(?:根据|按照).*(?:剧情|提纲|大纲|梗概|思路).*(?:写成|扩写成|续写|写).*(?:第?${CHAPTER_INDEX}章|正文|章节)`),
   /(?:把|将).*(?:剧情|梗概|提纲|这段情节).*(?:写成|扩写成).*(?:一章|正文|章节)/,
-  /(?:帮我|请|麻烦)?(?:开始|继续)?写(?:这一章|这章|下一章|正文)/,
+  /(?:帮我|请|麻烦)?(?:开始|继续)?(?:写|续写)(?:这一章|这章|下一章|正文|第?[0-9一二三四五六七八九十百零两]+章)/,
 ];
 
 const REVISE_PATTERNS = [
@@ -69,7 +69,8 @@ function detectChapterChatIntent(userText, session) {
     return { shouldRoute: false, mode: null, reason: '' };
   }
   const selectionScopedNarrativeRewrite = isSelectionScopedNarrativeRewrite(text, session);
-  if (matchesAny(text, NEGATIVE_PATTERNS) && !selectionScopedNarrativeRewrite) {
+  const hasCreateIntent = matchesAny(text, CREATE_PATTERNS);
+  if (matchesAny(text, NEGATIVE_PATTERNS) && !selectionScopedNarrativeRewrite && !hasCreateIntent) {
     return { shouldRoute: false, mode: null, reason: '' };
   }
 
@@ -83,7 +84,7 @@ function detectChapterChatIntent(userText, session) {
   if (selectionScopedNarrativeRewrite) {
     return { shouldRoute: true, mode: 'revise', reason: 'selection-narrative-rewrite' };
   }
-  if (matchesAny(text, CREATE_PATTERNS)) {
+  if (hasCreateIntent) {
     return { shouldRoute: true, mode: 'create', reason: 'chapter-create-intent' };
   }
 

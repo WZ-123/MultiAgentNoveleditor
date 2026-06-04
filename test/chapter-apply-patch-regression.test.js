@@ -74,10 +74,34 @@ async function runChapterApplyPatchRegressionTest() {
     assert.equal(successPayload.replacedCount, 2);
     assert.equal(successPayload.edits[0]?.matchStrategy, 'normalized_context');
     assert.equal(successPayload.edits[1]?.matchStrategy, 'exact');
+    assert.equal(successPayload.checkpoint?.source, 'apply_chapter_patch');
+    assert.equal(successPayload.checkpoint?.novelId, 'novel-patch');
+    assert.equal(successPayload.checkpoint?.chapterName, 'chapter-001.md');
+    assert.equal(successPayload.checkpoint?.beforeContent, originalBody);
+    assert.equal(successPayload.checkpoint?.afterContent, successAfter);
+    assert.equal(successPayload.changedFiles?.[0]?.restoreMode, 'write');
     assert.ok(successAfter.includes('林岚压低声音说：“先别动。”'));
     assert.ok(successAfter.includes('她抬手把窗推开一线，让冷雨气钻进来。'));
     assert.equal(successAfter.includes('林岚说：“先等等。”'), false);
     pass('CAP1_tool_applies_multiple_edits_against_one_snapshot', 'apply_chapter_patch applied two anchored edits in one write');
+
+    const writeTool = getToolByName('write_chapter');
+    assert.ok(writeTool);
+    const writeResult = await writeTool.handler(
+      {
+        name: 'chapter-010.md',
+        content: '新章第一段。',
+        title: '新建章',
+      },
+      { novelDir, novel: { id: 'novel-patch' } }
+    );
+    const writePayload = JSON.parse(writeResult.content[0].text);
+    assert.equal(writePayload.ok, true);
+    assert.equal(writePayload.checkpoint?.source, 'write_chapter');
+    assert.equal(writePayload.changedFiles?.[0]?.chapterName, 'chapter-010.md');
+    assert.equal(writePayload.changedFiles?.[0]?.restoreMode, 'delete');
+    assert.equal(writePayload.changedFiles?.[0]?.afterContent, '新章第一段。');
+    pass('CAP2_write_chapter_new_file_returns_delete_restore_checkpoint', 'new chapter writes can be undone by deleting the created file');
 
     const overlapBody = '她抬起头，紫红色的眼眸里映着冷光。';
     await novelData.writeChapterWithMeta(novelDir, 'chapter-002.md', overlapBody, { title: '冲突 patch' });
@@ -100,7 +124,7 @@ async function runChapterApplyPatchRegressionTest() {
 
     assert.match(String(overlapError?.message || ''), /overlap/i);
     assert.equal(overlapAfter, overlapBody);
-    pass('CAP2_overlapping_edits_are_rejected_without_partial_write', 'overlapping batch edits fail before the chapter is mutated');
+    pass('CAP3_overlapping_edits_are_rejected_without_partial_write', 'overlapping batch edits fail before the chapter is mutated');
 
     const staleBody = '窗外的风声一阵紧过一阵。';
     await novelData.writeChapterWithMeta(novelDir, 'chapter-003.md', staleBody, { title: '旧快照保护' });
@@ -122,12 +146,12 @@ async function runChapterApplyPatchRegressionTest() {
 
     assert.match(String(staleError?.message || ''), /snapshot mismatch/i);
     assert.equal(staleAfter, `${staleBody}\n\n门闩轻轻响了一下。`);
-    pass('CAP3_stale_snapshot_is_rejected', 'apply_chapter_patch refuses to apply edits from an outdated chapter snapshot');
+    pass('CAP4_stale_snapshot_is_rejected', 'apply_chapter_patch refuses to apply edits from an outdated chapter snapshot');
 
     const chatAgentText = await fs.readFile(path.join(ROOT, 'src/main/runtime/chatAgent.js'), 'utf8');
     assert.ok(chatAgentText.includes('apply_chapter_patch'));
     assert.ok(chatAgentText.includes('same chapter'));
-    pass('CAP4_chat_rules_advertise_batch_patch_flow', 'chat prompt now tells the model to use apply_chapter_patch for multiple same-chapter fixes');
+    pass('CAP5_chat_rules_advertise_batch_patch_flow', 'chat prompt now tells the model to use apply_chapter_patch for multiple same-chapter fixes');
   } catch (err) {
     fail('CAP_harness', err && err.stack ? err.stack : String(err));
   } finally {
