@@ -8,6 +8,7 @@ import { appendToolUseMessage, applyToolResultMessage } from '@/components/chatT
 import { buildQuickFeedbackPayload } from '@/components/chatFeedbackPayload.mjs';
 import { parseToolResultMeta } from '@/components/chatToolResultMeta.mjs';
 import { getRecentRendererLogs, installRecentRendererLogCapture } from '@/components/recentRendererLogs.mjs';
+import { buildChapterChangePreview } from '@/components/changePreview.mjs';
 
 export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTextNearCursor, onInsertTextAtCursor, onBeforeSendMessage }) {
   const mana = typeof window !== 'undefined' ? window.mana : null;
@@ -47,6 +48,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   const [threads, setThreads] = useState([]);
   const [activeThreadId, setActiveThreadId] = useState(null);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [isCompact, setIsCompact] = useState(false);
 
   // ---- Message state ----
   const [messages, setMessages] = useState([]);
@@ -55,6 +57,9 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   const [error, setError] = useState('');
   const [thinkingText, setThinkingText] = useState('');
   const [showThinking, setShowThinking] = useState(false);
+  const [progressItems, setProgressItems] = useState([]);
+  const [autoFollow, setAutoFollow] = useState(true);
+  const [showJumpToBottom, setShowJumpToBottom] = useState(false);
 
   // ---- Editing ----
   const [editingId, setEditingId] = useState(null);
@@ -63,6 +68,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   // ---- Session (chat agent runtime) ----
   const [sessionId, setSessionId] = useState(null);
   const offEventRef = useRef(null);
+  const shellRef = useRef(null);
   const containerRef = useRef(null);
 
   // ---- Online/offline ----
@@ -99,6 +105,23 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   useEffect(() => { editorContextRef.current = editorContext; }, [editorContext]);
   useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
 
+  useEffect(() => {
+    const shell = shellRef.current;
+    if (!shell) return undefined;
+    const updateCompact = () => {
+      const width = shell.getBoundingClientRect().width;
+      setIsCompact(width > 0 && width <= 680);
+    };
+    updateCompact();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateCompact);
+      return () => window.removeEventListener('resize', updateCompact);
+    }
+    const observer = new ResizeObserver(updateCompact);
+    observer.observe(shell);
+    return () => observer.disconnect();
+  }, []);
+
   // ====== Load threads on mount ======
   useEffect(() => {
     installRecentRendererLogCapture();
@@ -118,15 +141,21 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   const currentNovelId = editorContext?.novelId || null;
   useEffect(() => {
     if (!mana?.chatHistory) return;
+    if (!currentNovelId && (activeThreadId || sessionId)) {
+      return;
+    }
+    let cancelled = false;
     const run = async () => {
       const list = await mana.chatHistory.listThreads(currentNovelId);
+      if (cancelled) return;
       setThreads(list || []);
       // If active thread belongs to current novel, keep it; otherwise switch to first available
       const activeBelongs = activeThreadId && list?.some((t) => t.id === activeThreadId);
       if (!activeBelongs) {
         // Active novel state can briefly flicker to null while the app refreshes
-        // workspace context. Do not kill an in-flight chat turn during that gap.
-        if (!currentNovelId && status !== 'idle' && (sessionId || activeThreadId)) {
+        // workspace context. Do not clear the current conversation during that gap,
+        // even if the last turn has just finished and status is already idle.
+        if (!currentNovelId && (sessionId || activeThreadId)) {
           return;
         }
         if (list?.length > 0) {
@@ -152,6 +181,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
       }
     };
     run();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentNovelId, status]);
 
@@ -209,14 +239,19 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
         novelId: editorContext?.novelId || null,
       });
       setThreads((prev) => [t, ...prev]);
-      switchThread(t.id);
+      await switchThread(t.id);
     } catch (err) {
       setError(err?.message || String(err));
     }
   }
 
   async function switchThread(threadId) {
-    if (threadId === activeThreadId) return;
+    if (threadId === activeThreadId) {
+      if (isCompact) {
+        setShowSidebar(false);
+      }
+      return;
+    }
     if (isBusy) {
       setError('AI 正在回复中，请先停止生成或等待完成后再切换对话。');
       return;
@@ -237,6 +272,9 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
     setPendingWriteChapter(null);
     setPendingCharacterProfileDecision(null);
     setPendingCharacterProfilePatch(null);
+    if (isCompact) {
+      setShowSidebar(false);
+    }
 
     if (!threadId || !mana?.chatHistory) return;
 
@@ -340,6 +378,9 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
       case 'turn_start':
         setStatus('thinking');
         setThinkingText('');
+        setProgressItems([]);
+        setAutoFollow(true);
+        setShowJumpToBottom(false);
         setError('');
         break;
       case 'text_delta':
@@ -369,6 +410,22 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
         break;
       case 'thinking_delta':
         setThinkingText((t) => t + (ev.data.delta || ''));
+        break;
+      case 'progress':
+        setStatus((current) => (current === 'idle' ? 'thinking' : current));
+        setProgressItems((prev) => {
+          const text = typeof ev.data?.message === 'string' ? ev.data.message.trim() : '';
+          if (!text) return prev;
+          return [
+            ...prev.slice(-11),
+            {
+              id: `${Date.now()}-${prev.length}`,
+              text,
+              stage: ev.data?.stage || '',
+              timestamp: Date.now(),
+            },
+          ];
+        });
         break;
       case 'tool_use': {
         setMessages((prev) => {
@@ -645,15 +702,35 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   }
 
   // ====== Auto-scroll ======
-  useEffect(() => {
+  const handleMessageScroll = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const nearBottom = distanceFromBottom <= 80;
+    setAutoFollow(nearBottom);
+    setShowJumpToBottom(!nearBottom);
+  }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !autoFollow) return;
     // Delay scroll until browser has finished layout so scrollHeight is accurate
     const raf = requestAnimationFrame(() => {
       el.scrollTop = el.scrollHeight;
+      setShowJumpToBottom(false);
     });
     return () => cancelAnimationFrame(raf);
-  }, [messages, thinkingText]);
+  }, [messages, thinkingText, progressItems, autoFollow]);
+
+  const jumpToBottom = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    setAutoFollow(true);
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight;
+      setShowJumpToBottom(false);
+    });
+  }, []);
 
   const isBusy = status === 'thinking' || status === 'streaming';
   const activeThread = threads.find((t) => t.id === activeThreadId);
@@ -801,34 +878,43 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   }
 
   return (
-    <div className="flex h-full">
+      <div
+        ref={shellRef}
+        className="mana-chat-shell flex h-full text-[13px]"
+        data-testid="chat-shell"
+        data-compact={isCompact ? 'true' : 'false'}
+        data-compact-sidebar={isCompact && showSidebar ? 'true' : 'false'}
+      >
       {/* Sidebar — thread list */}
       {showSidebar && (
-        <div className="w-56 border-r border-vscode-panel-border flex flex-col bg-vscode-sidebar shrink-0">
-          <div className="h-9 border-b border-vscode-panel-border flex items-center px-3 justify-between shrink-0">
-            <span className="text-xs font-bold text-gray-400">对话历史</span>
+        <div className="mana-chat-sidebar w-64 border-r border-white/10 flex flex-col shrink-0">
+          <div className="h-12 border-b border-white/10 flex items-center px-3 justify-between shrink-0">
+            <div>
+              <div className="text-xs font-bold text-gray-200">对话历史</div>
+              <div className="text-[10px] text-gray-500">写作链路与审查记录</div>
+            </div>
             <button
               type="button"
-              className="text-gray-400 hover:text-white p-1"
+              className="rounded-lg border border-white/10 bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 p-1.5"
               onClick={createThread}
               title="新建对话"
             >
               <Plus size={14} />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto">
+          <div className="mana-chat-scroll flex-1 overflow-y-auto p-2">
             {threads.length === 0 && (
-              <div className="px-3 py-2 text-xs text-gray-500">暂无对话</div>
+              <div className="rounded-xl border border-dashed border-white/10 px-3 py-4 text-xs text-gray-500">暂无对话</div>
             )}
             {threads.map((t) => (
               <div
                 key={t.id}
-                className={`group flex items-center gap-2 px-3 py-2 cursor-pointer text-xs ${
-                  t.id === activeThreadId ? 'bg-vscode-active-item text-white' : 'text-gray-300 hover:bg-vscode-active-item'
+                className={`mana-chat-thread-item group mb-1 flex items-center gap-2 rounded-xl px-3 py-2.5 cursor-pointer text-xs ${
+                  t.id === activeThreadId ? 'mana-chat-thread-item-active text-white' : 'text-gray-300'
                 }`}
                 onClick={() => switchThread(t.id)}
               >
-                <MessageSquare size={12} className="shrink-0" />
+                <MessageSquare size={13} className="shrink-0 text-sky-300/80" />
                 <span className="flex-1 truncate">{t.title}</span>
                 <div className="hidden group-hover:flex items-center gap-1">
                   <button
@@ -855,21 +941,23 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
       )}
 
       {/* Main chat area */}
-      <div className="flex-1 flex flex-col h-full min-w-0">
+      <div className={`relative flex-1 flex-col h-full min-w-0 ${isCompact && showSidebar ? 'hidden' : 'flex'}`}>
         {/* Toolbar */}
-        <div className="h-9 border-b border-vscode-panel-border flex items-center px-2 justify-between shrink-0">
+        <div className="mana-chat-toolbar h-12 flex items-center px-3 justify-between shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
-              className="text-gray-400 hover:text-white p-1"
+              className="rounded-lg text-gray-400 hover:text-white hover:bg-white/10 p-1.5"
               onClick={() => setShowSidebar((v) => !v)}
-              title={showSidebar ? '隐藏侧边栏' : '显示侧边栏'}
+              title={showSidebar ? '隐藏侧边栏' : '返回对话列表'}
+              aria-label={showSidebar ? '隐藏侧边栏' : '返回对话列表'}
             >
               {showSidebar ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
             </button>
-            <span className="text-xs font-bold text-gray-400 truncate min-w-0">
-              {activeThread?.title || 'AI 助手'}
-            </span>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-gray-100 truncate">{activeThread?.title || 'AI 助手'}</div>
+              <div className="text-[10px] text-gray-500 truncate">{isBusy ? '正在执行写作任务' : '准备协作'}</div>
+            </div>
             {activeThread?.edited && (
               <span className="text-[9px] text-gray-500">(已编辑)</span>
             )}
@@ -883,7 +971,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
             {thinkingText && (
               <button
                 type="button"
-                className="text-gray-500 hover:text-gray-300 text-[10px] px-1"
+                className="rounded-lg text-gray-500 hover:text-gray-300 hover:bg-white/10 text-[10px] px-1.5 py-1"
                 onClick={() => setShowThinking((v) => !v)}
                 title="显示/隐藏思维链"
               >
@@ -892,7 +980,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
             )}
             <button
               type="button"
-              className="text-gray-500 hover:text-gray-300 text-[10px] px-1 disabled:opacity-40"
+              className="rounded-lg text-gray-500 hover:text-gray-300 hover:bg-white/10 text-[10px] px-1.5 py-1 disabled:opacity-40"
               onClick={createThread}
               title="新建对话"
               disabled={isBusy}
@@ -902,7 +990,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
             {activeThreadId && (
               <button
                 type="button"
-                className="text-gray-500 hover:text-rose-400 text-[10px] px-1 disabled:opacity-40"
+                className="rounded-lg text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 text-[10px] px-1.5 py-1 disabled:opacity-40"
                 onClick={() => deleteThread({ stopPropagation: () => {} }, activeThreadId)}
                 title="删除当前对话"
                 disabled={isBusy}
@@ -912,7 +1000,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
             )}
             <button
               type="button"
-              className="text-emerald-500 hover:text-emerald-300 text-[10px] px-1"
+              className="rounded-lg text-emerald-500 hover:text-emerald-300 hover:bg-emerald-500/10 text-[10px] px-1.5 py-1"
               onClick={openFeedbackModal}
               title="反馈 AI 聊天问题"
             >
@@ -922,14 +1010,20 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
         </div>
 
         {/* Messages */}
-        <div ref={containerRef} className="flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-3">
+        <div
+          ref={containerRef}
+          className="mana-chat-scroll flex-1 overflow-y-auto overflow-x-hidden px-4 py-5 space-y-4"
+          data-testid="chat-message-scroll"
+          onScroll={handleMessageScroll}
+        >
           {messages.length === 0 && (
-            <div className="flex gap-2">
-              <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+            <div className="flex gap-3 max-w-3xl">
+              <div className="mana-chat-avatar mana-chat-avatar-bot">
                 <Bot size={14} className="text-white" />
               </div>
-              <div className="bg-vscode-active-item p-2 rounded max-w-[85%] text-sm text-gray-200">
-                你好！我是你的 AI 写作助手。打开一篇文档后，我可以帮你阅读大纲、修改文本、或者调用专业子代理完成复杂任务。
+              <div className="mana-chat-bubble mana-chat-bubble-assistant p-4 max-w-[min(42rem,88%)] text-sm text-gray-200">
+                <div className="mb-1 text-xs font-semibold text-sky-200">AI 写作助手</div>
+                <div className="mana-chat-prose">打开一篇文档后，我可以帮你读大纲、审查 AI 味、修改文本，或者调用专业子代理完成复杂任务。现在也会显示自动执行链路，不再让你盯着空白发呆。</div>
               </div>
             </div>
           )}
@@ -937,6 +1031,8 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
           {messages.map((m, idx) => {
             if (m.role === 'tool') {
               const resultMeta = m.status === 'done' && !m.isError ? parseToolResultMeta(m.result || '') : null;
+              const rawResultText = typeof m.result === 'string' ? m.result : '';
+              const resultPreviewText = resultMeta?.summary || rawResultText;
               const changedFiles = resultMeta?.changedFiles || [];
               const changedSummary = changedFiles.reduce(
                 (acc, file) => {
@@ -947,43 +1043,44 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
               );
               const changesOpen = !!expandedChanges[m.id];
               return (
-                <div key={m.id || idx} className="flex gap-2 min-w-0">
-                  <div className="w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center shrink-0">
+                <div key={m.id || idx} className="flex gap-3 min-w-0 max-w-4xl">
+                  <div className="mana-chat-avatar mana-chat-avatar-tool">
                     <Wrench size={12} className="text-white" />
                   </div>
-                  <div className="bg-vscode-active-item/50 p-2 rounded max-w-[85%] min-w-0 break-words text-sm">
-                    <div className="text-amber-400 text-xs font-medium mb-1">
+                  <div className="mana-chat-bubble mana-chat-bubble-tool p-3 max-w-[min(46rem,88%)] min-w-0 break-words text-sm">
+                    <div className="flex items-center gap-2 text-amber-300 text-xs font-semibold mb-2">
+                      <span className={`h-2 w-2 rounded-full ${m.status === 'running' ? 'bg-amber-300 animate-pulse' : m.isError ? 'bg-rose-400' : 'bg-emerald-400'}`} />
                       {m.status === 'running' ? `调用: ${m.name}...` : `调用: ${m.name}`}
                     </div>
                     {m.input && expandedResults[m.id] && (
-                      <pre className="text-gray-400 text-[11px] overflow-x-hidden whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
+                      <pre className="rounded-lg bg-black/25 p-2 text-gray-400 text-[11px] overflow-x-hidden whitespace-pre-wrap break-words max-h-32 overflow-y-auto">
                         {JSON.stringify(m.input, null, 2)}
                       </pre>
                     )}
                     {m.status === 'done' && (
                       <div>
                         {expandedResults[m.id] ? (
-                          <pre className="mt-1 text-[11px] text-green-400 overflow-x-hidden whitespace-pre-wrap break-words max-h-60 overflow-y-auto">
+                          <pre className="mt-2 rounded-lg bg-black/25 p-2 text-[11px] text-green-300 overflow-x-hidden whitespace-pre-wrap break-words max-h-60 overflow-y-auto">
                             {m.result}
                           </pre>
                         ) : (
-                          <div className={`mt-1 text-[11px] leading-relaxed ${m.isError ? 'text-rose-400' : 'text-green-400'}`}>
+                          <div className={`mt-1 rounded-lg px-2 py-1.5 text-[11px] leading-relaxed ${m.isError ? 'bg-rose-500/10 text-rose-300' : 'bg-emerald-500/10 text-emerald-300'}`}>
                             {m.isError
-                              ? `错误: ${m.result?.slice(0, 180)}`
-                              : `结果预览: ${m.result?.slice(0, 180)}${m.result?.length > 180 ? '…（完整内容请点「查看详情」）' : ''}`}
+                              ? `错误: ${rawResultText.slice(0, 180)}`
+                              : `结果预览: ${resultPreviewText.slice(0, 180)}${rawResultText.length > 180 ? '…（完整内容请点「查看详情」）' : ''}`}
                           </div>
                         )}
-                        {(m.input || m.result?.length > 180) && (
+                        {(m.input || rawResultText.length > 180) && (
                           <button
                             type="button"
-                            className="text-[10px] text-blue-400 hover:text-blue-300 mt-0.5"
+                            className="mt-2 rounded-md px-2 py-1 text-[10px] text-sky-300 hover:bg-sky-500/10 hover:text-sky-200"
                             onClick={() => setExpandedResults(prev => ({ ...prev, [m.id]: !prev[m.id] }))}
                           >
                             {expandedResults[m.id] ? '折叠' : '查看详情'}
                           </button>
                         )}
                         {changedFiles.length > 0 && (
-                          <div className="mt-2 border border-vscode-panel-border bg-vscode-sidebar/70 rounded overflow-hidden">
+                          <div className="mt-3 border border-white/10 bg-black/20 rounded-xl overflow-hidden">
                             <div className="flex items-center justify-between gap-2 px-2 py-1.5">
                               <div className="min-w-0">
                                 <div className="text-xs font-semibold text-gray-200">
@@ -1019,8 +1116,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
                               <div className="border-t border-vscode-panel-border">
                                 {changedFiles.map((file) => {
                                   const changeKey = buildChangeKey(m.id, file);
-                                  const beforePreview = String(file.beforeContent || '').slice(0, 900);
-                                  const afterPreview = String(file.afterContent || '').slice(0, 900);
+                                  const changePreview = buildChapterChangePreview(file.beforeContent, file.afterContent);
                                   return (
                                     <div key={changeKey} className="border-b last:border-b-0 border-vscode-panel-border">
                                       <div className="flex items-center justify-between gap-2 px-2 py-1 bg-vscode-active-item/60">
@@ -1038,19 +1134,24 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
                                           </button>
                                         )}
                                       </div>
-                                      <div className="grid grid-cols-1 gap-0 text-[10px]">
-                                        <div className="px-2 py-1">
-                                          <div className="mb-0.5 text-rose-300">变更前</div>
-                                          <pre className="max-h-28 overflow-y-auto whitespace-pre-wrap break-words text-gray-400">
-                                            {beforePreview || '（新建章节）'}
-                                          </pre>
-                                        </div>
-                                        <div className="px-2 py-1 border-t border-vscode-panel-border">
-                                          <div className="mb-0.5 text-green-300">变更后</div>
-                                          <pre className="max-h-28 overflow-y-auto whitespace-pre-wrap break-words text-gray-300">
-                                            {afterPreview || '（已删除）'}
-                                          </pre>
-                                        </div>
+                                      <div className="px-2 py-2 text-[10px] leading-relaxed">
+                                        <div className="mb-1 text-gray-300">变更内容：{changePreview.summary}</div>
+                                        {(changePreview.beforeSnippet || changePreview.afterSnippet) && (
+                                          <div className="grid grid-cols-1 gap-1">
+                                            {changePreview.beforeSnippet && (
+                                              <div className="rounded bg-rose-500/5 px-2 py-1 text-gray-400">
+                                                <span className="text-rose-300">原片段：</span>
+                                                <span className="whitespace-pre-wrap break-words">{changePreview.beforeSnippet}</span>
+                                              </div>
+                                            )}
+                                            {changePreview.afterSnippet && (
+                                              <div className="rounded bg-emerald-500/5 px-2 py-1 text-gray-300">
+                                                <span className="text-green-300">新片段：</span>
+                                                <span className="whitespace-pre-wrap break-words">{changePreview.afterSnippet}</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   );
@@ -1069,10 +1170,10 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
             const isEditing = editingId === m.id;
 
             return (
-              <div key={m.id || idx} className={`flex gap-2 min-w-0 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+              <div key={m.id || idx} className={`flex gap-3 min-w-0 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
-                    m.role === 'user' ? 'bg-gray-600' : 'bg-blue-600'
+                  className={`mana-chat-avatar ${
+                    m.role === 'user' ? 'mana-chat-avatar-user' : 'mana-chat-avatar-bot'
                   }`}
                 >
                   {m.role === 'user' ? (
@@ -1081,19 +1182,19 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
                     <Bot size={14} className="text-white" />
                   )}
                 </div>
-                <div className={`group relative p-2 rounded text-sm whitespace-pre-wrap min-w-0 break-words ${
+                <div className={`mana-chat-bubble group relative px-4 py-3 text-sm whitespace-pre-wrap min-w-0 break-words mana-chat-prose ${
                   isEditing
                     ? 'w-[95%]'
-                    : 'max-w-[85%]'
+                    : 'max-w-[min(48rem,88%)]'
                 } ${
                   m.role === 'user'
-                    ? 'bg-primary-600/20 text-gray-200'
-                    : 'bg-vscode-active-item text-gray-200'
+                    ? 'mana-chat-bubble-user text-gray-100'
+                    : 'mana-chat-bubble-assistant text-gray-200'
                 }`}>
                   {isEditing ? (
                     <div className="flex flex-col gap-2">
                       <textarea
-                        className="bg-vscode-sidebar border border-vscode-panel-border rounded p-2 text-sm text-gray-200 w-full resize-y min-h-[200px]"
+                        className="bg-black/20 border border-white/10 rounded-xl p-3 text-sm text-gray-200 w-full resize-y min-h-[200px] outline-none focus:border-sky-400/50"
                         rows={Math.min(20, editText.split("\\n").length + 3)}
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
@@ -1125,7 +1226,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
                       )}
                       {/* Action buttons for assistant messages */}
                       {m.role === 'assistant' && !m.isStreaming && (
-                        <div className="absolute -right-1 -top-1 hidden group-hover:flex items-center gap-0.5 bg-vscode-sidebar border border-vscode-panel-border rounded px-1 py-0.5">
+                        <div className="mana-chat-actionbar absolute -right-1 -top-2 hidden group-hover:flex items-center gap-0.5 rounded-lg px-1 py-0.5">
                           <button
                             type="button"
                             className="text-gray-400 hover:text-white p-0.5"
@@ -1151,12 +1252,33 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
             );
           })}
 
+          {progressItems.length > 0 && isBusy && (
+            <div className="flex gap-3 max-w-4xl">
+              <div className="mana-chat-avatar mana-chat-avatar-bot">
+                <Brain size={12} className="text-white" />
+              </div>
+              <div className="mana-chat-bubble border-sky-400/20 bg-sky-950/35 p-3 max-w-[min(46rem,88%)] text-sm text-sky-100">
+                <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold text-sky-300">
+                  <span className="h-2 w-2 rounded-full bg-sky-300 animate-pulse" />
+                  自动执行中
+                </div>
+                <div className="space-y-1.5">
+                  {progressItems.map((item, index) => (
+                    <div key={item.id} className={`rounded-lg px-2 py-1 ${index === progressItems.length - 1 ? 'bg-sky-400/10 text-sky-50' : 'text-sky-200/70'}`}>
+                      {item.text}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {isBusy && !messages.some((m) => m.isStreaming) && (
-            <div className="flex gap-2">
-              <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+            <div className="flex gap-3">
+              <div className="mana-chat-avatar mana-chat-avatar-bot">
                 <Bot size={14} className="text-white" />
               </div>
-              <div className="bg-vscode-active-item p-2 rounded text-sm text-gray-400">
+              <div className="mana-chat-bubble mana-chat-bubble-assistant px-4 py-3 text-sm text-gray-400">
                 <span className="inline-block w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce mr-0.5" />
                 <span className="inline-block w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce mr-0.5 [animation-delay:0.1s]" />
                 <span className="inline-block w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]" />
@@ -1165,16 +1287,27 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
           )}
 
           {showThinking && thinkingText && (
-            <div className="flex gap-2">
-              <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center shrink-0">
+            <div className="flex gap-3 max-w-4xl">
+              <div className="mana-chat-avatar bg-gradient-to-br from-violet-600 to-fuchsia-500">
                 <Brain size={12} className="text-white" />
               </div>
-              <div className="bg-purple-900/30 p-2 rounded max-w-[85%] text-sm text-purple-200 italic">
+              <div className="mana-chat-bubble bg-violet-950/30 p-3 max-w-[min(46rem,88%)] text-sm text-purple-200 italic">
                 {thinkingText}
               </div>
             </div>
           )}
         </div>
+
+        {showJumpToBottom && (
+          <button
+            type="button"
+            className="absolute bottom-28 right-5 z-20 rounded-full border border-sky-400/25 bg-slate-950/80 px-3 py-1.5 text-[11px] font-semibold text-sky-200 shadow-[0_12px_32px_rgba(0,0,0,0.35)] backdrop-blur hover:bg-sky-950/80 hover:text-white"
+            title="回到底部"
+            onClick={jumpToBottom}
+          >
+            回到底部
+          </button>
+        )}
 
         {/* Error */}
         {error && (
@@ -1189,7 +1322,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
         {/* Character Profile Gate Card */}
         {pendingCharacterProfileDecision && (
-          <div className="px-3 py-3 border-t border-sky-500/30 bg-sky-500/10 shrink-0">
+          <div className="mx-3 mb-2 rounded-2xl border border-sky-500/20 bg-sky-500/10 px-4 py-3 shadow-2xl shadow-black/20 shrink-0">
             <div className="flex items-center gap-1.5 mb-2">
               <Brain size={12} className="text-sky-300" />
               <span className="text-xs font-bold text-sky-200">角色资料不足</span>
@@ -1229,7 +1362,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
         {/* Character Profile Patch Card */}
         {pendingCharacterProfilePatch && (
-          <div className="px-3 py-3 border-t border-cyan-500/30 bg-cyan-500/10 shrink-0">
+          <div className="mx-3 mb-2 rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 shadow-2xl shadow-black/20 shrink-0">
             <div className="flex items-center gap-1.5 mb-2">
               <Wrench size={12} className="text-cyan-300" />
               <span className="text-xs font-bold text-cyan-200">角色资料补全建议</span>
@@ -1272,7 +1405,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
         {/* Write Chapter Confirmation Card */}
         {pendingWriteChapter && (
-          <div className="px-3 py-3 border-t border-amber-500/30 bg-amber-500/10 shrink-0">
+          <div className="mx-3 mb-2 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 shadow-2xl shadow-black/20 shrink-0">
             <div className="flex items-center gap-1.5 mb-2">
               <AlertCircle size={12} className="text-amber-400" />
               <span className="text-xs font-bold text-amber-300">章节写入请求</span>
@@ -1370,7 +1503,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
         )}
 
         {/* Input */}
-        <div className="p-2 border-t border-vscode-panel-border shrink-0">
+        <div className="mana-chat-input-wrap p-3 shrink-0">
           {feedbackNotice && (
             <div className={`mb-2 rounded border px-2 py-1.5 text-[11px] ${feedbackNotice.type === 'error' ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'}`}>
               <div className="flex items-center gap-1.5">
@@ -1386,11 +1519,11 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
               </div>
             </div>
           )}
-          <div className="flex items-end gap-2 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1.5">
+          <div className="mana-chat-composer flex items-end gap-2 px-3 py-2" data-testid="chat-composer">
             <textarea
               placeholder="向 AI 提问…"
               rows={3}
-              className="min-h-[4.5rem] w-full resize-none bg-transparent border-none outline-none flex-1 text-sm leading-6 text-gray-200 placeholder-gray-600 overflow-y-auto"
+              className="mana-chat-scroll min-h-[4.5rem] max-h-40 w-full resize-none bg-transparent border-none outline-none flex-1 text-sm leading-6 text-gray-200 placeholder-gray-500 overflow-y-auto"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -1398,7 +1531,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
             />
             {isBusy ? (
               <button
-                className="p-1 hover:bg-rose-900/30 rounded text-rose-400"
+                className="h-9 w-9 rounded-xl border border-rose-500/20 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 flex items-center justify-center"
                 onClick={cancelGeneration}
                 title="停止生成"
               >
@@ -1406,11 +1539,11 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
               </button>
             ) : (
               <button
-                className="p-1 hover:bg-vscode-active-item rounded disabled:opacity-40"
+                className="mana-chat-send disabled:opacity-40"
                 onClick={sendMessage}
                 disabled={!input.trim()}
               >
-                <Send size={16} className="text-primary-400" />
+                <Send size={16} />
               </button>
             )}
           </div>

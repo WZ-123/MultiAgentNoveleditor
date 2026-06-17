@@ -252,9 +252,115 @@ function normalizeCharacter(character) {
 
 // ---------------- Characters ----------------
 
+function _characterJsonFiles(files) {
+  return (Array.isArray(files) ? files : []).filter((file) => !/\.memory\.json$/i.test(file));
+}
+
+function _characterIndexSummary(character) {
+  const parts = [
+    character?.personality,
+    character?.background,
+    character?.bio,
+    character?.appearance,
+  ].map(_cleanStr).filter(Boolean);
+  const text = parts.join('；').replace(/\s+/g, ' ').trim();
+  return text.length > 240 ? `${text.slice(0, 240)}...` : text;
+}
+
+async function _buildCharacterIndexEntry(file, character) {
+  let updatedAt = 0;
+  try {
+    const stat = await fs.stat(file);
+    updatedAt = Math.floor(stat.mtimeMs);
+  } catch {
+    updatedAt = Date.now();
+  }
+  return {
+    id: character.id,
+    name: character.name,
+    aliases: Array.isArray(character.aliases) ? character.aliases : [],
+    role: character.role || '',
+    faction: character.faction || '',
+    sourceWork: character.sourceWork || '',
+    originalName: character.originalName || '',
+    updatedAt,
+    summary: _characterIndexSummary(character),
+  };
+}
+
+async function rebuildCharacterIndex(novelDir) {
+  const np = ensureNovelLayout(novelDir);
+  const files = _characterJsonFiles(await listJsonFiles(np.characters)).sort();
+  const characters = [];
+  for (const file of files) {
+    const character = normalizeCharacter(await readJson(file, null));
+    if (!character) continue;
+    characters.push(await _buildCharacterIndexEntry(file, character));
+  }
+  const index = { schemaVersion: 1, generatedAt: Date.now(), characters };
+  await writeJson(np.charactersIndex, index);
+  return index;
+}
+
+async function readCharacterIndex(novelDir) {
+  const np = ensureNovelLayout(novelDir);
+  const files = _characterJsonFiles(await listJsonFiles(np.characters));
+  const index = await readJson(np.charactersIndex, null);
+  if (!index || !Array.isArray(index.characters) || index.characters.length !== files.length) {
+    return rebuildCharacterIndex(novelDir);
+  }
+  const generatedAt = Number(index.generatedAt) || 0;
+  for (const file of files) {
+    try {
+      const stat = await fs.stat(file);
+      if (Math.floor(stat.mtimeMs) > generatedAt) {
+        return rebuildCharacterIndex(novelDir);
+      }
+    } catch {
+      return rebuildCharacterIndex(novelDir);
+    }
+  }
+  return index;
+}
+
+async function listCharacterIndex(novelDir) {
+  const index = await readCharacterIndex(novelDir);
+  return Array.isArray(index.characters) ? index.characters : [];
+}
+
+async function upsertCharacterIndex(novelDir, character) {
+  const np = ensureNovelLayout(novelDir);
+  let index = await readJson(np.charactersIndex, null);
+  if (!index || !Array.isArray(index.characters)) {
+    index = { schemaVersion: 1, generatedAt: Date.now(), characters: [] };
+  }
+  const file = path.join(np.characters, `${character.id}.json`);
+  const entry = await _buildCharacterIndexEntry(file, character);
+  const nextCharacters = index.characters.filter((item) => item?.id !== character.id);
+  nextCharacters.push(entry);
+  nextCharacters.sort((left, right) => String(left.name || left.id).localeCompare(String(right.name || right.id), 'zh-Hans-CN'));
+  const next = { schemaVersion: 1, generatedAt: Date.now(), characters: nextCharacters };
+  await writeJson(np.charactersIndex, next);
+  return entry;
+}
+
+async function removeCharacterFromIndex(novelDir, characterId) {
+  const np = ensureNovelLayout(novelDir);
+  const index = await readJson(np.charactersIndex, null);
+  if (!index || !Array.isArray(index.characters)) return null;
+  const wanted = _cleanStr(characterId);
+  const next = {
+    schemaVersion: 1,
+    generatedAt: Date.now(),
+    characters: index.characters.filter((item) => item?.id !== wanted),
+  };
+  await writeJson(np.charactersIndex, next);
+  return next;
+}
+
 async function listCharacters(novelDir) {
   const np = novelPaths(novelDir);
-  const files = (await listJsonFiles(np.characters)).filter((file) => !/\.memory\.json$/i.test(file));
+  const files = _characterJsonFiles(await listJsonFiles(np.characters));
   const out = [];
   for (const f of files) {
     const obj = normalizeCharacter(await readJson(f, null));
@@ -277,7 +383,7 @@ async function resolveCharacterFile(novelDir, id) {
   }
 
   const wanted = key.toLowerCase();
-  const files = (await listJsonFiles(np.characters)).filter((file) => !/\.memory\.json$/i.test(file)).sort();
+  const files = _characterJsonFiles(await listJsonFiles(np.characters)).sort();
   for (const file of files) {
     const fileId = path.basename(file, '.json');
     const character = normalizeCharacter(await readJson(file, null));
@@ -307,6 +413,7 @@ async function writeCharacter(novelDir, character) {
   const np = ensureNovelLayout(novelDir);
   const file = path.join(np.characters, `${normalized.id}.json`);
   await writeJson(file, { schemaVersion: 1, ...normalized });
+  await upsertCharacterIndex(novelDir, normalized);
   return normalized;
 }
 
@@ -322,6 +429,7 @@ async function deleteCharacter(novelDir, id) {
   const resolved = await resolveCharacterFile(novelDir, id);
   if (!resolved) return null;
   await deleteFile(resolved.file);
+  await removeCharacterFromIndex(novelDir, resolved.character?.id || resolved.fileId);
   return resolved.character || null;
 }
 
@@ -2061,6 +2169,7 @@ module.exports = {
   // characters
   normalizeCharacter,
   listCharacters, readCharacter, writeCharacter, patchCharacter, deleteCharacter,
+  rebuildCharacterIndex, readCharacterIndex, listCharacterIndex,
   readCharacterMemory, writeCharacterMemory, patchCharacterMemory, normalizeCharacterMemory,
   // assets
   listAssets, readAsset, upsertAsset, grantAsset, revokeAsset, applyAssetPatch,

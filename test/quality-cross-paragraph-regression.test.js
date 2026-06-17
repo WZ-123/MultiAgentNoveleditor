@@ -43,6 +43,14 @@ async function runQualityCrossParagraphRegressionTest() {
       { id: 'p13', index: 12, text: '圣路易斯藏匿的秘密，是否还有更多未曾展示的隐藏珍宝，等待着被发掘？而这场盛宴，也才刚刚拉开帷幕。' },
       { id: 'p14', index: 13, text: '没有愤怒，没有悲伤，只是疲惫。' },
       { id: 'p15', index: 14, text: '他看了她一眼——没有说话——只是把杯子放回桌上。' },
+      { id: 'p16', index: 15, text: '窗外的雨停了一阵。屋檐还在滴水。' },
+      { id: 'p17', index: 16, text: '楼道里的灯坏了三天，开关按下去只有空响。' },
+      { id: 'p18', index: 17, text: '物业一直没有派人来修，公告栏上还贴着上个月的通知。' },
+      { id: 'p19', index: 18, text: '住户们只能摸黑走过那段台阶，鞋底蹭着潮湿的水泥边。' },
+      { id: 'p20', index: 19, text: '“那我明天再来。”' },
+      { id: 'p21', index: 20, text: '“你别等太久。”' },
+      { id: 'p22', index: 21, text: '“我知道。”' },
+      { id: 'p23', index: 22, text: '这间屋子里是否还有更多未曾展示的秘密，等待着被揭开？而真正的风暴，也才刚刚开始。' },
     ];
 
     const payload = buildQualityReviewPayload(paragraphs);
@@ -75,7 +83,7 @@ async function runQualityCrossParagraphRegressionTest() {
       .filter((annotation) => /章末三段式收尾|转场过度依赖「……」分隔线|顺手意象库存痕迹|标签式描述|感官清单式枚举|比喻触发词过密|破折号使用过密/u.test(annotation.note))
       .map((annotation) => annotation.paragraphId)
       .sort();
-    assert.deepEqual(structuralParagraphs, ['p10', 'p11', 'p12', 'p13', 'p15', 'p7', 'p7', 'p7', 'p8', 'p9']);
+    assert.deepEqual(structuralParagraphs, ['p10', 'p11', 'p12', 'p15', 'p23', 'p7', 'p7', 'p7', 'p8', 'p9']);
     pass('QCP3_structural_ai_patterns_are_flagged_heuristically', 'chapter-ending套路, ellipsis separators, stock imagery, label descriptors, sensory checklist, and dense similes are deterministically annotated');
 
     const noNoJustParagraphs = annotations
@@ -84,6 +92,18 @@ async function runQualityCrossParagraphRegressionTest() {
       .sort();
     assert.deepEqual(noNoJustParagraphs, ['p14']);
     pass('QCP4_no_no_just_pattern_is_flagged', 'the “没有，没有，只是” not-but variant is deterministically annotated');
+
+    const mechanicalSingleSentenceParagraphs = annotations
+      .filter((annotation) => annotation.note.includes('段落功能审查'))
+      .map((annotation) => annotation.paragraphId)
+      .sort();
+    assert.equal(mechanicalSingleSentenceParagraphs.includes('p17'), true);
+    assert.equal(mechanicalSingleSentenceParagraphs.includes('p18'), true);
+    assert.equal(mechanicalSingleSentenceParagraphs.includes('p19'), true);
+    assert.equal(mechanicalSingleSentenceParagraphs.includes('p20'), false);
+    assert.equal(mechanicalSingleSentenceParagraphs.includes('p21'), false);
+    assert.equal(mechanicalSingleSentenceParagraphs.includes('p22'), false);
+    pass('QCP5_mechanical_single_sentence_runs_are_flagged', 'three adjacent non-dialogue one-sentence paragraphs are flagged as choppy while dialogue lines are ignored');
   } catch (err) {
     fail('QCP_regression', err?.message || String(err));
   }

@@ -86,6 +86,51 @@ function matchesTargetChapterNode(node, targetChapter) {
   return false;
 }
 
+function normalizeSceneCharacterContext(value) {
+  const characters = Array.isArray(value?.characters) ? value.characters : [];
+  return {
+    nodeId: value?.nodeId || '',
+    title: value?.title || '',
+    setting: value?.setting || '',
+    location: value?.location || '',
+    pov: value?.pov || '',
+    outfit: value?.outfit || '',
+    characters: characters.map((character) => ({
+      id: character?.id || '',
+      name: character?.name || '',
+      role: character?.role || '',
+      personality: character?.personality || '',
+      appearance: character?.appearance || '',
+      speechStyle: character?.speechStyle || '',
+      currentOutfit: character?.currentOutfit || '',
+      background: character?.background || undefined,
+      skins: Array.isArray(character?.skins) ? character.skins : undefined,
+      quotes: character?.quotes || undefined,
+    })).filter((character) => character.id || character.name),
+  };
+}
+
+async function buildSceneCharacterContexts(matchingNodes) {
+  const contexts = [];
+  for (const node of (Array.isArray(matchingNodes) ? matchingNodes : []).slice(0, 6)) {
+    if (!node?.id) continue;
+    try {
+      const result = await mcpClient.callTool({
+        name: 'assemble_scene_context',
+        arguments: { nodeId: node.id },
+        autoConfirm: true,
+      });
+      const parsed = parseJsonFromText(parseToolText(result));
+      const normalized = normalizeSceneCharacterContext(parsed);
+      if (normalized.characters.length) contexts.push(normalized);
+    } catch {
+      // Scene character context is a low-noise optimization; draft can continue
+      // with outline/timeline context when a node or character card is missing.
+    }
+  }
+  return contexts;
+}
+
 async function buildCompactWritingContext(targetChapter) {
   const context = {};
   try {
@@ -105,7 +150,13 @@ async function buildCompactWritingContext(targetChapter) {
         pov: node.pov || '',
         chapterIndex: node.chapterIndex ?? null,
       }));
-    if (matchingNodes.length) context.outlineNodes = matchingNodes;
+    if (matchingNodes.length) {
+      context.outlineNodes = matchingNodes;
+      const sceneCharacterContexts = await buildSceneCharacterContexts(matchingNodes);
+      if (sceneCharacterContexts.length) {
+        context.sceneCharacterContexts = sceneCharacterContexts;
+      }
+    }
   } catch { /* compact context is an optimization, not a blocker */ }
 
   try {
@@ -151,7 +202,12 @@ function buildDraftInput({ mode, userText, pendingChapterDraft, targetChapter, e
   }
   if (compactContext) {
     lines.push('', '系统预装的紧凑写作上下文（优先使用，避免重复查询无关资料）：');
-    lines.push(JSON.stringify(compactContext, null, 2));
+    const { sceneCharacterContexts, ...compactWithoutSceneCharacters } = compactContext;
+    lines.push(JSON.stringify(compactWithoutSceneCharacters, null, 2));
+    if (Array.isArray(compactContext.sceneCharacterContexts) && compactContext.sceneCharacterContexts.length) {
+      lines.push('', '场景角色上下文（系统已按大纲节点自动装配；请优先使用，不要重复读取完整角色卡）：');
+      lines.push(JSON.stringify(compactContext.sceneCharacterContexts, null, 2));
+    }
   }
   if (roleplayPlan) {
     lines.push('', '角色驱动写作计划（只采用 director approved beats，不要直接照搬 actor 原始提案）：');
@@ -491,21 +547,31 @@ async function suggestTargetChapter(pendingChapterDraft, editorContext) {
   };
 }
 
-async function generateChapterDraft({ mode, userText, pendingChapterDraft, editorContext, abortSignal, roleplayOptions }) {
+function emitProgress(onProgress, message, detail = {}) {
+  if (typeof onProgress !== 'function') return;
+  try { onProgress({ message, ...detail }); } catch { /* progress is best-effort */ }
+}
+
+async function generateChapterDraft({ mode, userText, pendingChapterDraft, editorContext, abortSignal, roleplayOptions, onProgress }) {
+  emitProgress(onProgress, mode === 'revise' ? '写作链：正在定位当前草稿和修订目标。' : '写作链：正在定位下一章目标。', { stage: 'chapter_target' });
   const targetChapter = await suggestTargetChapter(pendingChapterDraft, editorContext);
+  emitProgress(onProgress, `写作链：目标章节为 ${targetChapter.displayName || targetChapter.name}，开始读取大纲和时间线。`, { stage: 'chapter_context', chapterName: targetChapter.name });
   const compactContext = await buildCompactWritingContext(targetChapter);
   const config = await appConfig.load();
   const writingConfig = config?.writing || appConfig.DEFAULT_WRITING_CONFIG;
   let roleplayPlan = null;
   let profileWarnings = [];
   if (writingConfig.mode === 'roleplay_driven') {
+    emitProgress(onProgress, '写作链：角色驱动模式已启用，进入 actor/director 规划。', { stage: 'roleplay_start' });
     const roleplayResult = await chapterRoleplayService.buildRoleplayPlan({
       targetChapter,
       compactContext,
       interactionLevel: writingConfig.roleplayInteractionLevel || 'director_mediated',
+      maxInteractionRounds: writingConfig.roleplayMaxInteractionRounds,
       ignoreProfileGate: !!roleplayOptions?.ignoreProfileGate,
       userText,
       abortSignal,
+      onProgress,
     });
     if (roleplayResult?.status === 'profile_gate_blocked') {
       return {
@@ -531,6 +597,7 @@ async function generateChapterDraft({ mode, userText, pendingChapterDraft, edito
   });
   const writer = await subagentsStore.getSubagent('sa-writer');
   const draftSystemPrompt = buildDraftSystemPrompt(writer?.systemPrompt || '');
+  emitProgress(onProgress, '写作链：writer 正在把规划扩写成章节草稿。', { stage: 'writer_drafting', chapterName: targetChapter.name });
   let draftOutput = await runWriterDraft(input, draftSystemPrompt, abortSignal);
 
   let draft = normalizeDraft(draftOutput, targetChapter);
@@ -538,6 +605,10 @@ async function generateChapterDraft({ mode, userText, pendingChapterDraft, edito
   const timelineReviewer = await subagentsStore.getSubagent('sa-timeline-guardian');
   let blockingIssues = [];
   for (let revisionIndex = 0; revisionIndex <= MAX_AUTO_REVIEW_REVISIONS; revisionIndex += 1) {
+    emitProgress(onProgress, `写作链：第 ${revisionIndex + 1} 轮人设/时空审查正在运行。`, {
+      stage: 'chapter_review',
+      revisionIndex,
+    });
     const reviewInput = buildReviewInput({ mode, userText, draft });
     const [characterIssues, timelineIssues] = await Promise.all([
       runReviewerWithFallback(
@@ -557,6 +628,10 @@ async function generateChapterDraft({ mode, userText, pendingChapterDraft, edito
     ]);
     blockingIssues = [...characterIssues, ...timelineIssues];
     if (!hasActionableReviewIssues(blockingIssues) || revisionIndex >= MAX_AUTO_REVIEW_REVISIONS) break;
+    emitProgress(onProgress, '写作链：审查发现硬伤，writer 正在自动修订一轮。', {
+      stage: 'writer_revision',
+      revisionIndex: revisionIndex + 1,
+    });
     const revisionInput = buildIssueRevisionInput({
       mode,
       userText,
@@ -589,4 +664,6 @@ module.exports = {
   _testBuildChapterReviewFailureIssue: buildReviewFailureIssue,
   _testBuildIssueRevisionInput: buildIssueRevisionInput,
   _testFormatProfileGateText: formatProfileGateText,
+  _testBuildCompactWritingContext: buildCompactWritingContext,
+  _testBuildDraftInput: buildDraftInput,
 };

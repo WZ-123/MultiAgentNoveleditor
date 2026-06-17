@@ -71,7 +71,11 @@ async function runWritingFlowOptimizationRegressionTest() {
     assert.ok(reviseInput.includes('时空错误'));
     pass('WFO4_revision_node_receives_draft_and_review_context', 'gate output carries enough context for actual revision');
 
-    const { _testBuildIssueRevisionInput } = require(path.join(ROOT, 'src/main/runtime/chapterDraftService'));
+    const {
+      _testBuildIssueRevisionInput,
+      _testBuildCompactWritingContext,
+      _testBuildDraftInput,
+    } = require(path.join(ROOT, 'src/main/runtime/chapterDraftService'));
     const issueRevisionInput = _testBuildIssueRevisionInput({
       mode: 'draft',
       userText: '写下一章',
@@ -82,6 +86,77 @@ async function runWritingFlowOptimizationRegressionTest() {
     assert.ok(issueRevisionInput.includes('只针对上述人设/逻辑/时空硬伤做必要修订'));
     assert.ok(issueRevisionInput.includes('移动距离不合理'));
     pass('WFO5_chat_draft_revision_is_targeted', 'chat writing service builds targeted review-fix prompts');
+
+    const mcpClient = require(path.join(ROOT, 'src/main/mcp/mcpClientStdio'));
+    const originalCallTool = mcpClient.callTool;
+    const calls = [];
+    try {
+      mcpClient.callTool = async ({ name, arguments: args }) => {
+        calls.push({ name, args });
+        if (name === 'read_outline_nodes') {
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                nodes: [{
+                  id: 'scene-auto-1',
+                  title: '天台重逢',
+                  summary: '楚岚与阿宁在天台重逢。',
+                  characters: ['hero', 'ally'],
+                  location: '天台',
+                  setting: '夜晚',
+                  pov: 'hero',
+                  chapterIndex: 3,
+                }],
+              }),
+            }],
+          };
+        }
+        if (name === 'assemble_scene_context') {
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                nodeId: args.nodeId,
+                title: '天台重逢',
+                setting: '夜晚',
+                location: '天台',
+                pov: 'hero',
+                characters: [{
+                  id: 'hero',
+                  name: '楚岚',
+                  role: '主角',
+                  personality: '克制，遇到阿宁时会短暂停顿。',
+                  appearance: '黑发，深色外套。',
+                }],
+              }),
+            }],
+          };
+        }
+        if (name === 'query_timeline') {
+          return { content: [{ type: 'text', text: JSON.stringify({ events: [] }) }] };
+        }
+        throw new Error(`unexpected tool ${name}`);
+      };
+      const compactContext = await _testBuildCompactWritingContext({ name: 'chapter-003.md', displayName: '第三章' });
+      assert.ok(calls.some((call) => call.name === 'assemble_scene_context' && call.args.nodeId === 'scene-auto-1'));
+      assert.equal(compactContext.sceneCharacterContexts.length, 1);
+      assert.equal(compactContext.sceneCharacterContexts[0].characters[0].name, '楚岚');
+      const draftInput = _testBuildDraftInput({
+        mode: 'draft',
+        userText: '写下一章',
+        pendingChapterDraft: null,
+        targetChapter: { name: 'chapter-003.md', displayName: '第三章', titleHint: '第三章' },
+        editorContext: {},
+        compactContext,
+      });
+      assert.ok(draftInput.includes('场景角色上下文（系统已按大纲节点自动装配'));
+      assert.ok(draftInput.includes('不要重复读取完整角色卡'));
+      assert.equal((draftInput.match(/sceneCharacterContexts/g) || []).length, 0);
+      pass('WFO6_chat_draft_preloads_scene_character_context', 'chapter draft harness auto-assembles filtered scene character context');
+    } finally {
+      mcpClient.callTool = originalCallTool;
+    }
   } catch (err) {
     fail('WFO_harness', err?.stack || String(err));
   }

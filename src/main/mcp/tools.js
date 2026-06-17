@@ -19,6 +19,7 @@ const { readJson } = require('../store/jsonStore');
 const { checkFeasibility, placesToMap, distanceBetweenPlaceNames, SPEED_KMH } = require('./feasibility');
 const characterEnricher = require('../import/characterEnricher');
 const stagingProject = require('../import/stagingProject');
+const { fitTextForModel, safeString } = require('../runtime/contextAssembler');
 const {
   buildCharacterConsistencyReviewPayload,
   enrichCharacterConsistencyAnnotations,
@@ -204,6 +205,8 @@ function _normalizeQualityAnnotations(paragraphs, rawAnnotations) {
       excerpt: _excerptParagraph(firstParagraph?.text || ''),
       kind,
       note,
+      severity: _compactText(annotation?.severity),
+      suggestedAction: _compactText(annotation?.suggestedAction),
     });
   }
 
@@ -215,6 +218,57 @@ async function _loadQualityReviewHelpers() {
   return {
     buildQualityReviewPayload: mod.buildQualityReviewPayload,
     detectCrossParagraphQualityAnnotations: mod.detectCrossParagraphQualityAnnotations,
+    buildParagraphFunctionReviewPayload: mod.buildParagraphFunctionReviewPayload,
+    detectParagraphFunctionAnnotations: mod.detectParagraphFunctionAnnotations,
+  };
+}
+
+async function _reviewChapterParagraphFunction(chapterName, focus, ctx) {
+  const dir = requireNovel(ctx);
+  const chapterText = await novelData.readChapter(dir, chapterName);
+  if (!_cleanText(chapterText)) {
+    throw new Error(`chapter is empty or missing: ${chapterName}`);
+  }
+
+  const paragraphs = splitIntoParagraphs(chapterText);
+  const {
+    buildParagraphFunctionReviewPayload,
+    detectParagraphFunctionAnnotations,
+  } = await _loadQualityReviewHelpers();
+  const payload = buildParagraphFunctionReviewPayload(paragraphs, focus);
+  payload.chapterName = chapterName;
+
+  const workflowOrchestrator = require('../runtime/workflowOrchestrator');
+  const result = await workflowOrchestrator.runWorkflow({
+    mode: 'subagent',
+    subagentId: 'sa-paragraph-function-reviewer',
+    input: JSON.stringify(payload),
+    abortSignal: AbortSignal.timeout(240_000),
+    novelContext: ctx?.novel
+      ? { novelId: ctx.novel.id || null, novelDir: ctx.novelDir || null }
+      : undefined,
+  });
+
+  const parsed = _parseJsonText(String(result.output || ''), { annotations: [] });
+  const modelAnnotations = _normalizeQualityAnnotations(paragraphs, parsed?.annotations);
+  const deterministicAnnotations = _normalizeQualityAnnotations(
+    paragraphs,
+    detectParagraphFunctionAnnotations(paragraphs)
+  );
+  const merged = [];
+  const seen = new Set();
+  for (const annotation of [...modelAnnotations, ...deterministicAnnotations]) {
+    const key = `${annotation.paragraphId}::${annotation.kind}::${annotation.note}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(annotation);
+  }
+
+  return {
+    chapterName,
+    candidateCount: Array.isArray(payload.candidates) ? payload.candidates.length : 0,
+    candidateRunCount: Array.isArray(payload.candidateRuns) ? payload.candidateRuns.length : 0,
+    annotations: merged.sort((left, right) => left.paragraphIndex - right.paragraphIndex),
   };
 }
 
@@ -557,6 +611,91 @@ function filterCharacterContext(char, { needBackground, outfit } = {}) {
   return result;
 }
 
+function _fitContextValue(value, { sourceRef, label, maxChars }, omittedFields) {
+  if (value == null || value === '') return undefined;
+  const isStructured = typeof value === 'object';
+  const raw = isStructured ? safeString(value) : String(value);
+  if (!raw.trim()) return undefined;
+  const fitted = fitTextForModel(raw, { sourceRef, label, maxChars });
+  if (fitted.wasTrimmed) omittedFields.push(`${label}: middle trimmed; re-read ${sourceRef} if exact details are required`);
+  if (!isStructured || fitted.wasTrimmed) return fitted.text;
+  try { return JSON.parse(fitted.text); } catch { return fitted.text; }
+}
+
+function buildWritingCharacterContext(char, { needBackground, outfit } = {}) {
+  const sourceRef = `character:${char.id || char.name || 'unknown'}`;
+  const omittedFields = [];
+  const result = {
+    contextMode: 'full_writing_context',
+    sourceRef,
+    id: char.id,
+    name: char.name,
+    aliases: Array.isArray(char.aliases) ? char.aliases : [],
+    role: char.role || '',
+    faction: char.faction || '',
+    gender: char.gender || '',
+    age: char.age || '',
+    sourceWork: char.sourceWork || '',
+    originalName: char.originalName || '',
+  };
+
+  const textFields = [
+    ['appearance', 1600],
+    ['personality', 1600],
+    ['speechStyle', 1400],
+    ['background', 2200],
+    ['bio', 1800],
+    ['storyArc', 1800],
+    ['quotes', 1000],
+    ['moeTraits', 1000],
+    ['hairColor', 300],
+    ['eyeColor', 300],
+    ['height', 300],
+    ['figure', 600],
+  ];
+  for (const [field, maxChars] of textFields) {
+    const fitted = _fitContextValue(char[field], {
+      sourceRef,
+      label: `${sourceRef}.${field}`,
+      maxChars,
+    }, omittedFields);
+    if (fitted !== undefined) result[field] = fitted;
+  }
+
+  for (const [field, maxChars] of [['relationships', 2200], ['attributes', 2200], ['arc', 1200]]) {
+    const fitted = _fitContextValue(char[field], {
+      sourceRef,
+      label: `${sourceRef}.${field}`,
+      maxChars,
+    }, omittedFields);
+    if (fitted !== undefined) result[field] = fitted;
+  }
+
+  if (Array.isArray(char.skins) && char.skins.length > 0) {
+    if (outfit) {
+      const matched = _matchSkin(char.skins, outfit);
+      if (matched) {
+        result.skins = [_fitContextValue(matched, {
+          sourceRef,
+          label: `${sourceRef}.skins.${matched.name || 'matched'}`,
+          maxChars: 1800,
+        }, omittedFields)];
+        result.currentOutfit = matched.name || outfit;
+      } else {
+        omittedFields.push('skins: outfit hint did not match any skin; omitted to avoid hallucinating current outfit');
+      }
+    } else {
+      omittedFields.push('skins: omitted because no outfit hint was provided');
+    }
+  }
+
+  if (!needBackground && result.background) {
+    result.backgroundUse = 'included because this is a full writing context for an involved scene character; use only if relevant to the current scene.';
+  }
+  if (omittedFields.length) result.omittedFields = omittedFields;
+  return result;
+}
+
 const TOOLS = [
   // ---------------- READ ----------------
   {
@@ -565,9 +704,8 @@ const TOOLS = [
     inputSchema: { type: 'object', properties: {} },
     handler: async (_args, ctx) => {
       const dir = requireNovel(ctx);
-      const list = await novelData.listCharacters(dir);
-      const slim = list.map((c) => ({ id: c.id, name: c.name, aliases: c.aliases, role: c.role, faction: c.faction }));
-      return textResult({ characters: slim });
+      const characters = await novelData.listCharacterIndex(dir);
+      return textResult({ characters });
     },
   },
   {
@@ -683,7 +821,7 @@ const TOOLS = [
         for (const charId of node.characters) {
           const c = await novelData.readCharacter(dir, charId);
           if (!c) continue;
-          const filtered = filterCharacterContext(c, {
+          const filtered = buildWritingCharacterContext(c, {
             needBackground: node.needBackground,
             outfit: node.outfit,
           });
@@ -1493,6 +1631,61 @@ const TOOLS = [
         reviewedWith: 'sa-prose-quality',
         focus,
         chapterCount: chapters.length,
+        totalAnnotations: chapters.reduce((sum, chapter) => sum + (chapter.annotations?.length || 0), 0),
+        chapters,
+      });
+    },
+  },
+  {
+    name: 'review_paragraph_function',
+    description: '专门审查一个或多个章节里的“一句话一段/段落功能不清”问题，复核单句段是否应合并，不直接改正文。',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        chapterName: { type: 'string', description: '单章审查时的章节文件名，如 "chapter-005.md"' },
+        chapterNames: {
+          type: 'array',
+          description: '多章节并行审查时的章节文件名数组，如 ["chapter-001.md","chapter-002.md"]',
+          items: { type: 'string' },
+        },
+        focus: { type: 'string', description: '可选，用户对本次审查的补充说明，例如“只看连续单句段是否应该合并”' },
+      },
+    },
+    handler: async (args, ctx) => {
+      requireNovel(ctx);
+      const requested = [
+        _cleanText(args.chapterName),
+        ...(Array.isArray(args.chapterNames) ? args.chapterNames.map((item) => _cleanText(item)) : []),
+      ].filter((item, index, list) => item && list.indexOf(item) === index);
+
+      if (!requested.length) {
+        throw new Error('review_paragraph_function requires chapterName or chapterNames');
+      }
+
+      const focus = _cleanText(args.focus);
+      const chapters = await Promise.all(requested.map(async (chapterName) => {
+        try {
+          return await _reviewChapterParagraphFunction(chapterName, focus, ctx);
+        } catch (err) {
+          return {
+            chapterName,
+            candidateCount: 0,
+            candidateRunCount: 0,
+            annotations: [],
+            error: err?.message || String(err),
+          };
+        }
+      }));
+
+      if (chapters.every((chapter) => chapter.error)) {
+        throw new Error(chapters[0]?.error || 'review_paragraph_function failed');
+      }
+
+      return textResult({
+        reviewedWith: 'sa-paragraph-function-reviewer',
+        focus,
+        chapterCount: chapters.length,
+        totalCandidates: chapters.reduce((sum, chapter) => sum + (chapter.candidateCount || 0), 0),
         totalAnnotations: chapters.reduce((sum, chapter) => sum + (chapter.annotations?.length || 0), 0),
         chapters,
       });

@@ -61,6 +61,14 @@ async function runChatScrollUiRegressionTest(mainWindow) {
   };
 
   try {
+    try {
+      mainWindow.setSize(900, 900);
+      mainWindow.show();
+      mainWindow.focus();
+    } catch {
+      // Some CI-style environments can still compute layout without showing.
+    }
+
     const ready = await mainWindow.webContents.executeJavaScript(`
       (async () => {
         const startedAt = Date.now();
@@ -117,7 +125,7 @@ async function runChatScrollUiRegressionTest(mainWindow) {
     await streamChunks(latestSessionId, 1, 18);
     const overflowState = await mainWindow.webContents.executeJavaScript(`
       (() => {
-        const container = document.querySelector('div.h-full.overflow-y-auto.p-3.space-y-3');
+        const container = document.querySelector('[data-testid="chat-message-scroll"]');
         if (!container) return { ok: false, step: 'find_container' };
         return {
           ok: true,
@@ -137,7 +145,7 @@ async function runChatScrollUiRegressionTest(mainWindow) {
 
     const scrolledAway = await mainWindow.webContents.executeJavaScript(`
       (async () => {
-        const container = document.querySelector('div.h-full.overflow-y-auto.p-3.space-y-3');
+        const container = document.querySelector('[data-testid="chat-message-scroll"]');
         if (!container) return { ok: false, step: 'find_container' };
         container.scrollTop = 0;
         container.dispatchEvent(new Event('scroll', { bubbles: true }));
@@ -160,7 +168,7 @@ async function runChatScrollUiRegressionTest(mainWindow) {
     await streamChunks(latestSessionId, 19, 8);
     const pausedFollow = await mainWindow.webContents.executeJavaScript(`
       (() => {
-        const container = document.querySelector('div.h-full.overflow-y-auto.p-3.space-y-3');
+        const container = document.querySelector('[data-testid="chat-message-scroll"]');
         const button = document.querySelector('button[title="回到底部"]');
         if (!container) return { ok: false, step: 'find_container' };
         return {
@@ -179,7 +187,7 @@ async function runChatScrollUiRegressionTest(mainWindow) {
 
     const returnedToBottom = await mainWindow.webContents.executeJavaScript(`
       (async () => {
-        const container = document.querySelector('div.h-full.overflow-y-auto.p-3.space-y-3');
+        const container = document.querySelector('[data-testid="chat-message-scroll"]');
         const button = document.querySelector('button[title="回到底部"]');
         if (!container || !button) return { ok: false, step: 'find_button_or_container' };
         button.click();
@@ -209,7 +217,7 @@ async function runChatScrollUiRegressionTest(mainWindow) {
     await streamChunks(latestSessionId, 27, 8);
     const resumedFollow = await mainWindow.webContents.executeJavaScript(`
       (() => {
-        const container = document.querySelector('div.h-full.overflow-y-auto.p-3.space-y-3');
+        const container = document.querySelector('[data-testid="chat-message-scroll"]');
         const button = document.querySelector('button[title="回到底部"]');
         if (!container) return { ok: false, step: 'find_container' };
         return {

@@ -46,6 +46,8 @@ async function runRunSubagentToolLoopRegressionTest() {
     const emitted = [];
     let providerTurn = 0;
     let toolCalls = 0;
+    const providerMessagesByTurn = [];
+    const longToolResult = `LONG_TOOL_HEAD_${'x'.repeat(15000)}_LONG_TOOL_TAIL`;
 
     require.cache[eventBusPath] = {
       id: eventBusPath,
@@ -64,12 +66,19 @@ async function runRunSubagentToolLoopRegressionTest() {
       filename: anthropicPath,
       loaded: true,
       exports: {
-        sendMessage: async () => {
+        sendMessage: async ({ messages }) => {
           providerTurn += 1;
+          providerMessagesByTurn.push(JSON.parse(JSON.stringify(messages || [])));
           if (providerTurn === 1) {
             return {
               stopReason: 'end_turn',
               content: [{ type: 'tool_use', id: 'tool-1', name: 'WebSearch', input: { query: '碧蓝航线 爱宕' } }],
+            };
+          }
+          if (providerTurn === 2) {
+            return {
+              stopReason: 'end_turn',
+              content: [{ type: 'tool_use', id: 'tool-2', name: 'WebSearch', input: { query: '碧蓝航线 爱宕' } }],
             };
           }
           return {
@@ -140,15 +149,46 @@ async function runRunSubagentToolLoopRegressionTest() {
         listTools: async () => [{ name: 'WebSearch' }],
         callTool: async ({ name, arguments: args }) => {
           toolCalls += 1;
-          return { isError: false, content: [{ type: 'text', text: `${name}:${args.query}` }] };
+          return { isError: false, content: [{ type: 'text', text: `${name}:${args.query}:${longToolResult}` }] };
         },
       },
     });
 
     assert.equal(toolCalls, 1);
-    assert.equal(providerTurn, 2);
+    assert.equal(providerTurn, 3);
     assert.equal(result.output, '搜索完成，任务继续执行。');
-    assert.ok(emitted.some((payload) => payload.kind === 'tool_result'));
+    const toolEvents = emitted.filter((payload) => payload.kind === 'tool_result');
+    assert.equal(toolEvents.length, 2);
+    assert.equal(toolEvents[0].data.cached, false);
+    assert.equal(toolEvents[1].data.cached, true);
+    assert.equal(toolEvents[0].data.cacheKey, toolEvents[1].data.cacheKey);
+    assert.equal(toolEvents[0].data.modelContentTrimmed, true);
+    assert.equal(toolEvents[1].data.modelContentTrimmed, true);
+    assert.ok(toolEvents[0].data.content.includes('LONG_TOOL_HEAD_'));
+    assert.ok(toolEvents[0].data.content.includes('_LONG_TOOL_TAIL'));
+    assert.equal(toolEvents[1].data.content, toolEvents[0].data.content);
+    const secondTurnToolResult = providerMessagesByTurn[1]
+      ?.flatMap((m) => Array.isArray(m.content) ? m.content : [])
+      .find((b) => b.type === 'tool_result');
+    assert.ok(secondTurnToolResult);
+    assert.ok(secondTurnToolResult.content.includes('[Context trimmed for model]'));
+    assert.ok(secondTurnToolResult.content.includes('sourceRef=tool:WebSearch#tool-1'));
+    assert.ok(secondTurnToolResult.content.length < toolEvents[0].data.content.length);
+    const thirdTurnToolResult = providerMessagesByTurn[2]
+      ?.flatMap((m) => Array.isArray(m.content) ? m.content : [])
+      .filter((b) => b.type === 'tool_result')
+      .at(-1);
+    assert.ok(thirdTurnToolResult);
+    assert.ok(thirdTurnToolResult.content.includes('[Context trimmed for model]'));
+    assert.ok(thirdTurnToolResult.content.includes('sourceRef=tool:WebSearch#tool-2'));
+    assert.ok(thirdTurnToolResult.content.length < toolEvents[1].data.content.length);
+    assert.ok(result.transcript.some((m) => m.content?.some((b) => b.type === 'tool_result' && b.content.includes('[Context trimmed for model]'))));
+    assert.ok(emitted.some((payload) => payload.kind === 'context_stats'));
+    assert.ok(emitted.some((payload) => payload.kind === 'context_manifest'
+      && Array.isArray(payload.data?.trimmed)
+      && payload.data.trimmed.some((item) => item.sourceRef === 'tool:WebSearch#tool-1')
+      && Array.isArray(payload.data?.cached)
+      && payload.data.cached.some((item) => item.sourceRef === 'tool:WebSearch#tool-2')));
     pass('RSL1_tool_use_blocks_continue_even_without_tool_stop_reason', result.output);
   } catch (err) {
     fail('RSL_harness', err?.stack || String(err));

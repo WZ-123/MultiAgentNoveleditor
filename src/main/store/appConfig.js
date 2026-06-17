@@ -8,6 +8,7 @@ const SCHEMA_VERSION = 2;
 const DEFAULT_WRITING_CONFIG = {
   mode: 'command_driven',
   roleplayInteractionLevel: 'director_mediated',
+  roleplayMaxInteractionRounds: 3,
   roleplayProfileGate: 'block_and_ask',
   roleplayAutofillScope: 'fill_missing_and_weak',
   roleplayAutofillAlignment: 'current_scene',
@@ -126,7 +127,11 @@ function normalizeDrivers(saved) {
 }
 
 function normalizeWriting(savedWriting) {
-  return { ...DEFAULT_WRITING_CONFIG, ...(savedWriting && typeof savedWriting === 'object' ? savedWriting : {}) };
+  const merged = { ...DEFAULT_WRITING_CONFIG, ...(savedWriting && typeof savedWriting === 'object' ? savedWriting : {}) };
+  const rawRounds = Number(merged.roleplayMaxInteractionRounds);
+  const rounds = Number.isFinite(rawRounds) ? Math.trunc(rawRounds) : DEFAULT_WRITING_CONFIG.roleplayMaxInteractionRounds;
+  merged.roleplayMaxInteractionRounds = Math.min(99, Math.max(0, rounds));
+  return merged;
 }
 
 async function load() {

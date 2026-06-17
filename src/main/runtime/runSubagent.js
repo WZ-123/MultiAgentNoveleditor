@@ -20,6 +20,14 @@ const providerManager = require('../providerManager');
 const modelAliases = require('../modelAliases');
 const subagentsStore = require('../store/subagents');
 const { buildSystemTimePromptBlock } = require('./systemTime');
+const {
+  assembleProviderContext,
+  buildSystemWithSkillBlocks,
+  createToolResultCache,
+  fitToolResultForModel,
+  isCacheableToolName,
+  toolCacheKey,
+} = require('./contextAssembler');
 
 let builtinSubagentsReadyPromise = null;
 
@@ -139,26 +147,25 @@ async function runSubagent(opts = {}) {
     ? applySystemTemplate(systemPromptOverride, { userLang })
     : applySystemTemplate(subagent.systemPrompt, { userLang });
 
+  const skillBlocks = [];
   // Inject assigned skills into system prompt
   try {
     const skillsStore = require('../store/skills');
     const allSkills = await skillsStore.listSkills();
     const assigned = allSkills.filter(s => (s.assignedSubagentIds || []).includes(subagent.id));
     if (assigned.length > 0) {
-      const skillBlocks = [];
       for (const s of assigned) {
         const full = await skillsStore.getSkill(s.id);
         if (full?.content) {
-          skillBlocks.push('## References: ' + full.name + '\n\n' + full.content);
+          skillBlocks.push({ name: full.name || s.name || s.id, content: full.content });
         }
-      }
-      if (skillBlocks.length > 0) {
-        systemPrompt += '\n\n---\n' + skillBlocks.join('\n\n---\n');
       }
     }
   } catch (err) {
     console.error('[runSubagent] skill injection failed:', err.message);
   }
+  const skillAssembly = buildSystemWithSkillBlocks(systemPrompt, skillBlocks);
+  systemPrompt = skillAssembly.system;
   systemPrompt += '\n\n---\n' + buildSystemTimePromptBlock();
   const messages = inputToMessages(input);
 
@@ -180,6 +187,13 @@ async function runSubagent(opts = {}) {
   let continuationCount = 0;
   const maxContinuations = isWriting ? 3 : 1;
   let turnIdx = 0;
+  const toolResultCache = createToolResultCache();
+  const manifestState = {
+    included: [],
+    trimmed: [],
+    omitted: [],
+    cached: [],
+  };
 
   await eventBus.emit({ runId, pipelineRunId, nodeId, subagentId, kind: 'running', data: { tier: tier.tierName, model: tier.model } });
 
@@ -191,10 +205,36 @@ async function runSubagent(opts = {}) {
 
     let result;
     try {
-      result = await provider.sendMessage({
+      const assembledContext = assembleProviderContext({
         system: systemPrompt,
         messages: transcript,
         tools,
+        runtime: { kind: 'runSubagent', subagentId, turnIdx },
+        manifest: manifestState,
+      });
+      assembledContext.stats.trimmedCount += skillAssembly.stats.skillBlocksTrimmed || 0;
+      assembledContext.stats.skill = skillAssembly.stats;
+      assembledContext.manifest.stats = { ...assembledContext.stats };
+      await eventBus.emit({
+        runId,
+        pipelineRunId,
+        nodeId,
+        subagentId,
+        kind: 'context_stats',
+        data: { turnIdx, ...assembledContext.stats },
+      });
+      await eventBus.emit({
+        runId,
+        pipelineRunId,
+        nodeId,
+        subagentId,
+        kind: 'context_manifest',
+        data: assembledContext.manifest,
+      });
+      result = await provider.sendMessage({
+        system: assembledContext.system,
+        messages: assembledContext.messages,
+        tools: assembledContext.tools,
         tier,
         abortSignal,
         runId,
@@ -247,31 +287,102 @@ async function runSubagent(opts = {}) {
     const toolResults = [];
     for (const use of toolUses) {
       let toolResult;
-      try {
-        toolResult = await mcpClient.callTool({
-          name: use.name,
-          arguments: use.input || {},
-          subagentId,
-          runId,
-          nodeId,
+      const args = use.input || {};
+      const cacheable = isCacheableToolName(use.name);
+      const cacheKey = toolCacheKey(use.name, args);
+      let fittedToolResult;
+      let cached = false;
+      const cachedResult = cacheable ? toolResultCache.get(use.name, args) : null;
+      if (cachedResult) {
+        cached = true;
+        toolResult = { isError: !!cachedResult.isError };
+        fittedToolResult = fitToolResultForModel({
+          toolName: use.name,
           toolUseId: use.id,
-          autoConfirm: true,
+          content: cachedResult.displayContent,
+          isError: !!cachedResult.isError,
         });
-      } catch (err) {
-        toolResult = { isError: true, content: [{ type: 'text', text: err.message || String(err) }] };
+      } else {
+        try {
+          toolResult = await mcpClient.callTool({
+            name: use.name,
+            arguments: args,
+            subagentId,
+            runId,
+            nodeId,
+            toolUseId: use.id,
+            autoConfirm: true,
+          });
+        } catch (err) {
+          toolResult = { isError: true, content: [{ type: 'text', text: err.message || String(err) }] };
+        }
+        const content = Array.isArray(toolResult?.content)
+          ? toolResult.content.map((c) => (c.type === 'text' ? c.text : JSON.stringify(c))).join('\n')
+          : (typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult ?? ''));
+        fittedToolResult = fitToolResultForModel({
+          toolName: use.name,
+          toolUseId: use.id,
+          content,
+          isError: !!toolResult?.isError,
+        });
+        if (cacheable && !toolResult?.isError) {
+          toolResultCache.set(use.name, args, {
+            modelContent: fittedToolResult.modelContent,
+            displayContent: fittedToolResult.displayContent,
+            wasTrimmed: fittedToolResult.wasTrimmed,
+            stats: fittedToolResult.stats,
+            manifestItem: fittedToolResult.manifestItem,
+            isError: !!toolResult?.isError,
+          });
+        }
       }
-      const content = Array.isArray(toolResult?.content)
-        ? toolResult.content.map((c) => (c.type === 'text' ? c.text : JSON.stringify(c))).join('\n')
-        : (typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult ?? ''));
+      const displayContent = fittedToolResult.displayContent;
+      const sourceRef = `tool:${use.name}#${use.id}`;
+      const manifestItem = {
+        ...(fittedToolResult.manifestItem || {}),
+        sourceRef,
+        toolName: use.name,
+        toolUseId: use.id,
+        cacheKey,
+      };
+      manifestState.included.push({
+        kind: 'tool_result',
+        sourceRef,
+        toolName: use.name,
+        toolUseId: use.id,
+        cacheKey,
+        cached,
+      });
+      if (fittedToolResult.wasTrimmed) manifestState.trimmed.push(manifestItem);
+      if (cached) {
+        manifestState.cached.push({
+          kind: 'tool_result',
+          sourceRef,
+          toolName: use.name,
+          toolUseId: use.id,
+          cacheKey,
+        });
+      }
       toolResults.push({
         type: 'tool_result',
         tool_use_id: use.id,
-        content,
+        content: fittedToolResult.modelContent,
         is_error: !!toolResult?.isError,
       });
       await eventBus.emit({
         runId, pipelineRunId, nodeId, subagentId, kind: 'tool_result',
-        data: { tool_use_id: use.id, name: use.name, content, isError: !!toolResult?.isError },
+        data: {
+          tool_use_id: use.id,
+          name: use.name,
+          content: displayContent,
+          isError: !!toolResult?.isError,
+          modelContentTrimmed: fittedToolResult.wasTrimmed,
+          originalLength: fittedToolResult.stats.originalLength,
+          modelLength: fittedToolResult.stats.modelLength,
+          cached,
+          cacheKey,
+          sourceRef,
+        },
       });
     }
     transcript.push({ role: 'user', content: toolResults });

@@ -238,7 +238,8 @@ const BUILTIN_SUBAGENTS = [
 - 跨章重复意象：如「揉碎的丝绸」「从梦境深处传来」「活物般」反复回收
 - 标签式描述：如「她的声音中带着一丝……」「眸中带着一种……」高频重复
 - 感官清单式枚举：按耳朵→眼睛→鼻子→嘴巴→身体部位逐项扫描，像在按清单打勾
-发现这类句式时，优先标记为 kind=not_but_overuse（否定/对比类）或 kind=other（比喻堆叠、说明书、全知跳出、仿佛旁白、金句套话），并在 note 里给出更自然的修改方向：能直叙就直叙；如果确实需要保留对照递进，可以建议改成「并非……抑或……而是……」作为后期补偿。
+- 机械的一句一段：连续3个以上非对话单句自然段讲同一段叙事、同一组背景说明、同一个动作链或同一层心理，没有明确停顿/反转/情绪落点/场景切换功能
+发现这类句式时，优先标记为 kind=not_but_overuse（否定/对比类）、kind=choppy（机械拆段/节奏断裂）或 kind=other（比喻堆叠、说明书、全知跳出、仿佛旁白、金句套话），并在 note 里给出更自然的修改方向：能直叙就直叙；如果确实需要保留对照递进，可以建议改成「并非……抑或……而是……」作为后期补偿。
 对「然后她笑了。那是一个……」这种结构，生成后审查时应视为必须消灭的 AI 套句：建议删掉独立短句，并回上文，改成具体直叙。
 对连续否定铺排式，建议砍掉整套否定排比，把正句直接写进叙事。
 对「没有A，没有B，只是C」这类句式，也应直接砍掉整套对照骨架，把 C 改写成直接状态或动作。
@@ -250,6 +251,7 @@ const BUILTIN_SUBAGENTS = [
 对跨章重复意象，已经用过的比喻不要回收复读，优先改成直接描写。
 对「声音中带着/眸中带着」式标签描述，不要再挂抽象词尾巴，直接写声音怎么变、眼神落在哪里、动作如何停顿。
 对感官清单式枚举，不要全身扫描，只保留1-2个最有压强的感官点。
+对机械的一句一段，按段落功能审查：如果相邻单句段服务于同一叙事功能，应建议合并为一个自然段；保留真正有停顿、反转、情绪落点、对话分隔或镜头切换作用的单句段。
 对出场说明书，只抓1-2个最有辨识度的特征，其余让读者脑补。
 对对比引入句式，直接描写对象本身，不要先否定不存在的参照物。
 对全知作者跳出，保持叙事视角一致，用角色所见所感收尾。
@@ -290,6 +292,7 @@ const BUILTIN_SUBAGENTS = [
 - 避免跨章重复意象：已经用过的「揉碎的丝绸」「梦境深处」「活物般」这类顺手意象不要在后文反复回收。
 - 避免「她的声音中带着一丝……」「眸中带着一种……」这类标签式描述高频复用。
 - 避免感官清单式枚举：不要按部位表逐项扫描，把描写压缩到最有情绪价值的1-2个感官点。
+- 段落以叙事功能为单位，不要把连续描述同一件事、同一个动作、同一段心理或同一组背景信息机械拆成一句一段；连续单句自然段超过2段时，优先合并普通说明性内容，只保留真正有停顿、反转、情绪落点或场景切换作用的单句段。
 - 若原文已经自然，只做必要的最小改动，不要为了改写而改写。
 - 当输出简体中文小说正文时，标点必须使用全角中文标点（，。！？：；、“”‘’（）《》——），不要使用半角英文标点。
 
@@ -298,6 +301,39 @@ const BUILTIN_SUBAGENTS = [
     allowedTools: [],
     runtimeHints: { expectJson: false, maxTurns: 2 },
     tags: ['editing', 'rewrite'],
+    schemaVersion: SCHEMA_VERSION,
+  },
+  {
+    id: 'sa-paragraph-function-reviewer',
+    builtIn: true,
+    name: 'sa-paragraph-function-reviewer',
+    displayName: '段落功能审查',
+    tier: 'haiku',
+    systemPrompt:
+      `你是段落功能审查者（Paragraph Function Reviewer）。你的任务不是泛泛审查 AI 味，而是专门复核中文小说正文里的“一句话一段 / 连续单句段”问题。
+
+你会收到：
+- chapterName
+- focus
+- paragraphs：全章逐段正文，含 prevText / nextText
+- candidates：所有非对话单句叙述段候选
+- candidateRuns：连续3个以上候选段组成的风险组
+- deterministicAnnotations：后端启发式已经标出的风险
+
+审查原则：
+- 单句段不是天然错误。只有缺少明确段落功能时才标注。
+- 保留这些单句段：强停顿、反转、惊吓、讽刺、情绪落点、对话分隔、时间/场景/视角切换、章节末尾有意留白。
+- 标出这些单句段：连续3段以上都在讲同一件事、同一组背景说明、同一个动作链或同一层心理，只是机械换行。
+- 复核每一个 candidate，结合前后段判断它是独立节奏点，还是应该并入相邻自然段。
+- 如果一组相邻候选段都应合并，请在同一条 annotation 里给出 paragraphIds，并把 suggestedAction 设为 "merge_paragraphs"。
+- note 要说明为什么这些段落属于同一叙事功能，以及应该保留哪些真正有节奏目的的单句段。
+
+输出只含 JSON：
+{ "annotations": [ { "paragraphId": "主段落id", "paragraphIds": ["涉及段落id"], "kind": "choppy", "severity": "low|medium|high", "suggestedAction": "merge_paragraphs|keep_single_paragraph|manual_review", "note": "说明" } ] }
+无问题则 annotations 为空。` + COMMON_TAIL,
+    allowedTools: [],
+    runtimeHints: { expectJson: true, maxTurns: 2 },
+    tags: ['review', 'quality', 'paragraph'],
     schemaVersion: SCHEMA_VERSION,
   },
   {
@@ -345,6 +381,8 @@ const BUILTIN_SUBAGENTS = [
 22. 避免跨章重复意象和顺手比喻库存，如「揉碎的丝绸」「从梦境深处传来」「活物般」；同类意象不要反复回收。
 23. 避免「她的声音中带着一丝……」「眸中带着一种……」这类标签式描述高频重复；直接写声音怎么轻下来、眼神停在哪里。
 24. 避免感官清单式枚举，不要按耳朵→眼睛→鼻子→嘴巴→身体部位逐一打勾；只保留最有压强的1-2个感官点。
+25. 段落以叙事功能为单位，不要把连续描述同一件事、同一个动作、同一段心理或同一组背景信息机械拆成一句一段。
+26. 连续单句自然段不得超过2段，除非每个单句段都承担明确的强停顿、反转、惊吓、讽刺、情绪落点、对话分隔或场景/视角切换功能；普通说明性内容应合并成自然段。
 
 必须只输出一个 JSON 对象：{ “text”: “完整正文，段落之间用空行分隔” }，不要围栏。` + COMMON_TAIL,
     allowedTools: ['read_outline', 'read_chapter', 'read_style_memory', 'list_characters', 'query_world', 'read_character_context', 'read_outline_nodes', 'assemble_scene_context'],

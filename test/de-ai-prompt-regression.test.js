@@ -93,6 +93,8 @@ async function runDeAiPromptRegressionTest() {
     assert.ok(upgraded?.content.includes('跨章重复意象'));
     assert.ok(upgraded?.content.includes('声音中带着一丝'));
     assert.ok(upgraded?.content.includes('感官清单式枚举'));
+    assert.ok(upgraded?.content.includes('避免机械的一句一段'));
+    assert.ok(upgraded?.content.includes('按段落功能组织自然段'));
     pass('DAI1_existing_de_ai_skill_is_upgraded', 'legacy seeded content picked up the new anti-cliche guidance');
   } catch (err) {
     fail('DAI1_existing_de_ai_skill_is_upgraded', err?.message || String(err));
@@ -139,6 +141,8 @@ async function runDeAiPromptRegressionTest() {
     assert.ok(proseQuality?.systemPrompt.includes('跨章重复意象'));
     assert.ok(proseQuality?.systemPrompt.includes('她的声音中带着一丝'));
     assert.ok(proseQuality?.systemPrompt.includes('感官清单式枚举'));
+    assert.ok(proseQuality?.systemPrompt.includes('机械的一句一段'));
+    assert.ok(proseQuality?.systemPrompt.includes('段落功能审查'));
     assert.ok(writer?.systemPrompt.includes('比喻堆叠'));
     assert.ok(writer?.systemPrompt.includes('出场说明书'));
     assert.ok(writer?.systemPrompt.includes('全知作者跳出'));
@@ -152,6 +156,8 @@ async function runDeAiPromptRegressionTest() {
     assert.ok(writer?.systemPrompt.includes('跨章重复意象和顺手比喻库存'));
     assert.ok(writer?.systemPrompt.includes('她的声音中带着一丝'));
     assert.ok(writer?.systemPrompt.includes('感官清单式枚举'));
+    assert.ok(writer?.systemPrompt.includes('段落以叙事功能为单位'));
+    assert.ok(writer?.systemPrompt.includes('连续单句自然段不得超过2段'));
     pass('DAI2_builtin_subagent_prompts_cover_new_patterns', 'writer and prose-quality prompts both mention the new anti-cliche rule');
   } catch (err) {
     fail('DAI2_builtin_subagent_prompts_cover_new_patterns', err?.message || String(err));
@@ -185,6 +191,8 @@ async function runDeAiPromptRegressionTest() {
     assert.ok(agentPromptsText.includes('跨章重复意象'));
     assert.ok(agentPromptsText.includes('她的声音中带着一丝'));
     assert.ok(agentPromptsText.includes('感官清单式枚举'));
+    assert.ok(agentPromptsText.includes('段落以叙事功能为单位'));
+    assert.ok(agentPromptsText.includes('机械的一句一段'));
     assert.ok(writingOrchestratorText.includes('buildQualityReviewPayload'));
     assert.ok(writingOrchestratorText.includes('detectCrossParagraphQualityAnnotations'));
     assert.ok(writingOrchestratorText.includes('paragraphIds'));

@@ -102,9 +102,114 @@ function countEmDashes(text) {
   return Array.isArray(hits) ? hits.length : 0;
 }
 
-function detectHeuristicParagraphAnnotations(paragraphs) {
+function countSentenceTerminators(text) {
+  const hits = compactText(text).match(/[。！？!?]/gdu);
+  return Array.isArray(hits) ? hits.length : 0;
+}
+
+function isDialogueLikeParagraph(text) {
+  const t = compactText(text);
+  if (!t) return false;
+  return /^[“"「『]/u.test(t)
+    || /[”"」』]$/.test(t)
+    || /^[^：:]{1,16}[：:][“"「『]/u.test(t);
+}
+
+function isSingleSentenceNarrativeParagraph(text) {
+  const t = compactText(text);
+  if (!t || /^#+\s*/u.test(t) || isEllipsisSeparator(t) || isDialogueLikeParagraph(t)) return false;
+  if (t.length < 8) return false;
+  const terminators = countSentenceTerminators(t);
+  return terminators <= 1 && /[。！？!?]$/u.test(t);
+}
+
+function detectMechanicalSingleSentenceRuns(paragraphs) {
   const list = Array.isArray(paragraphs) ? paragraphs : [];
   const annotations = [];
+  let run = [];
+
+  function flushRun() {
+    if (run.length < 3) {
+      run = [];
+      return;
+    }
+    const totalChars = run.reduce((sum, paragraph) => sum + compactText(paragraph.text).length, 0);
+    if (totalChars < 60) {
+      run = [];
+      return;
+    }
+    const note = '段落功能审查：连续多个非对话单句段讲同一段叙事，像把本可合并的说明/动作机械拆成一句一段。建议按叙事功能合并为自然段，只保留真正承担停顿、反转、情绪落点或场景切换的单句段。';
+    for (const paragraph of run) {
+      annotations.push({ paragraphId: paragraph.id, kind: 'choppy', note });
+    }
+    run = [];
+  }
+
+  for (const paragraph of list) {
+    if (isSingleSentenceNarrativeParagraph(paragraph.text)) {
+      run.push(paragraph);
+    } else {
+      flushRun();
+    }
+  }
+  flushRun();
+
+  return annotations;
+}
+
+export function detectParagraphFunctionAnnotations(paragraphs) {
+  return detectMechanicalSingleSentenceRuns(paragraphs);
+}
+
+export function buildParagraphFunctionReviewPayload(paragraphs, focus = '') {
+  const list = Array.isArray(paragraphs) ? paragraphs : [];
+  const candidates = [];
+  const runs = [];
+  let currentRun = [];
+
+  function flushRun() {
+    if (currentRun.length >= 3) {
+      runs.push({
+        paragraphIds: currentRun.map((paragraph) => paragraph.id),
+        paragraphIndexes: currentRun.map((paragraph) => paragraph.index),
+        totalChars: currentRun.reduce((sum, paragraph) => sum + compactText(paragraph.text).length, 0),
+      });
+    }
+    currentRun = [];
+  }
+
+  for (let index = 0; index < list.length; index += 1) {
+    const paragraph = list[index];
+    const isCandidate = isSingleSentenceNarrativeParagraph(paragraph.text);
+    if (isCandidate) {
+      currentRun.push(paragraph);
+      candidates.push({
+        id: paragraph.id,
+        index: paragraph.index,
+        text: paragraph.text,
+        prevParagraphId: index > 0 ? list[index - 1].id : null,
+        prevText: index > 0 ? list[index - 1].text : '',
+        nextParagraphId: index + 1 < list.length ? list[index + 1].id : null,
+        nextText: index + 1 < list.length ? list[index + 1].text : '',
+      });
+    } else {
+      flushRun();
+    }
+  }
+  flushRun();
+
+  return {
+    focus: String(focus || '').trim(),
+    paragraphs: buildQualityReviewPayload(list).paragraphs,
+    candidates,
+    candidateRuns: runs,
+    deterministicAnnotations: detectParagraphFunctionAnnotations(list),
+  };
+}
+
+function detectHeuristicParagraphAnnotations(paragraphs) {
+  const list = Array.isArray(paragraphs) ? paragraphs : [];
+  const annotations = [...detectMechanicalSingleSentenceRuns(list)];
   const separatorIndexes = list
     .map((paragraph, index) => (isEllipsisSeparator(paragraph.text) ? index : -1))
     .filter((index) => index >= 0);

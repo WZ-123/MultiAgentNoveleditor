@@ -232,9 +232,21 @@ async function runDirector(scene, proposals, interactionResponses, abortSignal) 
   });
 }
 
-async function buildRoleplayPlan({ targetChapter, compactContext, interactionLevel, ignoreProfileGate, userText, abortSignal }) {
+function clampInteractionRounds(value) {
+  const raw = Number(value);
+  if (!Number.isFinite(raw)) return 3;
+  return Math.min(99, Math.max(0, Math.trunc(raw)));
+}
+
+function emitProgress(onProgress, message, detail = {}) {
+  if (typeof onProgress !== 'function') return;
+  try { onProgress({ message, ...detail }); } catch { /* progress is best-effort */ }
+}
+
+async function buildRoleplayPlan({ targetChapter, compactContext, interactionLevel, maxInteractionRounds, ignoreProfileGate, userText, abortSignal, onProgress }) {
   const dir = activeNovelDir();
   if (!dir) return { status: 'skipped', reason: 'no_active_novel' };
+  emitProgress(onProgress, '角色驱动：检查出场角色资料。', { stage: 'roleplay_profile_gate' });
   const profileGate = await buildProfileGate({ targetChapter, compactContext });
   if (profileGate && !ignoreProfileGate) {
     return { status: 'profile_gate_blocked', profileGate };
@@ -251,7 +263,13 @@ async function buildRoleplayPlan({ targetChapter, compactContext, interactionLev
   }
 
   const scenePlans = [];
+  const configuredRounds = clampInteractionRounds(maxInteractionRounds);
   for (const scene of scenes.slice(0, 6)) {
+    emitProgress(onProgress, `导演视角：进入场景「${scene.title || scene.sceneId}」，召集出场角色。`, {
+      stage: 'roleplay_scene_start',
+      sceneId: scene.sceneId,
+      sceneTitle: scene.title || '',
+    });
     const actorIds = scene.appearingCharacterIds.slice(0, 4);
     const actors = [];
     for (const id of actorIds) {
@@ -260,10 +278,20 @@ async function buildRoleplayPlan({ targetChapter, compactContext, interactionLev
       const memory = await novelData.readCharacterMemory(dir, character.id);
       actors.push({ character, memory });
     }
+    emitProgress(onProgress, `导演视角：${actors.map(({ character }) => character.name || character.id).join('、') || '角色'} 正在提出动作、台词和内心反应。`, {
+      stage: 'roleplay_actor_proposals',
+      sceneId: scene.sceneId,
+      actors: actors.map(({ character }) => character.name || character.id),
+    });
     const proposals = await Promise.all(actors.map(({ character, memory }) => runActor(scene, character, memory, null, abortSignal)));
+    emitProgress(onProgress, `导演视角：正在仲裁「${scene.title || scene.sceneId}」的第一版角色反应。`, {
+      stage: 'roleplay_director_review',
+      sceneId: scene.sceneId,
+      round: 0,
+    });
     let firstDirector = await runDirector(scene, proposals, [], abortSignal);
     const interactionResponses = [];
-    const rounds = interactionLevel === 'deep_interaction' ? 2 : interactionLevel === 'director_mediated' ? 1 : 0;
+    const rounds = interactionLevel === 'deep_interaction' ? configuredRounds : interactionLevel === 'director_mediated' ? 1 : 0;
     let currentDirector = firstDirector;
     for (let round = 0; round < rounds; round += 1) {
       const approvedSummary = normalizeList(currentDirector.approvedBeats)
@@ -271,6 +299,12 @@ async function buildRoleplayPlan({ targetChapter, compactContext, interactionLev
         .map((beat) => `${beat.characterId || ''}:${beat.type || ''}:${beat.content || ''}`)
         .join('\n');
       if (!approvedSummary) break;
+      emitProgress(onProgress, `导演视角：第 ${round + 1}/${rounds} 轮互动，角色根据已批准动作继续回应。`, {
+        stage: 'roleplay_interaction_round',
+        sceneId: scene.sceneId,
+        round: round + 1,
+        totalRounds: rounds,
+      });
       const roundResponses = await Promise.all(actors.slice(0, 3).map(({ character, memory }) => runActor(
         scene,
         character,
@@ -279,8 +313,18 @@ async function buildRoleplayPlan({ targetChapter, compactContext, interactionLev
         abortSignal
       )));
       interactionResponses.push(...roundResponses);
+      emitProgress(onProgress, `导演视角：第 ${round + 1} 轮回应完成，导演正在筛选可写入 beats。`, {
+        stage: 'roleplay_director_review',
+        sceneId: scene.sceneId,
+        round: round + 1,
+      });
       currentDirector = await runDirector(scene, proposals, interactionResponses, abortSignal);
     }
+    emitProgress(onProgress, `导演视角：场景「${scene.title || scene.sceneId}」完成，已交给 writer 使用。`, {
+      stage: 'roleplay_scene_done',
+      sceneId: scene.sceneId,
+      approvedBeatCount: normalizeList(currentDirector.approvedBeats).length,
+    });
     scenePlans.push(currentDirector);
   }
 
@@ -289,6 +333,7 @@ async function buildRoleplayPlan({ targetChapter, compactContext, interactionLev
     roleplayPlan: {
       chapterRef: targetChapter.name,
       interactionLevel,
+      maxInteractionRounds: configuredRounds,
       scenePlans,
       profileWarnings: profileGate?.missingCharacters || [],
       globalWriterNotes: [

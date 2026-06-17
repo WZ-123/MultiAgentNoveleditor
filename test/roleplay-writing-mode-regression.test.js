@@ -31,11 +31,12 @@ async function runRoleplayWritingModeRegressionTest() {
     assert.equal(cfg.writing.roleplayProfileGate, 'block_and_ask');
     pass('RWM1_default_config_keeps_command_driven', 'new installs do not opt into roleplay writing');
 
-    const saved = await appConfig.save({ writing: { mode: 'roleplay_driven', roleplayInteractionLevel: 'deep_interaction' } });
+    const saved = await appConfig.save({ writing: { mode: 'roleplay_driven', roleplayInteractionLevel: 'deep_interaction', roleplayMaxInteractionRounds: 101 } });
     assert.equal(saved.writing.mode, 'roleplay_driven');
     assert.equal(saved.writing.roleplayInteractionLevel, 'deep_interaction');
+    assert.equal(saved.writing.roleplayMaxInteractionRounds, 99);
     assert.equal(saved.writing.characterMemoryUpdate, 'after_confirmed_write');
-    pass('RWM2_writing_config_persists_partial_updates', 'partial setting saves preserve defaults');
+    pass('RWM2_writing_config_persists_partial_updates', 'partial setting saves preserve defaults and clamps deep interaction rounds');
 
     const novelData = require(path.join(ROOT, 'src/main/store/novelData'));
     const { novelPaths } = require(path.join(ROOT, 'src/main/store/paths'));

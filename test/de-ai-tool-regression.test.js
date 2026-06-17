@@ -28,13 +28,16 @@ async function runDeAiToolRegressionTest() {
     const tools = await mcpClient.listTools();
     const deAiTool = (tools || []).find((tool) => tool.name === 'de_ai_ify');
     const deAiReviewTool = (tools || []).find((tool) => tool.name === 'review_de_ai_style');
+    const paragraphFunctionReviewTool = (tools || []).find((tool) => tool.name === 'review_paragraph_function');
 
     assert.ok(deAiTool);
     assert.ok(deAiReviewTool);
+    assert.ok(paragraphFunctionReviewTool);
     assert.equal(deAiTool.inputSchema?.required?.includes('text'), true);
     assert.equal(deAiTool.requiresConfirmation, false);
     assert.equal(deAiReviewTool.requiresConfirmation, false);
-    pass('DAT1_de_ai_tool_is_exposed_via_mcp', 'de_ai_ify and review_de_ai_style are visible in the MCP tool list');
+    assert.equal(paragraphFunctionReviewTool.requiresConfirmation, false);
+    pass('DAT1_de_ai_tool_is_exposed_via_mcp', 'de_ai_ify, review_de_ai_style, and review_paragraph_function are visible in the MCP tool list');
 
     try {
       await mcpClient.dispose();
@@ -86,9 +89,11 @@ async function runDeAiToolRegressionTest() {
     const mcpToolsText = fs.readFileSync(path.join(ROOT, 'src/main/mcp/tools.js'), 'utf8');
 
     assert.ok(mcpToolsText.includes("name: 'review_de_ai_style'"));
+    assert.ok(mcpToolsText.includes("name: 'review_paragraph_function'"));
     assert.ok(mcpToolsText.includes("subagentId: 'sa-prose-quality'"));
+    assert.ok(mcpToolsText.includes("subagentId: 'sa-paragraph-function-reviewer'"));
     assert.ok(mcpToolsText.includes('Promise.all(requested.map(async (chapterName) =>'));
-    pass('DAT3_de_ai_review_tool_fans_out_parallel_quality_reviews', 'review_de_ai_style is wired to batch chapters through Promise.all and sa-prose-quality');
+    pass('DAT3_de_ai_review_tool_fans_out_parallel_quality_reviews', 'review tools are wired to batch chapters through Promise.all and dedicated quality subagents');
   } catch (err) {
     fail('DAT3_de_ai_review_tool_fans_out_parallel_quality_reviews', err?.message || String(err));
   }
@@ -99,9 +104,12 @@ async function runDeAiToolRegressionTest() {
 
     assert.ok(builtinSubagentsText.includes("id: 'sa-de-ai-ifier'"));
     assert.ok(builtinSubagentsText.includes("id: 'sa-prose-quality'"));
+    assert.ok(builtinSubagentsText.includes("id: 'sa-paragraph-function-reviewer'"));
     assert.ok(builtinSubagentsText.includes('去 AI 味改写'));
+    assert.ok(builtinSubagentsText.includes('段落功能审查'));
     assert.ok(chatAgentText.includes('de_ai_ify'));
     assert.ok(chatAgentText.includes('review_de_ai_style'));
+    assert.ok(chatAgentText.includes('review_paragraph_function'));
     assert.ok(chatAgentText.includes('Do not claim that you manually reviewed the chapter without calling the tool.'));
     assert.ok(chatAgentText.includes('if the user also wants a concrete rewrite sample, call `de_ai_ify` on one flagged excerpt'));
     assert.ok(chatAgentText.includes('list_skills'));

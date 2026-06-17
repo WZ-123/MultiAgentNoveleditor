@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 const DEFAULT_WRITING = {
   mode: 'command_driven',
   roleplayInteractionLevel: 'director_mediated',
+  roleplayMaxInteractionRounds: 3,
   roleplayProfileGate: 'block_and_ask',
   roleplayAutofillScope: 'fill_missing_and_weak',
   roleplayAutofillAlignment: 'current_scene',
@@ -42,6 +43,12 @@ export function WritingSettings() {
 
   function update(patch) {
     setWriting((current) => ({ ...current, ...patch }));
+  }
+
+  function normalizeRounds(value) {
+    const raw = Number(value);
+    if (!Number.isFinite(raw)) return DEFAULT_WRITING.roleplayMaxInteractionRounds;
+    return Math.min(99, Math.max(0, Math.trunc(raw)));
   }
 
   return (
@@ -97,9 +104,26 @@ export function WritingSettings() {
           >
             <option value="independent">independent - 角色只独立提案</option>
             <option value="director_mediated">director_mediated - 导演组织一轮回应</option>
-            <option value="deep_interaction">deep_interaction - 最多两轮回应</option>
+            <option value="deep_interaction">deep_interaction - 使用下方互动轮数</option>
           </select>
         </label>
+        <label className="block">
+          <span className="block text-xs font-semibold text-gray-400 uppercase mb-1">deep_interaction 最大互动轮数</span>
+          <input
+            type="number"
+            min={0}
+            max={99}
+            className="w-28 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-sm text-gray-100"
+            value={writing.roleplayMaxInteractionRounds ?? DEFAULT_WRITING.roleplayMaxInteractionRounds}
+            onChange={(e) => update({ roleplayMaxInteractionRounds: normalizeRounds(e.target.value) })}
+          />
+          <span className="ml-2 text-xs text-gray-500">默认 3，最大 99。</span>
+        </label>
+        {(writing.roleplayMaxInteractionRounds ?? DEFAULT_WRITING.roleplayMaxInteractionRounds) >= 5 && (
+          <div className="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+            互动轮数设置为 5 次及以上会明显增加耗时、费用和角色跑偏概率；长群戏建议先小轮数试写，再针对关键段落加深互动。
+          </div>
+        )}
         <p className="text-xs text-gray-500">默认推荐 director_mediated；deep_interaction 更适合对峙、谈判、争吵、告白、审讯等高冲突群戏。</p>
       </section>
 

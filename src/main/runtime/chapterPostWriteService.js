@@ -22,6 +22,21 @@ function parseJsonFromText(text) {
   }
 }
 
+function buildJsonRepairPrompt(invalidJsonText) {
+  return [
+    '请修复下面这段模型输出，使其成为严格合法的 JSON 对象。',
+    '要求：只输出 JSON，不要 Markdown 围栏，不要解释；字段结构仍然遵循章节回写 JSON。',
+    '',
+    '待修复文本：',
+    String(invalidJsonText || '').slice(0, 20000),
+  ].join('\n');
+}
+
+function emitProgress(onProgress, message, detail = {}) {
+  if (typeof onProgress !== 'function') return;
+  try { onProgress({ message, ...detail }); } catch { /* progress is best-effort */ }
+}
+
 function trimMessage(message) {
   return String(message || '')
     .replace(/\s+/g, ' ')
@@ -251,6 +266,21 @@ async function runAnalysis(input, systemPrompt, abortSignal) {
   }
 }
 
+async function runAnalysisParsed(input, systemPrompt, draft, abortSignal, onProgress) {
+  emitProgress(onProgress, '写后同步：AI 正在分析章节摘要、时间线和大纲回写。', { stage: 'post_write_analysis' });
+  const output = await runAnalysis(input, systemPrompt, abortSignal);
+  try {
+    return { analysis: normalizeAnalysis(parseJsonFromText(output), draft), repaired: false };
+  } catch (firstErr) {
+    emitProgress(onProgress, '写后同步：AI 返回的 JSON 不合法，正在自动修复一次。', {
+      stage: 'post_write_json_repair',
+      error: trimMessage(firstErr?.message || String(firstErr)),
+    });
+    const repairOutput = await runAnalysis(buildJsonRepairPrompt(output), systemPrompt, abortSignal);
+    return { analysis: normalizeAnalysis(parseJsonFromText(repairOutput), draft), repaired: true };
+  }
+}
+
 function pickOutlineContext(nodes, draft) {
   const nodeList = Array.isArray(nodes) ? nodes : [];
   const matchingNodes = nodeList
@@ -274,18 +304,20 @@ function pickOutlineContext(nodes, draft) {
   };
 }
 
-async function persistChapterArtifacts({ draft, abortSignal }) {
+async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
   if (!draft?.name || !draft?.text) {
     throw new Error('persistChapterArtifacts requires chapter name and text');
   }
 
   const warnings = [];
   const context = { outlineContext: null, existingTimeline: [] };
+  emitProgress(onProgress, '写后同步：读取相关大纲节点。', { stage: 'post_write_read_outline' });
   const outlineContextRead = await callAutoTool('read_outline_nodes', {});
   if (!outlineContextRead.isError) {
     const outlinePayload = parseToolPayload(outlineContextRead.text);
     context.outlineContext = pickOutlineContext(outlinePayload?.nodes, draft);
   }
+  emitProgress(onProgress, '写后同步：读取本章旧时间线，准备只替换本章数据。', { stage: 'post_write_read_timeline' });
   const timelineContextRead = await callAutoTool('query_timeline', { chapterRef: draft.name });
   if (!timelineContextRead.isError) {
     const timelinePayload = parseToolPayload(timelineContextRead.text);
@@ -295,8 +327,11 @@ async function persistChapterArtifacts({ draft, abortSignal }) {
   let analysis;
   let analysisReliable = true;
   try {
-    const output = await runAnalysis(buildInput(draft, context), buildSystemPrompt(''), abortSignal);
-    analysis = normalizeAnalysis(parseJsonFromText(output), draft);
+    const parsed = await runAnalysisParsed(buildInput(draft, context), buildSystemPrompt(''), draft, abortSignal, onProgress);
+    analysis = parsed.analysis;
+    if (parsed.repaired) {
+      pushUniqueWarning(warnings, 'AI 回写 JSON 首次解析失败，已自动修复后继续同步。');
+    }
   } catch (err) {
     warnings.push(`章节回写分析失败：${trimMessage(err?.message || String(err))}`);
     analysisReliable = false;
@@ -306,6 +341,7 @@ async function persistChapterArtifacts({ draft, abortSignal }) {
   const toolCalls = [];
   let summarySaved = false;
   if (analysisReliable) {
+    emitProgress(onProgress, '写后同步：写入章节摘要和设定补充。', { stage: 'post_write_summary' });
     const summaryResult = await callAutoTool('append_summary', {
       chapterRef: draft.name,
       summary: analysis.summary,
@@ -324,7 +360,26 @@ async function persistChapterArtifacts({ draft, abortSignal }) {
       warnings.push(`章节摘要写入失败：${trimMessage(summaryResult.text)}`);
     }
   } else {
-    pushUniqueWarning(warnings, 'AI 分析失败，已跳过摘要写入以避免用兜底短句覆盖旧摘要。');
+    emitProgress(onProgress, '写后同步：AI 分析失败，写入安全兜底摘要，保留旧时间线和大纲。', { stage: 'post_write_summary_fallback' });
+    const fallbackSummaryResult = await callAutoTool('append_summary', {
+      chapterRef: draft.name,
+      summary: analysis.summary,
+      supplementMarkdown: '',
+    });
+    summarySaved = !fallbackSummaryResult.isError;
+    toolCalls.push({
+      id: `auto-summary-fallback-${Date.now().toString(36)}`,
+      name: 'append_summary',
+      input: { chapterRef: draft.name, fallback: true },
+      status: 'done',
+      result: fallbackSummaryResult.text,
+      isError: fallbackSummaryResult.isError,
+    });
+    if (fallbackSummaryResult.isError) {
+      warnings.push(`兜底章节摘要写入失败：${trimMessage(fallbackSummaryResult.text)}`);
+    } else {
+      pushUniqueWarning(warnings, 'AI 分析失败，已写入安全兜底摘要；时间线和大纲仍保留旧数据，未覆盖。');
+    }
   }
 
   let timelineSynced = 0;
@@ -336,6 +391,7 @@ async function persistChapterArtifacts({ draft, abortSignal }) {
     timelineSynced = context.existingTimeline.length;
     pushUniqueWarning(warnings, 'AI 未返回新的时间线事件，已保留本章原有时间线。');
   } else {
+    emitProgress(onProgress, `写后同步：同步本章时间线 ${analysis.timelineEvents.length} 条。`, { stage: 'post_write_timeline', eventCount: analysis.timelineEvents.length });
     const timelineResult = await callAutoTool('sync_chapter_timeline', {
       chapterRef: draft.name,
       events: analysis.timelineEvents,
@@ -367,6 +423,7 @@ async function persistChapterArtifacts({ draft, abortSignal }) {
   }
 
   if (analysisReliable) {
+    emitProgress(onProgress, '写后同步：标记相关大纲节点为已写，并回填实际进展。', { stage: 'post_write_outline' });
     const outlineResult = await updateOutlineAfterWrite(draft, analysis);
     toolCalls.push(...outlineResult.toolCalls);
     outlineUpdated = outlineResult.updated || 0;

@@ -59,13 +59,18 @@ async function runChatWritingIntentRegressionTest() {
   process.env.MANA_USE_STDIO_MCP = '0';
   const electronModulePath = require.resolve('electron');
   const originalElectronCache = require.cache[electronModulePath];
+  const emittedEvents = [];
   require.cache[electronModulePath] = {
     id: electronModulePath,
     filename: electronModulePath,
     loaded: true,
     exports: {
       app: null,
-      webContents: { getAllWebContents: () => [] },
+      webContents: {
+        getAllWebContents: () => [{
+          send: (_channel, payload) => emittedEvents.push(payload),
+        }],
+      },
     },
   };
 
@@ -349,8 +354,52 @@ async function runChatWritingIntentRegressionTest() {
       fail('W9_incomplete_review_blocks_chapter_confirmation', JSON.stringify({ pending: sessionAfterBlockedConfirm?.pendingChapterDraft, chapterFourExists }));
     }
     chatAgent.closeSession(fourthSessionId);
+
+    const outlineThread = await chatHistory.createThread({ title: '大纲确认自动续跑回归', novelId: seeded.entry.id });
+    const outlineSessionId = chatAgent.createSession({
+      editorContext: { novelId: seeded.entry.id, chapterCount: 3, novelTitle: '聊天写作意图回归小说' },
+      messages: [],
+      threadId: outlineThread.id,
+    });
+    const outlineSession = chatAgent.getSession(outlineSessionId);
+    outlineSession.workflowPhase = 'outline';
+    outlineSession.pendingOutlineDraft = {
+      nodes: [
+        { id: 'outline-auto-vol', title: '自动续跑卷', summary: '卷摘要', volumeIndex: 1, level: 1 },
+        { id: 'outline-auto-sec', title: '自动续跑节', summary: '节摘要', volumeIndex: 1, sectionIndex: 1, level: 2 },
+        { id: 'outline-auto-scene', title: '自动续跑章', summary: '写下一章。', volumeIndex: 1, sectionIndex: 1, chapterIndex: 4, level: 3 },
+      ],
+      rawMarkdown: '# 自动续跑大纲',
+    };
+    outlineSession.pendingOutlineIssues = [];
+    const callsBeforeOutlineConfirm = chapterCalls.length;
+    emittedEvents.length = 0;
+    await chatAgent.runTurn(outlineSessionId, '确认写入大纲');
+    const outlineSessionAfterConfirm = chatAgent.getSession(outlineSessionId);
+    const progressMessages = emittedEvents
+      .filter((event) => event?.kind === 'progress')
+      .map((event) => event.data?.message || '');
+    if (
+      outlineSessionAfterConfirm?.workflowPhase === 'writing'
+      && !outlineSessionAfterConfirm?.pendingOutlineDraft
+      && outlineSessionAfterConfirm?.pendingChapterDraft
+      && chapterCalls.length === callsBeforeOutlineConfirm + 1
+      && /继续写下一章/.test(chapterCalls[chapterCalls.length - 1]?.userText || '')
+      && progressMessages.some((message) => /自动续跑/.test(message))
+    ) {
+      pass('W10_outline_confirm_auto_continues_to_chapter_draft', 'confirming outline internally continued into next chapter draft without requiring another user message');
+    } else {
+      fail('W10_outline_confirm_auto_continues_to_chapter_draft', JSON.stringify({
+        workflowPhase: outlineSessionAfterConfirm?.workflowPhase,
+        pendingOutlineDraft: !!outlineSessionAfterConfirm?.pendingOutlineDraft,
+        pendingChapterDraft: outlineSessionAfterConfirm?.pendingChapterDraft,
+        chapterCalls,
+        progressMessages,
+      }));
+    }
+    chatAgent.closeSession(outlineSessionId);
   } catch (err) {
-    fail('W10_harness', err.message || String(err));
+    fail('W11_harness', err.message || String(err));
   } finally {
     providerManager.getActiveProvider = originalGetActiveProvider;
     modelAliases.getAlias = originalGetAlias;

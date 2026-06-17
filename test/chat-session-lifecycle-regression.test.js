@@ -22,12 +22,14 @@ async function runChatSessionLifecycleRegressionTest() {
 
   try {
     const source = await fs.readFile(path.join(ROOT, 'src/components/AiChatPanel.jsx'), 'utf8');
-    assert.ok(source.includes("if (!currentNovelId && status !== 'idle' && (sessionId || activeThreadId)) {"));
-    assert.ok(source.includes('Do not kill an in-flight chat turn during that gap.'));
+    assert.ok(source.includes('if (!currentNovelId && (activeThreadId || sessionId)) {'));
+    assert.ok(source.includes('let cancelled = false;'));
+    assert.ok(source.includes('if (cancelled) return;'));
+    assert.ok(source.includes('Do not clear the current conversation during that gap'));
     assert.ok(source.includes('}, [currentNovelId, status]);'));
     pass(
       'CSL1_busy_session_survives_transient_novel_context_gap',
-      'AiChatPanel now preserves an in-flight session when novelId briefly drops during workspace refresh'
+      'AiChatPanel now preserves the current session when novelId briefly drops during workspace refresh, even after a turn has just finished'
     );
 
     assert.ok(source.includes("setError('AI 正在回复中，请先停止生成或等待完成后再删除当前对话。');"));
@@ -60,13 +62,30 @@ async function runChatSessionLifecycleRegressionTest() {
       'reverting before a message rebuilds the agent session and exposes change restore controls'
     );
 
+    assert.ok(source.includes('const [isCompact, setIsCompact] = useState(false);'));
+    assert.ok(source.includes('new ResizeObserver(updateCompact);'));
+    assert.ok(source.includes('if (threadId === activeThreadId) {'));
+    assert.ok(source.includes('setShowSidebar(false);'));
+    assert.ok(source.includes("aria-label={showSidebar ? '隐藏侧边栏' : '返回对话列表'}"));
+    assert.ok(source.includes("data-compact-sidebar={isCompact && showSidebar ? 'true' : 'false'}"));
+    const css = await fs.readFile(path.join(ROOT, 'src/index.css'), 'utf8');
+    const compactStart = css.indexOf('@container (max-width: 680px)');
+    assert.ok(compactStart >= 0);
+    const compactCss = css.slice(compactStart);
+    assert.ok(compactCss.includes('width: 100%;'));
+    assert.ok(!compactCss.includes('display: none;'));
+    pass(
+      'CSL5_compact_chat_can_return_to_thread_list',
+      'compact chat mode exposes an accessible return-to-list control and no longer hides the sidebar with CSS'
+    );
+
     const toolUseStart = source.indexOf("case 'tool_use':");
     const toolUseEnd = source.indexOf("case 'tool_result':");
     const toolUseBlock = source.slice(toolUseStart, toolUseEnd);
     assert.ok(toolUseStart >= 0 && toolUseEnd > toolUseStart);
     assert.ok(!toolUseBlock.includes('persistMessage('));
     pass(
-      'CSL5_renderer_does_not_duplicate_tool_turn_persistence',
+      'CSL6_renderer_does_not_duplicate_tool_turn_persistence',
       'tool-use turns rely on main-process final persistence instead of writing a partial assistant message first'
     );
   } catch (err) {

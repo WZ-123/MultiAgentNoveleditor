@@ -63,8 +63,12 @@ async function runChatToolRoutingRegressionTest() {
   let driverSessionId = '';
   let idleSessionId = '';
   let stopReasonSessionId = '';
+  let writingPolicySessionId = '';
+  let characterPolicySessionId = '';
   let providerCallCount = 0;
   let capturedToolNames = [];
+  let capturedWritingToolNames = [];
+  let capturedCharacterToolNames = [];
   const workflowCalls = [];
   let capturedDriverSystemPrompt = '';
   let capturedIdleSystemPrompt = '';
@@ -112,6 +116,36 @@ async function runChatToolRoutingRegressionTest() {
       {
         name: 'read_skill',
         description: 'Read skill',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'read_chapter',
+        description: 'Read chapter',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'write_chapter',
+        description: 'Write chapter',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'read_character',
+        description: 'Read character',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'update_character',
+        description: 'Update character',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'enrich_character',
+        description: 'Enrich character',
+        inputSchema: { type: 'object', properties: {} },
+      },
+      {
+        name: 'update_world',
+        description: 'Update world',
         inputSchema: { type: 'object', properties: {} },
       },
     ]);
@@ -165,10 +199,12 @@ async function runChatToolRoutingRegressionTest() {
     await chatAgent.runTurn(sessionId, '把这段整理后交给子代理处理');
 
     assert.ok(capturedToolNames.includes('spawn_subagent'));
-  assert.ok(capturedToolNames.includes('WebSearch'));
-  assert.ok(capturedToolNames.includes('WebFetch'));
+    assert.ok(capturedToolNames.includes('WebSearch'));
+    assert.ok(capturedToolNames.includes('WebFetch'));
     assert.ok(capturedToolNames.includes('set_workflow_phase'));
-    assert.ok(capturedToolNames.includes('confirm_outline'));
+    assert.equal(capturedToolNames.includes('confirm_outline'), false);
+    assert.equal(capturedToolNames.includes('write_chapter'), false);
+    assert.equal(capturedToolNames.includes('update_world'), false);
     assert.equal(workflowCalls.length, 1);
     assert.equal(workflowCalls[0]?.mode, 'subagent');
     assert.equal(workflowCalls[0]?.subagentId, 'sa-lore-updater');
@@ -296,6 +332,66 @@ async function runChatToolRoutingRegressionTest() {
       'CTR4_provider_tool_loop_continues_even_when_stop_reason_is_end_turn',
       'chat provider loop continues on tool_use blocks even when an Anthropic-compatible endpoint misreports stopReason'
     );
+
+    anthropicProvider.sendMessage = async ({ tools }) => {
+      capturedWritingToolNames = (tools || []).map((tool) => tool.name);
+      return {
+        stopReason: 'end_turn',
+        content: [{ type: 'text', text: '写作工具已收窄。' }],
+      };
+    };
+    writingPolicySessionId = chatAgent.createSession({
+      editorContext: { novelId: 'novel-routing-regression', type: 'chapter', title: 'chapter-001.md' },
+      messages: [],
+    });
+    await chatAgent.runTurn(writingPolicySessionId, '帮我续写下一章并准备写入章节。');
+    assert.ok(capturedWritingToolNames.includes('write_chapter'));
+    assert.ok(capturedWritingToolNames.includes('read_chapter'));
+    assert.ok(capturedWritingToolNames.includes('WebSearch'));
+    assert.equal(capturedWritingToolNames.includes('update_world'), false);
+    assert.equal(capturedWritingToolNames.includes('update_character'), false);
+    assert.equal(
+      emittedEvents.some((event) => event.channel === 'chatAgent:event'
+        && event.payload?.sessionId === writingPolicySessionId
+        && event.payload?.kind === 'context_manifest'
+        && event.payload?.data?.toolPolicy?.id === 'writing'
+        && event.payload?.data?.toolPolicy?.omittedToolNames?.includes('update_world')),
+      true
+    );
+    pass(
+      'CTR5_writing_intent_uses_writing_tool_policy',
+      'writing turns keep chapter tools while omitting unrelated world and character mutators'
+    );
+
+    anthropicProvider.sendMessage = async ({ tools }) => {
+      capturedCharacterToolNames = (tools || []).map((tool) => tool.name);
+      return {
+        stopReason: 'end_turn',
+        content: [{ type: 'text', text: '角色工具已收窄。' }],
+      };
+    };
+    characterPolicySessionId = chatAgent.createSession({
+      editorContext: { novelId: 'novel-routing-regression', type: 'chapter', title: 'chapter-001.md' },
+      messages: [],
+    });
+    await chatAgent.runTurn(characterPolicySessionId, '修改楚岚的角色卡并补全角色资料。');
+    assert.ok(capturedCharacterToolNames.includes('read_character'));
+    assert.ok(capturedCharacterToolNames.includes('update_character'));
+    assert.ok(capturedCharacterToolNames.includes('enrich_character'));
+    assert.equal(capturedCharacterToolNames.includes('write_chapter'), false);
+    assert.equal(capturedCharacterToolNames.includes('update_world'), false);
+    assert.equal(
+      emittedEvents.some((event) => event.channel === 'chatAgent:event'
+        && event.payload?.sessionId === characterPolicySessionId
+        && event.payload?.kind === 'context_manifest'
+        && event.payload?.data?.toolPolicy?.id === 'character_edit'
+        && event.payload?.data?.toolPolicy?.omittedToolNames?.includes('write_chapter')),
+      true
+    );
+    pass(
+      'CTR6_character_edit_intent_uses_character_tool_policy',
+      'character edit turns keep character card tools while omitting chapter writing and world mutators'
+    );
   } catch (err) {
     fail('CTR_harness', err?.message || String(err));
   } finally {
@@ -310,6 +406,12 @@ async function runChatToolRoutingRegressionTest() {
     }
     if (stopReasonSessionId && chatAgent) {
       try { chatAgent.closeSession(stopReasonSessionId); } catch { /* ignore */ }
+    }
+    if (writingPolicySessionId && chatAgent) {
+      try { chatAgent.closeSession(writingPolicySessionId); } catch { /* ignore */ }
+    }
+    if (characterPolicySessionId && chatAgent) {
+      try { chatAgent.closeSession(characterPolicySessionId); } catch { /* ignore */ }
     }
     providerManager.getActiveProvider = originalGetActiveProvider;
     modelAliases.getAlias = originalGetAlias;

@@ -120,6 +120,14 @@ const DE_AI_NEW_SUMMARIZED_BLOCK = [
   '- 正确：改成具体可见的表情动作，如「嘴角微微上扬」「她笑了，干净明亮」。',
 ].join('\n');
 
+const DE_AI_PARAGRAPH_FUNCTION_LINES = [
+  '### 25. 避免机械的一句一段，按段落功能组织自然段',
+  '- 错误：连续3个以上非对话单句自然段讲同一件事、同一组背景说明、同一个动作链或同一层心理，只是机械换行。',
+  '- 这会让正文像短视频文案或模型输出，而不是小说自然段；问题不在“短段”本身，而在单句段没有明确节奏功能。',
+  '- 正确：连续描述同一叙事功能时合并成一个自然段。只在强停顿、反转、惊吓、讽刺、情绪落点、对话分隔或场景/视角切换时保留单句段。',
+  '- 后审要求：连续单句自然段超过2段时，逐段判断是否有独立节奏目的；没有就合并相邻段落，只做少量衔接调整。',
+];
+
 const DE_AI_STRUCTURE_BLOCK = [
   '### 19. 避免 AI 式章末三段式收尾：抛问题 + 下结论 + 下一章预告',
   '- 错误：「她是否还有更多未曾展示的隐藏珍宝，等待着被发掘？而这场盛宴，也才刚刚拉开帷幕。」',
@@ -150,7 +158,11 @@ const DE_AI_STRUCTURE_BLOCK = [
   '- 错误：一段里频繁用「——」补充解释、转折、插入旁白，几乎每两句就来一次。',
   '- 人类作者通常只在少数需要强停顿或插入语时用破折号；AI 则很容易把它当节奏器滥用。',
   '- 正确：能用逗号、句号直接说清的就直接说，不要把大量句子写成“前半句——后半句说明”的模板。',
+  '',
+  ...DE_AI_PARAGRAPH_FUNCTION_LINES,
 ].join('\n');
+
+const DE_AI_PARAGRAPH_FUNCTION_BLOCK = DE_AI_PARAGRAPH_FUNCTION_LINES.join('\n');
 
 const DE_AI_CROSS_PARAGRAPH_BLOCK = [
   '### AI 审稿补充：跨段拆开的套句也要算',
@@ -330,6 +342,9 @@ function maybeRefreshSeedContent(seedId, currentContent, skillSeedMd) {
   }
   if (nextContent.includes('# 去 AI 味写作指南') && !nextContent.includes('AI 式章末三段式收尾')) {
     nextContent = `${nextContent.trim()}\n\n${DE_AI_STRUCTURE_BLOCK}\n`;
+  }
+  if (nextContent.includes('# 去 AI 味写作指南') && !nextContent.includes('避免机械的一句一段')) {
+    nextContent = `${nextContent.trim()}\n\n${DE_AI_PARAGRAPH_FUNCTION_BLOCK}\n`;
   }
   return nextContent;
 }

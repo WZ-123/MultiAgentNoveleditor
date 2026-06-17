@@ -33,8 +33,8 @@ const TAB_PREFIX = 'chapter:';
 const BLUEPRINT_PREFIX = 'blueprint:';
 const SETTINGS_PREFIX = 'settings:';
 const DATA_PREFIX = 'data:'; // character, world, outline, timeline, style
-const DEFAULT_RIGHT_PANEL_WIDTH = 520;
-const MIN_RIGHT_PANEL_WIDTH = 360;
+const DEFAULT_RIGHT_PANEL_WIDTH = 640;
+const MIN_RIGHT_PANEL_WIDTH = 420;
 const RIGHT_PANEL_WIDTH_STORAGE_KEY = 'mana-right-panel-width-v1';
 const EDITOR_CONTEXT_MENU_WIDTH = 220;
 const makeId = (prefix) =>
@@ -1579,33 +1579,6 @@ function App() {
                 )}
               </div>
               <div className="flex-1 overflow-y-auto p-2 text-sm">
-                <div className="font-bold mb-2 px-2 text-gray-400">{t('app.openEditors')}</div>
-                {editorTabs.length === 0 ? (
-                  <div className="px-2 py-1 text-gray-500">{t('app.noOpenEditors')}</div>
-                ) : (
-                  editorTabs.map((tab) => {
-                    const tabIcon = tab.type === 'data'
-                      ? { label: 'DATA', color: 'text-purple-400' }
-                      : tab.type === 'blueprint'
-                      ? { label: 'BP', color: 'text-purple-400' }
-                      : tab.type === 'settings'
-                      ? { label: 'SET', color: 'text-gray-400' }
-                      : { label: 'MD', color: 'text-yellow-400' };
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        className={`w-full text-left px-2 py-1 cursor-pointer flex items-center gap-2 ${
-                          tab.id === activeEditorTab ? 'bg-vscode-active-item text-white' : 'hover:bg-vscode-active-item'
-                        }`}
-                        onClick={() => setActiveEditorTab(tab.id)}
-                      >
-                        <span className={`${tabIcon.color} text-xs w-7 shrink-0 text-center`}>{tabIcon.label}</span>
-                        <span className="truncate">{tab.title}</span>
-                      </button>
-                    );
-                  })
-                )}
                 {/* NOTE: 写作流程 / Pipeline 编排功能尚未完成，暂时隐藏 */}
                 {/*
                 <div className="font-bold mt-4 mb-2 px-2 text-gray-400 flex items-center justify-between gap-2">
@@ -1826,7 +1799,8 @@ function App() {
       <div className="flex-1 flex flex-col bg-vscode-editor-bg min-w-0">
         
         {/* Tabs */}
-        <div className="flex bg-vscode-sidebar border-b border-vscode-panel-border overflow-x-auto min-h-9">
+        <div className="flex bg-vscode-sidebar border-b border-vscode-panel-border min-h-9 min-w-0 overflow-hidden">
+          <div className="flex flex-1 min-w-0 overflow-x-auto overflow-y-hidden" data-testid="editor-tab-strip">
             {editorTabs.map((tab) => (
               <TabItem
                 key={tab.id}
@@ -1841,8 +1815,9 @@ function App() {
                 {t('app.noOpenFiles')}
               </div>
             )}
-            <div className="flex-1" />
-            <div className="px-2 flex items-center gap-3 text-xs border-l border-vscode-panel-border shrink-0">
+          </div>
+          <div className="flex shrink-0 border-l border-vscode-panel-border bg-vscode-sidebar" data-testid="editor-fixed-actions">
+            <div className="px-2 flex items-center gap-3 text-xs shrink-0">
               <div className="shrink-0">
                 <WorkspaceSwitcher onImportExternal={() => { loadExistingNovels(); setShowImportPanel(true); }} onActiveNovelChanged={refreshActiveNovelState} />
               </div>
@@ -1859,6 +1834,7 @@ function App() {
               <MessageSquare size={14} />
               <span className="hidden sm:inline">{t('app.aiChat')}</span>
             </button>
+          </div>
         </div>
 
         {/* Editor + Right Panel row */}

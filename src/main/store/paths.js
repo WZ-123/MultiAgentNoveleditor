@@ -81,6 +81,7 @@ function novelPaths(novelDir) {
     mana: path.join(novelDir, '.mana'),
     manaLock: path.join(novelDir, '.mana', 'lock'),
     manaIndex: path.join(novelDir, '.mana', 'index.json'),
+    charactersIndex: path.join(novelDir, '.mana', 'characters-index.json'),
   };
 }
 

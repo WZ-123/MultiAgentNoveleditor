@@ -98,6 +98,22 @@ async function runChapterPostWriteSyncRegressionTest() {
       supplementMarkdown: '',
       timelineEvents: [],
     },
+    '{"summary":"坏 JSON 摘要" "timelineEvents":[]}',
+    {
+      summary: '修复后摘要',
+      outlineActualSummary: '修复后大纲摘要',
+      supplementMarkdown: '- 修复后补充',
+      timelineEvents: [
+        {
+          when: '傍晚',
+          where: '鹏城天台',
+          participants: ['楚岚'],
+          description: '楚岚在天台确认下一步行动。',
+        },
+      ],
+    },
+    '{"summary":"再次坏 JSON" "timelineEvents":[]}',
+    '{"summary":"修复也坏" "timelineEvents":[]}',
   ];
 
   try {
@@ -124,7 +140,7 @@ async function runChapterPostWriteSyncRegressionTest() {
     runSubagentModule.runSubagent = async () => {
       const payload = responses[Math.min(providerCallCount, responses.length - 1)];
       providerCallCount += 1;
-      return { output: JSON.stringify(payload) };
+      return { output: typeof payload === 'string' ? payload : JSON.stringify(payload) };
     };
     delete require.cache[require.resolve(path.join(ROOT, 'src/main/runtime/chapterPostWriteService'))];
     const { persistChapterArtifacts } = require(path.join(ROOT, 'src/main/runtime/chapterPostWriteService'));
@@ -195,8 +211,46 @@ async function runChapterPostWriteSyncRegressionTest() {
     } else {
       fail('P4_empty_timeline_response_preserves_existing_events', JSON.stringify({ third, timelineAfterThird, providerCallCount }));
     }
+
+    const fourth = await persistChapterArtifacts({ draft, abortSignal: null });
+    const timelineAfterFourth = await novelData.queryTimeline(seeded.dir, { chapterRef: draft.name });
+    const summaryAfterFourth = await novelData.readSummary(seeded.dir, draft.name);
+    const fourthWarnings = Array.isArray(fourth.warnings) ? fourth.warnings.join(' | ') : '';
+    if (
+      fourth.summarySaved
+      && fourth.timelineCount === 1
+      && /修复后摘要/.test(summaryAfterFourth)
+      && timelineAfterFourth.length === 1
+      && /鹏城天台/.test(timelineAfterFourth[0]?.where || '')
+      && /自动修复后继续同步/.test(fourthWarnings)
+      && providerCallCount === 5
+    ) {
+      pass('P5_invalid_json_is_repaired_before_sync', 'invalid analysis JSON was repaired and post-write sync continued');
+    } else {
+      fail('P5_invalid_json_is_repaired_before_sync', JSON.stringify({ fourth, timelineAfterFourth, summaryAfterFourth, providerCallCount }));
+    }
+
+    const fifth = await persistChapterArtifacts({ draft, abortSignal: null });
+    const timelineAfterFifth = await novelData.queryTimeline(seeded.dir, { chapterRef: draft.name });
+    const summaryAfterFifth = await novelData.readSummary(seeded.dir, draft.name);
+    const fifthWarnings = Array.isArray(fifth.warnings) ? fifth.warnings.join(' | ') : '';
+    if (
+      fifth.summarySaved
+      && fifth.timelineCount === 0
+      && fifth.outlineUpdated === 0
+      && /章节草稿/.test(summaryAfterFifth)
+      && timelineAfterFifth.length === 1
+      && /鹏城天台/.test(timelineAfterFifth[0]?.where || '')
+      && /安全兜底摘要/.test(fifthWarnings)
+      && /保留旧数据/.test(fifthWarnings)
+      && providerCallCount === 7
+    ) {
+      pass('P6_unrepairable_json_saves_safe_summary_without_wiping_timeline', 'unrepairable JSON still saves a fallback summary and preserves existing timeline');
+    } else {
+      fail('P6_unrepairable_json_saves_safe_summary_without_wiping_timeline', JSON.stringify({ fifth, timelineAfterFifth, summaryAfterFifth, providerCallCount }));
+    }
   } catch (err) {
-    fail('P5_harness', err.message || String(err));
+    fail('P7_harness', err.message || String(err));
   } finally {
     providerManager.getActiveProvider = originalGetActiveProvider;
     modelAliases.getAlias = originalGetAlias;
