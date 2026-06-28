@@ -52,6 +52,7 @@ export const messages = {
       all: '全部',
       chapters: '章节',
       characters: '角色',
+      assets: '资产',
       world: '世界观',
       timeline: '时间线',
       noResults: '未找到匹配结果',
@@ -61,6 +62,7 @@ export const messages = {
       chapterContent: '章节内容',
       chapterName: '章节标题',
       characterInfo: '角色信息',
+      assetInfo: '资产信息',
       worldLore: '世界观设定',
       worldPlace: '地点',
       timelineEvent: '时间线事件',
@@ -301,6 +303,7 @@ export const messages = {
       all: 'All',
       chapters: 'Chapters',
       characters: 'Characters',
+      assets: 'Assets',
       world: 'World',
       timeline: 'Timeline',
       noResults: 'No results found',
@@ -310,6 +313,7 @@ export const messages = {
       chapterContent: 'Chapter Content',
       chapterName: 'Chapter Title',
       characterInfo: 'Character Info',
+      assetInfo: 'Asset Info',
       worldLore: 'World Lore',
       worldPlace: 'Place',
       timelineEvent: 'Timeline Event',
@@ -694,4 +698,3 @@ export const messages = {
     },
   },
 };
-

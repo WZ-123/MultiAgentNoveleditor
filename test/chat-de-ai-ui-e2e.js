@@ -192,7 +192,8 @@ async function runChatDeAiUiRegressionTest(mainWindow) {
         async function sendChatMessage(text, checks, timeout = 15000) {
           const input = document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]');
           if (!input) return { ok: false, step: 'find_input' };
-          const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+          const proto = input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+          const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
           if (setter) setter.call(input, text);
           else input.value = text;
           input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -232,7 +233,8 @@ async function runChatDeAiUiRegressionTest(mainWindow) {
         async function sendChatMessage(text, checks, timeout = 15000) {
           const input = document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]');
           if (!input) return { ok: false, step: 'find_input' };
-          const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+          const proto = input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+          const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
           if (setter) setter.call(input, text);
           else input.value = text;
           input.dispatchEvent(new Event('input', { bubbles: true }));

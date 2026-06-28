@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Search, X, FileText, User, Globe, Clock } from 'lucide-react';
+import { Search, X, FileText, User, Globe, Clock, Package } from 'lucide-react';
 import { useI18n } from '@/i18n/LanguageContext.jsx';
 
 const CATEGORY_OPTIONS = [
   { key: 'all', icon: null },
   { key: 'chapters', icon: FileText },
   { key: 'characters', icon: User },
+  { key: 'assets', icon: Package },
   { key: 'world', icon: Globe },
   { key: 'timeline', icon: Clock },
 ];
@@ -14,6 +15,7 @@ const TYPE_LABEL_MAP = {
   chapter_content: 'chapterContent',
   chapter_name: 'chapterName',
   character: 'characterInfo',
+  asset: 'assetInfo',
   world_lore: 'worldLore',
   world_place: 'worldPlace',
   timeline_event: 'timelineEvent',
@@ -23,6 +25,7 @@ const TYPE_ICON_MAP = {
   chapter_content: FileText,
   chapter_name: FileText,
   character: User,
+  asset: Package,
   world_lore: Globe,
   world_place: Globe,
   timeline_event: Clock,
@@ -34,9 +37,10 @@ const TYPE_ICON_MAP = {
  * @param {string|null} props.novelId
  * @param {(fileName: string) => void} props.onOpenChapter
  * @param {(id: string) => void} props.onOpenCharacter
+ * @param {(id: string) => void} [props.onOpenAsset]
  * @param {() => void} [props.onSwitchSidebar]
  */
-export function SearchPanel({ novelId, onOpenChapter, onOpenCharacter, onSwitchSidebar }) {
+export function SearchPanel({ novelId, onOpenChapter, onOpenCharacter, onOpenAsset, onSwitchSidebar }) {
   const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -120,11 +124,13 @@ export function SearchPanel({ novelId, onOpenChapter, onOpenCharacter, onSwitchS
     const target = result.target;
     if (!target) return;
     if (target.type === 'chapter' && target.chapterFileName) {
-      onOpenChapter(target.chapterFileName);
+      onOpenChapter(target.chapterFileName, { startOffset: target.startOffset, endOffset: target.endOffset });
     } else if (target.type === 'character' && target.characterId) {
       onOpenCharacter(target.characterId);
+    } else if (target.type === 'asset' && target.assetId && onOpenAsset) {
+      onOpenAsset(target.assetId);
     }
-  }, [onOpenChapter, onOpenCharacter]);
+  }, [onOpenChapter, onOpenCharacter, onOpenAsset]);
 
   const groupResultsByType = (items) => {
     const groups = {};

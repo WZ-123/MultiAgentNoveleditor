@@ -506,39 +506,175 @@ async function patchCharacterMemory(novelDir, characterId, patch = {}) {
 
 // ---------------- Assets ----------------
 
-function emptyAssets() { return { schemaVersion: 1, assets: [] }; }
+const ASSET_SCHEMA_VERSION = 2;
+
+function emptyAssets() { return { schemaVersion: ASSET_SCHEMA_VERSION, assets: [] }; }
+
+function _safeAssetId(id) {
+  return _cleanStr(id).replace(/[^\w.\-\u4e00-\u9fff]+/g, '_').replace(/^_+|_+$/g, '') || generateId('asset');
+}
+
+function _assetFilePath(novelDir, assetId) {
+  const np = novelPaths(novelDir);
+  return path.join(np.assetItems, `${_safeAssetId(assetId)}.json`);
+}
+
+function _activeAssetGrantEntries(asset) {
+  return (Array.isArray(asset?.grantedTo) ? asset.grantedTo : [])
+    .filter((entry) => entry && entry.revoked !== true && _cleanStr(entry.charId));
+}
+
+function normalizeAsset(asset = {}) {
+  if (!asset || typeof asset !== 'object' || Array.isArray(asset)) return null;
+  const id = _cleanStr(asset.id) || generateId('asset');
+  const raw = _cloneStructuredValue(asset);
+  const grantedTo = Array.isArray(asset.grantedTo)
+    ? asset.grantedTo.map((entry) => _cloneStructuredValue(entry)).filter(Boolean)
+    : [];
+  return {
+    ...raw,
+    schemaVersion: ASSET_SCHEMA_VERSION,
+    id,
+    name: _cleanStr(asset.name) || id,
+    type: _cleanStr(asset.type),
+    status: _cleanStr(asset.status) || 'active',
+    aliases: Array.isArray(asset.aliases) ? asset.aliases.map(_cleanStr).filter(Boolean) : [],
+    description: _cleanStr(asset.description),
+    location: _cleanStr(asset.location),
+    ownerId: _cleanStr(asset.ownerId),
+    relatedCharacterIds: Array.isArray(asset.relatedCharacterIds)
+      ? asset.relatedCharacterIds.map(_cleanStr).filter(Boolean)
+      : [],
+    firstAppearanceChapter: _cleanStr(asset.firstAppearanceChapter),
+    lastKnownChapter: _cleanStr(asset.lastKnownChapter),
+    plotImportance: _cleanStr(asset.plotImportance),
+    visibility: _cleanStr(asset.visibility),
+    constraints: _cleanStr(asset.constraints),
+    exclusive: asset.exclusive === true,
+    grantedTo,
+  };
+}
+
+function _assetSummary(asset) {
+  const activeHolders = _activeAssetGrantEntries(asset).map((entry) => entry.charId);
+  return {
+    schemaVersion: ASSET_SCHEMA_VERSION,
+    id: asset.id,
+    name: asset.name || asset.id,
+    type: asset.type || '',
+    status: asset.status || 'active',
+    location: asset.location || '',
+    ownerId: asset.ownerId || '',
+    activeHolders,
+    updatedAt: asset.updatedAt || null,
+  };
+}
+
+async function _readAssetItemFiles(novelDir) {
+  const np = ensureNovelLayout(novelDir);
+  const files = await listJsonFiles(np.assetItems);
+  const assets = [];
+  for (const file of files) {
+    const asset = normalizeAsset(await readJson(file, null));
+    if (asset?.id) assets.push(asset);
+  }
+  return assets.sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
+}
+
+async function _writeAssetsIndex(novelDir, assets) {
+  const np = ensureNovelLayout(novelDir);
+  const normalized = (Array.isArray(assets) ? assets : []).map(normalizeAsset).filter(Boolean);
+  await writeJson(np.assetsMain, {
+    schemaVersion: ASSET_SCHEMA_VERSION,
+    storage: 'items',
+    assets: normalized.map(_assetSummary),
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+async function _ensureAssetStore(novelDir) {
+  const np = ensureNovelLayout(novelDir);
+  const itemFiles = await listJsonFiles(np.assetItems);
+  if (itemFiles.length > 0) {
+    const assets = await _readAssetItemFiles(novelDir);
+    await _writeAssetsIndex(novelDir, assets);
+    return assets;
+  }
+
+  const data = await readJson(np.assetsMain, null);
+  const legacyAssets = Array.isArray(data?.assets) ? data.assets : [];
+  if (!legacyAssets.length) {
+    await _writeAssetsIndex(novelDir, []);
+    return [];
+  }
+
+  const migrated = legacyAssets.map(normalizeAsset).filter(Boolean);
+  for (const asset of migrated) {
+    await writeJson(_assetFilePath(novelDir, asset.id), {
+      ...asset,
+      migratedAt: asset.migratedAt || new Date().toISOString(),
+    });
+  }
+  await _writeAssetsIndex(novelDir, migrated);
+  return migrated;
+}
 
 async function readAssetsFile(novelDir) {
-  const np = novelPaths(novelDir);
-  const data = await readJson(np.assetsMain, null);
-  return data && typeof data === 'object' ? data : emptyAssets();
+  const assets = await _ensureAssetStore(novelDir);
+  return { ...emptyAssets(), storage: 'items', assets };
 }
 
 async function writeAssetsFile(novelDir, data) {
   const np = ensureNovelLayout(novelDir);
-  await writeJson(np.assetsMain, data);
+  const assets = Array.isArray(data?.assets) ? data.assets.map(normalizeAsset).filter(Boolean) : [];
+  await withMutex(np.assetsMain, async () => {
+    await fs.rm(np.assetItems, { recursive: true, force: true });
+    await fs.mkdir(np.assetItems, { recursive: true });
+    for (const asset of assets) {
+      await writeJson(_assetFilePath(novelDir, asset.id), asset);
+    }
+    await _writeAssetsIndex(novelDir, assets);
+  });
 }
 
 async function listAssets(novelDir) {
-  const data = await readAssetsFile(novelDir);
-  return Array.isArray(data.assets) ? data.assets : [];
+  return _ensureAssetStore(novelDir);
 }
 
 async function readAsset(novelDir, id) {
-  const list = await listAssets(novelDir);
-  return list.find((a) => a.id === id) || null;
+  const assetId = _cleanStr(id);
+  if (!assetId) return null;
+  await _ensureAssetStore(novelDir);
+  return normalizeAsset(await readJson(_assetFilePath(novelDir, assetId), null));
 }
 
 async function upsertAsset(novelDir, asset) {
   if (!asset?.id) throw new Error('asset.id required');
   const np = ensureNovelLayout(novelDir);
   return withMutex(np.assetsMain, async () => {
-    const data = await readAssetsFile(novelDir);
-    const idx = data.assets.findIndex((a) => a.id === asset.id);
-    if (idx >= 0) data.assets[idx] = { ...data.assets[idx], ...asset };
-    else data.assets.push({ schemaVersion: 1, grantedTo: [], ...asset });
-    await writeAssetsFile(novelDir, data);
-    return asset;
+    await _ensureAssetStore(novelDir);
+    const current = await readJson(_assetFilePath(novelDir, asset.id), null);
+    const next = normalizeAsset({
+      ...(current || {}),
+      grantedTo: Array.isArray(current?.grantedTo) ? current.grantedTo : [],
+      ...asset,
+      updatedAt: new Date().toISOString(),
+    });
+    await writeJson(_assetFilePath(novelDir, next.id), next);
+    await _writeAssetsIndex(novelDir, await _readAssetItemFiles(novelDir));
+    return next;
+  });
+}
+
+async function deleteAsset(novelDir, id) {
+  const assetId = _cleanStr(id);
+  if (!assetId) throw new Error('asset id required');
+  const np = ensureNovelLayout(novelDir);
+  return withMutex(np.assetsMain, async () => {
+    await _ensureAssetStore(novelDir);
+    await deleteFile(_assetFilePath(novelDir, assetId));
+    await _writeAssetsIndex(novelDir, await _readAssetItemFiles(novelDir));
+    return { id: assetId, deleted: true };
   });
 }
 
@@ -631,7 +767,7 @@ function _applyAssetPatchEdit(asset, edit) {
 async function applyAssetPatch(novelDir, patch = {}) {
   const np = ensureNovelLayout(novelDir);
   return withMutex(np.assetsMain, async () => {
-    const data = await readAssetsFile(novelDir);
+    await _ensureAssetStore(novelDir);
     const rawEdits = Array.isArray(patch.edits) ? patch.edits : [];
     const edits = rawEdits.map((edit, index) => _coerceAssetPatchEdit(edit, index));
     if (!edits.length) throw new Error('applyAssetPatch requires a non-empty edits array');
@@ -644,7 +780,7 @@ async function applyAssetPatch(novelDir, patch = {}) {
       seenAssetIds.add(edit.assetId);
     }
 
-    const nextAssets = Array.isArray(data.assets) ? data.assets.map((asset) => _cloneStructuredValue(asset)) : [];
+    const nextAssets = await _readAssetItemFiles(novelDir);
     const updatedAssets = [];
     let operationCount = 0;
 
@@ -657,14 +793,19 @@ async function applyAssetPatch(novelDir, patch = {}) {
         _assertAssetGrantSnapshot(currentAsset, edit.baseGrantedTo, edit.assetId);
       }
 
-      const nextAsset = _applyAssetPatchEdit(currentAsset, edit);
+      const nextAsset = normalizeAsset({
+        ..._applyAssetPatchEdit(currentAsset, edit),
+        updatedAt: new Date().toISOString(),
+      });
       nextAssets[assetIndex] = nextAsset;
       updatedAssets.push(_cloneStructuredValue(nextAsset));
       operationCount += edit.operations.length;
     }
 
-    data.assets = nextAssets;
-    await writeAssetsFile(novelDir, data);
+    for (const asset of updatedAssets) {
+      await writeJson(_assetFilePath(novelDir, asset.id), asset);
+    }
+    await _writeAssetsIndex(novelDir, await _readAssetItemFiles(novelDir));
 
     return {
       assetCount: updatedAssets.length,
@@ -715,6 +856,65 @@ async function revokeAsset(novelDir, { assetId, charId, chapterRef, note }) {
     }],
   });
   return result.assets[0] || null;
+}
+
+async function auditAssets(novelDir) {
+  const [assets, characters, chapters] = await Promise.all([
+    listAssets(novelDir),
+    listCharacters(novelDir).catch(() => []),
+    listChapters(novelDir).catch(() => []),
+  ]);
+  const characterIds = new Set((characters || []).map((ch) => _cleanStr(ch.id)).filter(Boolean));
+  const chapterNames = new Set((chapters || []).map((chapter) => _cleanStr(chapter.name)).filter(Boolean));
+  const issues = [];
+
+  for (const asset of assets) {
+    const activeGrants = _activeAssetGrantEntries(asset);
+    const addIssue = (severity, code, message, extra = {}) => {
+      issues.push({ severity, code, assetId: asset.id, assetName: asset.name || asset.id, message, ...extra });
+    };
+
+    if (asset.exclusive && activeGrants.length > 1) {
+      addIssue('error', 'exclusive_multi_holder', `独占资产当前有 ${activeGrants.length} 个活跃持有人`, { holders: activeGrants.map((entry) => entry.charId) });
+    }
+
+    if (['destroyed', 'consumed', 'lost'].includes(_cleanStr(asset.status).toLowerCase()) && activeGrants.length > 0) {
+      addIssue('warning', 'inactive_asset_held', `资产状态为 ${asset.status}，但仍有活跃持有人`, { holders: activeGrants.map((entry) => entry.charId) });
+    }
+
+    for (const charId of [
+      asset.ownerId,
+      ...(Array.isArray(asset.relatedCharacterIds) ? asset.relatedCharacterIds : []),
+      ...activeGrants.map((entry) => entry.charId),
+    ].map(_cleanStr).filter(Boolean)) {
+      if (!characterIds.has(charId)) addIssue('warning', 'unknown_character', `引用了不存在的角色：${charId}`, { charId });
+    }
+
+    for (const chapterRef of [
+      asset.firstAppearanceChapter,
+      asset.lastKnownChapter,
+      ...(Array.isArray(asset.grantedTo) ? asset.grantedTo.map((entry) => entry.chapterRef) : []),
+    ].map(_cleanStr).filter(Boolean)) {
+      if (/^chapter-.*\.md$/i.test(chapterRef) && !chapterNames.has(chapterRef)) {
+        addIssue('warning', 'unknown_chapter', `引用了不存在的章节：${chapterRef}`, { chapterRef });
+      }
+    }
+
+    const grants = Array.isArray(asset.grantedTo) ? asset.grantedTo : [];
+    for (let index = 1; index < grants.length; index += 1) {
+      const previousAt = Date.parse(grants[index - 1]?.at || '');
+      const currentAt = Date.parse(grants[index]?.at || '');
+      if (Number.isFinite(previousAt) && Number.isFinite(currentAt) && currentAt < previousAt) {
+        addIssue('info', 'grant_time_order', '授权记录时间不是递增顺序', { index });
+        break;
+      }
+    }
+  }
+
+  return {
+    issueCount: issues.length,
+    issues,
+  };
 }
 
 // ---------------- Timeline ----------------
@@ -1614,6 +1814,114 @@ async function writeChapterWithMeta(novelDir, name, content, metadata) {
   return { name: safe, path: file };
 }
 
+function _safeChapterRevisionStem(name) {
+  return String(name || 'chapter.md').replace(/[^\w.\-]/g, '_');
+}
+
+function _chapterRevisionPaths(novelDir, name) {
+  const np = ensureNovelLayout(novelDir);
+  const stem = _safeChapterRevisionStem(name);
+  return {
+    index: path.join(np.chapterRevisions, `${stem}.jsonl`),
+    snapshots: path.join(np.chapterRevisions, stem),
+  };
+}
+
+async function _writeJsonlFile(file, entries) {
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  const lines = (Array.isArray(entries) ? entries : []).map((entry) => JSON.stringify(entry));
+  await fs.writeFile(file, lines.length ? `${lines.join('\n')}\n` : '', 'utf8');
+}
+
+async function createChapterRevision(novelDir, name, content, metadata = null, options = {}) {
+  if (options?.createRevision === false) return null;
+  const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
+  if (!safeName) return null;
+
+  const source = _cleanStr(options.source) || 'manual';
+  const now = new Date();
+  const paths = _chapterRevisionPaths(novelDir, safeName);
+  await fs.mkdir(paths.snapshots, { recursive: true });
+  const existing = await readJsonl(paths.index);
+  const latest = existing[existing.length - 1] || null;
+
+  if (source === 'autosave' && latest?.source === 'autosave') {
+    const latestTs = Date.parse(latest.updatedAt || latest.createdAt || '');
+    if (Number.isFinite(latestTs) && now.getTime() - latestTs < 5 * 60 * 1000 && latest.snapshotFile) {
+      const updatedEntry = {
+        ...latest,
+        updatedAt: now.toISOString(),
+        contentLength: String(content || '').length,
+        label: _cleanStr(options.revisionLabel) || latest.label || '自动保存',
+        metadata: metadata || null,
+      };
+      await fs.writeFile(path.join(paths.snapshots, latest.snapshotFile), serializeFrontmatter(metadata || {}, content || ''), 'utf8');
+      await _writeJsonlFile(paths.index, [...existing.slice(0, -1), updatedEntry]);
+      return updatedEntry;
+    }
+  }
+
+  const revisionId = `${now.getTime().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  const snapshotFile = `${revisionId}.md`;
+  const entry = {
+    id: revisionId,
+    chapterName: safeName,
+    source,
+    label: _cleanStr(options.revisionLabel) || (source === 'autosave' ? '自动保存' : '保存'),
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+    contentLength: String(content || '').length,
+    snapshotFile,
+    metadata: metadata || null,
+  };
+  await fs.writeFile(path.join(paths.snapshots, snapshotFile), serializeFrontmatter(metadata || {}, content || ''), 'utf8');
+  await appendJsonl(paths.index, entry);
+  return entry;
+}
+
+async function listChapterRevisions(novelDir, name) {
+  const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
+  if (!safeName) return [];
+  const paths = _chapterRevisionPaths(novelDir, safeName);
+  const entries = await readJsonl(paths.index);
+  return entries
+    .filter((entry) => entry?.id && entry.snapshotFile)
+    .sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
+}
+
+async function readChapterRevision(novelDir, name, revisionId) {
+  const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
+  const safeRevisionId = _cleanStr(revisionId);
+  if (!safeName || !safeRevisionId) throw new Error('chapter name and revisionId are required');
+  const paths = _chapterRevisionPaths(novelDir, safeName);
+  const entries = await readJsonl(paths.index);
+  const entry = entries.find((item) => item?.id === safeRevisionId);
+  if (!entry?.snapshotFile) throw new Error(`chapter revision not found: ${safeRevisionId}`);
+  const raw = await fs.readFile(path.join(paths.snapshots, entry.snapshotFile), 'utf8');
+  const { metadata, body } = parseFrontmatter(raw);
+  return {
+    entry,
+    content: body || raw,
+    metadata: metadata || entry.metadata || null,
+  };
+}
+
+async function restoreChapterRevision(novelDir, name, revisionId) {
+  const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
+  const revision = await readChapterRevision(novelDir, safeName, revisionId);
+  const result = await writeChapterWithMeta(novelDir, safeName, revision.content || '', revision.metadata || null);
+  const restoredRevision = await createChapterRevision(novelDir, safeName, revision.content || '', revision.metadata || null, {
+    source: 'restore',
+    revisionLabel: `恢复 ${revision.entry?.label || revision.entry?.id || ''}`.trim(),
+  });
+  return {
+    ...result,
+    content: revision.content || '',
+    metadata: revision.metadata || null,
+    revision: restoredRevision,
+  };
+}
+
 function _findLiteralRanges(haystack, needle) {
   if (!needle) return [];
   const matches = [];
@@ -2172,7 +2480,7 @@ module.exports = {
   rebuildCharacterIndex, readCharacterIndex, listCharacterIndex,
   readCharacterMemory, writeCharacterMemory, patchCharacterMemory, normalizeCharacterMemory,
   // assets
-  listAssets, readAsset, upsertAsset, grantAsset, revokeAsset, applyAssetPatch,
+  normalizeAsset, listAssets, readAsset, upsertAsset, deleteAsset, grantAsset, revokeAsset, applyAssetPatch, auditAssets,
   // timeline
   listTimeline, appendTimelineEvent, updateTimelineEvent, replaceTimeline, dedupeTimeline, queryTimeline, syncTimelineEventsForChapter,
   // summaries
@@ -2182,6 +2490,7 @@ module.exports = {
   // chapters
   listChapters, listChapterMetas, readChapter, readChapterRaw, readChapterWithMeta, readChapterMeta, resolveChapterTitle,
   writeChapter, writeChapterWithMeta, replaceChapterText, applyChapterPatch, computeNextInsertNameForNovel,
+  createChapterRevision, listChapterRevisions, readChapterRevision, restoreChapterRevision,
   // outlines
   readOutlineNodes, writeOutlineNodes, writeOutlineNodesToHierarchy,
   writeHierarchicalOutline,

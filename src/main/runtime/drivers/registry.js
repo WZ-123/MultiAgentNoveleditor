@@ -20,6 +20,7 @@
  */
 
 const appConfig = require('../../store/appConfig');
+const clientEvents = require('../clientEvents');
 
 /** @type {Map<string, import('./driver.d.js').AgentRuntimeDriver>} */
 const drivers = new Map();
@@ -33,13 +34,15 @@ function setWebContents(wc) {
 }
 
 function emitChanged() {
+  const payload = { ts: Date.now() };
   if (webContentsRef && !webContentsRef.isDestroyed?.()) {
     try {
-      webContentsRef.send('runtime:changed', { ts: Date.now() });
+      webContentsRef.send('runtime:changed', payload);
     } catch (err) {
       console.error('[driverRegistry] emit failed', err);
     }
   }
+  clientEvents.emit('runtime:changed', payload);
 }
 
 function register(driver) {

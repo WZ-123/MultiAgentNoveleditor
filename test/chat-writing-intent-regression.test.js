@@ -89,6 +89,8 @@ async function runChatWritingIntentRegressionTest() {
   const originalGetActiveDriverId = workflowOrchestrator.getActiveDriverId;
   const originalSendMessage = anthropicProvider.sendMessage;
   const originalGenerateChapterDraft = chapterDraftService.generateChapterDraft;
+  const originalReviewExistingChapterDraft = chapterDraftService.reviewExistingChapterDraft;
+  const originalCallTool = mcpClient.callTool;
 
   let cleanupRoot = '';
   let sessionId = '';
@@ -355,6 +357,120 @@ async function runChatWritingIntentRegressionTest() {
     }
     chatAgent.closeSession(fourthSessionId);
 
+    const styleBlockThread = await chatHistory.createThread({ title: '文风问题阻塞写入回归', novelId: seeded.entry.id });
+    const styleBlockSessionId = chatAgent.createSession({
+      editorContext: { novelId: seeded.entry.id, chapterCount: 3, novelTitle: '聊天写作意图回归小说' },
+      messages: [],
+      threadId: styleBlockThread.id,
+    });
+    const styleBlockSession = chatAgent.getSession(styleBlockSessionId);
+    styleBlockSession.pendingChapterDraft = {
+      name: 'chapter-005.md',
+      displayName: '第5章',
+      title: '文风待审章节',
+      text: '不是害怕，而是命运的回响。',
+    };
+    styleBlockSession.pendingChapterIssues = [{
+      id: 'style-open-1',
+      source: 'style',
+      sourceAgent: 'style',
+      category: 'style',
+      severity: 'blocking',
+      status: 'open',
+      summary: '文风偏 AI 味。',
+      note: '文风偏 AI 味。',
+      paragraphIds: ['p-0'],
+      paragraphIndexes: [0],
+      excerpt: '不是害怕，而是命运的回响。',
+    }];
+    styleBlockSession.workflowPhase = 'writing';
+    await chatAgent.runTurn(styleBlockSessionId, '确认写入这一章');
+    let chapterFiveExists = true;
+    try {
+      await fs.access(path.join(seeded.dir, 'chapters', 'chapter-005.md'));
+    } catch {
+      chapterFiveExists = false;
+    }
+    if (chatAgent.getSession(styleBlockSessionId)?.pendingChapterDraft && !chapterFiveExists) {
+      pass('W9b_open_style_issue_blocks_chapter_confirmation', 'open style/prose review issues block chapter confirmation');
+    } else {
+      fail('W9b_open_style_issue_blocks_chapter_confirmation', JSON.stringify({ pending: chatAgent.getSession(styleBlockSessionId)?.pendingChapterDraft, chapterFiveExists }));
+    }
+    await chatAgent.runTurn(styleBlockSessionId, '忽略第1条');
+    const styleAfterIgnore = chatAgent.getSession(styleBlockSessionId);
+    const styleIssueStatus = styleAfterIgnore?.pendingChapterIssues?.find((issue) => issue.id === 'style-open-1')?.status;
+    if (styleIssueStatus === 'ignored') {
+      pass('W9c_ignored_chapter_issue_releases_blocker', 'explicitly ignored issue is no longer open');
+    } else {
+      fail('W9c_ignored_chapter_issue_releases_blocker', JSON.stringify(styleAfterIgnore?.pendingChapterIssues));
+    }
+    chatAgent.closeSession(styleBlockSessionId);
+
+    const previewThread = await chatHistory.createThread({ title: '草稿修复预览回归', novelId: seeded.entry.id });
+    const previewSessionId = chatAgent.createSession({
+      editorContext: { novelId: seeded.entry.id, chapterCount: 3, novelTitle: '聊天写作意图回归小说' },
+      messages: [],
+      threadId: previewThread.id,
+    });
+    const previewSession = chatAgent.getSession(previewSessionId);
+    previewSession.pendingChapterDraft = {
+      name: 'chapter-006.md',
+      displayName: '第6章',
+      title: '预览章节',
+      text: '不是害怕，而是命运的回响。',
+    };
+    previewSession.pendingChapterIssues = [{
+      id: 'prose-open-1',
+      source: 'prose_quality',
+      sourceAgent: 'prose_quality',
+      category: 'not_but_overuse',
+      severity: 'blocking',
+      status: 'open',
+      summary: 'AI 味 not-but 套句。',
+      note: 'AI 味 not-but 套句。',
+      paragraphIds: ['p-0'],
+      paragraphIndexes: [0],
+    }];
+    chapterDraftService.reviewExistingChapterDraft = async ({ draft }) => ({
+      issues: [],
+      blockingIssues: [],
+      advisoryIssues: [],
+      draft,
+    });
+    mcpClient.callTool = async (payload) => {
+      if (payload?.name === 'de_ai_ify') {
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({ revisedText: '他确实怕了，但还是把这口气咽回去，抬眼看向门外。' }),
+          }],
+        };
+      }
+      return originalCallTool(payload);
+    };
+    await chatAgent.runTurn(previewSessionId, '预览修复第1条');
+    const previewAfterBuild = chatAgent.getSession(previewSessionId);
+    const hadPendingFixPreview = !!previewAfterBuild?.pendingChapterFixPreview;
+    await chatAgent.runTurn(previewSessionId, '应用修复');
+    const previewAfterApply = chatAgent.getSession(previewSessionId);
+    if (
+      hadPendingFixPreview
+      && /他确实怕了/.test(previewAfterApply?.pendingChapterDraft?.text || '')
+      && !previewAfterApply?.pendingChapterFixPreview
+      && !(previewAfterApply?.pendingChapterIssues || []).some((issue) => issue.status === 'open')
+    ) {
+      pass('W9d_pending_draft_fix_preview_applies_after_confirmation', 'draft fix preview updates only session draft and clears reviewed issue after apply');
+    } else {
+      fail('W9d_pending_draft_fix_preview_applies_after_confirmation', JSON.stringify({
+        preview: previewAfterBuild?.pendingChapterFixPreview,
+        draft: previewAfterApply?.pendingChapterDraft,
+        issues: previewAfterApply?.pendingChapterIssues,
+      }));
+    }
+    mcpClient.callTool = originalCallTool;
+    chapterDraftService.reviewExistingChapterDraft = originalReviewExistingChapterDraft;
+    chatAgent.closeSession(previewSessionId);
+
     const outlineThread = await chatHistory.createThread({ title: '大纲确认自动续跑回归', novelId: seeded.entry.id });
     const outlineSessionId = chatAgent.createSession({
       editorContext: { novelId: seeded.entry.id, chapterCount: 3, novelTitle: '聊天写作意图回归小说' },
@@ -406,6 +522,8 @@ async function runChatWritingIntentRegressionTest() {
     workflowOrchestrator.getActiveDriverId = originalGetActiveDriverId;
     anthropicProvider.sendMessage = originalSendMessage;
     chapterDraftService.generateChapterDraft = originalGenerateChapterDraft;
+    chapterDraftService.reviewExistingChapterDraft = originalReviewExistingChapterDraft;
+    mcpClient.callTool = originalCallTool;
     if (originalElectronCache) {
       require.cache[electronModulePath] = originalElectronCache;
     } else {

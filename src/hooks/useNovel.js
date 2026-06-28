@@ -39,6 +39,16 @@ export function useNovel() {
     refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    if (!mana?.novel?.onActiveChanged) return undefined;
+    const off = mana.novel.onActiveChanged(() => {
+      refresh();
+    });
+    return () => {
+      try { off(); } catch {}
+    };
+  }, [mana, refresh]);
+
   const open = useCallback(async (id) => {
     if (!mana?.novel) return null;
     const r = await mana.novel.open(id);

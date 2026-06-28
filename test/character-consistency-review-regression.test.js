@@ -79,6 +79,10 @@ async function runCharacterConsistencyReviewRegressionTest() {
       assert.equal(workflowCalls.length, 1);
       assert.equal(workflowCalls[0]?.mode, 'subagent');
       assert.equal(workflowCalls[0]?.subagentId, 'sa-character-consistency-reviewer');
+      const reviewerInput = JSON.parse(workflowCalls[0]?.input || '{}');
+      assert.ok(reviewerInput.retrievedContext);
+      assert.ok(Array.isArray(reviewerInput.retrievedContext.items));
+      assert.ok(reviewerInput.retrievedContext.items.some((item) => item.sourceRef === 'character:shinano'));
       assert.equal(payload.chapterName, 'chapter-005.md');
       assert.deepEqual(payload.reviewedCharacterIds, ['shinano']);
       assert.equal(payload.annotations.length, 1);

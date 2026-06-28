@@ -51,6 +51,7 @@ async function runChapterPostWriteValidationRegressionTest() {
   const originalRunSubagent = runSubagentModule.runSubagent;
 
   let cleanupRoot = '';
+  let analysisCallCount = 0;
 
   try {
     const seeded = await seedNovel(ROOT);
@@ -73,15 +74,39 @@ async function runChapterPostWriteValidationRegressionTest() {
       maxOutputTokens: 512,
       temperature: 0,
     });
-    runSubagentModule.runSubagent = async () => ({
-      output: JSON.stringify({
-        summary: '校验摘要',
-        supplementMarkdown: '',
-        timelineEvents: [
-          { when: '晚上八点', where: '直播间', participants: ['楚岚'], description: '第四章直播事件' },
-        ],
-      }),
-    });
+    runSubagentModule.runSubagent = async () => {
+      const payloads = [
+        {
+          summary: '校验摘要',
+          supplementMarkdown: '',
+          timelineEvents: [
+            { when: '晚上八点', where: '直播间', participants: ['楚岚'], description: '第四章直播事件' },
+          ],
+        },
+        {
+          summary: '低置信摘要',
+          summaryConfidence: 0.92,
+          timelineConfidence: 0.42,
+          outlineConfidence: 0.81,
+          supplementMarkdown: '',
+          timelineEvents: [
+            { when: '错误时间', where: '错误地点', participants: ['楚岚'], description: '低置信事件不应覆盖。' },
+          ],
+        },
+        {
+          summary: '无理由清空摘要',
+          summaryConfidence: 0.95,
+          timelineConfidence: 0.95,
+          outlineConfidence: 0.95,
+          supplementMarkdown: '',
+          timelineEvents: [],
+          timelineShouldClear: true,
+        },
+      ];
+      const payload = payloads[Math.min(analysisCallCount, payloads.length - 1)];
+      analysisCallCount += 1;
+      return { output: JSON.stringify(payload) };
+    };
     delete require.cache[require.resolve(path.join(ROOT, 'src/main/runtime/chapterPostWriteService'))];
     const { persistChapterArtifacts } = require(path.join(ROOT, 'src/main/runtime/chapterPostWriteService'));
 
@@ -116,6 +141,57 @@ async function runChapterPostWriteValidationRegressionTest() {
       pass('V2_post_write_surfaces_blocking_timeline_validation', 'persistChapterArtifacts marked missing chapter and orphan chapter refs as blocking');
     } else {
       fail('V2_post_write_surfaces_blocking_timeline_validation', JSON.stringify(result));
+    }
+
+    const lowConfidenceResult = await persistChapterArtifacts({
+      draft: {
+        name: 'chapter-004.md',
+        displayName: '第4章',
+        title: '直播间论牛',
+        summary: '章节草稿',
+        text: '正文占位。',
+      },
+      abortSignal: null,
+    });
+    const timelineAfterLowConfidence = await novelData.queryTimeline(seeded.dir, { chapterRef: 'chapter-004.md' });
+    const lowConfidenceWarnings = Array.isArray(lowConfidenceResult.warnings) ? lowConfidenceResult.warnings.join(' | ') : '';
+    const lowConfidenceToolNames = (lowConfidenceResult.toolCalls || []).map((toolCall) => toolCall.name);
+    if (
+      lowConfidenceResult.summarySaved
+      && lowConfidenceResult.timelineCount === 1
+      && lowConfidenceResult.outlineUpdated === 0
+      && /第四章直播事件/.test(timelineAfterLowConfidence[0]?.description || '')
+      && !/低置信事件/.test(timelineAfterLowConfidence[0]?.description || '')
+      && /置信度低于 0.75/.test(lowConfidenceWarnings)
+      && !lowConfidenceToolNames.includes('sync_chapter_timeline')
+      && !lowConfidenceToolNames.includes('write_outline_nodes')
+    ) {
+      pass('V2b_low_confidence_only_saves_summary', 'low-confidence post-write analysis preserved timeline and skipped outline sync');
+    } else {
+      fail('V2b_low_confidence_only_saves_summary', JSON.stringify({ lowConfidenceResult, timelineAfterLowConfidence, lowConfidenceToolNames }));
+    }
+
+    const clearWithoutReason = await persistChapterArtifacts({
+      draft: {
+        name: 'chapter-004.md',
+        displayName: '第4章',
+        title: '直播间论牛',
+        summary: '章节草稿',
+        text: '正文占位。',
+      },
+      abortSignal: null,
+    });
+    const timelineAfterClearWithoutReason = await novelData.queryTimeline(seeded.dir, { chapterRef: 'chapter-004.md' });
+    const clearWarnings = Array.isArray(clearWithoutReason.warnings) ? clearWithoutReason.warnings.join(' | ') : '';
+    if (
+      clearWithoutReason.timelineCount === 1
+      && timelineAfterClearWithoutReason.length === 1
+      && /第四章直播事件/.test(timelineAfterClearWithoutReason[0]?.description || '')
+      && /未提供 timelineClearReason/.test(clearWarnings)
+    ) {
+      pass('V2c_timeline_clear_requires_reason', 'timelineShouldClear without reason preserved existing chapter timeline');
+    } else {
+      fail('V2c_timeline_clear_requires_reason', JSON.stringify({ clearWithoutReason, timelineAfterClearWithoutReason }));
     }
   } catch (err) {
     fail('V3_harness', err && err.stack ? err.stack : String(err));

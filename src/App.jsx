@@ -19,6 +19,8 @@ import { StorageSettings } from '@/components/StorageSettings.jsx';
 import { SearchSettings } from '@/components/SearchSettings.jsx';
 import { SkillSettings } from '@/components/SkillSettings.jsx';
 import { WritingSettings } from '@/components/WritingSettings.jsx';
+import { LanRemoteSettings } from '@/components/LanRemoteSettings.jsx';
+import { ChapterEditor } from '@/components/ChapterEditor.jsx';
 import { OfflineSyncDialog } from '@/components/OfflineSyncDialog.jsx';
 import { ImportNovelPanel } from '@/components/ImportNovelPanel.jsx';
 import { ImportMergePanel } from '@/components/ImportMergePanel.jsx';
@@ -28,6 +30,7 @@ import { DataTabContent } from '@/components/DataTabContent.jsx';
 import { countMeaningfulCharacters } from '@/domain/text.js';
 import { collectPreferredTextMatches } from '@/domain/textMatch.js';
 import { useI18n } from '@/i18n/LanguageContext.jsx';
+import DiffMatchPatch from 'diff-match-patch';
 
 const TAB_PREFIX = 'chapter:';
 const BLUEPRINT_PREFIX = 'blueprint:';
@@ -37,6 +40,7 @@ const DEFAULT_RIGHT_PANEL_WIDTH = 640;
 const MIN_RIGHT_PANEL_WIDTH = 420;
 const RIGHT_PANEL_WIDTH_STORAGE_KEY = 'mana-right-panel-width-v1';
 const EDITOR_CONTEXT_MENU_WIDTH = 220;
+const diffMatchPatch = new DiffMatchPatch();
 const makeId = (prefix) =>
   `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -196,7 +200,10 @@ function App() {
               volume: snapshot.volume ?? chapter.volume ?? null,
               section: snapshot.section ?? chapter.section ?? null,
             };
-            if (typeof content === 'string') next.content = content;
+            if (typeof content === 'string') {
+              next.content = content;
+              next.lastSavedContent = content;
+            }
             if (typeof isContentLoaded === 'boolean') next.isContentLoaded = isContentLoaded;
             return next;
           }),
@@ -252,6 +259,7 @@ function App() {
             id: `ch-${chapterMeta.fileName}-${Date.now()}-${index}`,
             fileName: chapterMeta.fileName,
             content: '',
+            lastSavedContent: '',
             isContentLoaded: false,
             isDirty: false,
             _title: resolveChapterTitle({ metadataTitle: chapterMeta.title }),
@@ -310,14 +318,14 @@ function App() {
     }
   }
 
-  const refreshActiveNovelState = useCallback(async (novelEntry) => {
+  const refreshActiveNovelState = useCallback(async (novelEntry, options = {}) => {
     if (!window.mana?.novel?.active) return null;
     try {
       const activeEntry = novelEntry === undefined
         ? await window.mana.novel.active()
         : novelEntry;
       const nextId = activeEntry?.id || '';
-      if (nextId === activeNovelId) {
+      if (nextId === activeNovelId && !options.forceReload) {
         return activeEntry || null;
       }
 
@@ -327,7 +335,9 @@ function App() {
         return null;
       }
 
-      resetNovelUiState(false);
+      if (nextId !== activeNovelId || options.resetUi) {
+        resetNovelUiState(false);
+      }
       await syncNovelTreeFromDisk(activeEntry);
       return activeEntry;
     } catch (err) {
@@ -352,13 +362,15 @@ function App() {
   useEffect(() => {
     if (!window.mana?.novel?.onActiveChanged) return undefined;
     const off = window.mana.novel.onActiveChanged((payload) => {
-      refreshActiveNovelState(payload?.entry ?? null).catch((err) => {
+      refreshActiveNovelState(payload?.entry ?? null, { forceReload: true }).catch((err) => {
         console.error('[App] active novel push refresh failed', err);
       });
+      loadExistingNovels();
     });
     return () => {
       try { off(); } catch {}
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshActiveNovelState]);
 
   async function loadExistingNovels() {
@@ -477,6 +489,7 @@ function App() {
             return {
               ...chapter,
               content: content || '',
+              lastSavedContent: content || '',
               isContentLoaded: true,
               isDirty: false,
               _title: nextTitle,
@@ -515,6 +528,7 @@ function App() {
           id: existing?.chapter?.id || `ch-${data.name}-${Date.now()}`,
           fileName: data.name,
           content: content || '',
+          lastSavedContent: content || '',
           isContentLoaded: true,
           isDirty: false,
           _title: title,
@@ -554,7 +568,7 @@ function App() {
   };
 
   const dataTabLabel = (dataType) => {
-    const labels = { characters: '角色卡', world: '世界观', timeline: '时间线', outline: '大纲', style: '文风' };
+    const labels = { characters: '角色卡', assets: '资产/物品', world: '世界观', timeline: '时间线', outline: '大纲', style: '文风' };
     return labels[dataType] || dataType;
   };
 
@@ -587,6 +601,7 @@ function App() {
         case 'models': return t('settings.llmTitle');
         case 'storage': return '存储空间';
         case 'writing': return '写作设置';
+        case 'lan-remote': return '局域网遥控';
         case 'search': return '搜索引擎';
         case 'skill': return 'Skill';
         default: return `设置: ${sid}`;
@@ -621,11 +636,18 @@ function App() {
     ? activeEditorTab.slice(SETTINGS_PREFIX.length)
     : '';
 
-  const openChapterInEditor = async (chapterId) => {
+  const openChapterInEditor = async (chapterId, jump = null) => {
     if (!chapterMap.get(chapterId)) return;
     await ensureChapterContentLoaded(chapterId);
     setOpenChapterIds((ids) => (ids.includes(chapterId) ? ids : [...ids, chapterId]));
     setActiveEditorTab(`${TAB_PREFIX}${chapterId}`);
+    if (jump && Number.isFinite(jump.startOffset)) {
+      const start = jump.startOffset;
+      const end = Number.isFinite(jump.endOffset) ? jump.endOffset : start;
+      setPendingEditorJump({ chapterId, start, end, nonce: Date.now() });
+      setEditorJumpStatus(`已跳转到搜索命中 ${start}-${end}`);
+      setTimeout(() => setEditorJumpStatus(''), 3500);
+    }
   };
 
   const openBlueprintInEditor = (bpId) => {
@@ -701,6 +723,7 @@ function App() {
       id: makeId('chapter'),
       fileName,
       content: '',
+      lastSavedContent: '',
       isContentLoaded: true,
       isDirty: false,
     };
@@ -726,7 +749,7 @@ function App() {
     setActiveEditorTab(`${TAB_PREFIX}${chapter.id}`);
     // Persist: write empty file to disk
     if (activeNovelId && window.mana?.novel?.saveChapter) {
-      window.mana.novel.saveChapter(activeNovelId, fileName, '').catch(() => {});
+      window.mana.novel.saveChapter(activeNovelId, fileName, '', {}, { createRevision: false }).catch(() => {});
     }
   };
   
@@ -739,7 +762,12 @@ function App() {
         const ch = chapterEntry.chapter;
         if (ch.isContentLoaded && ch.isDirty) {
           const chapTitle = getChapterSaveTitle(ch, ch.content);
-          window.mana.novel.saveChapter(activeNovelId, ch.fileName, ch.content, { title: chapTitle })
+          window.mana.novel.saveChapter(activeNovelId, ch.fileName, ch.content, { title: chapTitle }, {
+            baseContent: ch.lastSavedContent ?? '',
+            source: 'manual',
+            revisionLabel: '关闭标签页前保存',
+            createRevision: true,
+          })
             .then((saved) => applySavedChapterSnapshot(chapterId, saved, { content: ch.content, isContentLoaded: true, isDirty: false }))
             .catch(() => {});
         }
@@ -910,7 +938,12 @@ function App() {
     if (activeNovelId) {
       try {
         const content = await ensureChapterContentLoaded(chapterId);
-        window.mana?.novel?.saveChapter(activeNovelId, chapter.fileName, content, { title: raw })
+        window.mana?.novel?.saveChapter(activeNovelId, chapter.fileName, content, { title: raw }, {
+          baseContent: chapter.lastSavedContent ?? content,
+          source: 'manual',
+          revisionLabel: '更新章节标题',
+          createRevision: true,
+        })
           .then((saved) => applySavedChapterSnapshot(chapterId, saved, { content, isContentLoaded: true, isDirty: false }))
           .catch(() => {});
       } catch {
@@ -958,6 +991,15 @@ function App() {
   const [editorScroll, setEditorScroll] = useState({ top: 0, left: 0 });
   const [editorContextMenu, setEditorContextMenu] = useState(null);
   const [editorAiStatus, setEditorAiStatus] = useState(null);
+  const [editorAiPreview, setEditorAiPreview] = useState(null);
+  const [saveConflict, setSaveConflict] = useState(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [chapterRevisions, setChapterRevisions] = useState([]);
+  const [selectedRevision, setSelectedRevision] = useState(null);
+  const [revisionPreview, setRevisionPreview] = useState(null);
+  const [historyStatus, setHistoryStatus] = useState('');
+  const [pendingEditorJump, setPendingEditorJump] = useState(null);
+  const [editorJumpStatus, setEditorJumpStatus] = useState('');
   const isResizingRightPanelRef = useRef(false);
   const [isRightPanelResizeHover, setIsRightPanelResizeHover] = useState(false);
   const [isRightPanelResizing, setIsRightPanelResizing] = useState(false);
@@ -1011,13 +1053,60 @@ function App() {
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
   }, []);
-  const editorTextareaRef = useRef(null);
+  const chapterEditorRef = useRef(null);
   const pendingEditorSelectionRef = useRef(null);
 
   const showSaveToast = useCallback((type, message) => {
     setSaveToast({ type, message });
     setTimeout(() => setSaveToast(null), 3000);
   }, []);
+
+  const saveChapterContentToDisk = useCallback(async (chapterId, content, options = {}) => {
+    if (!chapterId || !activeNovelId) return null;
+    const entry = chapterMap.get(chapterId);
+    if (!entry?.chapter?.fileName || !window.mana?.novel?.saveChapter) return null;
+    const name = entry.chapter.fileName;
+    const chapTitle = getChapterSaveTitle(entry.chapter, content);
+    const source = options.source || 'manual';
+    const baseContent = Object.prototype.hasOwnProperty.call(options, 'baseContent')
+      ? options.baseContent
+      : (entry.chapter.lastSavedContent ?? '');
+    try {
+      const saved = await window.mana.novel.saveChapter(
+        activeNovelId,
+        name,
+        content,
+        { title: chapTitle },
+        {
+          baseContent,
+          source,
+          revisionLabel: options.revisionLabel || (source === 'autosave' ? '自动保存' : '手动保存'),
+          createRevision: options.createRevision !== false,
+        }
+      );
+      applySavedChapterSnapshot(chapterId, saved, { content, isContentLoaded: true, isDirty: false });
+      return saved;
+    } catch (err) {
+      const reason = err?.message || String(err);
+      if (/snapshot mismatch/i.test(reason)) {
+        let diskContent = '';
+        try {
+          diskContent = await window.mana.novel.readChapter(activeNovelId, name);
+        } catch {
+          diskContent = '';
+        }
+        setSaveConflict({
+          chapterId,
+          name,
+          localContent: content,
+          diskContent,
+          baseContent,
+          message: '磁盘上的章节已变化，请选择如何处理。',
+        });
+      }
+      throw err;
+    }
+  }, [activeNovelId, chapterMap, applySavedChapterSnapshot]);
 
   const flushActiveChapterToDisk = useCallback(async ({ silent = false } = {}) => {
     if (!activeChapterId || !activeNovelId) return;
@@ -1034,9 +1123,10 @@ function App() {
     clearTimeout(window[key]);
     if (!silent) setSaveStatus('saving');
     try {
-      const chapTitle = getChapterSaveTitle(entry.chapter, content);
-      const saved = await window.mana.novel.saveChapter(activeNovelId, name, content, { title: chapTitle });
-      applySavedChapterSnapshot(activeChapterId, saved, { content, isContentLoaded: true, isDirty: false });
+      await saveChapterContentToDisk(activeChapterId, content, {
+        source: silent ? 'autosave' : 'manual',
+        revisionLabel: silent ? '自动保存' : '手动保存',
+      });
       if (!silent) {
         setSaveStatus('saved');
         showSaveToast('success', '已保存到磁盘');
@@ -1051,7 +1141,7 @@ function App() {
       console.error('[editor-save]', reason);
       throw err;
     }
-  }, [activeChapterId, activeNovelId, activeChapter, chapterMap, showSaveToast, applySavedChapterSnapshot]);
+  }, [activeChapterId, activeNovelId, activeChapter, chapterMap, showSaveToast, saveChapterContentToDisk]);
 
   const manualSave = useCallback(async () => {
     try {
@@ -1061,7 +1151,7 @@ function App() {
     }
   }, [flushActiveChapterToDisk]);
 
-  const updateActiveChapterContent = (content) => {
+  const updateActiveChapterContent = (content, { scheduleSave = true } = {}) => {
     if (!activeChapterId) return;
     setNovel((n) => ({
       ...n,
@@ -1077,15 +1167,18 @@ function App() {
     }));
     // Save to project file on disk (debounced per chapter)
     const chapterEntry = chapterMap.get(activeChapterId);
-    if (chapterEntry?.chapter?.fileName && activeNovelId) {
+    if (scheduleSave && chapterEntry?.chapter?.fileName && activeNovelId) {
       const name = chapterEntry.chapter.fileName;
       const key = `_save_${name}`;
       clearTimeout(window[key]);
       window[key] = setTimeout(async () => {
         if (window.mana?.novel?.saveChapter) {
           try {
-            const saved = await window.mana.novel.saveChapter(activeNovelId, name, content, { title: getChapterSaveTitle(chapterEntry.chapter, content) });
-            applySavedChapterSnapshot(activeChapterId, saved, { content, isContentLoaded: true, isDirty: false });
+            await saveChapterContentToDisk(activeChapterId, content, {
+              source: 'autosave',
+              revisionLabel: '自动保存',
+              baseContent: chapterEntry.chapter.lastSavedContent ?? '',
+            });
             setSaveStatus(null);
           } catch {
             setSaveStatus('save-failed');
@@ -1108,38 +1201,55 @@ function App() {
       const name = chapterEntry.chapter.fileName;
       const content = saveContentRef.current;
       if (!content) return;
-      window.mana?.novel?.saveChapter(activeNovelId, name, content, { title: getChapterSaveTitle(chapterEntry.chapter, content) })
-        .then((saved) => {
-          applySavedChapterSnapshot(activeChapterId, saved, { content, isContentLoaded: true, isDirty: false });
+      saveChapterContentToDisk(activeChapterId, content, {
+        source: 'autosave',
+        revisionLabel: '自动保存',
+        baseContent: chapterEntry.chapter.lastSavedContent ?? '',
+      })
+        .then(() => {
           setSaveStatus(null);
         })
         .catch(() => setSaveStatus('save-failed'));
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, [activeNovelId, activeChapterId, chapterMap, applySavedChapterSnapshot]);
+  }, [activeNovelId, activeChapterId, chapterMap, saveChapterContentToDisk]);
 
   useEffect(() => {
     setEditorSelection({ text: '', start: 0, end: 0 });
     setEditorHasFocus(false);
     setEditorScroll({ top: 0, left: 0 });
+    setEditorAiPreview(null);
+    setSaveConflict(null);
+    setHistoryOpen(false);
+    setChapterRevisions([]);
+    setSelectedRevision(null);
+    setRevisionPreview(null);
+    setEditorJumpStatus('');
   }, [activeChapterId]);
 
   useEffect(() => {
     const pending = pendingEditorSelectionRef.current;
-    const textarea = editorTextareaRef.current;
-    if (!pending || !textarea) return;
+    const editor = chapterEditorRef.current;
+    if (!pending || !editor) return;
     pendingEditorSelectionRef.current = null;
     try {
-      textarea.focus();
-      textarea.setSelectionRange(pending.start, pending.end);
+      editor.focus();
+      editor.setSelectionRange(pending.start, pending.end);
     } catch {
       // ignore DOM selection failures
     }
   }, [activeChapter?.content]);
 
+  const handleEditorSelection = (selection) => {
+    const start = Number.isFinite(selection?.start) ? selection.start : 0;
+    const end = Number.isFinite(selection?.end) ? selection.end : start;
+    setEditorSelection({ text: String(selection?.text || ''), start, end });
+  };
+
   const handleTextSelect = (e) => {
     const target = e.target;
+    if (!target || typeof target.selectionStart !== 'number') return;
     const start = target.selectionStart;
     const end = target.selectionEnd;
     const text = target.value.substring(start, end);
@@ -1183,14 +1293,15 @@ function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  const openEditorContextMenu = useCallback((event) => {
+  const openEditorContextMenu = useCallback((event, selectionInfo = null) => {
     event.preventDefault();
     event.stopPropagation();
-    handleTextSelect(event);
-    const target = event.currentTarget;
-    const start = target.selectionStart || 0;
-    const end = target.selectionEnd || start;
-    const selectedText = target.value.substring(start, end);
+    if (selectionInfo) handleEditorSelection(selectionInfo);
+    else handleTextSelect(event);
+    const fallback = selectionInfo || editorSelection;
+    const start = Number.isFinite(fallback?.start) ? fallback.start : 0;
+    const end = Number.isFinite(fallback?.end) ? fallback.end : start;
+    const selectedText = String(fallback?.text || '');
     const x = Math.min(event.clientX, Math.max(8, window.innerWidth - EDITOR_CONTEXT_MENU_WIDTH - 8));
     const y = Math.min(event.clientY, Math.max(8, window.innerHeight - 260));
     setEditorContextMenu({
@@ -1200,7 +1311,7 @@ function App() {
       start,
       end,
     });
-  }, []);
+  }, [editorSelection]);
 
   const overlaySelection = useMemo(() => {
     if (!activeChapter) return null;
@@ -1227,10 +1338,10 @@ function App() {
     }
 
     const current = activeChapter.content || '';
-    const textarea = editorTextareaRef.current;
-    if (textarea && typeof textarea.selectionStart === 'number' && typeof textarea.selectionEnd === 'number') {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
+    const editorRange = chapterEditorRef.current?.getSelectionRange?.();
+    if (editorRange && typeof editorRange.start === 'number' && typeof editorRange.end === 'number') {
+      const start = editorRange.start;
+      const end = editorRange.end;
       const text = current.substring(start, end);
       if (mode === 'insert' || (end > start && text)) {
         return { start, end, text };
@@ -1289,9 +1400,9 @@ function App() {
         && preferred.matches[0].end === text.length;
     };
 
-    const textarea = editorTextareaRef.current;
-    const domStart = textarea && typeof textarea.selectionStart === 'number' ? textarea.selectionStart : null;
-    const domEnd = textarea && typeof textarea.selectionEnd === 'number' ? textarea.selectionEnd : null;
+    const editorRange = chapterEditorRef.current?.getSelectionRange?.();
+    const domStart = editorRange && typeof editorRange.start === 'number' ? editorRange.start : null;
+    const domEnd = editorRange && typeof editorRange.end === 'number' ? editorRange.end : null;
     const selectedFromDom = domStart != null && domEnd != null ? current.substring(domStart, domEnd) : '';
     if (domStart != null && domEnd != null && domEnd > domStart && selectionCoversTarget(selectedFromDom)) {
       return replaceSelectedText(replacement);
@@ -1400,6 +1511,12 @@ function App() {
     return output;
   };
 
+  const buildDiffParts = (before, after) => {
+    const diffs = diffMatchPatch.diff_main(String(before || ''), String(after || ''));
+    diffMatchPatch.diff_cleanupSemantic(diffs);
+    return diffs.map(([kind, text], index) => ({ id: `${index}-${kind}`, kind, text }));
+  };
+
   const runEditorAiAction = useCallback(async (actionId, customInstruction = '') => {
     const action = EDITOR_AI_ACTIONS[actionId];
     if (!action || !activeChapter) return;
@@ -1438,16 +1555,16 @@ function App() {
       if (action.mode !== 'insert' && current.substring(safeStart, safeEnd) !== range.text) {
         throw new Error('选中文本已变化，请重新选中后再试');
       }
-      const nextContent = current.substring(0, safeStart) + output + current.substring(safeEnd);
-      updateActiveChapterContent(nextContent);
-      const nextPos = safeStart + output.length;
-      if (action.mode === 'insert') {
-        pendingEditorSelectionRef.current = { start: nextPos, end: nextPos };
-      } else {
-        pendingEditorSelectionRef.current = { start: safeStart, end: nextPos };
-      }
-      setEditorSelection({ text: '', start: nextPos, end: nextPos });
-      showSaveToast('success', `${action.label}完成`);
+      setEditorAiPreview({
+        actionId,
+        actionLabel: action.label,
+        mode: action.mode,
+        range: { start: safeStart, end: safeEnd, text: range.text || '' },
+        original: action.mode === 'insert' ? '' : current.substring(safeStart, safeEnd),
+        output,
+        customInstruction,
+      });
+      showSaveToast('success', `${action.label}已生成预览`);
     } catch (err) {
       showSaveToast('error', `${action.label}失败：${err?.message || String(err)}`);
     } finally {
@@ -1466,6 +1583,133 @@ function App() {
     if (instruction == null || !instruction.trim()) return;
     await runEditorAiAction('rewrite', `按用户要求处理选中文本：${instruction.trim()}。只输出处理后的正文，不要解释。`);
   }, [runEditorAiAction]);
+
+  const acceptEditorAiPreview = useCallback(async () => {
+    if (!editorAiPreview || !activeChapterId || !activeChapter) return;
+    const { range, output, mode, actionLabel } = editorAiPreview;
+    const current = activeChapter.content || '';
+    const start = Math.max(0, Math.min(range.start, current.length));
+    const end = mode === 'insert'
+      ? start
+      : Math.max(start, Math.min(range.end, current.length));
+    if (mode !== 'insert' && current.substring(start, end) !== range.text) {
+      showSaveToast('error', '原文已变化，请重新生成 AI 预览');
+      return;
+    }
+    const nextContent = current.substring(0, start) + output + current.substring(end);
+    const nextPos = start + output.length;
+    updateActiveChapterContent(nextContent, { scheduleSave: false });
+    pendingEditorSelectionRef.current = mode === 'insert'
+      ? { start: nextPos, end: nextPos }
+      : { start, end: nextPos };
+    setEditorSelection({ text: '', start: nextPos, end: nextPos });
+    setSaveStatus('saving');
+    try {
+      await saveChapterContentToDisk(activeChapterId, nextContent, {
+        source: 'ai',
+        revisionLabel: actionLabel || 'AI 修改',
+      });
+      setSaveStatus('saved');
+      showSaveToast('success', `${actionLabel || 'AI 修改'}已应用并保存`);
+      setTimeout(() => setSaveStatus(null), 2000);
+      setEditorAiPreview(null);
+    } catch (err) {
+      setSaveStatus('save-failed');
+      showSaveToast('error', `AI 修改保存失败：${err?.message || String(err)}`);
+    }
+  }, [activeChapter, activeChapterId, editorAiPreview, saveChapterContentToDisk, showSaveToast]);
+
+  const regenerateEditorAiPreview = useCallback(async () => {
+    if (!editorAiPreview) return;
+    await runEditorAiAction(editorAiPreview.actionId, editorAiPreview.customInstruction || '');
+  }, [editorAiPreview, runEditorAiAction]);
+
+  const openChapterHistory = useCallback(async () => {
+    if (!activeNovelId || !activeChapter?.fileName || !window.mana?.novel?.listChapterRevisions) return;
+    setHistoryOpen(true);
+    setHistoryStatus('加载历史中...');
+    setSelectedRevision(null);
+    setRevisionPreview(null);
+    try {
+      const revisions = await window.mana.novel.listChapterRevisions(activeNovelId, activeChapter.fileName);
+      setChapterRevisions(Array.isArray(revisions) ? revisions : []);
+      setHistoryStatus(revisions?.length ? '' : '暂无历史记录');
+    } catch (err) {
+      setHistoryStatus(err?.message || String(err));
+    }
+  }, [activeChapter?.fileName, activeNovelId]);
+
+  const selectChapterRevision = useCallback(async (revision) => {
+    if (!activeNovelId || !activeChapter?.fileName || !revision?.id) return;
+    setSelectedRevision(revision);
+    setHistoryStatus('读取版本中...');
+    try {
+      const detail = await window.mana.novel.readChapterRevision(activeNovelId, activeChapter.fileName, revision.id);
+      setRevisionPreview(detail);
+      setHistoryStatus('');
+    } catch (err) {
+      setHistoryStatus(err?.message || String(err));
+    }
+  }, [activeChapter?.fileName, activeNovelId]);
+
+  const restoreSelectedRevision = useCallback(async () => {
+    if (!activeNovelId || !activeChapterId || !activeChapter?.fileName || !selectedRevision?.id) return;
+    setHistoryStatus('恢复中...');
+    try {
+      const restored = await window.mana.novel.restoreChapterRevision(activeNovelId, activeChapter.fileName, selectedRevision.id);
+      applySavedChapterSnapshot(activeChapterId, restored, {
+        content: restored.content || '',
+        isContentLoaded: true,
+        isDirty: false,
+      });
+      setHistoryStatus('已恢复并保存');
+      showSaveToast('success', '已恢复历史版本');
+      await openChapterHistory();
+    } catch (err) {
+      setHistoryStatus(err?.message || String(err));
+    }
+  }, [activeChapter?.fileName, activeChapterId, activeNovelId, applySavedChapterSnapshot, openChapterHistory, selectedRevision?.id, showSaveToast]);
+
+  const useDiskConflictVersion = useCallback(() => {
+    if (!saveConflict) return;
+    const diskContent = saveConflict.diskContent || '';
+    setNovel((n) => ({
+      ...n,
+      volumes: n.volumes.map((v) => ({
+        ...v,
+        sections: v.sections.map((s) => ({
+          ...s,
+          chapters: s.chapters.map((c) =>
+            c.id === saveConflict.chapterId
+              ? { ...c, content: diskContent, lastSavedContent: diskContent, isContentLoaded: true, isDirty: false }
+              : c
+          ),
+        })),
+      })),
+    }));
+    setSaveConflict(null);
+    setSaveStatus(null);
+    showSaveToast('success', '已使用磁盘版本');
+  }, [saveConflict, showSaveToast]);
+
+  const keepLocalConflictVersion = useCallback(async () => {
+    if (!saveConflict) return;
+    setSaveStatus('saving');
+    try {
+      await saveChapterContentToDisk(saveConflict.chapterId, saveConflict.localContent || '', {
+        source: 'manual',
+        revisionLabel: '冲突后保留本地版本',
+        baseContent: saveConflict.diskContent || '',
+      });
+      setSaveConflict(null);
+      setSaveStatus('saved');
+      showSaveToast('success', '已保存本地版本');
+      setTimeout(() => setSaveStatus(null), 2000);
+    } catch (err) {
+      setSaveStatus('save-failed');
+      showSaveToast('error', `冲突处理失败：${err?.message || String(err)}`);
+    }
+  }, [saveChapterContentToDisk, saveConflict, showSaveToast]);
 
   const editorContext = useMemo(() => {
     const base = {
@@ -1506,7 +1750,15 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen w-screen bg-vscode-bg text-vscode-text overflow-hidden">
+    <div
+      className="flex w-screen bg-vscode-bg text-vscode-text overflow-hidden"
+      style={{
+        height: 'var(--mana-app-height, 100dvh)',
+        boxSizing: 'border-box',
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}
+    >
       
       {/* Activity Bar (Leftmost narrow sidebar) */}
       <div className="w-12 bg-vscode-activity-bar flex flex-col items-center py-2 justify-between border-r border-vscode-panel-border z-10">
@@ -1767,13 +2019,14 @@ function App() {
               {activeSidebarItem === 'search' && (
                 <SearchPanel
                   novelId={activeNovelId}
-                  onOpenChapter={(fileName) => {
+                  onOpenChapter={(fileName, jump) => {
                     const id = fileNameToChapterId[fileName];
                     if (id) {
-                      openChapterInEditor(id);
+                      openChapterInEditor(id, jump || null);
                     }
                   }}
                   onOpenCharacter={(id) => openDataInEditor('character', id)}
+                  onOpenAsset={() => openDataInEditor('assets')}
                   onSwitchSidebar={() => setActiveSidebarItem('explorer')}
                 />
               )}
@@ -1844,46 +2097,25 @@ function App() {
             {activeEditorTab.startsWith(TAB_PREFIX) && activeChapter ? (
               <div className="flex flex-col h-full">
                 <div className="relative flex-1 min-h-0 overflow-hidden">
+                  <ChapterEditor
+                    ref={chapterEditorRef}
+                    value={activeEditor.content}
+                    placeholder={t('app.markdownInputPlaceholder')}
+                    onChange={(nextContent) => updateActiveChapterContent(nextContent)}
+                    onSelectionChange={handleEditorSelection}
+                    onContextMenu={openEditorContextMenu}
+                    onScroll={(scroll) => setEditorScroll(scroll)}
+                    onSaveShortcut={manualSave}
+                    jumpRange={pendingEditorJump?.chapterId === activeChapterId ? pendingEditorJump : null}
+                  />
                   {overlaySelection ? (
                     <div
                       data-editor-selection-overlay="visible"
-                      className="absolute inset-0 pointer-events-none overflow-hidden"
-                      aria-hidden="true"
+                      className="pointer-events-none absolute right-3 top-3 rounded border border-blue-400/40 bg-blue-500/15 px-2 py-1 text-[11px] text-blue-100 shadow-lg"
                     >
-                      <div
-                        className="min-h-full whitespace-pre-wrap break-words p-4 font-mono text-sm leading-relaxed text-transparent"
-                        style={{ transform: `translate(${-editorScroll.left}px, ${-editorScroll.top}px)` }}
-                      >
-                        {activeEditor.content.substring(0, overlaySelection.start)}
-                        <span className="rounded-sm bg-blue-500/30 shadow-[0_0_0_1px_rgba(96,165,250,0.25)] text-transparent">
-                          {activeEditor.content.substring(overlaySelection.start, overlaySelection.end)}
-                        </span>
-                        {activeEditor.content.substring(overlaySelection.end)}
-                      </div>
+                      已选中 {overlaySelection.text.length} 字
                     </div>
                   ) : null}
-                  <textarea
-                    ref={editorTextareaRef}
-                    className="relative z-10 flex-1 h-full w-full resize-none bg-transparent outline-none text-gray-300 leading-relaxed p-4 font-mono text-sm"
-                    value={activeEditor.content}
-                    onChange={(e) => updateActiveChapterContent(e.target.value)}
-                    onContextMenu={openEditorContextMenu}
-                    onSelect={handleTextSelect}
-                    onClick={handleTextSelect}
-                    onKeyUp={handleTextSelect}
-                    onKeyDown={(e) => {
-                      const isMac = navigator.platform.toLowerCase().includes('mac');
-                      const modifier = isMac ? e.metaKey : e.ctrlKey;
-                      if (modifier && e.key === 's') {
-                        e.preventDefault();
-                        manualSave();
-                      }
-                    }}
-                    onFocus={() => setEditorHasFocus(true)}
-                    onBlur={() => setEditorHasFocus(false)}
-                    onScroll={(e) => setEditorScroll({ top: e.target.scrollTop, left: e.target.scrollLeft })}
-                    placeholder={t('app.markdownInputPlaceholder')}
-                  />
                   {editorContextMenu ? (
                     <div
                       className="fixed z-50 w-[220px] overflow-hidden rounded border border-vscode-panel-border bg-[#252526] py-1 text-xs text-gray-200 shadow-2xl"
@@ -1946,9 +2178,10 @@ function App() {
                           if (entry?.chapter?.fileName && activeNovelId) {
                             setSaveStatus('saving');
                             try {
-                              const chapTitle = getChapterSaveTitle(entry.chapter, activeChapter.content);
-                              const saved = await window.mana.novel.saveChapter(activeNovelId, entry.chapter.fileName, activeChapter.content, { title: chapTitle });
-                              applySavedChapterSnapshot(activeChapterId, saved, { content: activeChapter.content, isContentLoaded: true, isDirty: false });
+                              await saveChapterContentToDisk(activeChapterId, activeChapter.content, {
+                                source: 'manual',
+                                revisionLabel: '重试保存',
+                              });
                               setSaveStatus('saved');
                               setTimeout(() => setSaveStatus(null), 2000);
                             } catch { setSaveStatus('save-failed'); }
@@ -1962,7 +2195,17 @@ function App() {
                   ) : saveStatus === 'saved' ? (
                     <span className="text-[10px] text-green-400">已保存到磁盘</span>
                   ) : null}
+                  {editorJumpStatus ? (
+                    <span className="text-[10px] text-blue-300">{editorJumpStatus}</span>
+                  ) : null}
                   <div className="flex-1" />
+                  <button
+                    type="button"
+                    onClick={() => openChapterHistory()}
+                    className="text-[10px] text-gray-400 hover:text-gray-200 underline"
+                  >
+                    历史
+                  </button>
                   <span className="text-[10px] text-gray-500">字数 {getChapterWordCount(activeEditor.content)}</span>
                   <span className="text-[9px] text-gray-600">自动保存至项目文件</span>
                 </div>
@@ -2036,6 +2279,119 @@ function App() {
       </div>
 
       <ToolConfirmationModal />
+
+      {editorAiPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-6" data-testid="editor-ai-preview">
+          <div className="flex max-h-[82vh] w-[min(920px,96vw)] flex-col overflow-hidden rounded border border-vscode-panel-border bg-[#1e1e1e] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-vscode-panel-border px-4 py-2">
+              <div>
+                <div className="text-sm font-semibold text-gray-100">{editorAiPreview.actionLabel}预览</div>
+                <div className="text-[11px] text-gray-500">确认后才会写入正文并保存</div>
+              </div>
+              <button type="button" className="text-gray-400 hover:text-white" onClick={() => setEditorAiPreview(null)}>×</button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 text-xs leading-relaxed">
+              <div className="mb-2 text-gray-400">差异预览</div>
+              <div className="whitespace-pre-wrap rounded border border-vscode-panel-border bg-black/20 p-3 font-mono text-gray-300">
+                {buildDiffParts(editorAiPreview.original, editorAiPreview.output).map((part) => (
+                  <span
+                    key={part.id}
+                    className={part.kind === 1 ? 'bg-green-500/20 text-green-200' : part.kind === -1 ? 'bg-rose-500/20 text-rose-200 line-through' : ''}
+                  >
+                    {part.text}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-vscode-panel-border px-4 py-3">
+              <button type="button" className="rounded border border-vscode-panel-border px-3 py-1 text-xs text-gray-300 hover:bg-vscode-active-item" onClick={() => navigator.clipboard?.writeText(editorAiPreview.output || '')}>复制结果</button>
+              <button type="button" className="rounded border border-vscode-panel-border px-3 py-1 text-xs text-gray-300 hover:bg-vscode-active-item" onClick={regenerateEditorAiPreview} disabled={!!editorAiStatus}>重新生成</button>
+              <button type="button" className="rounded border border-vscode-panel-border px-3 py-1 text-xs text-gray-300 hover:bg-vscode-active-item" onClick={() => setEditorAiPreview(null)}>拒绝</button>
+              <button type="button" className="rounded bg-blue-600 px-4 py-1 text-xs text-white hover:bg-blue-500" onClick={acceptEditorAiPreview}>接受并保存</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {saveConflict && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-6" data-testid="editor-save-conflict">
+          <div className="flex max-h-[82vh] w-[min(980px,96vw)] flex-col overflow-hidden rounded border border-amber-700/60 bg-[#1e1e1e] shadow-2xl">
+            <div className="border-b border-vscode-panel-border px-4 py-2">
+              <div className="text-sm font-semibold text-amber-200">保存冲突</div>
+              <div className="text-[11px] text-gray-500">{saveConflict.message}</div>
+            </div>
+            <div className="grid flex-1 grid-cols-2 gap-3 overflow-y-auto p-4 text-xs">
+              <div>
+                <div className="mb-1 text-gray-400">我的版本</div>
+                <pre className="max-h-[52vh] overflow-auto whitespace-pre-wrap rounded border border-vscode-panel-border bg-black/20 p-3 text-gray-300">{saveConflict.localContent}</pre>
+              </div>
+              <div>
+                <div className="mb-1 text-gray-400">磁盘版本</div>
+                <pre className="max-h-[52vh] overflow-auto whitespace-pre-wrap rounded border border-vscode-panel-border bg-black/20 p-3 text-gray-300">{saveConflict.diskContent}</pre>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-vscode-panel-border px-4 py-3">
+              <button type="button" className="rounded border border-vscode-panel-border px-3 py-1 text-xs text-gray-300 hover:bg-vscode-active-item" onClick={() => navigator.clipboard?.writeText(saveConflict.localContent || '')}>复制本地文本</button>
+              <button type="button" className="rounded border border-vscode-panel-border px-3 py-1 text-xs text-gray-300 hover:bg-vscode-active-item" onClick={useDiskConflictVersion}>使用磁盘版本</button>
+              <button type="button" className="rounded bg-blue-600 px-4 py-1 text-xs text-white hover:bg-blue-500" onClick={keepLocalConflictVersion}>保留我的版本并保存</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {historyOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-6" data-testid="chapter-history-panel">
+          <div className="flex max-h-[84vh] w-[min(980px,96vw)] flex-col overflow-hidden rounded border border-vscode-panel-border bg-[#1e1e1e] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-vscode-panel-border px-4 py-2">
+              <div>
+                <div className="text-sm font-semibold text-gray-100">章节历史</div>
+                <div className="text-[11px] text-gray-500">{activeChapter?.displayName || activeChapter?.fileName}</div>
+              </div>
+              <button type="button" className="text-gray-400 hover:text-white" onClick={() => setHistoryOpen(false)}>×</button>
+            </div>
+            <div className="flex min-h-0 flex-1">
+              <div className="w-64 shrink-0 overflow-y-auto border-r border-vscode-panel-border p-2 text-xs">
+                {chapterRevisions.map((revision) => (
+                  <button
+                    key={revision.id}
+                    type="button"
+                    className={`mb-1 w-full rounded px-2 py-2 text-left hover:bg-vscode-active-item ${selectedRevision?.id === revision.id ? 'bg-vscode-active-item text-white' : 'text-gray-300'}`}
+                    onClick={() => selectChapterRevision(revision)}
+                  >
+                    <div className="truncate">{revision.label || revision.source || revision.id}</div>
+                    <div className="text-[10px] text-gray-500">{revision.updatedAt || revision.createdAt}</div>
+                  </button>
+                ))}
+                {!chapterRevisions.length && <div className="px-2 py-4 text-gray-500">{historyStatus || '暂无历史记录'}</div>}
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 text-xs">
+                {historyStatus && <div className="mb-2 text-blue-300">{historyStatus}</div>}
+                {revisionPreview ? (
+                  <>
+                    <div className="mb-2 text-gray-400">当前正文 ↔ 历史版本</div>
+                    <div className="whitespace-pre-wrap rounded border border-vscode-panel-border bg-black/20 p-3 font-mono text-gray-300">
+                      {buildDiffParts(activeChapter?.content || '', revisionPreview.content || '').map((part) => (
+                        <span
+                          key={part.id}
+                          className={part.kind === 1 ? 'bg-green-500/20 text-green-200' : part.kind === -1 ? 'bg-rose-500/20 text-rose-200 line-through' : ''}
+                        >
+                          {part.text}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-gray-500">选择一个历史版本查看差异</div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-vscode-panel-border px-4 py-3">
+              <button type="button" className="rounded border border-vscode-panel-border px-3 py-1 text-xs text-gray-300 hover:bg-vscode-active-item" onClick={() => setHistoryOpen(false)}>关闭</button>
+              <button type="button" className="rounded bg-blue-600 px-4 py-1 text-xs text-white hover:bg-blue-500 disabled:opacity-40" onClick={restoreSelectedRevision} disabled={!selectedRevision}>恢复此版本</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showSyncDialog && (
         <OfflineSyncDialog
@@ -2194,6 +2550,12 @@ function SettingsTabContent({ settingsId }) {
       return (
         <div className="h-full overflow-y-auto p-6">
           <WritingSettings />
+        </div>
+      );
+    case 'lan-remote':
+      return (
+        <div className="h-full overflow-y-auto p-6">
+          <LanRemoteSettings />
         </div>
       );
     case 'search':

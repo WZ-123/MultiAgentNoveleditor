@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { User, Globe, Book, Pen, Calendar, Loader2, Edit3, Save, X, Sparkles } from 'lucide-react';
+import { User, Globe, Book, Pen, Calendar, Loader2, Edit3, Save, X, Sparkles, Package, Plus, ShieldAlert } from 'lucide-react';
 import { CharacterEnrichPanel } from './CharacterEnrichPanel.jsx';
 import { saveDataTabEdit } from './dataTabSave.mjs';
 
@@ -68,6 +68,7 @@ async function buildOutlineTree(mana, novelDir) {
 
 const DATA_REFRESH_TOOL_NAMES = {
   characters: new Set(['create_character', 'update_character', 'delete_character']),
+  assets: new Set(['grant_asset', 'revoke_asset', 'apply_asset_patch']),
   world: new Set(['update_world']),
   timeline: new Set(['append_timeline', 'update_timeline', 'sync_chapter_timeline', 'dedupe_timeline']),
   outline: new Set(['write_outline_nodes']),
@@ -111,6 +112,9 @@ export function DataTabContent({ dataType, novelId }) {
         if (dataType === 'characters') {
           const chars = await mana.novel.listCharacters(nid);
           result = Array.isArray(chars) ? chars : [];
+        } else if (dataType === 'assets') {
+          const assets = await mana.novel.listAssets(nid);
+          result = Array.isArray(assets) ? assets : [];
         } else if (dataType === 'world') {
           const w = await mana.novel.readWorld(nid);
           result = w || { lore: '', places: [] };
@@ -172,6 +176,7 @@ export function DataTabContent({ dataType, novelId }) {
 
   const startEdit = () => {
     const text = dataType === 'characters' ? JSON.stringify(data, null, 2)
+      : dataType === 'assets' ? JSON.stringify(data, null, 2)
       : dataType === 'world' ? JSON.stringify(data, null, 2)
       : dataType === 'timeline' ? JSON.stringify(data, null, 2)
       : (typeof data === 'string' ? data : JSON.stringify(data || '', null, 2));
@@ -266,6 +271,83 @@ export function DataTabContent({ dataType, novelId }) {
       setError(err?.message || String(err));
     }
     setRegenerating(false);
+  };
+
+  const createAsset = async () => {
+    if (!mana?.novel || !novelId) return;
+    const raw = await window.mana?.prompt?.show?.('输入资产 ID / 名称', 'key-item');
+    const id = String(raw || '').trim();
+    if (!id) return;
+    const name = await window.mana?.prompt?.show?.('输入资产显示名称', id);
+    try {
+      await mana.novel.upsertAsset(novelId, {
+        id,
+        name: String(name || id).trim() || id,
+        type: '道具',
+        status: 'active',
+        grantedTo: [],
+      });
+      setSaveFeedback('资产已创建');
+      setRefreshKey((key) => key + 1);
+    } catch (err) {
+      setError(err?.message || String(err));
+    }
+  };
+
+  const grantAssetToCharacter = async (asset) => {
+    if (!asset?.id || !mana?.novel || !novelId) return;
+    const charId = await window.mana?.prompt?.show?.(`把「${asset.name || asset.id}」授予角色 ID`, '');
+    if (!String(charId || '').trim()) return;
+    try {
+      await mana.novel.grantAsset(novelId, {
+        assetId: asset.id,
+        charId: String(charId).trim(),
+        chapterRef: '',
+        note: '手动授权',
+        baseGrantedTo: Array.isArray(asset.grantedTo) ? asset.grantedTo : [],
+      });
+      setSaveFeedback('资产授权已保存');
+      setRefreshKey((key) => key + 1);
+    } catch (err) {
+      setError(err?.message || String(err));
+    }
+  };
+
+  const revokeAssetFromCharacter = async (asset) => {
+    if (!asset?.id || !mana?.novel || !novelId) return;
+    const activeHolders = (Array.isArray(asset.grantedTo) ? asset.grantedTo : [])
+      .filter((entry) => entry && entry.revoked !== true && entry.charId)
+      .map((entry) => entry.charId);
+    const charId = await window.mana?.prompt?.show?.(`回收「${asset.name || asset.id}」的角色 ID`, activeHolders[0] || '');
+    if (!String(charId || '').trim()) return;
+    try {
+      await mana.novel.revokeAsset(novelId, {
+        assetId: asset.id,
+        charId: String(charId).trim(),
+        chapterRef: '',
+        note: '手动回收',
+        baseGrantedTo: Array.isArray(asset.grantedTo) ? asset.grantedTo : [],
+      });
+      setSaveFeedback('资产回收已保存');
+      setRefreshKey((key) => key + 1);
+    } catch (err) {
+      setError(err?.message || String(err));
+    }
+  };
+
+  const auditAssetList = async () => {
+    if (!mana?.novel || !novelId) return;
+    try {
+      const result = await mana.novel.auditAssets(novelId);
+      setSaveFeedback(result?.issueCount ? `发现 ${result.issueCount} 个资产问题` : '资产审计通过');
+      setData((current) => {
+        const next = Array.isArray(current) ? [...current] : [];
+        next._audit = result;
+        return next;
+      });
+    } catch (err) {
+      setError(err?.message || String(err));
+    }
   };
 
   if (dataType === 'characters') {
@@ -416,6 +498,91 @@ export function DataTabContent({ dataType, novelId }) {
             onClose={() => { setShowEnrichPanel(false); setRefreshKey((k) => k + 1); }}
             onComplete={() => { setRefreshKey((k) => k + 1); }}
           />
+        )}
+      </div>
+    );
+  }
+
+  if (dataType === 'assets') {
+    const audit = data?._audit || null;
+    const assets = Array.isArray(data) ? data : [];
+    const activeHolders = (asset) => (Array.isArray(asset.grantedTo) ? asset.grantedTo : [])
+      .filter((entry) => entry && entry.revoked !== true && entry.charId)
+      .map((entry) => entry.charId);
+
+    return (
+      <div className="h-full overflow-y-auto p-4 text-sm">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-lg font-bold text-gray-200 flex items-center gap-2">
+            <Package size={18}/>资产/物品 ({assets.length || 0})
+            {saveFeedback && (
+              <span className={`text-[11px] ml-2 ${saveFeedback.includes('发现') || saveFeedback.includes('失败') || saveFeedback.includes('错误') ? 'text-amber-400' : 'text-green-400'}`}>
+                {saveFeedback}
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button onClick={createAsset} className="px-2 py-0.5 bg-blue-700 text-white hover:bg-blue-600 rounded text-xs flex items-center gap-1"><Plus size={11}/>新建资产</button>
+            <button onClick={auditAssetList} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><ShieldAlert size={11}/>审计资产</button>
+            <button onClick={startEdit} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><Edit3 size={11}/>编辑 JSON</button>
+          </div>
+        </div>
+        {audit?.issues?.length > 0 && (
+          <div className="mb-3 rounded border border-amber-700/50 bg-amber-950/20 p-3 text-xs">
+            <div className="mb-1 font-semibold text-amber-300">资产审计问题</div>
+            <div className="space-y-1">
+              {audit.issues.map((issue, index) => (
+                <div key={`${issue.code}-${index}`} className="text-amber-100/90">
+                  [{issue.severity}] {issue.assetName || issue.assetId}: {issue.message}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {!assets.length ? (
+          <div className="text-gray-500 italic">暂无资产数据 — 可以新建资产，或让 AI/MCP 记录关键道具流转</div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {assets.map((asset, index) => {
+              const holders = activeHolders(asset);
+              return (
+                <div key={asset.id || index} className="border border-vscode-panel-border rounded p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="font-semibold text-gray-200 text-base">{s(asset.name || asset.id || '?')}</div>
+                      <div className="text-[10px] text-gray-600">{s(asset.id)}</div>
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => grantAssetToCharacter(asset)} className="px-2 py-0.5 rounded bg-green-900/40 text-green-300 hover:text-green-200 text-[10px]">授权</button>
+                      <button onClick={() => revokeAssetFromCharacter(asset)} className="px-2 py-0.5 rounded bg-rose-900/40 text-rose-300 hover:text-rose-200 text-[10px]">回收</button>
+                    </div>
+                  </div>
+                  <div className="mt-2 space-y-1 text-xs text-gray-500">
+                    {asset.type && <div>类型: {s(asset.type)}</div>}
+                    {asset.status && <div>状态: {s(asset.status)}</div>}
+                    {asset.location && <div>地点: {s(asset.location)}</div>}
+                    {asset.ownerId && <div>所有者: {s(asset.ownerId)}</div>}
+                    {asset.description && <div className="text-gray-400 whitespace-pre-wrap">描述: {s(asset.description)}</div>}
+                    {holders.length > 0 ? (
+                      <div className="text-green-300/80">当前持有人: {holders.join('、')}</div>
+                    ) : (
+                      <div className="text-gray-600">当前无活跃持有人</div>
+                    )}
+                    {Array.isArray(asset.grantedTo) && asset.grantedTo.length > 0 && (
+                      <div className="mt-2 border-t border-vscode-panel-border/50 pt-2">
+                        <div className="text-gray-400 mb-1">流转记录</div>
+                        {asset.grantedTo.slice(-4).reverse().map((entry, idx) => (
+                          <div key={idx} className="text-[10px] text-gray-500">
+                            {entry.revoked ? '回收' : '授权'} {s(entry.charId)} {entry.chapterRef ? `@ ${s(entry.chapterRef)}` : ''} {entry.note ? `- ${s(entry.note)}` : ''}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     );

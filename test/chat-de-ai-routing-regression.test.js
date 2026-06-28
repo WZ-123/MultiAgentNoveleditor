@@ -239,13 +239,12 @@ async function runChatDeAiRoutingRegressionTest() {
 
     await chatAgent.runTurn(sessionId, '现在有哪些工具可用？');
 
-    assert.ok(capturedToolNames.includes('de_ai_ify'));
     assert.ok(capturedToolNames.includes('list_skills'));
     assert.ok(capturedToolNames.includes('read_skill_content'));
     assert.ok(capturedToolNames.includes('create_novel'));
     assert.ok(capturedToolNames.includes('list_novels'));
     assert.equal(capturedToolNames.includes('list_characters'), false);
-    pass('CDR2_idle_provider_path_still_exposes_de_ai_tooling', 'direct-api idle mode keeps de_ai_ify and explicit skill tools visible without leaking novel-only tools');
+    pass('CDR2_idle_provider_path_keeps_bootstrap_tooling_scoped', 'direct-api idle mode keeps explicit bootstrap/skill tools visible without leaking novel-only tools');
   } catch (err) {
     fail('CDR2_idle_provider_path_still_exposes_de_ai_tooling', err?.message || String(err));
   } finally {
@@ -462,8 +461,11 @@ async function runChatDeAiRoutingRegressionTest() {
     const session = chatAgent.getSession(sessionId);
     const lastAssistantText = session?.messages?.[session.messages.length - 1]?.content?.[0]?.text || '';
     assert.equal(providerCallCount, 2);
-    assert.deepEqual(toolCalls.map((call) => call.name), ['de_ai_ify']);
-    assert.equal(toolCalls[0]?.args?.text, '然后她笑了。那是一个很淡的笑。');
+    assert.ok(toolCalls.some((call) => call.name === 'read_outline_nodes'));
+    assert.ok(toolCalls.some((call) => call.name === 'retrieve_context'));
+    const deAiCall = toolCalls.find((call) => call.name === 'de_ai_ify');
+    assert.ok(deAiCall);
+    assert.equal(deAiCall?.args?.text, '然后她笑了。那是一个很淡的笑。');
     assert.equal(
       emittedEvents.some((event) => event.channel === 'chatAgent:event'
         && event.payload?.sessionId === sessionId
@@ -568,13 +570,16 @@ async function runChatDeAiRoutingRegressionTest() {
 
     await chatAgent.runTurn(sessionId, '审查第一章的AI味，先不要直接改。');
     await chatAgent.runTurn(sessionId, '方案A');
+    const previewSession = chatAgent.getSession(sessionId);
+    const previewText = previewSession?.messages?.[previewSession.messages.length - 1]?.content?.[0]?.text || '';
+    await chatAgent.runTurn(sessionId, '确认应用');
 
     const session = chatAgent.getSession(sessionId);
     const lastAssistantText = session?.messages?.[session.messages.length - 1]?.content?.[0]?.text || '';
 
     assert.equal(providerCallCount, 0);
-    assert.equal(readCount, 2);
-    assert.equal(applyCount, 2);
+    assert.equal(readCount, 1);
+    assert.equal(applyCount, 1);
     assert.deepEqual(toolCalls.map((call) => call.name), [
       'list_chapters',
       'list_chapter_displays',
@@ -582,13 +587,11 @@ async function runChatDeAiRoutingRegressionTest() {
       'read_chapter',
       'de_ai_ify',
       'apply_chapter_patch',
-      'read_chapter',
-      'de_ai_ify',
-      'apply_chapter_patch',
     ]);
-    assert.match(lastAssistantText, /已按上一次审查结果自动应用去 AI 味修改/u);
-    assert.match(lastAssistantText, /chapter-001\.md：1 处/u);
-    pass('CDR5_pending_de_ai_review_apply_retries_after_snapshot_mismatch', 'confirmed de-ai fixes re-read and retry apply_chapter_patch once after snapshot mismatch');
+    assert.match(previewText, /已生成去 AI 味 patch 预览/u);
+    assert.match(lastAssistantText, /章节已变化，请重新生成预览/u);
+    assert.equal(/已按预览应用去 AI 味修改/u.test(lastAssistantText), false);
+    pass('CDR5_pending_de_ai_review_preview_stops_on_snapshot_mismatch', 'confirmed de-ai patch preview stops on snapshot mismatch without overwriting newer chapter text');
   } catch (err) {
     fail('CDR5_pending_de_ai_review_apply_retries_after_snapshot_mismatch', err?.message || String(err));
   } finally {
@@ -721,6 +724,7 @@ async function runChatDeAiRoutingRegressionTest() {
 
     await chatAgent.runTurn(sessionId, '审查第一章的AI味，先不要直接改。');
     await chatAgent.runTurn(sessionId, '方案A');
+    await chatAgent.runTurn(sessionId, '确认应用');
 
     const session = chatAgent.getSession(sessionId);
     const firstReviewText = session?.messages?.find((message) => {

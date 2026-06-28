@@ -1111,6 +1111,10 @@ const TOOLS = [
         afterContext: typeof args.afterContext === 'string' ? args.afterContext : '',
       });
       const afterSnapshot = { content: result.content || '', metadata: result.metadata || null, exists: true };
+      const revision = await novelData.createChapterRevision(dir, result.name, result.content || '', result.metadata || null, {
+        source: 'mcp',
+        revisionLabel: 'MCP 替换正文',
+      });
       const title = result.metadata?.title || null;
       notifyChapterChanged(result.name, 'updated', title);
       return textResult({
@@ -1119,6 +1123,7 @@ const TOOLS = [
         replacedCount: result.replacedCount,
         matchCount: result.matchCount,
         matchStrategy: result.matchStrategy,
+        revision,
         ...buildChapterChangePayload(ctx, 'replace_chapter_text', beforeSnapshot, afterSnapshot, result),
       });
     },
@@ -1158,6 +1163,10 @@ const TOOLS = [
         baseContent: payload.baseContent,
       });
       const afterSnapshot = { content: result.content || '', metadata: result.metadata || null, exists: true };
+      const revision = await novelData.createChapterRevision(dir, result.name, result.content || '', result.metadata || null, {
+        source: 'mcp',
+        revisionLabel: 'MCP 批量修改正文',
+      });
       const title = result.metadata?.title || null;
       notifyChapterChanged(result.name, 'updated', title);
       return textResult({
@@ -1166,6 +1175,7 @@ const TOOLS = [
         editCount: result.editCount,
         replacedCount: result.replacedCount,
         edits: result.edits,
+        revision,
         ...buildChapterChangePayload(ctx, 'apply_chapter_patch', beforeSnapshot, afterSnapshot, result),
       });
     },
@@ -1244,6 +1254,42 @@ const TOOLS = [
         categoryCounts: counts,
         results: results.slice(0, 50),
       });
+    },
+  },
+  {
+    name: 'retrieve_context',
+    description: 'Retrieve bounded writing/review context from the active novel across character cards, world lore/places, timeline events, and outline nodes. Use this before writing or consistency review when you need relevant settings/persona context without reading full cards or whole lore.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Natural-language retrieval query. Include the current scene/chapter/user request.' },
+        focus: { type: 'string', description: 'Optional extra focus, such as a character name, setting concern, or review angle.' },
+        chapterName: { type: 'string', description: 'Optional chapter file name like "chapter-003.md"; boosts nearby outline/timeline context.' },
+        categories: {
+          type: 'array',
+          items: { type: 'string', enum: ['characters', 'world', 'timeline', 'outlines'] },
+          description: 'Optional retrieval categories. Default: all.',
+        },
+        maxItems: { type: 'number', description: 'Maximum retrieved items. Default 12, max 50.' },
+        maxChars: { type: 'number', description: 'Maximum characters for contextText. Default 14000.' },
+      },
+      required: ['query'],
+    },
+    requiresConfirmation: false,
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      const { retrieveNovelContext } = require('../search/contextRetrieval');
+      const query = _cleanText(args.query);
+      if (!query) throw new Error('retrieve_context: query is required');
+      const result = await retrieveNovelContext(dir, {
+        query,
+        focus: _cleanText(args.focus),
+        chapterName: _cleanText(args.chapterName),
+        categories: Array.isArray(args.categories) ? args.categories : undefined,
+        maxItems: Math.min(Number(args.maxItems) || 12, 50),
+        maxChars: Number(args.maxChars) || 14000,
+      });
+      return textResult(result);
     },
   },
 
@@ -1385,10 +1431,15 @@ const TOOLS = [
       const beforeSnapshot = await readChapterSnapshot(dir, name);
       await novelData.writeChapterWithMeta(dir, name, args.content, metaObj, writeOptions);
       const afterSnapshot = await readChapterSnapshot(dir, name);
+      const revision = await novelData.createChapterRevision(dir, name, args.content, metaObj, {
+        source: 'mcp',
+        revisionLabel: beforeSnapshot.exists === false ? 'MCP 新建章节' : 'MCP 写入章节',
+      });
       notifyChapterChanged(name, 'created', args.title || null);
       return textResult({
         ok: true,
         name,
+        revision,
         ...buildChapterChangePayload(
           ctx,
           'write_chapter',
@@ -1559,6 +1610,23 @@ const TOOLS = [
         focus: _cleanText(args.focus),
         characters: targetCharacters,
       });
+      try {
+        const { retrieveNovelContext } = require('../search/contextRetrieval');
+        payload.retrievedContext = await retrieveNovelContext(dir, {
+          query: [
+            chapterName,
+            _cleanText(args.focus),
+            targetCharacters.map((character) => character.name || character.id).join('、'),
+            chapterText.slice(0, 1200),
+          ].filter(Boolean).join('\n'),
+          focus: _cleanText(args.focus),
+          chapterName,
+          maxItems: 10,
+          maxChars: 10000,
+        });
+      } catch {
+        payload.retrievedContext = null;
+      }
       const workflowOrchestrator = require('../runtime/workflowOrchestrator');
       const result = await workflowOrchestrator.runWorkflow({
         mode: 'subagent',

@@ -15,6 +15,11 @@ const DEFAULT_WRITING_CONFIG = {
   characterMemoryUpdate: 'after_confirmed_write',
 };
 
+const DEFAULT_LAN_REMOTE_CONFIG = {
+  enabled: false,
+  port: 8788,
+};
+
 const DEFAULT_DRIVERS = {
   'claude-code-vscode': {
     kind: 'claude-code-vscode',
@@ -76,6 +81,7 @@ const DEFAULT_APP_CONFIG = {
     autoDownload: false,
     lastCheckAt: '',
   },
+  lanRemote: DEFAULT_LAN_REMOTE_CONFIG,
 };
 
 function normalizeFeishuSync(savedFeishu) {
@@ -134,6 +140,19 @@ function normalizeWriting(savedWriting) {
   return merged;
 }
 
+function normalizeLanRemote(savedLanRemote) {
+  const merged = {
+    ...DEFAULT_LAN_REMOTE_CONFIG,
+    ...(savedLanRemote && typeof savedLanRemote === 'object' ? savedLanRemote : {}),
+  };
+  const rawPort = Number(merged.port);
+  merged.port = Number.isFinite(rawPort)
+    ? Math.min(65535, Math.max(1024, Math.trunc(rawPort)))
+    : DEFAULT_LAN_REMOTE_CONFIG.port;
+  merged.enabled = merged.enabled === true;
+  return merged;
+}
+
 async function load() {
   const file = paths().appConfig;
   const data = await readJson(file, null);
@@ -176,6 +195,7 @@ async function load() {
     ...DEFAULT_APP_CONFIG,
     ...data,
     writing: normalizeWriting(data.writing),
+    lanRemote: normalizeLanRemote(data.lanRemote),
     feishuSync,
     license,
     updater,
@@ -233,8 +253,13 @@ async function save(patch) {
   } else {
     next.writing = current.writing;
   }
+  if (patch && patch.lanRemote) {
+    next.lanRemote = normalizeLanRemote({ ...current.lanRemote, ...patch.lanRemote });
+  } else {
+    next.lanRemote = current.lanRemote;
+  }
   await writeJson(paths().appConfig, next);
   return next;
 }
 
-module.exports = { load, save, DEFAULT_APP_CONFIG, DEFAULT_DRIVERS, DEFAULT_WRITING_CONFIG, SCHEMA_VERSION };
+module.exports = { load, save, DEFAULT_APP_CONFIG, DEFAULT_DRIVERS, DEFAULT_WRITING_CONFIG, DEFAULT_LAN_REMOTE_CONFIG, SCHEMA_VERSION };

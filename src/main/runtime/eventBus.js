@@ -3,6 +3,7 @@
 const path = require('node:path');
 const { paths, generateId } = require('../store/paths');
 const { appendJsonl } = require('../store/jsonStore');
+const clientEvents = require('./clientEvents');
 
 let webContents = null;
 const subscribers = new Map();
@@ -41,6 +42,7 @@ async function emit(event) {
       console.error('[eventBus] send failed', err);
     }
   }
+  clientEvents.emit('agent:event', payload);
   const subs = subscribers.get(payload.runId);
   if (subs) {
     for (const fn of subs) {
@@ -73,6 +75,7 @@ async function emitPipeline(event) {
       console.error('[eventBus] pipeline send failed', err);
     }
   }
+  clientEvents.emit('pipeline:event', payload);
   const subs = subscribers.get(payload.pipelineRunId);
   if (subs) {
     for (const fn of subs) {

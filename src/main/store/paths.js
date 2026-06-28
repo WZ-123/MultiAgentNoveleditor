@@ -73,6 +73,7 @@ function novelPaths(novelDir) {
     timelineEvents: path.join(novelDir, 'timeline', 'events.jsonl'),
     assets: path.join(novelDir, 'assets'),
     assetsMain: path.join(novelDir, 'assets', 'assets.json'),
+    assetItems: path.join(novelDir, 'assets', 'items'),
     style: path.join(novelDir, 'style'),
     styleMemory: path.join(novelDir, 'style', 'memory.md'),
     styleThreshold: path.join(novelDir, 'style', 'threshold.json'),
@@ -82,6 +83,8 @@ function novelPaths(novelDir) {
     manaLock: path.join(novelDir, '.mana', 'lock'),
     manaIndex: path.join(novelDir, '.mana', 'index.json'),
     charactersIndex: path.join(novelDir, '.mana', 'characters-index.json'),
+    revisions: path.join(novelDir, '.mana', 'revisions'),
+    chapterRevisions: path.join(novelDir, '.mana', 'revisions', 'chapters'),
   };
 }
 
@@ -109,10 +112,13 @@ function ensureNovelLayout(novelDir) {
   ensureDirSync(np.world);
   ensureDirSync(np.timeline);
   ensureDirSync(np.assets);
+  ensureDirSync(np.assetItems);
   ensureDirSync(np.style);
   ensureDirSync(np.styleArchive);
   ensureDirSync(np.runs);
   ensureDirSync(np.mana);
+  ensureDirSync(np.revisions);
+  ensureDirSync(np.chapterRevisions);
   return np;
 }
 

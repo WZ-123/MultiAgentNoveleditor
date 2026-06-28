@@ -10,6 +10,7 @@ import {
   Search,
   Book,
   PenLine,
+  Wifi,
 } from 'lucide-react';
 
 // One row per category. The settings UI itself lives in the main editor area —
@@ -61,6 +62,12 @@ function buildCategories(t) {
       title: '写作设置',
       desc: '默认写作模式与角色驱动写作交互强度。',
       Icon: PenLine,
+    },
+    {
+      sid: 'lan-remote',
+      title: '局域网遥控',
+      desc: '在同一 Wi-Fi 下用浏览器遥控这台 Mac 的本地应用。',
+      Icon: Wifi,
     },
     {
       sid: 'storage',

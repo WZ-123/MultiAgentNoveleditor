@@ -5,6 +5,8 @@ const workflowOrchestrator = require('./workflowOrchestrator');
 const { getActiveNovelContext } = require('./activeNovelContext');
 const { runSubagent } = require('./runSubagent');
 
+const CONFIDENCE_THRESHOLD = 0.75;
+
 function parseJsonFromText(text) {
   const raw = String(text || '').trim();
   if (!raw) throw new Error('章节回写分析未返回内容');
@@ -91,13 +93,16 @@ function buildSystemPrompt(basePrompt) {
     '- 当前任务是对一章已经确认写入的正文做结构化回写准备。',
     '- 不要调用任何写工具，也不要要求用户确认。',
     '- 你必须只输出一个 JSON 对象，不要围栏、不要解释文字。',
-    '- JSON 结构：{"summary":"本章详细摘要","outlineActualSummary":"写回大纲的实际进展","outlineUpdates":[{"nodeId":"大纲节点ID","actualSummary":"该节点对应正文实际进展","actualBeats":["关键动作/转折"]}],"supplementMarkdown":"可写入 summaries 的补充 Markdown","timelineEvents":[{"when":"时间描述","where":"地点，可为空","participants":["参与者"],"description":"具体事件描述","physical":null,"communication":null}],"timelineShouldClear":false}.',
+    '- JSON 结构：{"summary":"本章详细摘要","summaryConfidence":1,"outlineActualSummary":"写回大纲的实际进展","outlineConfidence":1,"outlineUpdates":[{"nodeId":"大纲节点ID","actualSummary":"该节点对应正文实际进展","actualBeats":["关键动作/转折"]}],"supplementMarkdown":"可写入 summaries 的补充 Markdown","timelineEvents":[{"when":"时间描述","where":"地点，可为空","participants":["参与者"],"description":"具体事件描述","physical":null,"communication":null}],"timelineConfidence":1,"timelineShouldClear":false,"timelineClearReason":""}.',
     '- summary 写 150-300 字，覆盖开局状态、关键转折、角色决定、关系变化、结尾悬念；不要只写一句概括。',
     '- outlineActualSummary 写 80-180 字，面向大纲维护，说明本章实际完成了哪些剧情推进、人物状态变化和未解决伏笔。',
     '- 如果输入里提供了 outlineContext.matchingNodes，请为每个相关节点生成 outlineUpdates；actualSummary 不要复述原大纲，要写正文实际发生后的结果。',
     '- timelineEvents 应按本章内发生顺序列出具体事件。普通剧情章通常需要 2-6 条；只有纯内心独白/无可定位事件时才返回空数组。',
     '- 若 existingTimeline 里有旧事件且正文仍支持这些事件，请保留或改写为新的 timelineEvents；不要因为不确定就返回空数组。',
+    '- 若输入提供 retrievedContext，请优先用它核对世界观、人设、地点和时间线前情；不要把检索上下文逐字抄进摘要。',
     '- 只有确认本章不应保留任何时间线事件时，才将 timelineShouldClear 设为 true。',
+    '- 如果 timelineShouldClear 为 true，必须填写明确 timelineClearReason；没有明确原因就不要清空。',
+    '- summaryConfidence、timelineConfidence、outlineConfidence 用 0-1 表示你对对应结构化结果的把握；若低于 0.75，系统会只保存摘要并跳过时间线/大纲覆盖。',
     '- supplementMarkdown 只写新增设定补充，不要重复正文；没有新增设定则为空字符串。',
   ].join('\n');
 }
@@ -113,6 +118,7 @@ function buildInput(draft, context = {}) {
     },
     outlineContext: context.outlineContext || null,
     existingTimeline: Array.isArray(context.existingTimeline) ? context.existingTimeline : [],
+    retrievedContext: context.retrievedContext || null,
   }, null, 2);
 }
 
@@ -137,6 +143,14 @@ function normalizeTimelineEvent(event, chapterRef) {
   return next;
 }
 
+function normalizeConfidence(value, fallback = 1) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  if (number < 0) return 0;
+  if (number > 1) return 1;
+  return number;
+}
+
 function normalizeAnalysis(parsed, draft) {
   const fallbackSummary = String(draft.summary || `${draft.displayName || draft.name} 已写入项目。`).trim();
   const outlineUpdates = (Array.isArray(parsed?.outlineUpdates) ? parsed.outlineUpdates : [])
@@ -157,7 +171,28 @@ function normalizeAnalysis(parsed, draft) {
     outlineUpdates,
     supplementMarkdown: String(parsed?.supplementMarkdown || '').trim(),
     timelineEvents,
+    summaryConfidence: normalizeConfidence(parsed?.summaryConfidence, 1),
+    timelineConfidence: normalizeConfidence(parsed?.timelineConfidence, 1),
+    outlineConfidence: normalizeConfidence(parsed?.outlineConfidence, 1),
     timelineShouldClear: parsed?.timelineShouldClear === true,
+    timelineClearReason: String(parsed?.timelineClearReason || '').trim(),
+  };
+}
+
+function getConfidenceState(analysis) {
+  const confidence = {
+    summaryConfidence: normalizeConfidence(analysis?.summaryConfidence, 1),
+    timelineConfidence: normalizeConfidence(analysis?.timelineConfidence, 1),
+    outlineConfidence: normalizeConfidence(analysis?.outlineConfidence, 1),
+  };
+  const low = Object.entries(confidence)
+    .filter(([, value]) => value < CONFIDENCE_THRESHOLD)
+    .map(([key, value]) => `${key}=${value.toFixed(2)}`);
+  return {
+    ...confidence,
+    threshold: CONFIDENCE_THRESHOLD,
+    ok: low.length === 0,
+    low,
   };
 }
 
@@ -310,7 +345,7 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
   }
 
   const warnings = [];
-  const context = { outlineContext: null, existingTimeline: [] };
+  const context = { outlineContext: null, existingTimeline: [], retrievedContext: null };
   emitProgress(onProgress, '写后同步：读取相关大纲节点。', { stage: 'post_write_read_outline' });
   const outlineContextRead = await callAutoTool('read_outline_nodes', {});
   if (!outlineContextRead.isError) {
@@ -322,6 +357,36 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
   if (!timelineContextRead.isError) {
     const timelinePayload = parseToolPayload(timelineContextRead.text);
     context.existingTimeline = Array.isArray(timelinePayload?.events) ? timelinePayload.events : [];
+  }
+  emitProgress(onProgress, '写后同步：检索本章相关设定和前情。', { stage: 'post_write_retrieve_context' });
+  const retrievalContextRead = await callAutoTool('retrieve_context', {
+    query: [
+      draft.displayName || draft.name,
+      draft.title || '',
+      draft.summary || '',
+      String(draft.text || '').slice(0, 1600),
+      ...(Array.isArray(context.outlineContext?.matchingNodes)
+        ? context.outlineContext.matchingNodes.flatMap((node) => [node.title, node.summary, node.location, node.setting])
+        : []),
+    ].filter(Boolean).join('\n'),
+    focus: '写后摘要、时间线、大纲回写需要核对的世界观、人设、地点和前情',
+    chapterName: draft.name,
+    maxItems: 10,
+    maxChars: 10000,
+  });
+  if (!retrievalContextRead.isError) {
+    const retrievalPayload = parseToolPayload(retrievalContextRead.text);
+    if (retrievalPayload?.contextText || Array.isArray(retrievalPayload?.items)) {
+      context.retrievedContext = {
+        query: retrievalPayload.query || '',
+        resultCount: Number(retrievalPayload.resultCount) || 0,
+        contextText: retrievalPayload.contextText || '',
+        items: Array.isArray(retrievalPayload.items) ? retrievalPayload.items : [],
+        wasTrimmed: !!retrievalPayload.wasTrimmed,
+      };
+    }
+  } else {
+    pushUniqueWarning(warnings, `写后设定检索失败：${trimMessage(retrievalContextRead.text)}`);
   }
 
   let analysis;
@@ -336,6 +401,17 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
     warnings.push(`章节回写分析失败：${trimMessage(err?.message || String(err))}`);
     analysisReliable = false;
     analysis = normalizeAnalysis({}, draft);
+  }
+  if (analysis.timelineShouldClear && !analysis.timelineClearReason) {
+    analysis.timelineShouldClear = false;
+    pushUniqueWarning(warnings, 'AI 要求清空本章时间线但未提供 timelineClearReason，已保留旧时间线。');
+  }
+  const confidence = getConfidenceState(analysis);
+  if (analysisReliable && !confidence.ok) {
+    pushUniqueWarning(
+      warnings,
+      `写后分析置信度低于 ${CONFIDENCE_THRESHOLD}（${confidence.low.join('，')}），已只保存摘要，跳过时间线和大纲回写。`
+    );
   }
 
   const toolCalls = [];
@@ -387,6 +463,9 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
   const blockingWarnings = [];
   if (!analysisReliable) {
     pushUniqueWarning(warnings, 'AI 分析失败，已跳过时间线和大纲回写以避免覆盖旧数据。');
+  } else if (!confidence.ok) {
+    timelineSynced = context.existingTimeline.length;
+    pushUniqueWarning(warnings, '因写后分析置信度不足，已保留本章原有时间线，未覆盖。');
   } else if (!analysis.timelineEvents.length && context.existingTimeline.length && !analysis.timelineShouldClear) {
     timelineSynced = context.existingTimeline.length;
     pushUniqueWarning(warnings, 'AI 未返回新的时间线事件，已保留本章原有时间线。');
@@ -422,7 +501,7 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
     }
   }
 
-  if (analysisReliable) {
+  if (analysisReliable && confidence.ok) {
     emitProgress(onProgress, '写后同步：标记相关大纲节点为已写，并回填实际进展。', { stage: 'post_write_outline' });
     const outlineResult = await updateOutlineAfterWrite(draft, analysis);
     toolCalls.push(...outlineResult.toolCalls);
@@ -430,6 +509,8 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
     if (outlineResult.warning) {
       pushUniqueWarning(warnings, outlineResult.warning);
     }
+  } else if (analysisReliable && !confidence.ok) {
+    pushUniqueWarning(warnings, '因写后分析置信度不足，已跳过大纲实际进展回填。');
   }
 
   return {
@@ -437,6 +518,7 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
     summarySaved,
     timelineCount: timelineSynced,
     outlineUpdated,
+    confidence,
     blockingWarnings,
     warnings,
     toolCalls,

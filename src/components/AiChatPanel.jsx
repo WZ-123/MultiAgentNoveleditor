@@ -98,19 +98,29 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
   const onInsertRef = useRef(onInsertTextAtCursor);
   const editorContextRef = useRef(editorContext);
   const handleEventRef = useRef(null);
+  const handleRemoteThreadEventRef = useRef(null);
   const sessionIdRef = useRef(sessionId);
+  const activeThreadIdRef = useRef(activeThreadId);
+  const currentNovelIdRef = useRef(null);
+  const wasCompactRef = useRef(false);
   useEffect(() => { onReplaceRef.current = onReplaceSelectedText; }, [onReplaceSelectedText]);
   useEffect(() => { onReplaceNearCursorRef.current = onReplaceTextNearCursor; }, [onReplaceTextNearCursor]);
   useEffect(() => { onInsertRef.current = onInsertTextAtCursor; }, [onInsertTextAtCursor]);
   useEffect(() => { editorContextRef.current = editorContext; }, [editorContext]);
   useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
+  useEffect(() => { activeThreadIdRef.current = activeThreadId; }, [activeThreadId]);
 
   useEffect(() => {
     const shell = shellRef.current;
     if (!shell) return undefined;
     const updateCompact = () => {
       const width = shell.getBoundingClientRect().width;
-      setIsCompact(width > 0 && width <= 680);
+      const nextCompact = width > 0 && width <= 680;
+      setIsCompact(nextCompact);
+      if (nextCompact && !wasCompactRef.current) {
+        setShowSidebar(false);
+      }
+      wasCompactRef.current = nextCompact;
     };
     updateCompact();
     if (typeof ResizeObserver === 'undefined') {
@@ -139,8 +149,23 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
   // ====== Auto-switch threads when novel changes ======
   const currentNovelId = editorContext?.novelId || null;
+  useEffect(() => { currentNovelIdRef.current = currentNovelId; }, [currentNovelId]);
+
+  const reloadActiveThread = useCallback(async (threadId = activeThreadIdRef.current) => {
+    if (!threadId || !mana?.chatHistory) return;
+    try {
+      const thread = await mana.chatHistory.getThread(threadId);
+      if (thread?.branch) {
+        setMessages(expandThreadBranch(thread.branch));
+      }
+    } catch (err) {
+      console.error('[AiChatPanel] reloadActiveThread failed', err);
+    }
+  }, [mana]);
+
   useEffect(() => {
     if (!mana?.chatHistory) return;
+    if (status !== 'idle') return;
     if (!currentNovelId && (activeThreadId || sessionId)) {
       return;
     }
@@ -165,9 +190,6 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
           if (sessionId && mana?.chatAgent) {
             try { await mana.chatAgent.closeSession(sessionId); } catch { /* ignore */ }
           }
-          if (offEventRef.current) {
-            try { offEventRef.current(); } catch { /* ignore */ }
-          }
           setActiveThreadId(null);
           setMessages([]);
           setError('');
@@ -177,6 +199,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
           setPendingCharacterProfileDecision(null);
           setPendingCharacterProfilePatch(null);
           setSessionId(null);
+          sessionIdRef.current = null;
         }
       }
     };
@@ -203,18 +226,14 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
     const onVisibilityChange = async () => {
       if (document.visibilityState !== 'visible' || !activeThreadId || !mana?.chatHistory) return;
       try {
-        const thread = await mana.chatHistory.getThread(activeThreadId);
-        if (thread?.branch) {
-          const msgs = expandThreadBranch(thread.branch);
-          setMessages(msgs);
-        }
+        await reloadActiveThread(activeThreadId);
       } catch (err) {
         console.error('[AiChatPanel] resume reload failed', err);
       }
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
-  }, [activeThreadId, mana]);
+  }, [activeThreadId, mana, reloadActiveThread]);
 
   async function loadThreads(novelId) {
     if (!mana?.chatHistory) return;
@@ -260,10 +279,6 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
     if (sessionId && mana?.chatAgent) {
       try { await mana.chatAgent.closeSession(sessionId); } catch { /* ignore */ }
     }
-    if (offEventRef.current) {
-      try { offEventRef.current(); } catch { /* ignore */ }
-    }
-
     setActiveThreadId(threadId);
     setMessages([]);
     setError('');
@@ -294,6 +309,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
     if (mana?.chatAgent?.createSession) {
       try {
         const r = await mana.chatAgent.createSession({ editorContext, messages: localMsgs, threadId });
+        sessionIdRef.current = r.sessionId;
         setSessionId(r.sessionId);
       } catch (err) {
         setError(err?.message || String(err));
@@ -318,11 +334,8 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
         if (sessionId && mana?.chatAgent) {
           try { await mana.chatAgent.closeSession(sessionId); } catch { /* ignore */ }
         }
-        if (offEventRef.current) {
-          try { offEventRef.current(); } catch { /* ignore */ }
-          offEventRef.current = null;
-        }
         setSessionId(null);
+        sessionIdRef.current = null;
         setActiveThreadId(null);
         setMessages([]);
         setError('');
@@ -351,16 +364,62 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
     }
   }
 
-  // ====== Chat agent events ======
-  useEffect(() => {
-    if (!sessionId || !mana?.chatAgent?.onEvent) return;
+  function ensureChatEventSubscription() {
+    if (!mana?.chatAgent?.onEvent || offEventRef.current) return;
     const off = mana.chatAgent.onEvent((payload) => {
-      if (!payload || payload.sessionId !== sessionIdRef.current) return;
-      handleEventRef.current(payload);
+      if (!payload) return;
+      if (payload.sessionId === sessionIdRef.current) {
+        handleEventRef.current?.(payload);
+        return;
+      }
+      if (payload.threadId && payload.threadId === activeThreadIdRef.current) {
+        handleRemoteThreadEventRef.current?.(payload);
+      }
     });
     offEventRef.current = off;
-    return () => { try { off(); } catch { /* ignore */ } };
-  }, [sessionId, activeThreadId]);
+  }
+
+  const offHistoryEventRef = useRef(null);
+
+  function ensureChatHistoryEventSubscription() {
+    if (!mana?.runtime?.on || offHistoryEventRef.current) return;
+    const off = mana.runtime.on('chatHistory:changed', async (payload) => {
+      if (!payload?.threadId) return;
+      const novelMatches = payload.novelId === currentNovelIdRef.current || (!payload.novelId && !currentNovelIdRef.current);
+      if (novelMatches) {
+        await loadThreads(currentNovelIdRef.current);
+      }
+      if (payload.type === 'create' && novelMatches && !activeThreadIdRef.current) {
+        await switchThread(payload.threadId);
+        return;
+      }
+      if (payload.type === 'delete' && payload.threadId === activeThreadIdRef.current) {
+        setActiveThreadId(null);
+        activeThreadIdRef.current = null;
+        setMessages([]);
+        setStatus('idle');
+        setThinkingText('');
+        return;
+      }
+      if (payload.threadId === activeThreadIdRef.current) {
+        await reloadActiveThread(payload.threadId);
+      }
+    });
+    offHistoryEventRef.current = off;
+  }
+
+  // ====== Chat agent events ======
+  useEffect(() => {
+    ensureChatEventSubscription();
+    ensureChatHistoryEventSubscription();
+    return () => {
+      try { offEventRef.current?.(); } catch { /* ignore */ }
+      offEventRef.current = null;
+      try { offHistoryEventRef.current?.(); } catch { /* ignore */ }
+      offHistoryEventRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mana, reloadActiveThread]);
 
   // ====== Persist messages to backend ======
   async function persistMessage(message, threadIdOverride) {
@@ -381,6 +440,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
         setProgressItems([]);
         setAutoFollow(true);
         setShowJumpToBottom(false);
+        setShowSidebar(false);
         setError('');
         break;
       case 'text_delta':
@@ -525,8 +585,94 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
     }
   }, [activeThreadId, sessionId]);
 
+  const handleRemoteThreadEvent = useCallback((ev) => {
+    switch (ev.kind) {
+      case 'turn_start':
+        setStatus('thinking');
+        setThinkingText('');
+        setProgressItems([]);
+        setAutoFollow(true);
+        setShowJumpToBottom(false);
+        setError('');
+        break;
+      case 'text_delta':
+        setStatus('streaming');
+        setMessages((prev) => {
+          const delta = typeof ev.data?.delta === 'string' ? ev.data.delta
+            : ev.data?.delta != null ? String(ev.data.delta)
+            : '';
+          if (!delta) return prev;
+          const last = prev[prev.length - 1];
+          if (last && last.role === 'assistant' && last.isStreaming) {
+            const next = [...prev];
+            next[next.length - 1] = { ...last, text: last.text + delta };
+            return next;
+          }
+          return [
+            ...prev,
+            {
+              id: `remote-msg-${Date.now()}`,
+              role: 'assistant',
+              text: delta,
+              timestamp: Date.now(),
+              isStreaming: true,
+              edited: false,
+              toolCalls: null,
+            },
+          ];
+        });
+        break;
+      case 'thinking_delta':
+        setThinkingText((t) => t + (ev.data?.delta || ''));
+        break;
+      case 'progress':
+        setStatus((current) => (current === 'idle' ? 'thinking' : current));
+        setProgressItems((prev) => {
+          const text = typeof ev.data?.message === 'string' ? ev.data.message.trim() : '';
+          if (!text) return prev;
+          return [
+            ...prev.slice(-11),
+            {
+              id: `remote-${Date.now()}-${prev.length}`,
+              text,
+              stage: ev.data?.stage || '',
+              timestamp: Date.now(),
+            },
+          ];
+        });
+        break;
+      case 'tool_use':
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last && last.role === 'assistant' && last.isStreaming) {
+            const next = [...prev];
+            next[next.length - 1] = { ...last, isStreaming: false };
+            return appendToolUseMessage(next, ev.data, Date.now());
+          }
+          return appendToolUseMessage(prev, ev.data, Date.now());
+        });
+        break;
+      case 'tool_result':
+        setMessages((prev) => applyToolResultMessage(prev, ev.data, Date.now()));
+        break;
+      case 'turn_done':
+        setStatus('idle');
+        setThinkingText('');
+        reloadActiveThread(ev.threadId).catch(() => {});
+        break;
+      case 'error':
+        setStatus('idle');
+        setError(ev.data?.message || 'Unknown error');
+        reloadActiveThread(ev.threadId).catch(() => {});
+        break;
+      default:
+        break;
+    }
+  }, [reloadActiveThread]);
+
   // Keep handleEventRef.current up-to-date for the subscription useEffect
   handleEventRef.current = handleEvent;
+  handleRemoteThreadEventRef.current = handleRemoteThreadEvent;
 
   const handleFrontendAction = useCallback(async (data) => {
     const { actionId, name, input: actionInput } = data;
@@ -590,6 +736,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
         // Create session
         if (mana?.chatAgent?.createSession) {
           const r = await mana.chatAgent.createSession({ editorContext, messages: [], threadId: currentThreadId });
+          sessionIdRef.current = r.sessionId;
           setSessionId(r.sessionId);
           currentSessionId = r.sessionId;
         }
@@ -603,6 +750,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
 
     setError('');
     setInput('');
+    setShowSidebar(false);
 
     const userMsg = {
       id: `msg-${Date.now()}`,
@@ -617,6 +765,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
     await persistMessage(userMsg, currentThreadId);
 
     try {
+      ensureChatEventSubscription();
       await mana.chatAgent.sendMessage(currentSessionId, trimmed);
     } catch (err) {
       const msg = err?.message || String(err);
@@ -692,6 +841,7 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
       }
       if (mana?.chatAgent?.createSession) {
         const r = await mana.chatAgent.createSession({ editorContext, messages: localMsgs, threadId: activeThreadId });
+        sessionIdRef.current = r.sessionId;
         setSessionId(r.sessionId);
       }
       setStatus('idle');
@@ -1000,11 +1150,13 @@ export function AiChatPanel({ editorContext, onReplaceSelectedText, onReplaceTex
             )}
             <button
               type="button"
-              className="rounded-lg text-emerald-500 hover:text-emerald-300 hover:bg-emerald-500/10 text-[10px] px-1.5 py-1"
+              className="rounded-lg text-emerald-400 hover:text-emerald-200 hover:bg-emerald-500/10 text-[10px] px-2 py-1 flex items-center gap-1"
               onClick={openFeedbackModal}
               title="反馈 AI 聊天问题"
+              aria-label="一键反馈问题"
             >
               <AlertCircle size={12} />
+              <span>一键反馈问题</span>
             </button>
           </div>
         </div>

@@ -21,6 +21,7 @@ const fs = require('node:fs').promises;
 const path = require('node:path');
 const { paths, generateId } = require('./paths');
 const { readJson, writeJson } = require('./jsonStore');
+const clientEvents = require('../runtime/clientEvents');
 
 const THREADS_DIR = 'chat-threads';
 const INDEX_FILE = 'index.json';
@@ -52,6 +53,27 @@ async function _writeIndex(index) {
 }
 
 function _emitChange(event) {
+  const payload = {
+    type: event.type,
+    threadId: event.threadId || event.thread?.id || null,
+    novelId: event.thread?.novelId ?? event.novelId ?? null,
+    messageId: event.messageId || event.message?.id || null,
+    title: event.thread?.title || event.title || null,
+    updatedAt: event.thread?.updatedAt || event.updatedAt || new Date().toISOString(),
+  };
+  try {
+    clientEvents.emit('chatHistory:changed', payload);
+  } catch {
+    // Non-critical: local store subscribers still run below.
+  }
+  try {
+    const { webContents } = require('electron');
+    for (const wc of webContents.getAllWebContents()) {
+      try { wc.send('chatHistory:changed', payload); } catch {}
+    }
+  } catch {
+    // Non-Electron tests can still use local subscribers.
+  }
   for (const listener of changeListeners) {
     try {
       listener(event);
@@ -100,6 +122,7 @@ async function createThread({ title, novelId, maxBytes } = {}) {
   idx.threads = idx.threads || [];
   idx.threads.push({ id: threadId, title: thread.title, novelId: thread.novelId, createdAt: now, updatedAt: now });
   await _writeIndex(idx);
+  _emitChange({ type: 'create', threadId, thread });
   return thread;
 }
 
@@ -116,6 +139,7 @@ async function deleteThread(threadId) {
   const idx = await _readIndex();
   idx.threads = (idx.threads || []).filter((t) => t.id !== threadId);
   await _writeIndex(idx);
+  _emitChange({ type: 'delete', threadId });
 }
 
 async function renameThread(threadId, title) {
@@ -131,6 +155,7 @@ async function renameThread(threadId, title) {
     entry.updatedAt = thread.updatedAt;
     await _writeIndex(idx);
   }
+  _emitChange({ type: 'rename', threadId, thread });
   return thread;
 }
 
@@ -168,6 +193,7 @@ async function appendMessage(threadId, message) {
     entry.updatedAt = thread.updatedAt;
     await _writeIndex(idx);
   }
+  _emitChange({ type: 'append', threadId, message, thread });
   return thread;
 }
 
@@ -247,6 +273,7 @@ async function updateThreadNovelId(threadId, novelId) {
     entry.updatedAt = thread.updatedAt;
     await _writeIndex(idx);
   }
+  _emitChange({ type: 'move', threadId, novelId: thread.novelId, thread });
   return thread;
 }
 

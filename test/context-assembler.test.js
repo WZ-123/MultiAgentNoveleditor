@@ -16,6 +16,8 @@ function runContextAssemblerTest() {
     isCacheableToolName,
     buildContextManifest,
     classifyChatToolPolicy,
+    classifyCharacterContextPolicy,
+    classifyRetrievalContextPolicy,
     applyToolPolicy,
   } = require(path.join(ROOT, 'src/main/runtime/contextAssembler'));
 
@@ -87,6 +89,7 @@ function runContextAssemblerTest() {
     assert.equal(toolCacheKey('read_chapter', { b: 2, a: 1 }), toolCacheKey('read_chapter', { a: 1, b: 2 }));
     assert.equal(isCacheableToolName('read_chapter'), true);
     assert.equal(isCacheableToolName('query_world'), true);
+    assert.equal(isCacheableToolName('retrieve_context'), true);
     assert.equal(isCacheableToolName('write_chapter'), false);
     assert.equal(isCacheableToolName('update_character'), false);
     pass('CA5_cache_key_and_cacheable_tool_policy_are_stable');
@@ -126,10 +129,12 @@ function runContextAssemblerTest() {
       { name: 'write_chapter' },
       { name: 'update_world' },
       { name: 'read_character' },
+      { name: 'retrieve_context' },
       { name: 'WebSearch' },
     ];
     const writing = applyToolPolicy(tools, { id: 'writing', reason: 'test' });
     assert.ok(writing.tools.some((tool) => tool.name === 'write_chapter'));
+    assert.ok(writing.tools.some((tool) => tool.name === 'retrieve_context'));
     assert.equal(writing.tools.some((tool) => tool.name === 'update_world'), false);
     const characterEdit = applyToolPolicy(tools, { id: 'character_edit', reason: 'test' });
     assert.ok(characterEdit.tools.some((tool) => tool.name === 'read_character'));
@@ -137,6 +142,46 @@ function runContextAssemblerTest() {
     pass('CA7_chat_tool_policy_classifies_and_filters_tools');
   } catch (err) {
     fail('CA7_chat_tool_policy_classifies_and_filters_tools', err?.stack || String(err));
+  }
+
+  try {
+    const chapterSession = {
+      activeNovelId: 'novel-1',
+      editorContext: { type: 'chapter', title: 'chapter-003.md', chapterFileName: 'chapter-003.md' },
+    };
+    const writingPolicy = classifyCharacterContextPolicy('结合当前章节剧情聊聊人物表现', chapterSession, { id: 'writing' });
+    assert.equal(writingPolicy.shouldPreload, true);
+    assert.equal(writingPolicy.id, 'writing_scene_characters');
+    const reviewPolicy = classifyCharacterContextPolicy('审查本章人物表现是否稳定', chapterSession, { id: 'review' });
+    assert.equal(reviewPolicy.shouldPreload, true);
+    assert.equal(reviewPolicy.id, 'review_scene_characters');
+    const generalPolicy = classifyCharacterContextPolicy('你好，聊聊创作方向', chapterSession, { id: 'general' });
+    assert.equal(generalPolicy.shouldPreload, false);
+    const noChapterPolicy = classifyCharacterContextPolicy('结合剧情聊聊人物表现', { activeNovelId: 'novel-1', editorContext: {} }, { id: 'writing' });
+    assert.equal(noChapterPolicy.shouldPreload, false);
+    pass('CA8_character_context_policy_preloads_only_for_targeted_writing_or_review');
+  } catch (err) {
+    fail('CA8_character_context_policy_preloads_only_for_targeted_writing_or_review', err?.stack || String(err));
+  }
+
+  try {
+    const chapterSession = {
+      activeNovelId: 'novel-1',
+      editorContext: { type: 'chapter', title: 'chapter-003.md', chapterFileName: 'chapter-003.md' },
+    };
+    const writingPolicy = classifyRetrievalContextPolicy('结合当前章节剧情聊聊人物表现', chapterSession, { id: 'writing' });
+    assert.equal(writingPolicy.shouldPreload, true);
+    assert.equal(writingPolicy.id, 'writing_retrieved_context');
+    const reviewPolicy = classifyRetrievalContextPolicy('审查本章人物表现是否稳定', chapterSession, { id: 'review' });
+    assert.equal(reviewPolicy.shouldPreload, true);
+    assert.equal(reviewPolicy.id, 'review_retrieved_context');
+    const generalPolicy = classifyRetrievalContextPolicy('你好，聊聊创作方向', chapterSession, { id: 'general' });
+    assert.equal(generalPolicy.shouldPreload, false);
+    const noChapterPolicy = classifyRetrievalContextPolicy('结合剧情聊聊人物表现', { activeNovelId: 'novel-1', editorContext: {} }, { id: 'writing' });
+    assert.equal(noChapterPolicy.shouldPreload, false);
+    pass('CA9_retrieval_context_policy_preloads_only_for_targeted_writing_or_review');
+  } catch (err) {
+    fail('CA9_retrieval_context_policy_preloads_only_for_targeted_writing_or_review', err?.stack || String(err));
   }
 
   console.log('');

@@ -61,6 +61,30 @@ export async function saveDataTabEdit({
     return { message: `已保存 ${drafts.length} 个角色`, refresh: true };
   }
 
+  if (dataType === 'assets') {
+    const parsed = ensureArray(JSON.parse(editText), '资产数据');
+    const drafts = parsed.map((item, index) => {
+      ensurePlainObject(item, `第 ${index + 1} 个资产`);
+      const id = normalizeText(item.id) || normalizeText(item.name) || `asset-manual-${Date.now().toString(36)}-${index + 1}`;
+      return { ...item, id };
+    });
+    const existing = await mana.novel.listAssets(novelId);
+    const nextIds = new Set(drafts.map((item) => item.id));
+
+    for (const draft of drafts) {
+      await mana.novel.upsertAsset(novelId, draft);
+    }
+
+    for (const asset of existing || []) {
+      const currentId = normalizeText(asset?.id);
+      if (currentId && !nextIds.has(currentId) && mana.novel.deleteAsset) {
+        await mana.novel.deleteAsset(novelId, currentId);
+      }
+    }
+
+    return { message: `已保存 ${drafts.length} 个资产`, refresh: true };
+  }
+
   if (dataType === 'world') {
     const parsed = ensurePlainObject(JSON.parse(editText), '世界观数据');
     await mana.novel.writeWorld(novelId, parsed);

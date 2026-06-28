@@ -52,6 +52,7 @@ async function runChapterPostWriteSyncRegressionTest() {
 
   let cleanupRoot = '';
   let providerCallCount = 0;
+  const analysisInputs = [];
   const responses = [
     {
       summary: '第一版摘要',
@@ -137,7 +138,8 @@ async function runChapterPostWriteSyncRegressionTest() {
       maxOutputTokens: 512,
       temperature: 0,
     });
-    runSubagentModule.runSubagent = async () => {
+    runSubagentModule.runSubagent = async ({ input }) => {
+      analysisInputs.push(input);
       const payload = responses[Math.min(providerCallCount, responses.length - 1)];
       providerCallCount += 1;
       return { output: typeof payload === 'string' ? payload : JSON.stringify(payload) };
@@ -174,6 +176,17 @@ async function runChapterPostWriteSyncRegressionTest() {
       pass('P2_first_sync_writes_initial_events', 'first post-write sync created two chapter-scoped events');
     } else {
       fail('P2_first_sync_writes_initial_events', JSON.stringify({ first, timelineAfterFirst }));
+    }
+
+    const firstAnalysisInput = JSON.parse(analysisInputs[0]);
+    if (
+      firstAnalysisInput.retrievedContext
+      && /Retrieved Novel Context/.test(firstAnalysisInput.retrievedContext.contextText || '')
+      && /旧案复盘|鹏城/.test(firstAnalysisInput.retrievedContext.contextText || '')
+    ) {
+      pass('P2b_post_write_analysis_receives_retrieved_context', 'post-write analysis input includes bounded RAG context');
+    } else {
+      fail('P2b_post_write_analysis_receives_retrieved_context', JSON.stringify(firstAnalysisInput.retrievedContext));
     }
 
     const second = await persistChapterArtifacts({ draft, abortSignal: null });

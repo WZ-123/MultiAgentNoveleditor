@@ -1,4 +1,5 @@
 import { createId } from '@/domain/ids.js';
+import { mergeReviewIssues, normalizeReviewIssues } from '@/domain/chapterReview.js';
 import { joinParagraphs, splitIntoParagraphs } from '@/domain/text.js';
 import { WRITING_PHASE } from '@/domain/types.js';
 import {
@@ -32,6 +33,7 @@ import { appendStyleMemory, loadStyleMemory } from '@/services/styleMemoryStore.
  * @property {ParagraphRef[]} paragraphs
  * @property {StyleAnnotation[]} styleAnnotations
  * @property {QualityAnnotation[]} qualityAnnotations
+ * @property {Object[]} reviewIssues
  * @property {Set<string>} qualityResolvedIds
  * @property {import('@/domain/types.js').PeekSession | null} peek
  * @property {string | null} agent6Summary
@@ -59,6 +61,7 @@ export function createWritingSession(outlineMarkdown, hierarchicalContext, chara
     paragraphs: [],
     styleAnnotations: [],
     qualityAnnotations: [],
+    reviewIssues: [],
     qualityResolvedIds: new Set(),
     peek: null,
     agent6Summary: null,
@@ -85,11 +88,54 @@ export function createWritingSessionFromChapter(chapterOutlineMarkdown, context,
     paragraphs: [],
     styleAnnotations: [],
     qualityAnnotations: [],
+    reviewIssues: [],
     qualityResolvedIds: new Set(),
     peek: null,
     agent6Summary: null,
     agent6Supplement: null,
     lastError: null,
+  };
+}
+
+function buildReviewIssuesFromAnnotations(state) {
+  const paragraphs = state?.paragraphs || [];
+  const styleIssues = normalizeReviewIssues(
+    (state?.styleAnnotations || []).map((annotation) => ({
+      id: annotation.id,
+      source: 'style',
+      category: 'style',
+      status: 'open',
+      paragraphId: annotation.paragraphId,
+      note: annotation.reason || '文风一致性问题',
+      suggestedAction: 'preview_rewrite',
+    })),
+    { paragraphs, source: 'style', defaultSeverity: 'blocking' }
+  );
+  const qualityIssues = normalizeReviewIssues(
+    (state?.qualityAnnotations || []).map((annotation) => ({
+      id: annotation.id,
+      source: annotation.kind === 'logic_consistency'
+        ? 'character_world'
+        : annotation.kind === 'timeline_consistency'
+          ? 'timeline'
+          : annotation.kind === 'choppy'
+            ? 'paragraph_function'
+            : 'prose_quality',
+      category: annotation.kind || 'prose_quality',
+      status: state?.qualityResolvedIds?.has(annotation.paragraphId) ? 'passed' : 'open',
+      paragraphId: annotation.paragraphId,
+      note: annotation.note || '行文质量问题',
+      suggestedAction: annotation.kind === 'choppy' ? 'merge_paragraphs' : 'preview_rewrite',
+    })),
+    { paragraphs, defaultSeverity: 'blocking' }
+  );
+  return mergeReviewIssues(styleIssues, qualityIssues);
+}
+
+function withReviewIssues(state) {
+  return {
+    ...state,
+    reviewIssues: buildReviewIssuesFromAnnotations(state),
   };
 }
 
@@ -139,6 +185,7 @@ export async function generateRemoteDraft(state) {
       draftText,
       paragraphs,
       lastError: null,
+      reviewIssues: [],
     };
   } catch (e) {
     const err = e instanceof Error ? e.message : String(e);
@@ -293,12 +340,12 @@ export async function runAgent4Style(state) {
       state.paragraphs,
       data.annotations
     );
-    return {
+    return withReviewIssues({
       ...state,
       phase: WRITING_PHASE.AGENT4,
       styleAnnotations,
       lastError: null,
-    };
+    });
   } catch (e) {
     const err = e instanceof Error ? e.message : String(e);
     return { ...state, lastError: err };
@@ -329,12 +376,12 @@ export function applyStyleAction(state, annotationId, action, patch) {
     appendStyleMemory(patch ?? `例外：段落 ${ann.paragraphId} 采用口语化节奏。`);
   }
 
-  return {
+  return withReviewIssues({
     ...state,
     paragraphs,
     styleAnnotations,
     draftText: joinParagraphs(paragraphs),
-  };
+  });
 }
 
 /**
@@ -407,12 +454,12 @@ export async function runAgent5Quality(state) {
       [...modelAnnotations, ...hardAnnotations],
       crossParagraphAnnotations
     );
-    return {
+    return withReviewIssues({
       ...state,
       phase: WRITING_PHASE.AGENT5,
       qualityAnnotations,
       lastError: null,
-    };
+    });
   } catch (e) {
     const err = e instanceof Error ? e.message : String(e);
     return { ...state, lastError: err };
@@ -428,10 +475,10 @@ export function applyQualityChoice(state, paragraphId, choice) {
   if (choice === 'keep') {
     const next = new Set(state.qualityResolvedIds);
     next.add(paragraphId);
-    return { ...state, qualityResolvedIds: next };
+    return withReviewIssues({ ...state, qualityResolvedIds: next });
   }
   const para = state.paragraphs.find((p) => p.id === paragraphId);
-  return {
+  return withReviewIssues({
     ...state,
     peek: {
       paragraphId,
@@ -439,7 +486,7 @@ export function applyQualityChoice(state, paragraphId, choice) {
       candidate: '',
       status: 'pending',
     },
-  };
+  });
 }
 
 /**
@@ -491,12 +538,15 @@ export function resolvePeek(state, action) {
   const paragraphs = state.paragraphs.map((p) =>
     p.id === paragraphId ? { ...p, text: candidate } : p
   );
-  return {
+  const qualityResolvedIds = new Set(state.qualityResolvedIds);
+  qualityResolvedIds.add(paragraphId);
+  return withReviewIssues({
     ...state,
     paragraphs,
+    qualityResolvedIds,
     draftText: joinParagraphs(paragraphs),
     peek: null,
-  };
+  });
 }
 
 /**
@@ -527,12 +577,12 @@ export async function bulkRewriteUnresolved(state) {
     );
     nextParagraphs.push({ ...p, text });
   }
-  return {
+  return withReviewIssues({
     ...state,
     paragraphs: nextParagraphs,
     draftText: joinParagraphs(nextParagraphs),
     qualityAnnotations: [],
-  };
+  });
 }
 
 /**
@@ -548,7 +598,7 @@ export function markReadyToSave(state) {
 export function bulkKeepAllQuality(state) {
   const ids = new Set(state.qualityResolvedIds);
   state.qualityAnnotations.forEach((a) => ids.add(a.paragraphId));
-  return { ...state, qualityResolvedIds: ids };
+  return withReviewIssues({ ...state, qualityResolvedIds: ids });
 }
 
 /**

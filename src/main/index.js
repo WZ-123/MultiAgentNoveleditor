@@ -26,11 +26,14 @@ const { registerImportIpc } = require('./ipc/import');
 const { registerFeedbackIpc } = require('./ipc/feedback');
 const { registerFeedbackSyncIpc } = require('./ipc/feedbackSync');
 const { registerUpdaterIpc } = require('./ipc/updater');
+const { registerLanRemoteIpc } = require('./ipc/lanRemote');
 const { FeedbackSyncWorker } = require('./sync/feedbackSyncWorker');
 const chatHistory = require('./store/chatHistory');
 const offlineLog = require('./store/offlineLog');
 const recentLogBuffer = require('./store/recentLogBuffer');
 const stagingProject = require('./import/stagingProject');
+const ipcBridge = require('./lan/ipcBridge');
+const lanRemote = require('./lan/remoteServer');
 
 const SKILL_SEED = `# Multi-Agent Novel Assistant — Skill Reference
 
@@ -226,6 +229,7 @@ async function initBackend() {
   recentLogBuffer.installConsoleCapture();
   ensureLayout();
   await restoreLastActiveNovel();
+  ipcBridge.install();
   registerFsIpc();
   registerConfigIpc();
   workflowOrchestrator.bootstrap();
@@ -242,7 +246,13 @@ async function initBackend() {
   registerFeedbackIpc();
   registerFeedbackSyncIpc();
   registerUpdaterIpc();
+  registerLanRemoteIpc();
   registerLegacyChatCompletionsIpc();
+  try {
+    await lanRemote.syncFromAppConfig();
+  } catch (err) {
+    console.error('[main] LAN remote startup failed', err.message || String(err));
+  }
 }
 
 function attachWindow(win) {

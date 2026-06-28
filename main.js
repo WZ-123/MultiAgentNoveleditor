@@ -56,6 +56,8 @@ const isAuthDialogRelayE2ETest = process.argv.includes('--test-auth-dialog-relay
 const isUserE2ETest = process.argv.includes('--test-user-e2e');
 const isCharacterCardUiTest = process.argv.includes('--test-character-card-ui');
 const isDataTabEditUiTest = process.argv.includes('--test-datatab-edit-ui');
+const isEditorReviewUiRegressionTest = process.argv.includes('--test-editor-review-ui-regression');
+const isAssetsUiRegressionTest = process.argv.includes('--test-assets-ui-regression');
 const isAutomatedTest = isUiTest
   || isChatTest
   || isFlowTest
@@ -75,7 +77,9 @@ const isAutomatedTest = isUiTest
   || isAuthDialogRelayE2ETest
   || isUserE2ETest
   || isCharacterCardUiTest
-  || isDataTabEditUiTest;
+  || isDataTabEditUiTest
+  || isEditorReviewUiRegressionTest
+  || isAssetsUiRegressionTest;
 
 if (isChatDeAiUiRegressionTest) {
   process.env.MANA_USE_STDIO_MCP = '0';
@@ -85,7 +89,7 @@ async function createWindow () {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    show: isRealChatTest || isUserE2ETest || isCharacterCardUiTest || isDataTabEditUiTest || isChatSelectionSyncRegressionTest || isChatUiScreenshotRegressionTest || !isAutomatedTest,
+    show: isRealChatTest || isUserE2ETest || isCharacterCardUiTest || isDataTabEditUiTest || isEditorReviewUiRegressionTest || isAssetsUiRegressionTest || isChatSelectionSyncRegressionTest || isChatUiScreenshotRegressionTest || !isAutomatedTest,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -229,6 +233,46 @@ async function createWindow () {
         try {
           const { runDataTabEditUiE2E } = require('./test/datatab-edit-ui-e2e.js');
           const results = await runDataTabEditUiE2E(mainWindow);
+          process.exit(results.failed > 0 ? 1 : 0);
+        } catch (err) {
+          console.error('TEST_FAIL harness_error:', err.message || String(err));
+          process.exit(1);
+        }
+      });
+      mainWindow.webContents.once('did-fail-load', (_e, code, desc) => {
+        clearTimeout(timeout);
+        reject(new Error(`Page load failed: ${code} ${desc}`));
+      });
+      mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+    });
+  } else if (isEditorReviewUiRegressionTest) {
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Page load timeout')), 15000);
+      mainWindow.webContents.once('did-finish-load', async () => {
+        clearTimeout(timeout);
+        try {
+          const { runEditorReviewUiRegressionTest } = require('./test/editor-review-ui-e2e.js');
+          const results = await runEditorReviewUiRegressionTest(mainWindow);
+          process.exit(results.failed > 0 ? 1 : 0);
+        } catch (err) {
+          console.error('TEST_FAIL harness_error:', err.message || String(err));
+          process.exit(1);
+        }
+      });
+      mainWindow.webContents.once('did-fail-load', (_e, code, desc) => {
+        clearTimeout(timeout);
+        reject(new Error(`Page load failed: ${code} ${desc}`));
+      });
+      mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
+    });
+  } else if (isAssetsUiRegressionTest) {
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Page load timeout')), 15000);
+      mainWindow.webContents.once('did-finish-load', async () => {
+        clearTimeout(timeout);
+        try {
+          const { runAssetsUiRegressionTest } = require('./test/assets-ui-e2e.js');
+          const results = await runAssetsUiRegressionTest(mainWindow);
           process.exit(results.failed > 0 ? 1 : 0);
         } catch (err) {
           console.error('TEST_FAIL harness_error:', err.message || String(err));

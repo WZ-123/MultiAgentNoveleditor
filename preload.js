@@ -78,7 +78,12 @@ const runtime = {
   driverAvailability: (id) => invoke('mana:runtime:driverAvailability', { id }),
   autoDetectDriverBinPath: (id) => invoke('mana:runtime:autoDetectDriverBinPath', { id }),
   on: (channel, handler) => {
-    if (channel !== 'agent:event' && channel !== 'pipeline:event' && channel !== 'runtime:changed') {
+    if (
+      channel !== 'agent:event' &&
+      channel !== 'pipeline:event' &&
+      channel !== 'runtime:changed' &&
+      channel !== 'chatHistory:changed'
+    ) {
       throw new Error(`Unsupported runtime event channel: ${channel}`);
     }
     const wrapped = (_event, payload) => handler(payload);
@@ -99,8 +104,11 @@ const novel = {
   listChapters: (id) => invoke('mana:novel:listChapters', { id }),
   listChapterMetas: (id) => invoke('mana:novel:listChapterMetas', { id }),
   readChapter: (id, name) => invoke('mana:novel:readChapter', { id, name }),
-  saveChapter: (id, name, content, metadata) => invoke('mana:novel:saveChapter', { id, name, content, metadata }),
+  saveChapter: (id, name, content, metadata, options) => invoke('mana:novel:saveChapter', { id, name, content, metadata, options }),
   deleteChapter: (id, name) => invoke('mana:novel:deleteChapter', { id, name }),
+  listChapterRevisions: (id, name) => invoke('mana:novel:listChapterRevisions', { id, name }),
+  readChapterRevision: (id, name, revisionId) => invoke('mana:novel:readChapterRevision', { id, name, revisionId }),
+  restoreChapterRevision: (id, name, revisionId) => invoke('mana:novel:restoreChapterRevision', { id, name, revisionId }),
   readChapterMeta: (id, name) => invoke('mana:novel:readChapterMeta', { id, name }),
   computeChapterDisplayName: (id, seq, title) => invoke('mana:novel:computeChapterDisplayName', { id, seq, title }),
   computeNextInsertName: (id, afterFileName) => invoke('mana:novel:computeNextInsertName', { id, afterFileName }),
@@ -122,7 +130,13 @@ const novel = {
   writeCharacter: (id, character) => invoke('mana:novel:writeCharacter', { id, character }),
   deleteCharacter: (id, charId) => invoke('mana:novel:deleteCharacter', { id, charId }),
   listAssets: (id) => invoke('mana:novel:listAssets', { id }),
+  readAsset: (id, assetId) => invoke('mana:novel:readAsset', { id, assetId }),
   upsertAsset: (id, asset) => invoke('mana:novel:upsertAsset', { id, asset }),
+  deleteAsset: (id, assetId) => invoke('mana:novel:deleteAsset', { id, assetId }),
+  grantAsset: (id, payload) => invoke('mana:novel:grantAsset', { id, payload }),
+  revokeAsset: (id, payload) => invoke('mana:novel:revokeAsset', { id, payload }),
+  applyAssetPatch: (id, patch) => invoke('mana:novel:applyAssetPatch', { id, patch }),
+  auditAssets: (id) => invoke('mana:novel:auditAssets', { id }),
   listTimeline: (id) => invoke('mana:novel:listTimeline', { id }),
   appendTimeline: (id, event) => invoke('mana:novel:appendTimeline', { id, event }),
   replaceTimeline: (id, events) => invoke('mana:novel:replaceTimeline', { id, events }),
@@ -210,6 +224,12 @@ const networkStatus = {
 
 const feedback = {
   submit: (payload, options) => invoke('mana:feedback:submit', { payload: payload || {}, options: options || {} }),
+};
+
+const lanRemote = {
+  getStatus: () => invoke('mana:lan:getStatus'),
+  setEnabled: (enabled, port) => invoke('mana:lan:setEnabled', { enabled, port }),
+  rotateCode: () => invoke('mana:lan:rotateCode'),
 };
 
 /**
@@ -302,6 +322,7 @@ contextBridge.exposeInMainWorld('mana', {
   chatHistory,
   offlineLog,
   feedback,
+  lanRemote,
   networkStatus,
   prompt,
   import: importBridge,

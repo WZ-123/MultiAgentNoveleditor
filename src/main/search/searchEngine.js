@@ -2,7 +2,7 @@
 
 /**
  * Cross-project search engine for MultiAgentNovelAssistant.
- * Searches chapter content, chapter names, character cards, world lore, and timeline events.
+ * Searches chapter content, chapter names, character cards, assets, world lore, and timeline events.
  * Uses the existing textMatch.cjs for normalized (NFKC/fullwidth) text matching.
  */
 
@@ -29,7 +29,7 @@ async function searchNovel(novelDir, query, options = {}) {
 
   const categories = Array.isArray(options.categories)
     ? options.categories
-    : ['chapters', 'characters', 'world', 'timeline'];
+    : ['chapters', 'characters', 'assets', 'world', 'timeline'];
   const maxPer = options.maxResultsPerCategory || DEFAULT_MAX_PER_CATEGORY;
 
   const tasks = [];
@@ -42,6 +42,9 @@ async function searchNovel(novelDir, query, options = {}) {
   }
   if (categories.includes('characters')) {
     addTask('characters', () => searchCharacters(novelDir, query, maxPer));
+  }
+  if (categories.includes('assets')) {
+    addTask('assets', () => searchAssets(novelDir, query, maxPer));
   }
   if (categories.includes('world')) {
     addTask('world', () => searchWorld(novelDir, query, maxPer));
@@ -275,6 +278,72 @@ async function searchCharacters(novelDir, query, maxResults) {
 }
 
 /**
+ * Search asset cards.
+ * @param {string} novelDir
+ * @param {string} query
+ * @param {number} maxResults
+ * @returns {Promise<SearchResult[]>}
+ */
+async function searchAssets(novelDir, query, maxResults) {
+  const assets = await novelData.listAssets(novelDir);
+  if (!Array.isArray(assets) || assets.length === 0) return [];
+
+  const normalizedQuery = query.normalize('NFKC').toLowerCase();
+  const results = [];
+
+  for (const asset of assets) {
+    const grantsText = Array.isArray(asset.grantedTo)
+      ? asset.grantedTo.map((entry) => [entry?.charId, entry?.chapterRef, entry?.note].filter(Boolean).join(' ')).join('\n')
+      : '';
+    const fields = [
+      { value: asset.name || '', weight: 20, label: 'name' },
+      { value: asset.id || '', weight: 12, label: 'id' },
+      ...(Array.isArray(asset.aliases) ? asset.aliases.map((alias) => ({ value: alias || '', weight: 15, label: 'aliases' })) : []),
+      { value: asset.description || '', weight: 7, label: 'description' },
+      { value: asset.type || '', weight: 6, label: 'type' },
+      { value: asset.status || '', weight: 6, label: 'status' },
+      { value: asset.location || '', weight: 5, label: 'location' },
+      { value: asset.ownerId || '', weight: 4, label: 'ownerId' },
+      { value: grantsText, weight: 3, label: 'grantedTo' },
+    ];
+
+    let bestWeight = 0;
+    let bestField = '';
+    let bestSnippet = '';
+
+    for (const { value, weight, label } of fields) {
+      if (!value) continue;
+      const normalizedValue = String(value).normalize('NFKC').toLowerCase();
+      if (normalizedValue.includes(normalizedQuery)) {
+        const effectiveWeight = weight + (normalizedValue.startsWith(normalizedQuery) ? 5 : 0);
+        if (effectiveWeight > bestWeight) {
+          bestWeight = effectiveWeight;
+          bestField = label;
+          bestSnippet = String(value).length > 220 ? `${String(value).slice(0, 220)}...` : String(value);
+        }
+      }
+    }
+
+    if (bestWeight > 0) {
+      results.push({
+        type: 'asset',
+        relevance: bestWeight,
+        title: asset.name || asset.id,
+        snippet: bestSnippet,
+        matchField: bestField,
+        target: {
+          type: 'asset',
+          assetId: asset.id,
+        },
+      });
+    }
+  }
+
+  results.sort((a, b) => b.relevance - a.relevance);
+  return results.slice(0, maxResults);
+}
+
+/**
  * Search world lore and places.
  * @param {string} novelDir
  * @param {string} query
@@ -396,6 +465,7 @@ module.exports = {
   searchChapterContent,
   searchChapterNames,
   searchCharacters,
+  searchAssets,
   searchWorld,
   searchTimeline,
 };

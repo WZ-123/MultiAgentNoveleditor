@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { User, Globe, Book, Pen, Calendar, ChevronRight, ChevronDown } from 'lucide-react';
+import { User, Globe, Book, Pen, Calendar, ChevronRight, ChevronDown, Package } from 'lucide-react';
 
 const TOOL_REFRESH_SECTIONS = {
   create_character: ['characters'],
   update_character: ['characters'],
   delete_character: ['characters'],
+  grant_asset: ['assets'],
+  revoke_asset: ['assets'],
+  apply_asset_patch: ['assets'],
   update_world: ['world'],
   append_timeline: ['timeline'],
   update_timeline: ['timeline'],
@@ -52,6 +55,9 @@ export function NovelDataBrowser({ onOpenTab }) {
       if (key === 'characters') {
         const chars = await mana.novel.listCharacters(nid);
         setSectionData((prev) => ({ ...prev, characters: Array.isArray(chars) ? chars : [] }));
+      } else if (key === 'assets') {
+        const assets = await mana.novel.listAssets(nid);
+        setSectionData((prev) => ({ ...prev, assets: Array.isArray(assets) ? assets : [] }));
       } else if (key === 'world') {
         const w = await mana.novel.readWorld(nid);
         setSectionData((prev) => ({ ...prev, world: w && typeof w === 'object' ? w : { lore: '', places: [] } }));
@@ -122,6 +128,7 @@ export function NovelDataBrowser({ onOpenTab }) {
 
   const sections = [
     { key: 'characters', icon: User, label: '角色卡', countKey: 'characters' },
+    { key: 'assets', icon: Package, label: '资产/物品', countKey: 'assets' },
     { key: 'world', icon: Globe, label: '世界观' },
     { key: 'timeline', icon: Calendar, label: '时间线', countKey: 'timeline' },
     { key: 'outline', icon: Book, label: '大纲' },
@@ -160,6 +167,26 @@ export function NovelDataBrowser({ onOpenTab }) {
           {data.places?.length > 0 && (
             <div className="mt-1 text-[10px] text-gray-600">地点: {data.places.map((p) => s(p.name)).join('、')}</div>
           )}
+        </div>
+      );
+    }
+
+    if (key === 'assets') {
+      if (!Array.isArray(data) || !data.length) return <div className="px-4 py-1 text-[10px] text-gray-600">暂无资产</div>;
+      return (
+        <div className="px-4 pb-1 max-h-48 overflow-y-auto">
+          {data.map((asset, i) => {
+            const holders = (Array.isArray(asset.grantedTo) ? asset.grantedTo : [])
+              .filter((entry) => entry && entry.revoked !== true && entry.charId)
+              .map((entry) => entry.charId);
+            return (
+              <div key={asset.id || i} className="py-0.5 text-[11px] border-b border-vscode-panel-border/30 last:border-0">
+                <span className="text-gray-200">{s(asset.name || asset.id || '?')}</span>
+                {asset.type && <span className="text-gray-500 ml-1 text-[10px]">— {s(asset.type)}</span>}
+                {holders.length > 0 && <div className="text-gray-500 text-[10px] truncate">持有人: {holders.join('、')}</div>}
+              </div>
+            );
+          })}
         </div>
       );
     }

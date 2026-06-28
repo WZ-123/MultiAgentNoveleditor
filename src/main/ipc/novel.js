@@ -12,17 +12,20 @@ const networkStatus = require('../store/networkStatus');
 const characterEnricher = require('../import/characterEnricher');
 const { extractCharacters } = require('../import/analyzer');
 const eventBus = require('../runtime/eventBus');
+const clientEvents = require('../runtime/clientEvents');
 
 function notifyChapterChanged(name, action, title) {
   if (!name) return;
+  const payload = { name, action, title: title || null };
   try {
     const { webContents } = require('electron');
     for (const wc of webContents.getAllWebContents()) {
-      try { wc.send('mana:chapter:changed', { name, action, title: title || null }); } catch {}
+      try { wc.send('mana:chapter:changed', payload); } catch {}
     }
   } catch {
     // ignore renderer sync failures
   }
+  clientEvents.emit('mana:chapter:changed', payload);
 }
 
 async function buildChapterSaveSnapshot(id, novelRoot, fileName, metadata) {
@@ -41,19 +44,21 @@ async function buildChapterSaveSnapshot(id, novelRoot, fileName, metadata) {
 }
 
 function notifyActiveNovelChanged(entry, action) {
+  const payload = {
+    action: action || 'updated',
+    entry: entry || null,
+  };
   try {
     const { webContents } = require('electron');
     for (const wc of webContents.getAllWebContents()) {
       try {
-        wc.send('mana:novel:activeChanged', {
-          action: action || 'updated',
-          entry: entry || null,
-        });
+        wc.send('mana:novel:activeChanged', payload);
       } catch {}
     }
   } catch {
     // ignore renderer sync failures
   }
+  clientEvents.emit('mana:novel:activeChanged', payload);
 }
 
 function safeIpc(handler) {
@@ -153,7 +158,7 @@ function registerNovelIpc() {
     return novelData.readChapter(np.root, name);
   }));
 
-  ipcMain.handle('mana:novel:saveChapter', safeIpc(async (_e, { id, name, content, metadata }) => {
+  ipcMain.handle('mana:novel:saveChapter', safeIpc(async (_e, { id, name, content, metadata, options }) => {
     const np = await novelsStore.pathsFor(id);
     let finalMeta = metadata || {};
     // Preserve existing frontmatter fields (volume, section) from the file
@@ -172,7 +177,17 @@ function registerNovelIpc() {
     } else if ('title' in finalMeta) {
       delete finalMeta.title;
     }
-    const result = await novelData.writeChapterWithMeta(np.root, name, content, finalMeta);
+    const writeOptions = options && Object.prototype.hasOwnProperty.call(options, 'baseContent')
+      ? { baseContent: typeof options.baseContent === 'string' ? options.baseContent : '' }
+      : undefined;
+    const result = await novelData.writeChapterWithMeta(np.root, name, content, finalMeta, writeOptions);
+    const revision = options && options.createRevision !== false
+      ? await novelData.createChapterRevision(np.root, result.name || name, content, finalMeta, {
+        source: options?.source || 'manual',
+        revisionLabel: options?.revisionLabel,
+        createRevision: options?.createRevision,
+      })
+      : null;
     const snapshot = await buildChapterSaveSnapshot(id, np.root, result.name || name, finalMeta);
     notifyChapterChanged(result.name || name, 'updated', finalMeta.title || existing?.metadata?.title || null);
     await maybeLogOffline({ type: 'chapter', action: 'update', targetId: name, targetName: name, payload: { name, content: content?.slice(0, 500) }, novelId: id });
@@ -180,7 +195,27 @@ function registerNovelIpc() {
       ...result,
       ...snapshot,
       metadata: finalMeta,
+      revision,
     };
+  }));
+
+  ipcMain.handle('mana:novel:listChapterRevisions', safeIpc(async (_e, { id, name }) => {
+    const np = await novelsStore.pathsFor(id);
+    return novelData.listChapterRevisions(np.root, name);
+  }));
+
+  ipcMain.handle('mana:novel:readChapterRevision', safeIpc(async (_e, { id, name, revisionId }) => {
+    const np = await novelsStore.pathsFor(id);
+    return novelData.readChapterRevision(np.root, name, revisionId);
+  }));
+
+  ipcMain.handle('mana:novel:restoreChapterRevision', safeIpc(async (_e, { id, name, revisionId }) => {
+    const np = await novelsStore.pathsFor(id);
+    const result = await novelData.restoreChapterRevision(np.root, name, revisionId);
+    const snapshot = await buildChapterSaveSnapshot(id, np.root, result.name || name, result.metadata || {});
+    notifyChapterChanged(result.name || name, 'updated', result.metadata?.title || null);
+    await maybeLogOffline({ type: 'chapter', action: 'restore', targetId: name, targetName: name, payload: { name, revisionId }, novelId: id });
+    return { ...result, ...snapshot };
   }));
 
   ipcMain.handle('mana:novel:deleteChapter', safeIpc(async (_e, { id, name }) => {
@@ -254,11 +289,49 @@ function registerNovelIpc() {
     return novelData.listAssets(np.root);
   }));
 
+  ipcMain.handle('mana:novel:readAsset', safeIpc(async (_e, { id, assetId }) => {
+    const np = await novelsStore.pathsFor(id);
+    return novelData.readAsset(np.root, assetId);
+  }));
+
   ipcMain.handle('mana:novel:upsertAsset', safeIpc(async (_e, { id, asset }) => {
     const np = await novelsStore.pathsFor(id);
     const result = await novelData.upsertAsset(np.root, asset);
     await maybeLogOffline({ type: 'asset', action: 'update', targetId: asset?.id, targetName: asset?.name, payload: asset, novelId: id });
     return result;
+  }));
+
+  ipcMain.handle('mana:novel:deleteAsset', safeIpc(async (_e, { id, assetId }) => {
+    const np = await novelsStore.pathsFor(id);
+    const result = await novelData.deleteAsset(np.root, assetId);
+    await maybeLogOffline({ type: 'asset', action: 'delete', targetId: assetId, targetName: assetId, payload: {}, novelId: id });
+    return result;
+  }));
+
+  ipcMain.handle('mana:novel:grantAsset', safeIpc(async (_e, { id, payload }) => {
+    const np = await novelsStore.pathsFor(id);
+    const result = await novelData.grantAsset(np.root, payload || {});
+    await maybeLogOffline({ type: 'asset', action: 'grant', targetId: payload?.assetId, targetName: payload?.assetId, payload, novelId: id });
+    return result;
+  }));
+
+  ipcMain.handle('mana:novel:revokeAsset', safeIpc(async (_e, { id, payload }) => {
+    const np = await novelsStore.pathsFor(id);
+    const result = await novelData.revokeAsset(np.root, payload || {});
+    await maybeLogOffline({ type: 'asset', action: 'revoke', targetId: payload?.assetId, targetName: payload?.assetId, payload, novelId: id });
+    return result;
+  }));
+
+  ipcMain.handle('mana:novel:applyAssetPatch', safeIpc(async (_e, { id, patch }) => {
+    const np = await novelsStore.pathsFor(id);
+    const result = await novelData.applyAssetPatch(np.root, patch || {});
+    await maybeLogOffline({ type: 'asset', action: 'patch', targetId: 'asset-patch', targetName: '资产批量变更', payload: patch || {}, novelId: id });
+    return result;
+  }));
+
+  ipcMain.handle('mana:novel:auditAssets', safeIpc(async (_e, { id }) => {
+    const np = await novelsStore.pathsFor(id);
+    return novelData.auditAssets(np.root);
   }));
 
   ipcMain.handle('mana:novel:listTimeline', safeIpc(async (_e, { id }) => {

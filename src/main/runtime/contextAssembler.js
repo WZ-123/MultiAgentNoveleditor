@@ -246,7 +246,7 @@ function toolCacheKey(toolName, args) {
 function isCacheableToolName(name) {
   const tool = safeString(name);
   return /^(list_|read_|query_|check_)/.test(tool)
-    || ['search_index', 'search_novel', 'get_system_time', 'WebFetch', 'WebSearch'].includes(tool);
+    || ['search_index', 'search_novel', 'retrieve_context', 'get_system_time', 'WebFetch', 'WebSearch'].includes(tool);
 }
 
 function createToolResultCache() {
@@ -305,6 +305,57 @@ function classifyChatToolPolicy(userText, session = {}) {
   return { id: 'general', reason: 'default-general' };
 }
 
+function classifyCharacterContextPolicy(userText, session = {}, chatToolPolicy = null) {
+  const editorContext = session?.editorContext || {};
+  const text = safeString(userText).toLowerCase();
+  const policyId = chatToolPolicy?.id || classifyChatToolPolicy(userText, session).id;
+  const hasActiveNovel = !!(editorContext?.novelId || session?.activeNovelId);
+  if (!hasActiveNovel) {
+    return { id: 'none', shouldPreload: false, reason: 'no-active-novel' };
+  }
+  if (!['writing', 'review'].includes(policyId)) {
+    return { id: 'none', shouldPreload: false, reason: `tool-policy-${policyId}` };
+  }
+  const isChapterEditor = editorContext?.type === 'chapter' && !!(editorContext?.chapterFileName || editorContext?.title);
+  const hasSelection = !!safeString(editorContext?.selectedText).trim();
+  const mentionsCurrentChapter = /当前章节|这一章|本章|当前这章|当前正文|选中文本|selection|chapter-\d+\.md/.test(text);
+  if (!isChapterEditor && !hasSelection && !mentionsCurrentChapter) {
+    return { id: 'none', shouldPreload: false, reason: 'no-current-chapter-target' };
+  }
+  return {
+    id: policyId === 'review' ? 'review_scene_characters' : 'writing_scene_characters',
+    shouldPreload: true,
+    reason: policyId === 'review' ? 'review-needs-scene-character-context' : 'writing-needs-scene-character-context',
+    maxChars: policyId === 'review' ? 14000 : 18000,
+  };
+}
+
+function classifyRetrievalContextPolicy(userText, session = {}, chatToolPolicy = null) {
+  const editorContext = session?.editorContext || {};
+  const policyId = chatToolPolicy?.id || classifyChatToolPolicy(userText, session).id;
+  const hasActiveNovel = !!(editorContext?.novelId || session?.activeNovelId);
+  if (!hasActiveNovel) {
+    return { id: 'none', shouldPreload: false, reason: 'no-active-novel' };
+  }
+  if (!['writing', 'review'].includes(policyId)) {
+    return { id: 'none', shouldPreload: false, reason: `tool-policy-${policyId}` };
+  }
+  const isChapterEditor = editorContext?.type === 'chapter' && !!(editorContext?.chapterFileName || editorContext?.title);
+  const hasSelection = !!safeString(editorContext?.selectedText).trim();
+  const text = safeString(userText).toLowerCase();
+  const mentionsCurrentChapter = /当前章节|这一章|本章|当前这章|当前正文|选中文本|selection|chapter-\d+\.md/.test(text);
+  if (!isChapterEditor && !hasSelection && !mentionsCurrentChapter) {
+    return { id: 'none', shouldPreload: false, reason: 'no-current-chapter-target' };
+  }
+  return {
+    id: policyId === 'review' ? 'review_retrieved_context' : 'writing_retrieved_context',
+    shouldPreload: true,
+    reason: policyId === 'review' ? 'review-needs-retrieved-context' : 'writing-needs-retrieved-context',
+    maxChars: policyId === 'review' ? 12000 : 14000,
+    maxItems: policyId === 'review' ? 10 : 12,
+  };
+}
+
 const TOOL_POLICY_ALLOWLISTS = {
   writing: new Set([
     'list_characters', 'read_character_context', 'read_character_memory', 'assemble_scene_context',
@@ -317,7 +368,7 @@ const TOOL_POLICY_ALLOWLISTS = {
     'replace_selected_text', 'replace_text_near_cursor', 'insert_text_at_cursor', 'get_full_editor_content',
     'replace_chapter_text', 'apply_chapter_patch',
     'set_workflow_phase', 'confirm_outline', 'spawn_subagent',
-    'get_system_time', 'WebSearch', 'WebFetch', 'search_index', 'search_novel',
+    'get_system_time', 'WebSearch', 'WebFetch', 'search_index', 'search_novel', 'retrieve_context',
   ]),
   review: new Set([
     'list_characters', 'read_character_context', 'read_character_memory',
@@ -326,25 +377,25 @@ const TOOL_POLICY_ALLOWLISTS = {
     'review_character_consistency', 'review_de_ai_style', 'review_paragraph_function', 'de_ai_ify',
     'replace_selected_text', 'replace_text_near_cursor', 'insert_text_at_cursor', 'get_full_editor_content',
     'replace_chapter_text', 'apply_chapter_patch',
-    'spawn_subagent', 'get_system_time', 'WebSearch', 'WebFetch', 'search_index', 'search_novel',
+    'spawn_subagent', 'get_system_time', 'WebSearch', 'WebFetch', 'search_index', 'search_novel', 'retrieve_context',
   ]),
   character_edit: new Set([
     'list_characters', 'read_character', 'read_character_context', 'read_character_memory', 'patch_character_memory',
     'create_character', 'update_character', 'delete_character', 'enrich_character',
     'read_outline_nodes', 'read_chapter', 'query_world', 'query_timeline',
-    'spawn_subagent', 'get_system_time', 'WebSearch', 'WebFetch', 'search_index', 'search_novel',
+    'spawn_subagent', 'get_system_time', 'WebSearch', 'WebFetch', 'search_index', 'search_novel', 'retrieve_context',
   ]),
   world_edit: new Set([
     'query_world', 'read_world', 'update_world', 'apply_world_patch',
     'read_outline', 'read_outline_nodes', 'list_chapters', 'read_chapter',
     'list_characters', 'query_timeline',
-    'spawn_subagent', 'get_system_time', 'WebSearch', 'WebFetch', 'search_index', 'search_novel',
+    'spawn_subagent', 'get_system_time', 'WebSearch', 'WebFetch', 'search_index', 'search_novel', 'retrieve_context',
   ]),
   general: new Set([
     'list_characters', 'read_character_context',
     'list_chapters', 'list_chapter_displays', 'read_outline', 'read_outline_nodes', 'read_chapter',
     'query_world', 'query_timeline', 'read_style_memory', 'read_skill', 'list_skills', 'read_skill_content',
-    'search_index', 'search_novel',
+    'search_index', 'search_novel', 'retrieve_context',
     'replace_selected_text', 'replace_text_near_cursor', 'insert_text_at_cursor', 'get_full_editor_content',
     'set_workflow_phase',
     'create_novel', 'list_novels',
@@ -382,6 +433,8 @@ module.exports = {
   createToolResultCache,
   buildContextManifest,
   classifyChatToolPolicy,
+  classifyCharacterContextPolicy,
+  classifyRetrievalContextPolicy,
   applyToolPolicy,
   fitTextForModel,
   fitToolResultForModel,

@@ -121,7 +121,7 @@ function createProviderStub() {
       ? messages.flatMap((message) => Array.isArray(message.content) ? message.content : []).map((block) => block?.text || '').join('\n')
       : '';
 
-    if (/Outline Drafter|大纲撰写者/.test(systemText)) {
+    if (/Outline Drafter|大纲撰写者|Drafting Override|结构化大纲草案/.test(systemText)) {
       const lastUser = Array.isArray(messages)
         ? [...messages].reverse().find((message) => message.role === 'user')
         : null;
@@ -242,7 +242,8 @@ async function runChatOutlineUiRegressionTest(mainWindow) {
         async function sendChatMessage(text) {
           const input = document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]');
           if (!input) return { ok: false, step: 'find_input' };
-          const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+          const proto = input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+          const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
           if (setter) setter.call(input, text);
           else input.value = text;
           input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -289,7 +290,8 @@ async function runChatOutlineUiRegressionTest(mainWindow) {
         async function sendChatMessage(text) {
           const input = document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]');
           if (!input) return { ok: false, step: 'find_input' };
-          const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+          const proto = input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+          const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
           if (setter) setter.call(input, text);
           else input.value = text;
           input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -336,7 +338,8 @@ async function runChatOutlineUiRegressionTest(mainWindow) {
         async function sendChatMessage(text) {
           const input = document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]');
           if (!input) return { ok: false, step: 'find_input' };
-          const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+          const proto = input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+          const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
           if (setter) setter.call(input, text);
           else input.value = text;
           input.dispatchEvent(new Event('input', { bubbles: true }));

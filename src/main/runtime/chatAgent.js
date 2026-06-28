@@ -30,17 +30,30 @@ const chapterDraftService = require('./chapterDraftService');
 const chapterRoleplayService = require('./chapterRoleplayService');
 const { detectChapterChatIntent, detectChapterConfirmIntent } = require('./chapterIntent');
 const { splitIntoParagraphs } = require('./chapterCharacterReview');
+const {
+  formatReviewIssueLabel,
+  getOpenReviewIssues,
+  hasBlockingReviewIssues,
+  isOpenReviewIssue,
+  mergeReviewIssues,
+  reviewSourceLabel,
+  setReviewIssueStatus,
+} = require('../../domain/chapterReview.cjs');
 const { buildSystemTimePromptBlock, getSystemTimeInfo } = require('./systemTime');
 const {
   applyToolPolicy,
   assembleProviderContext,
+  classifyCharacterContextPolicy,
   classifyChatToolPolicy,
+  classifyRetrievalContextPolicy,
   createToolResultCache,
+  fitTextForModel,
   fitToolResultForModel,
   isCacheableToolName,
   toolCacheKey,
 } = require('./contextAssembler');
 const appConfig = require('../store/appConfig');
+const clientEvents = require('./clientEvents');
 const { webContents } = require('electron');
 
 // ---------- provider resolution ----------
@@ -303,9 +316,12 @@ function createSession({ editorContext, messages, threadId }) {
     pendingOutlineIssues: [],
     pendingChapterDraft: null,
     pendingChapterIssues: [],
+    pendingChapterAdvisoryIssues: [],
+    pendingChapterFixPreview: null,
     pendingRoleplayProfileGate: null,
     pendingRoleplayProfileProposal: null,
     pendingDeAiChapterReview: null,
+    pendingDeAiChapterPatchPreview: null,
     pendingWriteChapter: null, // { name, title, content, volumeIndex, sectionIndex, baseContent, toolUseId }
   };
   // Pre-populate from thread history so the AI has conversation context
@@ -332,7 +348,8 @@ function getSession(sessionId) {
 
 function emitEvent(sessionId, kind, data) {
   // Broadcast to all webContents. Renderer filters by sessionId.
-  const payload = { sessionId, kind, data, ts: Date.now() };
+  const session = sessions.get(sessionId);
+  const payload = { sessionId, threadId: session?.threadId || null, kind, data, ts: Date.now() };
   for (const wc of webContents.getAllWebContents()) {
     try {
       wc.send('chatAgent:event', payload);
@@ -340,6 +357,7 @@ function emitEvent(sessionId, kind, data) {
       // renderer may be gone
     }
   }
+  clientEvents.emit('chatAgent:event', payload);
 }
 
 function emitProgressEvent(sessionId, message, detail = {}) {
@@ -654,6 +672,8 @@ function clearPendingOutlineDraft(session) {
 function clearPendingChapterDraft(session) {
   session.pendingChapterDraft = null;
   session.pendingChapterIssues = [];
+  session.pendingChapterAdvisoryIssues = [];
+  session.pendingChapterFixPreview = null;
 }
 
 function clearPendingRoleplayProfile(session) {
@@ -663,10 +683,488 @@ function clearPendingRoleplayProfile(session) {
 
 function clearPendingDeAiChapterReview(session) {
   session.pendingDeAiChapterReview = null;
+  session.pendingDeAiChapterPatchPreview = null;
 }
 
 function clearPendingWriteChapter(session) {
   session.pendingWriteChapter = null;
+}
+
+function getPendingChapterIssues(session) {
+  return mergeReviewIssues(
+    session?.pendingChapterIssues || [],
+    session?.pendingChapterAdvisoryIssues || [],
+    session?.pendingChapterDraft?.advisoryIssues || []
+  );
+}
+
+function storePendingChapterIssues(session, issues) {
+  const merged = mergeReviewIssues(issues || []);
+  session.pendingChapterIssues = merged;
+  session.pendingChapterAdvisoryIssues = merged.filter((issue) => (
+    issue?.source === 'style'
+    || issue?.source === 'prose_quality'
+    || issue?.source === 'paragraph_function'
+  ));
+  if (session.pendingChapterDraft) {
+    session.pendingChapterDraft.advisoryIssues = session.pendingChapterAdvisoryIssues;
+  }
+}
+
+function storePendingChapterDraftResult(session, draftResult) {
+  session.pendingChapterDraft = draftResult.draft || null;
+  storePendingChapterIssues(
+    session,
+    draftResult.issues || draftResult.blockingIssues || []
+  );
+  session.workflowPhase = 'writing';
+}
+
+function formatPendingChapterOpenIssues(issues, { prefix = '当前章节草稿仍有 open 审查问题，先不写入。' } = {}) {
+  const openIssues = getOpenReviewIssues(issues);
+  const lines = [prefix];
+  if (!openIssues.length) return `${prefix}\n\n当前没有 open 问题。`;
+  lines.push('');
+  openIssues.slice(0, 12).forEach((issue, index) => {
+    const note = issue.summary || issue.note || issue.detail || '未命名问题';
+    lines.push(`${index + 1}. ${formatReviewIssueLabel(issue)} ${note}`);
+    if (issue.excerpt) lines.push(`   摘录：${issue.excerpt}`);
+  });
+  if (openIssues.length > 12) lines.push(`...另有 ${openIssues.length - 12} 条未展开。`);
+  lines.push('');
+  lines.push('可以回复“预览修复第 N 条”“修复全部可自动修复项”“忽略第 N 条”或“全部标记通过”。');
+  return lines.join('\n');
+}
+
+function parseIssueOrdinalFromText(text) {
+  const source = safeStr(text);
+  const match = source.match(/第\s*([零〇一二两三四五六七八九十百千\d]+)\s*条/u)
+    || source.match(/(?:修复|忽略|通过|处理|看)\s*([零〇一二两三四五六七八九十百千\d]+)\s*(?:条)?/u);
+  if (!match) return NaN;
+  return parseChapterOrdinal(match[1]);
+}
+
+function detectPendingChapterIssueDecisionIntent(userText, session) {
+  if (!session?.pendingChapterDraft?.text) return { action: null };
+  const text = safeStr(userText).trim();
+  if (!text) return { action: null };
+  if (/全部(?:标记)?通过|全部忽略|忽略全部|都(?:标记)?通过|都忽略/u.test(text)) {
+    return {
+      action: /忽略/u.test(text) ? 'ignored' : 'passed',
+      all: true,
+    };
+  }
+  if (/忽略第\s*[零〇一二两三四五六七八九十百千\d]+\s*条|第\s*[零〇一二两三四五六七八九十百千\d]+\s*条.{0,8}忽略/u.test(text)) {
+    return { action: 'ignored', ordinal: parseIssueOrdinalFromText(text) };
+  }
+  if (/(?:标记)?通过第\s*[零〇一二两三四五六七八九十百千\d]+\s*条|第\s*[零〇一二两三四五六七八九十百千\d]+\s*条.{0,8}(?:通过|没问题)/u.test(text)) {
+    return { action: 'passed', ordinal: parseIssueOrdinalFromText(text) };
+  }
+  return { action: null };
+}
+
+function maybeHandlePendingChapterIssueDecision(session, userText) {
+  const intent = detectPendingChapterIssueDecisionIntent(userText, session);
+  if (!intent.action) return null;
+
+  const issues = getPendingChapterIssues(session);
+  const openIssues = getOpenReviewIssues(issues);
+  if (!openIssues.length) {
+    return {
+      text: '当前章节草稿没有 open 审查问题；如果认可这版正文，可以回复“确认写入这一章”。',
+      turns: 1,
+      toolCalls: [],
+    };
+  }
+
+  let targetIds = [];
+  if (intent.all) {
+    targetIds = openIssues
+      .filter((issue) => !issue.reviewIncomplete)
+      .map((issue) => issue.id);
+  } else {
+    const index = intent.ordinal - 1;
+    const issue = openIssues[index];
+    if (!issue) {
+      return {
+        text: `没有找到第 ${intent.ordinal || '?'} 条 open 问题。`,
+        turns: 1,
+        toolCalls: [],
+      };
+    }
+    if (issue.reviewIncomplete) {
+      return {
+        text: '这条是“审查未完成”阻塞，不能直接忽略或标记通过。请回复“重新审查这一章”，或先继续修改草稿后再审。',
+        turns: 1,
+        toolCalls: [],
+      };
+    }
+    targetIds = [issue.id];
+  }
+
+  if (!targetIds.length) {
+    return {
+      text: '当前 open 问题里只有审查未完成项，不能用“全部通过/忽略”绕过。请先重新审查。',
+      turns: 1,
+      toolCalls: [],
+    };
+  }
+
+  const nextIssues = setReviewIssueStatus(
+    issues,
+    (issue) => targetIds.includes(issue.id),
+    intent.action
+  );
+  storePendingChapterIssues(session, nextIssues);
+  session.pendingChapterFixPreview = null;
+  const remaining = getOpenReviewIssues(nextIssues);
+  return {
+    text: remaining.length
+      ? formatPendingChapterOpenIssues(nextIssues, { prefix: `已将 ${targetIds.length} 条问题标记为 ${intent.action === 'ignored' ? 'ignored' : 'passed'}，但仍有 open 项。` })
+      : '所有审查问题都已关闭；如果认可这版正文，可以回复“确认写入这一章”。',
+    turns: 1,
+    toolCalls: [],
+  };
+}
+
+function isPendingChapterFixPreviewIntent(userText) {
+  const text = safeStr(userText);
+  return /预览修复|修复第\s*[零〇一二两三四五六七八九十百千\d]+\s*条|修复全部可自动修复项|自动修复|修一下第/u.test(text);
+}
+
+function isPendingChapterFixApplyIntent(userText) {
+  return /应用修复|确认应用|应用这个|采用预览|就按这个修|确认修复/u.test(safeStr(userText));
+}
+
+function isPendingChapterFixCancelIntent(userText) {
+  return /取消修复|放弃修复|不要应用|先别应用|撤销预览/u.test(safeStr(userText));
+}
+
+function isDraftIssueAutoFixable(issue) {
+  return ['style', 'prose_quality', 'paragraph_function'].includes(issue?.source || issue?.sourceAgent);
+}
+
+function issueParagraphIndexes(issue, paragraphs) {
+  const byId = new Map((paragraphs || []).map((paragraph) => [paragraph.id, paragraph]));
+  const indexes = [];
+  const add = (value) => {
+    const index = Number(value);
+    if (!Number.isInteger(index) || index < 0 || index >= paragraphs.length || indexes.includes(index)) return;
+    indexes.push(index);
+  };
+  if (Array.isArray(issue?.paragraphIndexes)) issue.paragraphIndexes.forEach(add);
+  if (Number.isInteger(issue?.paragraphIndex)) add(issue.paragraphIndex);
+  if (Array.isArray(issue?.paragraphIds)) {
+    issue.paragraphIds.forEach((id) => add(byId.get(id)?.index));
+  }
+  return indexes.sort((left, right) => left - right);
+}
+
+function groupContiguousIndexes(indexes) {
+  const sorted = Array.from(new Set(indexes)).sort((left, right) => left - right);
+  const groups = [];
+  let current = [];
+  for (const index of sorted) {
+    if (!current.length || index === current[current.length - 1] + 1) {
+      current.push(index);
+    } else {
+      groups.push(current);
+      current = [index];
+    }
+  }
+  if (current.length) groups.push(current);
+  return groups;
+}
+
+function buildFixGuidanceForIssues(issues) {
+  const lines = ['只处理下列审查问题对应的段落，保留事实、人称、人物关系和时空链，不要扩写新剧情。'];
+  for (const issue of issues) {
+    lines.push(`- [${reviewSourceLabel(issue.source)}] ${issue.summary || issue.note || issue.detail || ''}`);
+    if (issue.suggestedAction) lines.push(`  建议动作：${issue.suggestedAction}`);
+  }
+  return lines.join('\n');
+}
+
+function buildFixPreviewText(preview) {
+  const lines = [
+    '已生成局部修复预览，尚未应用到草稿。',
+    '',
+    `影响段落：${preview.affectedParagraphIndexes.map((index) => `第${index + 1}段`).join(' / ') || '未定位'}`,
+  ];
+  if (preview.risk) lines.push(`风险提示：${preview.risk}`);
+  lines.push('', '变更预览：');
+  for (const edit of preview.edits.slice(0, 8)) {
+    lines.push(`- 第${edit.paragraphIndex + 1}段`);
+    lines.push(`  原文：${compactPatchContext(edit.original, 180)}`);
+    lines.push(`  新文：${compactPatchContext(edit.replacement, 180)}`);
+  }
+  if (preview.edits.length > 8) lines.push(`- 另有 ${preview.edits.length - 8} 处变更未展开。`);
+  lines.push('', '确认后回复“应用修复”；不想用这版可回复“取消修复”。');
+  return lines.join('\n');
+}
+
+async function buildAutoFixPreviewForDraft(session, selectedIssues) {
+  const draft = session.pendingChapterDraft;
+  const paragraphs = splitIntoParagraphs(draft.text || '');
+  if (!paragraphs.length) throw new Error('当前草稿没有可定位段落');
+
+  const allIssues = getPendingChapterIssues(session);
+  const expandedIssues = [];
+  for (const issue of selectedIssues) {
+    expandedIssues.push(issue);
+    if ((issue.source || issue.sourceAgent) === 'paragraph_function') {
+      const currentIndexes = issueParagraphIndexes(issue, paragraphs);
+      for (const other of allIssues) {
+        if ((other.source || other.sourceAgent) !== 'paragraph_function' || other.id === issue.id || !isOpenReviewIssue(other)) continue;
+        const otherIndexes = issueParagraphIndexes(other, paragraphs);
+        if (currentIndexes.some((index) => otherIndexes.some((otherIndex) => Math.abs(otherIndex - index) <= 1))) {
+          expandedIssues.push(other);
+        }
+      }
+    }
+  }
+  const targetIssues = mergeReviewIssues(expandedIssues);
+  const targetIndexes = Array.from(new Set(targetIssues.flatMap((issue) => issueParagraphIndexes(issue, paragraphs))))
+    .sort((left, right) => left - right);
+  if (!targetIndexes.length) throw new Error('这条问题缺少段落定位，不能安全做段落级自动修复；请先让我按你的指示人工修订，或要求生成整章修订预览。');
+
+  const replacements = new Map();
+  const skipIndexes = new Set();
+  const consumed = new Set();
+  const toolCalls = [];
+  const paragraphFunctionIndexes = targetIssues
+    .filter((issue) => (issue.source || issue.sourceAgent) === 'paragraph_function')
+    .flatMap((issue) => issueParagraphIndexes(issue, paragraphs));
+  const mergeGroups = groupContiguousIndexes(paragraphFunctionIndexes).filter((group) => group.length >= 2);
+
+  for (const group of mergeGroups) {
+    const sourceText = group.map((index) => paragraphs[index]?.text || '').filter(Boolean).join('\n\n');
+    if (!sourceText) continue;
+    const guidance = [
+      buildFixGuidanceForIssues(targetIssues),
+      '这组相邻段落主要问题是机械拆段/一句一段。请把它们按自然段功能合并或重写为更顺的段落组；如果仍需停顿，只保留真正承担节奏落点的短段。',
+    ].join('\n');
+    const rewriteResult = await callMcpTool('de_ai_ify', { text: sourceText, guidance });
+    toolCalls.push({
+      id: `pending-draft-de-ai-merge-${group[0]}-${Date.now().toString(36)}`,
+      name: 'de_ai_ify',
+      input: { paragraphIndexes: group, guidance },
+      status: 'done',
+      result: rewriteResult.text,
+      isError: rewriteResult.isError,
+    });
+    if (rewriteResult.isError) throw new Error(rewriteResult.text || 'de_ai_ify failed');
+    const payload = parseTextJson(rewriteResult.text);
+    const replacement = safeStr(payload?.revisedText || rewriteResult.text).trim();
+    if (!replacement) continue;
+    replacements.set(group[0], replacement);
+    consumed.add(group[0]);
+    for (const index of group.slice(1)) {
+      skipIndexes.add(index);
+      consumed.add(index);
+    }
+  }
+
+  for (const index of targetIndexes) {
+    if (consumed.has(index)) continue;
+    const paragraph = paragraphs[index];
+    if (!paragraph?.text) continue;
+    const related = targetIssues.filter((issue) => issueParagraphIndexes(issue, paragraphs).includes(index));
+    const guidance = buildFixGuidanceForIssues(related.length ? related : targetIssues);
+    const rewriteResult = await callMcpTool('de_ai_ify', { text: paragraph.text, guidance });
+    toolCalls.push({
+      id: `pending-draft-de-ai-${index}-${Date.now().toString(36)}`,
+      name: 'de_ai_ify',
+      input: { paragraphIndex: index, guidance },
+      status: 'done',
+      result: rewriteResult.text,
+      isError: rewriteResult.isError,
+    });
+    if (rewriteResult.isError) throw new Error(rewriteResult.text || 'de_ai_ify failed');
+    const payload = parseTextJson(rewriteResult.text);
+    const replacement = safeStr(payload?.revisedText || rewriteResult.text).trim();
+    if (replacement && replacement !== paragraph.text.trim()) replacements.set(index, replacement);
+  }
+
+  const nextParagraphs = [];
+  const edits = [];
+  paragraphs.forEach((paragraph, index) => {
+    if (skipIndexes.has(index)) return;
+    const replacement = replacements.get(index);
+    if (replacement) {
+      nextParagraphs.push({ ...paragraph, text: replacement });
+      edits.push({
+        paragraphIndex: index,
+        paragraphId: paragraph.id,
+        original: paragraph.text,
+        replacement,
+      });
+    } else {
+      nextParagraphs.push(paragraph);
+    }
+  });
+  if (!edits.length) throw new Error('修复器没有生成有效改动；草稿保持不变。');
+
+  return {
+    kind: 'pending_draft',
+    issueIds: targetIssues.map((issue) => issue.id),
+    beforeText: draft.text,
+    afterText: nextParagraphs.map((paragraph) => paragraph.text).join('\n\n'),
+    affectedParagraphIds: targetIndexes.map((index) => paragraphs[index]?.id).filter(Boolean),
+    affectedParagraphIndexes: targetIndexes,
+    edits,
+    toolCalls,
+    risk: '仅改动定位段落及必要相邻短段；应用后会触发复审。',
+    createdAt: Date.now(),
+  };
+}
+
+async function buildHardIssuePreviewForDraft(session, selectedIssues, userText, sessionId, abortSignal) {
+  const draft = session.pendingChapterDraft;
+  const issueLines = selectedIssues.map((issue, index) => {
+    const paragraphs = Array.isArray(issue.paragraphIndexes) && issue.paragraphIndexes.length
+      ? `（${issue.paragraphIndexes.map((item) => `第${item + 1}段`).join(' / ')}）`
+      : '';
+    return `${index + 1}. [${reviewSourceLabel(issue.source)}]${paragraphs} ${issue.summary || issue.note || issue.detail || ''}`;
+  }).join('\n');
+  const repairPrompt = [
+    '请基于当前草稿生成“最小范围修订预览”，只修复以下审查问题。',
+    '不要写入项目，不要调用保存工具；保留原章节核心剧情、叙事视角和未涉及段落。',
+    '',
+    issueLines,
+    '',
+    userText ? `用户补充：${safeStr(userText)}` : '',
+  ].filter(Boolean).join('\n');
+  const result = await chapterDraftService.generateChapterDraft({
+    mode: 'revise',
+    userText: repairPrompt,
+    pendingChapterDraft: draft,
+    editorContext: session.editorContext,
+    abortSignal,
+    onProgress: (event) => emitProgressEvent(sessionId, event.message, event),
+  });
+  if (!result?.draft?.text) throw new Error('writer 没有生成可预览的修订草稿');
+  return {
+    kind: 'pending_draft',
+    issueIds: selectedIssues.map((issue) => issue.id),
+    beforeText: draft.text,
+    afterText: result.draft.text,
+    candidateDraft: result.draft,
+    affectedParagraphIds: selectedIssues.flatMap((issue) => issue.paragraphIds || []),
+    affectedParagraphIndexes: selectedIssues.flatMap((issue) => issue.paragraphIndexes || []),
+    edits: [{
+      paragraphIndex: selectedIssues[0]?.paragraphIndexes?.[0] ?? 0,
+      paragraphId: selectedIssues[0]?.paragraphIds?.[0] || 'whole-draft-preview',
+      original: draft.text,
+      replacement: result.draft.text,
+    }],
+    toolCalls: [],
+    risk: '这条属于人设/时空/事件账本硬审问题，预览可能涉及跨段衔接；不会自动应用，需你确认。',
+    createdAt: Date.now(),
+  };
+}
+
+async function maybeHandlePendingChapterFixPreview(session, userText, sessionId, abortSignal) {
+  if (!session?.pendingChapterDraft?.text) return null;
+
+  if (session.pendingChapterFixPreview && isPendingChapterFixCancelIntent(userText)) {
+    session.pendingChapterFixPreview = null;
+    return { text: '已取消这次修复预览，草稿没有变化。', turns: 1, toolCalls: [] };
+  }
+
+  if (session.pendingChapterFixPreview && isPendingChapterFixApplyIntent(userText)) {
+    const preview = session.pendingChapterFixPreview;
+    const beforeIssues = getPendingChapterIssues(session);
+    const baseDraft = session.pendingChapterDraft || {};
+    session.pendingChapterDraft = {
+      ...baseDraft,
+      ...(preview.candidateDraft || {}),
+      text: preview.afterText,
+    };
+    let nextIssues = setReviewIssueStatus(beforeIssues, (issue) => preview.issueIds.includes(issue.id), 'fixed');
+    let reviewWarning = '';
+    try {
+      const reviewResult = await chapterDraftService.reviewExistingChapterDraft({
+        mode: 'review',
+        userText: [
+          '小范围复审：刚应用了局部修复预览。',
+          preview.affectedParagraphIndexes.length
+            ? `重点复查这些段落及前后衔接：${preview.affectedParagraphIndexes.map((index) => `第${index + 1}段`).join('、')}`
+            : '重点复查本次改动区域及前后衔接。',
+        ].join('\n'),
+        draft: session.pendingChapterDraft,
+        retrievedContext: baseDraft.roleplayContext?.retrievedContext || null,
+        abortSignal,
+        onProgress: (event) => emitProgressEvent(sessionId, event.message, event),
+      });
+      const rerunIssues = mergeReviewIssues(reviewResult?.issues || reviewResult?.blockingIssues || []);
+      const preservedClosed = nextIssues.filter((issue) => !isOpenReviewIssue(issue) && !preview.issueIds.includes(issue.id));
+      const fixedTargets = nextIssues.filter((issue) => preview.issueIds.includes(issue.id));
+      nextIssues = mergeReviewIssues(rerunIssues, preservedClosed, fixedTargets);
+    } catch (err) {
+      reviewWarning = `\n\n复审暂未完成：${trimMessage(err?.message || String(err))}。为安全起见，写入前仍建议重新审查。`;
+    }
+    storePendingChapterIssues(session, nextIssues);
+    session.pendingChapterFixPreview = null;
+    const remaining = getOpenReviewIssues(nextIssues);
+    return {
+      text: remaining.length
+        ? `${formatPendingChapterOpenIssues(nextIssues, { prefix: '修复已应用到待确认草稿，并完成复审；当前仍有 open 问题。' })}${reviewWarning}`
+        : `修复已应用到待确认草稿，复审未发现 open 问题；现在可以回复“确认写入这一章”。${reviewWarning}`,
+      turns: 1,
+      toolCalls: Array.isArray(preview.toolCalls) ? preview.toolCalls : [],
+    };
+  }
+
+  if (!isPendingChapterFixPreviewIntent(userText)) return null;
+
+  const issues = getPendingChapterIssues(session);
+  const openIssues = getOpenReviewIssues(issues);
+  if (!openIssues.length) {
+    return { text: '当前没有 open 问题需要修复；如果认可这版正文，可以确认写入。', turns: 1, toolCalls: [] };
+  }
+
+  const wantsAllAuto = /全部可自动修复项|自动修复|全部修复/u.test(safeStr(userText));
+  let selectedIssues = [];
+  if (wantsAllAuto) {
+    selectedIssues = openIssues.filter((issue) => !issue.reviewIncomplete && isDraftIssueAutoFixable(issue));
+  } else {
+    const ordinal = parseIssueOrdinalFromText(userText);
+    const issue = openIssues[ordinal - 1];
+    if (!issue) {
+      return { text: `没有找到第 ${ordinal || '?'} 条 open 问题。`, turns: 1, toolCalls: [] };
+    }
+    if (issue.reviewIncomplete) {
+      return { text: '这条是审查未完成项，不能生成修复预览。请先回复“重新审查这一章”。', turns: 1, toolCalls: [] };
+    }
+    selectedIssues = [issue];
+  }
+
+  if (!selectedIssues.length) {
+    return {
+      text: '当前没有可自动修复的 open 项。人设/时空硬审问题请回复“预览修复第 N 条”，我会生成单条最小修订预览。',
+      turns: 1,
+      toolCalls: [],
+    };
+  }
+
+  try {
+    const preview = selectedIssues.every(isDraftIssueAutoFixable)
+      ? await buildAutoFixPreviewForDraft(session, selectedIssues)
+      : await buildHardIssuePreviewForDraft(session, selectedIssues, userText, sessionId, abortSignal);
+    session.pendingChapterFixPreview = preview;
+    return {
+      text: buildFixPreviewText(preview),
+      turns: 1,
+      toolCalls: Array.isArray(preview.toolCalls) ? preview.toolCalls : [],
+    };
+  } catch (err) {
+    return {
+      text: `生成修复预览失败：${err?.message || String(err)}\n\n草稿没有变化。你可以改为指定段落手动修订，或先忽略/标记通过该问题。`,
+      turns: 1,
+      toolCalls: [],
+    };
+  }
 }
 
 function isChapterSnapshotMismatch(text) {
@@ -804,9 +1302,10 @@ async function maybeHandleWriteChapterConfirmation(session, userText, sessionId)
       }
 
       try {
+        const postWriteReviewFocus = '写入后自动审查 AI 味、套话、机械行文和章末模板感';
         const reviewResult = await callMcpTool('review_de_ai_style', {
           chapterName: writtenName,
-          focus: '写入后自动审查 AI 味、套话、机械行文和章末模板感',
+          focus: postWriteReviewFocus,
         });
         followupToolCalls.push({
           id: `auto-de-ai-review-${Date.now().toString(36)}`,
@@ -820,7 +1319,13 @@ async function maybeHandleWriteChapterConfirmation(session, userText, sessionId)
           followupNotes.push(`去 AI 味审查失败：${trimMessage(reviewResult.text)}`);
         } else {
           const reviewPayload = parseTextJson(reviewResult.text) || {};
-          followupNotes.push(`去 AI 味审查完成：发现 ${reviewPayload.totalAnnotations || 0} 处可疑段落。`);
+          const totalAnnotations = Number(reviewPayload.totalAnnotations) || 0;
+          if (totalAnnotations > 0) {
+            storePendingDeAiChapterReview(session, reviewPayload, postWriteReviewFocus);
+            followupNotes.push(`去 AI 味审查完成：发现 ${totalAnnotations} 处可疑段落。已保留审查结果；如果要我按结果局部改正文，直接回复“按方案A改”。`);
+          } else {
+            followupNotes.push('去 AI 味审查完成：没有发现明确需要处理的段落。');
+          }
         }
       } catch (err) {
         followupNotes.push(`去 AI 味审查失败：${err?.message || String(err)}`);
@@ -954,9 +1459,7 @@ async function rerunChapterDraftAfterRoleplayGate(session, sessionId, abortSigna
     };
   }
   clearPendingRoleplayProfile(session);
-  session.pendingChapterDraft = draftResult.draft || null;
-  session.pendingChapterIssues = Array.isArray(draftResult.blockingIssues) ? draftResult.blockingIssues : [];
-  session.workflowPhase = 'writing';
+  storePendingChapterDraftResult(session, draftResult);
   emitEvent(sessionId, 'character_profile_gate_resolved', {});
   return {
     text: draftResult.assistantText || '已生成章节草稿，等待确认。',
@@ -1015,12 +1518,17 @@ async function maybeHandleChapterDraftAutomation(session, userText, sessionId, a
   const pendingRoleplay = await maybeHandleRoleplayProfilePending(session, userText, sessionId, abortSignal);
   if (pendingRoleplay) return pendingRoleplay;
 
+  const pendingIssueDecision = maybeHandlePendingChapterIssueDecision(session, userText);
+  if (pendingIssueDecision) return pendingIssueDecision;
+
+  const pendingFixPreview = await maybeHandlePendingChapterFixPreview(session, userText, sessionId, abortSignal);
+  if (pendingFixPreview) return pendingFixPreview;
+
   if (detectChapterConfirmIntent(userText, session)) {
-    const incompleteReview = Array.isArray(session.pendingChapterIssues)
-      && session.pendingChapterIssues.some((issue) => issue.reviewIncomplete);
-    if (incompleteReview) {
+    const issues = getPendingChapterIssues(session);
+    if (hasBlockingReviewIssues(issues)) {
       return {
-        text: '当前章节草稿还有未完成的审查，先不写入。请回复“重新审查这一章”，或指出要调整的段落/时间线问题。',
+        text: formatPendingChapterOpenIssues(issues),
         turns: 1,
         toolCalls: [],
       };
@@ -1074,9 +1582,7 @@ async function maybeHandleChapterDraftAutomation(session, userText, sessionId, a
     };
   }
   clearPendingRoleplayProfile(session);
-  session.pendingChapterDraft = draftResult.draft || null;
-  session.pendingChapterIssues = Array.isArray(draftResult.blockingIssues) ? draftResult.blockingIssues : [];
-  session.workflowPhase = 'writing';
+  storePendingChapterDraftResult(session, draftResult);
 
   return {
     text: draftResult.assistantText || '已生成章节草稿，等待确认。',
@@ -1660,20 +2166,123 @@ async function buildDeAiPatchForChapter(chapterName, annotations, focus, toolCal
   return { baseContent, edits };
 }
 
+function formatDeAiPatchPreviewReply(preview) {
+  const patches = Array.isArray(preview?.patches) ? preview.patches : [];
+  const failed = Array.isArray(preview?.failed) ? preview.failed : [];
+  const lines = ['已生成去 AI 味 patch 预览，尚未写入正文。'];
+  if (patches.length) {
+    const totalEdits = patches.reduce((sum, patch) => sum + (Array.isArray(patch.edits) ? patch.edits.length : 0), 0);
+    lines.push('', `可应用章节：${patches.length} 章，共 ${totalEdits} 处段落级修改。`);
+    for (const patch of patches) {
+      lines.push(`- ${patch.chapterName}：${patch.edits.length} 处`);
+      for (const edit of patch.edits.slice(0, 2)) {
+        lines.push(`  原文：${compactPatchContext(edit.targetText, 140)}`);
+        lines.push(`  新文：${compactPatchContext(edit.replacement, 140)}`);
+      }
+      if (patch.edits.length > 2) lines.push(`  另有 ${patch.edits.length - 2} 处未展开。`);
+    }
+  } else {
+    lines.push('', '没有生成可应用的普通去 AI 味段落修改。');
+  }
+  if (failed.length) {
+    lines.push('', `以下章节生成预览失败：${failed.map((item) => `${item.chapterName}（${item.error}）`).join('；')}`);
+  }
+  if (Array.isArray(preview?.paragraphFunctionChapterNames) && preview.paragraphFunctionChapterNames.length) {
+    lines.push('', '另有段落功能风险会在普通去 AI 味 patch 应用后再跑专门复审，不会在这次预览里直接当套话改掉。');
+  }
+  lines.push('', '确认使用这版 patch 请回复“确认应用”；如果目标章节已被你改过，应用时会因 baseContent 快照冲突而停止，不会覆盖新内容。');
+  return lines.join('\n');
+}
+
+async function applyDeAiPatchPreview(session, toolCalls) {
+  const preview = session.pendingDeAiChapterPatchPreview;
+  if (!preview) return null;
+  const applied = [];
+  const failed = [];
+  for (const patch of Array.isArray(preview.patches) ? preview.patches : []) {
+    if (!patch?.chapterName || !Array.isArray(patch.edits) || !patch.edits.length) continue;
+    const applyResult = await callMcpTool('apply_chapter_patch', {
+      name: patch.chapterName,
+      baseContent: patch.baseContent,
+      edits: patch.edits,
+    });
+    toolCalls.push({
+      id: `apply-chapter-patch-${patch.chapterName}-${toolCalls.length + 1}`,
+      name: 'apply_chapter_patch',
+      input: { name: patch.chapterName, edits: patch.edits },
+      status: 'done',
+      result: applyResult.text,
+      isError: applyResult.isError,
+    });
+    if (applyResult.isError) {
+      failed.push({
+        chapterName: patch.chapterName,
+        error: applyResult.text || 'apply_chapter_patch failed',
+        snapshotMismatch: /snapshot mismatch/i.test(applyResult.text || ''),
+      });
+      continue;
+    }
+    const payload = parseTextJson(applyResult.text) || { editCount: patch.edits.length, replacedCount: patch.edits.length };
+    applied.push({
+      chapterName: patch.chapterName,
+      editCount: Number(payload.replacedCount ?? payload.editCount) || 0,
+    });
+  }
+
+  const paragraphReview = preview.paragraphFunctionChapterNames?.length && applied.length
+    ? await runParagraphFunctionReviewForPending(preview.paragraphFunctionChapterNames, preview.focus, toolCalls)
+    : null;
+
+  return { applied, failed, paragraphReview };
+}
+
 async function maybeHandlePendingDeAiChapterApply(session, userText) {
   const pending = session.pendingDeAiChapterReview;
-  if (!pending) return null;
+  if (!pending && !session.pendingDeAiChapterPatchPreview) return null;
 
   const intent = detectPendingDeAiChapterApplyIntent(userText, session);
   if (intent.action === 'cancel') {
     clearPendingDeAiChapterReview(session);
     return {
-      text: '已保留这次去 AI 味审查结果，暂不自动修改正文。',
+      text: '已取消这次去 AI 味修改流程，正文没有变化。',
       turns: 1,
       toolCalls: [],
     };
   }
   if (intent.action !== 'apply') return null;
+
+  if (session.pendingDeAiChapterPatchPreview) {
+    const toolCalls = [];
+    const result = await applyDeAiPatchPreview(session, toolCalls);
+    const lines = [];
+    if (result?.applied?.length) {
+      const totalEdits = result.applied.reduce((sum, item) => sum + (item.editCount || 0), 0);
+      lines.push(`已按预览应用去 AI 味修改，共处理 ${result.applied.length} 章，落盘 ${totalEdits} 处：`);
+      lines.push('');
+      for (const item of result.applied) lines.push(`- ${item.chapterName}：${item.editCount} 处`);
+    }
+    if (result?.failed?.length) {
+      if (lines.length) lines.push('');
+      lines.push(`以下章节未应用成功：${result.failed.map((item) => `${item.chapterName}（${item.snapshotMismatch ? '章节已变化，请重新生成预览' : item.error}）`).join('；')}`);
+    }
+    if (!lines.length) lines.push('这次没有应用任何去 AI 味修改。');
+    if (result?.paragraphReview) {
+      lines.push('');
+      lines.push('普通 AI 味段落处理完毕后，我已调用段落功能审查 subagent 复核一句一段问题：');
+      lines.push('');
+      lines.push(result.paragraphReview.text);
+    }
+    if (result?.failed?.some((item) => item.snapshotMismatch)) {
+      session.pendingDeAiChapterPatchPreview = null;
+      return {
+        text: `${lines.join('\n')}\n\n我已丢弃这版旧快照预览；如需继续，请重新回复“方案A”生成基于最新正文的新预览。`,
+        turns: 1,
+        toolCalls,
+      };
+    }
+    clearPendingDeAiChapterReview(session);
+    return { text: lines.join('\n'), turns: 1, toolCalls };
+  }
 
   const allReviewedChapters = (Array.isArray(pending.reviewPayload?.chapters) ? pending.reviewPayload.chapters : [])
     .filter((chapter) => !chapter?.error)
@@ -1710,90 +2319,30 @@ async function maybeHandlePendingDeAiChapterApply(session, userText) {
   const toolCalls = [];
 
   for (const chapter of chapters) {
-    let appliedPayload = null;
-    let lastError = '';
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
-      try {
-        const patch = await buildDeAiPatchForChapter(chapter.chapterName, chapter.annotations, pending.focus, toolCalls);
-        if (!patch.edits.length) {
-          appliedPayload = { replacedCount: 0, editCount: 0 };
-          break;
-        }
-
-        const applyArgs = {
-          name: chapter.chapterName,
+    try {
+      const patch = await buildDeAiPatchForChapter(chapter.chapterName, chapter.annotations, pending.focus, toolCalls);
+      if (patch.edits.length) {
+        applied.push({
+          chapterName: chapter.chapterName,
           baseContent: patch.baseContent,
           edits: patch.edits,
-        };
-        const applyResult = await callMcpTool('apply_chapter_patch', applyArgs);
-        toolCalls.push({
-          id: `apply-chapter-patch-${chapter.chapterName}-${attempt}`,
-          name: 'apply_chapter_patch',
-          input: { name: chapter.chapterName, edits: patch.edits },
-          status: 'done',
-          result: applyResult.text,
-          isError: applyResult.isError,
         });
-
-        if (applyResult.isError) {
-          lastError = applyResult.text || 'apply_chapter_patch failed';
-          if (/snapshot mismatch/i.test(lastError) && attempt < 2) {
-            continue;
-          }
-          throw new Error(lastError);
-        }
-
-        appliedPayload = parseTextJson(applyResult.text) || { editCount: patch.edits.length, replacedCount: patch.edits.length };
-        break;
-      } catch (err) {
-        lastError = err?.message || String(err);
-        if (!/snapshot mismatch/i.test(lastError) || attempt >= 2) {
-          break;
-        }
       }
-    }
-
-    if (appliedPayload) {
-      applied.push({
-        chapterName: chapter.chapterName,
-        editCount: Number(appliedPayload.replacedCount ?? appliedPayload.editCount) || 0,
-      });
-    } else {
-      failed.push({ chapterName: chapter.chapterName, error: lastError || '未能生成可应用补丁' });
+    } catch (err) {
+      failed.push({ chapterName: chapter.chapterName, error: err?.message || String(err) });
     }
   }
 
-  const paragraphReview = paragraphFunctionChapterNames.length
-    ? await runParagraphFunctionReviewForPending(paragraphFunctionChapterNames, pending.focus, toolCalls)
-    : null;
-
-  clearPendingDeAiChapterReview(session);
-
-  const lines = [];
-  if (applied.length) {
-    const totalEdits = applied.reduce((sum, item) => sum + (item.editCount || 0), 0);
-    lines.push(`已按上一次审查结果自动应用去 AI 味修改，共处理 ${applied.length} 章，落盘 ${totalEdits} 处：`);
-    lines.push('');
-    for (const item of applied) {
-      lines.push(`- ${item.chapterName}：${item.editCount} 处`);
-    }
-  }
-  if (failed.length) {
-    if (lines.length) lines.push('');
-    lines.push(`以下章节仍未处理成功：${failed.map((item) => `${item.chapterName}（${item.error}）`).join('；')}`);
-  }
-  if (!lines.length) {
-    lines.push('这次没有生成可落盘的去 AI 味修改。');
-  }
-  if (paragraphReview) {
-    lines.push('');
-    lines.push('普通 AI 味段落处理完毕后，我已调用段落功能审查 subagent 复核一句一段问题：');
-    lines.push('');
-    lines.push(paragraphReview.text);
-  }
+  session.pendingDeAiChapterPatchPreview = {
+    patches: applied,
+    failed,
+    paragraphFunctionChapterNames,
+    focus: pending.focus,
+    createdAt: Date.now(),
+  };
 
   return {
-    text: lines.join('\n'),
+    text: formatDeAiPatchPreviewReply(session.pendingDeAiChapterPatchPreview),
     turns: 1,
     toolCalls,
   };
@@ -2312,6 +2861,8 @@ async function _runTurnViaProvider(session, sessionId, system, userText, abortSi
   let tools;
   const policy = classifyChatToolPolicy(userText, session);
   let toolPolicySummary = null;
+  let activeNovelId = session.editorContext?.novelId || '';
+  try { activeNovelId = activeNovelId || mcpClient.getActiveNovel(); } catch { /* active novel is best-effort */ }
   for (let retry = 0; retry < 2; retry++) {
     try {
       const allMcp = await mcpClient.listTools();
@@ -2322,7 +2873,6 @@ async function _runTurnViaProvider(session, sessionId, system, userText, abortSi
       }));
       // Query MCP server for active novel as fallback (editorContext may be stale
       // due to polling delay between WorkspaceSwitcher and App.jsx state).
-      const activeNovelId = session.editorContext?.novelId || mcpClient.getActiveNovel();
       if (!activeNovelId) {
         const allowed = ['read_skill', 'list_skills', 'read_skill_content', 'de_ai_ify', 'create_novel', 'list_novels', 'get_system_time'];
         const filtered = mcpTools.filter((t) => allowed.includes(t.name));
@@ -2354,18 +2904,45 @@ async function _runTurnViaProvider(session, sessionId, system, userText, abortSi
   const toolCalls = [];
   let toolResultTrimmedCount = 0;
   const toolResultCache = createToolResultCache();
+  let systemForProvider = system;
   const manifestState = {
     included: [],
     trimmed: [],
     omitted: [],
     cached: [],
   };
+  const characterContext = await buildChatCharacterContextForProvider({
+    session,
+    userText,
+    chatToolPolicy: toolPolicySummary || policy,
+    activeNovelId,
+  });
+  if (characterContext.systemBlock) {
+    systemForProvider = `${systemForProvider}\n\n---\n${characterContext.systemBlock}`;
+    manifestState.included.push(characterContext.includedItem);
+    if (characterContext.trimmedItem) manifestState.trimmed.push(characterContext.trimmedItem);
+  } else if (characterContext.omittedItem) {
+    manifestState.omitted.push(characterContext.omittedItem);
+  }
+  const retrievalContext = await buildChatRetrievalContextForProvider({
+    session,
+    userText,
+    chatToolPolicy: toolPolicySummary || policy,
+    activeNovelId,
+  });
+  if (retrievalContext.systemBlock) {
+    systemForProvider = `${systemForProvider}\n\n---\n${retrievalContext.systemBlock}`;
+    manifestState.included.push(retrievalContext.includedItem);
+    if (retrievalContext.trimmedItem) manifestState.trimmed.push(retrievalContext.trimmedItem);
+  } else if (retrievalContext.omittedItem) {
+    manifestState.omitted.push(retrievalContext.omittedItem);
+  }
 
   while (turnIdx < maxTurns) {
     if (abortSignal.aborted) throw new DOMException('aborted', 'AbortError');
 
     const assembledContext = assembleProviderContext({
-      system,
+      system: systemForProvider,
       messages: session.messages,
       tools,
       runtime: { kind: 'chatAgent', sessionId, turnIdx },
@@ -2474,6 +3051,10 @@ async function _runTurnViaProvider(session, sessionId, system, userText, abortSi
         } else if (use.name === 'spawn_subagent') {
           toolResult = await handleSpawnSubagent(use.input, session);
         } else if (use.name === 'write_chapter') {
+          const pendingIssues = getPendingChapterIssues(session);
+          if (hasBlockingReviewIssues(pendingIssues)) {
+            throw new Error(formatPendingChapterOpenIssues(pendingIssues, { prefix: '章节写入被审查门槛拦截：仍有 open 问题。' }));
+          }
           // Gate: write_chapter requires explicit user confirmation
           session.pendingWriteChapter = {
             name: use.input?.name || '',
@@ -2673,6 +3254,204 @@ async function _runTurnViaDriver(session, sessionId, system, userText, abortSign
   } finally {
     unsub();
   }
+}
+
+function resolveCharacterContextTargetChapter(session) {
+  const ctx = session?.editorContext || {};
+  const pending = session?.pendingChapterDraft || {};
+  const name = safeStr(
+    pending.name
+    || ctx.chapterFileName
+    || (ctx.type === 'chapter' ? ctx.title : '')
+  ).trim();
+  if (!name) return null;
+  const displayName = safeStr(
+    pending.displayName
+    || ctx.chapterDisplayName
+    || ctx.title
+    || name
+  ).trim() || name;
+  return {
+    name,
+    displayName,
+    titleHint: safeStr(pending.title || ctx.chapterDisplayName || displayName).trim() || displayName,
+  };
+}
+
+async function buildChatCharacterContextForProvider({ session, userText, chatToolPolicy, activeNovelId }) {
+  const policy = classifyCharacterContextPolicy(userText, { ...session, activeNovelId }, chatToolPolicy);
+  const baseItem = {
+    kind: 'character_context',
+    policyId: policy.id,
+    reason: policy.reason,
+  };
+  if (!policy.shouldPreload) {
+    return { policy, omittedItem: baseItem };
+  }
+
+  const targetChapter = resolveCharacterContextTargetChapter(session);
+  if (!targetChapter) {
+    return { policy, omittedItem: { ...baseItem, reason: 'no-target-chapter' } };
+  }
+
+  const sceneContext = await chapterDraftService.buildSceneCharacterContextForTargetChapter(targetChapter);
+  const sceneCharacterContexts = Array.isArray(sceneContext?.sceneCharacterContexts)
+    ? sceneContext.sceneCharacterContexts
+    : [];
+  if (!sceneCharacterContexts.length) {
+    return {
+      policy,
+      omittedItem: {
+        ...baseItem,
+        sourceRef: `character-context:${targetChapter.name}`,
+        targetChapter: targetChapter.name,
+        reason: 'no-scene-character-context',
+      },
+    };
+  }
+
+  const payload = {
+    targetChapter,
+    sceneCharacterContexts,
+  };
+  const sourceRef = `character-context:${targetChapter.name}`;
+  const fitted = fitTextForModel(JSON.stringify(payload, null, 2), {
+    maxChars: policy.maxChars,
+    sourceRef,
+    label: 'chat_scene_character_context',
+    kind: 'character_context',
+  });
+  const characterCount = sceneCharacterContexts.reduce((sum, context) => {
+    return sum + (Array.isArray(context?.characters) ? context.characters.length : 0);
+  }, 0);
+  const manifestItem = {
+    ...(fitted.manifestItem || {}),
+    sourceRef,
+    policyId: policy.id,
+    targetChapter: targetChapter.name,
+    nodeCount: sceneCharacterContexts.length,
+    characterCount,
+  };
+  return {
+    policy,
+    systemBlock: [
+      '## Preloaded Scene Character Context',
+      'The harness assembled this low-noise context for the current writing/review turn. Use it before calling character tools. Do not call read_character for full cards unless an exact missing detail is necessary.',
+      fitted.text,
+    ].join('\n\n'),
+    includedItem: manifestItem,
+    trimmedItem: fitted.wasTrimmed ? manifestItem : null,
+    stats: {
+      sourceRef,
+      originalLength: fitted.originalLength,
+      modelLength: fitted.modelLength,
+      wasTrimmed: fitted.wasTrimmed,
+      nodeCount: sceneCharacterContexts.length,
+      characterCount,
+    },
+  };
+}
+
+function buildChatRetrievalQuery({ targetChapter, userText, session }) {
+  const ctx = session?.editorContext || {};
+  return [
+    targetChapter?.displayName,
+    targetChapter?.titleHint,
+    targetChapter?.name,
+    ctx.selectedText,
+    userText,
+  ].map((item) => safeStr(item).trim()).filter(Boolean).join('\n');
+}
+
+async function buildChatRetrievalContextForProvider({ session, userText, chatToolPolicy, activeNovelId }) {
+  const policy = classifyRetrievalContextPolicy(userText, { ...session, activeNovelId }, chatToolPolicy);
+  const baseItem = {
+    kind: 'rag_context',
+    policyId: policy.id,
+    reason: policy.reason,
+  };
+  if (!policy.shouldPreload) {
+    return { policy, omittedItem: baseItem };
+  }
+
+  const targetChapter = resolveCharacterContextTargetChapter(session);
+  if (!targetChapter) {
+    return { policy, omittedItem: { ...baseItem, reason: 'no-target-chapter' } };
+  }
+
+  const query = buildChatRetrievalQuery({ targetChapter, userText, session });
+  if (!query.trim()) {
+    return { policy, omittedItem: { ...baseItem, targetChapter: targetChapter.name, reason: 'empty-query' } };
+  }
+
+  let payload = null;
+  try {
+    const result = await mcpClient.callTool({
+      name: 'retrieve_context',
+      arguments: {
+        query,
+        focus: userText,
+        chapterName: targetChapter.name,
+        maxItems: policy.maxItems,
+        maxChars: policy.maxChars,
+      },
+      autoConfirm: true,
+    });
+    const text = Array.isArray(result?.content)
+      ? result.content.map((item) => item?.type === 'text' ? item.text : JSON.stringify(item)).join('\n')
+      : safeStr(result);
+    payload = parseTextJson(text);
+  } catch {
+    payload = null;
+  }
+
+  const contextText = safeStr(payload?.contextText).trim();
+  if (!contextText) {
+    return {
+      policy,
+      omittedItem: {
+        ...baseItem,
+        sourceRef: `rag-context:${targetChapter.name}`,
+        targetChapter: targetChapter.name,
+        reason: 'no-retrieved-context',
+      },
+    };
+  }
+
+  const sourceRef = `rag-context:${targetChapter.name}`;
+  const fitted = fitTextForModel(contextText, {
+    maxChars: policy.maxChars,
+    sourceRef,
+    label: 'chat_retrieved_context',
+    kind: 'rag_context',
+  });
+  const itemCount = Array.isArray(payload?.items) ? payload.items.length : Number(payload?.resultCount) || 0;
+  const manifestItem = {
+    ...(fitted.manifestItem || {}),
+    kind: 'rag_context',
+    sourceRef,
+    policyId: policy.id,
+    targetChapter: targetChapter.name,
+    itemCount,
+  };
+  const wasTrimmed = fitted.wasTrimmed || !!payload?.wasTrimmed;
+  return {
+    policy,
+    systemBlock: [
+      '## Preloaded Retrieval Context',
+      'The harness retrieved bounded world/persona/place/timeline context for this writing/review turn. Use it as supporting evidence before calling broad read tools.',
+      fitted.text,
+    ].join('\n\n'),
+    includedItem: manifestItem,
+    trimmedItem: wasTrimmed ? manifestItem : null,
+    stats: {
+      sourceRef,
+      originalLength: fitted.originalLength,
+      modelLength: fitted.modelLength,
+      wasTrimmed,
+      itemCount,
+    },
+  };
 }
 
 async function runTurn(sessionId, userText) {
