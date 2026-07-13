@@ -1,8 +1,22 @@
 export function appendToolUseMessage(messages, data, now = Date.now()) {
   const next = [...(messages || [])];
+  const toolUseId = data?.id || null;
+  if (toolUseId) {
+    for (let index = next.length - 1; index >= 0; index -= 1) {
+      if (next[index]?.role === 'tool' && next[index]?.toolUseId === toolUseId) {
+        next[index] = {
+          ...next[index],
+          name: data?.name || next[index].name,
+          input: data?.input !== undefined ? data.input : next[index].input,
+          finalizedInput: data?.finalized === true || next[index].finalizedInput === true,
+        };
+        return next;
+      }
+    }
+  }
   next.push({
-    id: `tool-${now}`,
-    toolUseId: data?.id || null,
+    id: `tool-${toolUseId || now}`,
+    toolUseId,
     role: 'tool',
     name: data?.name,
     input: data?.input,
@@ -25,6 +39,12 @@ export function applyToolResultMessage(messages, data, now = Date.now()) {
           status: 'done',
           result: data?.text,
           isError: data?.isError,
+          cached: data?.cached === true,
+          cacheKey: data?.cacheKey || next[i].cacheKey || '',
+          sourceRef: data?.sourceRef || next[i].sourceRef || '',
+          modelContentTrimmed: data?.modelContentTrimmed === true,
+          originalLength: Number(data?.originalLength) || 0,
+          modelLength: Number(data?.modelLength) || 0,
         };
         updated = true;
         break;
@@ -40,6 +60,12 @@ export function applyToolResultMessage(messages, data, now = Date.now()) {
           status: 'done',
           result: data?.text,
           isError: data?.isError,
+          cached: data?.cached === true,
+          cacheKey: data?.cacheKey || next[i].cacheKey || '',
+          sourceRef: data?.sourceRef || next[i].sourceRef || '',
+          modelContentTrimmed: data?.modelContentTrimmed === true,
+          originalLength: Number(data?.originalLength) || 0,
+          modelLength: Number(data?.modelLength) || 0,
         };
         updated = true;
         break;
@@ -57,6 +83,12 @@ export function applyToolResultMessage(messages, data, now = Date.now()) {
       status: 'done',
       result: data?.text,
       isError: data?.isError,
+      cached: data?.cached === true,
+      cacheKey: data?.cacheKey || '',
+      sourceRef: data?.sourceRef || '',
+      modelContentTrimmed: data?.modelContentTrimmed === true,
+      originalLength: Number(data?.originalLength) || 0,
+      modelLength: Number(data?.modelLength) || 0,
       timestamp: now,
     });
   }

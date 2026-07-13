@@ -1,13 +1,9 @@
 /**
  * Front-end remote AI client.
  *
- * Phase 1 strategy (transitional):
- *   1. If `window.mana.runtime` is available AND user has a usable active preset
- *      with an api key for the agent's tier — route to the provider-agnostic
- *      runtime via runSubagent.
- *   2. Else if the legacy per-agent config has `useMock: true` or no apiKey —
- *      return canned mock responses (kept for offline/dev use).
- *   3. Else fall back to the legacy OpenAI-compat `chatCompletions` IPC.
+ * All active application flows route through the unified runtime/model profile
+ * resolver. Legacy localStorage is retained only for migration and for the
+ * explicit offline mock mode.
  */
 
 import { getAgentConfig } from '@/services/agentApiConfig.js';
@@ -19,6 +15,7 @@ const LEGACY_AGENT_TO_SUBAGENT = {
   agent3: 'sa-timeline-guardian',
   agent4: 'sa-style-checker',
   agent5: 'sa-prose-quality',
+  de_ai_rewrite: 'sa-de-ai-ifier',
   agent6: 'sa-lore-updater',
   chapter_draft: 'sa-writer',
 };
@@ -29,6 +26,7 @@ const LEGACY_AGENT_TO_TIER = {
   agent3: 'opus',
   agent4: 'haiku',
   agent5: 'haiku',
+  de_ai_rewrite: 'sonnet',
   agent6: 'opus',
   chapter_draft: 'sonnet',
 };
@@ -64,39 +62,9 @@ function extractText(data) {
   return typeof c === 'string' ? c : '';
 }
 
-let cachedActivePreset = null;
-let cachedActivePresetAt = 0;
-const PRESET_CACHE_MS = 1500;
-
-async function getActivePresetCached() {
-  if (typeof window === 'undefined' || !window.mana?.config) return null;
-  const now = Date.now();
-  if (cachedActivePreset && now - cachedActivePresetAt < PRESET_CACHE_MS) {
-    return cachedActivePreset;
-  }
-  try {
-    const cfg = await window.mana.config.getApp();
-    if (!cfg?.activePresetId) return null;
-    const preset = await window.mana.config.getPreset(cfg.activePresetId);
-    if (preset) {
-      cachedActivePreset = preset;
-      cachedActivePresetAt = now;
-    }
-    return preset;
-  } catch {
-    return null;
-  }
-}
-
 export function invalidateActivePresetCache() {
-  cachedActivePreset = null;
-  cachedActivePresetAt = 0;
-}
-
-function tierHasApiKey(preset, tierName) {
-  const slot = preset?.tiers?.[tierName];
-  if (!slot) return false;
-  return !!slot.apiKeyRef;
+  // Kept for source compatibility. Unified model config is revision-aware and
+  // does not use a renderer-side preset cache.
 }
 
 function lastUserContent(messages) {
@@ -111,10 +79,7 @@ function lastUserContent(messages) {
 
 async function tryRuntimeRoute(agentId, messages, options) {
   if (typeof window === 'undefined' || !window.mana?.runtime) return null;
-  const preset = await getActivePresetCached();
-  if (!preset) return null;
   const tier = LEGACY_AGENT_TO_TIER[agentId];
-  if (!tierHasApiKey(preset, tier)) return null;
   const subagentId = LEGACY_AGENT_TO_SUBAGENT[agentId];
   if (!subagentId) return null;
   const userText = lastUserContent(messages);
@@ -127,8 +92,17 @@ async function tryRuntimeRoute(agentId, messages, options) {
     });
     return typeof result?.output === 'string' ? result.output : '';
   } catch (err) {
-    console.error('[remoteAI] runSubagent failed; falling back', err);
-    return null;
+    console.error('[remoteAI] unified runtime failed', err);
+    throw err;
+  }
+}
+
+async function offlineMockEnabled() {
+  try {
+    const cfg = await window.mana?.config?.getApp?.();
+    return cfg?.modelRuntime?.offlineMockEnabled === true;
+  } catch {
+    return false;
   }
 }
 
@@ -140,11 +114,12 @@ export function createRemoteAIClient() {
      * @param {{ expectJson?: boolean }} [options]
      */
     async completeForAgent(agentId, messages, options = {}) {
+      if (await offlineMockEnabled()) return mockComplete(agentId, messages, options);
       const runtimeAnswer = await tryRuntimeRoute(agentId, messages, options);
       if (runtimeAnswer != null) return runtimeAnswer;
 
       const cfg = getAgentConfig(agentId);
-      if (cfg.useMock || !cfg.apiKey?.trim()) {
+      if (!cfg.apiKey?.trim()) {
         return mockComplete(agentId, messages, options);
       }
       const body = {
@@ -180,6 +155,8 @@ async function mockComplete(agentId, messages, options) {
       return JSON.stringify({
         text: '这是远程 mock 返回的正文。\n\n第二段用于测试 Agent4/5 标注。',
       });
+    case 'de_ai_rewrite':
+      return '她轻轻笑了一下。';
     case 'agent4':
       return JSON.stringify({
         annotations: [

@@ -2,11 +2,12 @@
 'use strict';
 
 /**
- * 验收评估：读取 benchmark-report.json + 角色 JSON，计算成功率与正确率。
+ * 验收评估：读取 benchmark-report.json + 角色 JSON，计算覆盖率、参考覆盖率与证据正确率。
  *
  * 用法:
  *   node scripts/eval-enrichment-benchmark.js
  *   node scripts/eval-enrichment-benchmark.js --report=path/to/benchmark-report.json
+ *   node scripts/eval-enrichment-benchmark.js --out=/tmp/acceptance.json
  */
 
 const fs = require('node:fs').promises;
@@ -17,9 +18,13 @@ const PROJECT_DIR = path.join(ROOT, 'test-projects', 'web-enrichment-benchmark-2
 const REF_PATH = path.join(PROJECT_DIR, 'benchmark-reference.json');
 
 function parseArgs(argv) {
-  const out = { reportPath: path.join(PROJECT_DIR, 'benchmark-report.json') };
+  const out = {
+    reportPath: path.join(PROJECT_DIR, 'benchmark-report.json'),
+    outPath: path.join(PROJECT_DIR, 'acceptance-report.json'),
+  };
   for (const arg of argv) {
     if (arg.startsWith('--report=')) out.reportPath = path.resolve(arg.slice('--report='.length));
+    if (arg.startsWith('--out=')) out.outPath = path.resolve(arg.slice('--out='.length));
   }
   return out;
 }
@@ -38,10 +43,10 @@ function checkCompleteness(ch, pageText) {
 }
 
 function checkReference(ch, refEntry) {
-  if (!refEntry) return { ok: true, reason: 'no-ref' };
+  if (!refEntry) return { eligible: false, ok: null, reason: 'no-ref' };
   const blob = JSON.stringify(ch);
   for (const token of refEntry.forbidTokens || []) {
-    if (token && blob.includes(token)) return { ok: false, reason: `forbid:${token}` };
+    if (token && blob.includes(token)) return { eligible: true, ok: false, reason: `forbid:${token}` };
   }
   const page = ch._pageSnapshot || '';
   for (const field of ['hairColor', 'eyeColor', 'height']) {
@@ -50,10 +55,10 @@ function checkReference(ch, refEntry) {
     if (!expected || !actual) continue;
     const { _fieldInPageText } = require(path.join(ROOT, 'src/main/import/characterEnricher'));
     if (!_fieldInPageText(actual, page) && !actual.includes(expected) && !expected.includes(actual.slice(0, 2))) {
-      return { ok: false, reason: `ref-mismatch:${field}` };
+      return { eligible: true, ok: false, reason: `ref-mismatch:${field}` };
     }
   }
-  return { ok: true, reason: 'ref-ok' };
+  return { eligible: true, ok: true, reason: 'ref-ok' };
 }
 
 async function loadCharacterSnapshots() {
@@ -83,7 +88,9 @@ async function main() {
   const rows = report.enrichResults || [];
   const perGame = {};
   let successOk = 0;
-  let accuracyOk = 0;
+  let referenceEligible = 0;
+  let referenceAccurate = 0;
+  let referenceWrongCharacterCount = 0;
   const details = [];
 
   for (const row of rows) {
@@ -97,21 +104,39 @@ async function main() {
     }
     const ref = checkReference({ ...ch, name: row.name }, reference.characters?.[key]);
     const success = statusOk && comp.ok;
-    const accurate = success && ref.ok;
+    const accurate = ref.eligible && success && ref.ok;
+    const wrongCharacter = ref.eligible && String(ref.reason || '').startsWith('forbid:');
 
     if (success) successOk += 1;
-    if (accurate) accuracyOk += 1;
+    if (ref.eligible) referenceEligible += 1;
+    if (accurate) referenceAccurate += 1;
+    if (wrongCharacter) referenceWrongCharacterCount += 1;
 
-    if (!perGame[row.sourceWork]) perGame[row.sourceWork] = { total: 0, success: 0, accurate: 0 };
+    if (!perGame[row.sourceWork]) {
+      perGame[row.sourceWork] = {
+        total: 0,
+        success: 0,
+        referenceEligible: 0,
+        referenceAccurate: 0,
+        referenceWrongCharacterCount: 0,
+        // Legacy name retained for existing report consumers.
+        accurate: 0,
+      };
+    }
     perGame[row.sourceWork].total += 1;
     if (success) perGame[row.sourceWork].success += 1;
+    if (ref.eligible) perGame[row.sourceWork].referenceEligible += 1;
+    if (accurate) perGame[row.sourceWork].referenceAccurate += 1;
+    if (wrongCharacter) perGame[row.sourceWork].referenceWrongCharacterCount += 1;
     if (accurate) perGame[row.sourceWork].accurate += 1;
 
     details.push({
       key,
       status: row.status,
       success,
-      accurate,
+      referenceEligible: ref.eligible,
+      referenceAccurate: accurate,
+      wrongCharacter,
       completeness: comp.reason,
       reference: ref.reason,
       filledCount: row.filledCount,
@@ -120,26 +145,49 @@ async function main() {
   }
 
   const total = rows.length || 1;
+  const coverageRate = Number((100 * successOk / total).toFixed(1));
+  const referenceCoverageRate = Number((100 * referenceEligible / total).toFixed(1));
+  const referenceAccuracyRate = referenceEligible
+    ? Number((100 * referenceAccurate / referenceEligible).toFixed(1))
+    : null;
+  const targets = {
+    coverageRate: 90,
+    referenceCoverageRate: 80,
+    referenceAccuracyRate: 95,
+    referenceWrongCharacterCount: 0,
+  };
+  const passed = coverageRate >= targets.coverageRate
+    && referenceCoverageRate >= targets.referenceCoverageRate
+    && referenceAccuracyRate !== null
+    && referenceAccuracyRate >= targets.referenceAccuracyRate
+    && referenceWrongCharacterCount === targets.referenceWrongCharacterCount;
   const acceptance = {
     evaluatedAt: new Date().toISOString(),
     reportPath: args.reportPath,
     total,
     successCount: successOk,
-    successRate: Number((100 * successOk / total).toFixed(1)),
-    accuracyCount: accuracyOk,
-    accuracyRate: Number((100 * accuracyOk / total).toFixed(1)),
-    targets: { successRate: 90, accuracyRate: 95 },
-    passed: successOk / total >= 0.9 && accuracyOk / total >= 0.95,
+    coverageRate,
+    referenceEligible,
+    referenceCoverageRate,
+    referenceAccurate,
+    referenceAccuracyRate,
+    referenceWrongCharacterCount,
+    // 保留旧字段，避免已有消费方立即失效；新报告应改用上方语义明确的指标。
+    successRate: coverageRate,
+    accuracyCount: referenceAccurate,
+    accuracyRate: referenceAccuracyRate,
+    targets,
+    passed,
     perGame,
     details,
   };
 
-  const outPath = path.join(PROJECT_DIR, 'acceptance-report.json');
-  await fs.writeFile(outPath, JSON.stringify(acceptance, null, 2), 'utf8');
-  console.log('[eval] acceptance report:', outPath);
+  await fs.writeFile(args.outPath, JSON.stringify(acceptance, null, 2), 'utf8');
+  console.log('[eval] acceptance report:', args.outPath);
   console.log(JSON.stringify({
-    successRate: acceptance.successRate,
-    accuracyRate: acceptance.accuracyRate,
+    coverageRate: acceptance.coverageRate,
+    referenceCoverageRate: acceptance.referenceCoverageRate,
+    referenceAccuracyRate: acceptance.referenceAccuracyRate,
     passed: acceptance.passed,
     perGame: acceptance.perGame,
   }, null, 2));

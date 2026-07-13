@@ -187,6 +187,7 @@ async function runPipeline(opts = {}) {
           const r = await runSubagent({
             subagentId: node.subagentId,
             input,
+            dagModelProfileId: node.modelProfileId || undefined,
             tierOverride: node.tierOverride || undefined,
             presetOverride,
             userLang,
@@ -214,6 +215,7 @@ async function runPipeline(opts = {}) {
               const r = await runSubagent({
                 subagentId: child.subagentId,
                 input: childInput,
+                dagModelProfileId: child.modelProfileId || undefined,
                 tierOverride: child.tierOverride || undefined,
                 presetOverride,
                 userLang,

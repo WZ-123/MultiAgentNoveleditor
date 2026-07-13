@@ -41,6 +41,7 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
   const modelAliases = require(path.join(ROOT, 'src/main/modelAliases'));
   const workflowOrchestrator = require(path.join(ROOT, 'src/main/runtime/workflowOrchestrator'));
   const anthropicProvider = require(path.join(ROOT, 'src/main/runtime/providers/anthropic'));
+  const chatHistory = require(path.join(ROOT, 'src/main/store/chatHistory'));
 
   const originalGetActiveProvider = providerManager.getActiveProvider;
   const originalGetAlias = modelAliases.getAlias;
@@ -252,7 +253,32 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
       temperature: 0,
     });
     workflowOrchestrator.getActiveDriverId = () => 'direct-api';
-    anthropicProvider.sendMessage = async ({ onEvent }) => {
+    anthropicProvider.sendMessage = async ({ system, messages, subagentId, onEvent }) => {
+      const systemText = String(system || '');
+      if (systemText.includes('章节场景状态抽取器')) {
+        const text = JSON.stringify({ extracted: {}, discrepancies: [], confidence: 0.99, evidenceParagraphIds: ['p-0'], sourceUsage: [] });
+        onEvent && onEvent({ kind: 'text', data: { delta: text } });
+        return { stopReason: 'end_turn', content: [{ type: 'text', text }] };
+      }
+      if (systemText.includes('章节逐约束独立验证器')) {
+        const serialized = JSON.stringify(messages || []);
+        const constraintIds = [...serialized.matchAll(/\\"constraintId\\"\s*:\s*\\"([^\\"]+)\\"/gu)].map((match) => match[1]);
+        const text = JSON.stringify({ checks: [...new Set(constraintIds)].map((constraintId) => ({
+          constraintId,
+          status: 'satisfied',
+          summary: 'UI 回归固定验证：正文预览满足约束。',
+          confidence: 0.99,
+          evidenceParagraphIds: ['p-0'],
+          sourceRefs: [],
+        })) });
+        onEvent && onEvent({ kind: 'text', data: { delta: text } });
+        return { stopReason: 'end_turn', content: [{ type: 'text', text }] };
+      }
+      if (subagentId || systemText.includes('Chapter Review Override') || systemText.includes('annotations')) {
+        const text = JSON.stringify({ issues: [], annotations: [] });
+        onEvent && onEvent({ kind: 'text', data: { delta: text } });
+        return { stopReason: 'end_turn', content: [{ type: 'text', text }] };
+      }
       const next = scriptedResponses.shift();
       if (!next) throw new Error('unexpected sendMessage call');
       for (const block of next.content || []) {
@@ -293,6 +319,10 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
         const chapterButtonHints = [chapterButtonLabel, '天桥摊前', chapterFile, '第一章'];
 
         const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        const observedChatEvents = [];
+        window.mana.chatAgent.onEvent((event) => {
+          observedChatEvents.push({ kind: event?.kind || '', sessionId: event?.sessionId || '', data: event?.kind === 'awaiting_write_chapter_confirmation' ? event.data : undefined });
+        });
 
         async function waitFor(predicate, message, timeout = 15000) {
           const startedAt = Date.now();
@@ -387,10 +417,47 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
             'assistant completion marker not found: ' + doneMarker,
             20000
           );
+          let diskBeforeConfirmation = null;
+          if (options.confirmMutation) {
+            let decisionCard;
+            try {
+              decisionCard = await waitFor(
+                () => document.querySelector('[data-testid="chapter-mutation-decision"]'),
+                'strict mutation preview card not found',
+                60000
+              );
+            } catch (error) {
+              throw new Error(error.message + '; observed=' + JSON.stringify(observedChatEvents.slice(-30)) + '; body=' + (document.body.innerText || '').slice(-1200));
+            }
+            const confirmButton = Array.from(decisionCard.querySelectorAll('button'))
+              .find((button) => (button.textContent || '').includes('确认写入'));
+            if (!confirmButton || confirmButton.disabled) throw new Error('strict mutation confirmation is not enabled');
+            diskBeforeConfirmation = await window.mana.novel.readChapter(novelId, chapterFile);
+            confirmButton.click();
+            await waitFor(() => input.value.includes('确认写入'), 'confirmation prompt was not placed into chat input');
+            const confirmSendButton = await waitFor(
+              () => {
+                const button = input.parentElement?.querySelector('button');
+                return button && !button.disabled ? button : null;
+              },
+              'confirmation send button not enabled'
+            );
+            confirmSendButton.click();
+            try {
+              await waitFor(
+                () => !document.querySelector('[data-testid="chapter-mutation-decision"]'),
+                'mutation preview card did not close after confirmation',
+                60000
+              );
+            } catch (error) {
+              throw new Error(error.message + '; observed=' + JSON.stringify(observedChatEvents.slice(-30)) + '; input=' + input.value + '; body=' + (document.body.innerText || '').slice(-1200));
+            }
+          }
           await sleep(250);
           return {
             body: document.body.innerText || '',
             selectionOverlayVisible,
+            diskBeforeConfirmation,
           };
         }
 
@@ -415,7 +482,7 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
         await sleep(150);
         chapterEditor.setSelectionRange(0, 0);
         chapterEditor.blur();
-        const unsavedResult = await sendPrompt('我刚把阿宁那句动作自己改了一下，你接着再收紧一点，不用我手动选。', '未保存改动后的替换已完成。');
+        const unsavedResult = await sendPrompt('我刚把阿宁那句动作自己改了一下，你接着再收紧一点，不用我手动选。', '未保存改动后的替换已完成。', { confirmMutation: true });
         await waitFor(
           () => chapterEditor.value.includes(unsavedReplacement) && !chapterEditor.value.includes(unsavedEditedLine),
           'unsaved replacement not applied'
@@ -424,7 +491,7 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
 
         chapterEditor.setSelectionRange(0, 0);
         chapterEditor.blur();
-        const autoResult = await sendPrompt('请直接把当前章节最后一句改得更警觉一点，不用我手动选。', '自动定位替换已完成。');
+        const autoResult = await sendPrompt('请直接把当前章节最后一句改得更警觉一点，不用我手动选。', '自动定位替换已完成。', { confirmMutation: true });
         await waitFor(
           () => chapterEditor.value.includes(autoReplacement) && !chapterEditor.value.includes(autoOriginal),
           'auto replacement not applied'
@@ -433,7 +500,7 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
         const diskAfterAuto = await window.mana.novel.readChapter(novelId, chapterFile);
 
         selectPhrase(chapterEditor, firstOriginal);
-        const firstResult = await sendPrompt('请把我选中的第一句改得更有画面感。', '第一处替换已完成。', { expectSelectionOverlay: true });
+        const firstResult = await sendPrompt('请把我选中的第一句改得更有画面感。', '第一处替换已完成。', { expectSelectionOverlay: true, confirmMutation: true });
         await waitFor(
           () => chapterEditor.value.includes(firstReplacement) && !chapterEditor.value.includes(firstOriginal),
           'first replacement not applied'
@@ -446,7 +513,7 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
         const duplicateResult = await sendPrompt('把文里第二处“铜钱”换成“铜铃”；如果你发现多命中，就先告诉我需要我定位。', '这段原文命中了多处，请你把光标放到要改的那一处旁边。');
 
         placeCursorNearOccurrence(chapterEditor, duplicateTarget, 1);
-        const nearCursorResult = await sendPrompt('我已经把光标放到第二处“铜钱”旁边了，你继续替换。', '已按光标附近的位置替换。');
+        const nearCursorResult = await sendPrompt('我已经把光标放到第二处“铜钱”旁边了，你继续替换。', '已按光标附近的位置替换。', { confirmMutation: true });
         await waitFor(
           () => chapterEditor.value.includes(duplicateFirstLine) && chapterEditor.value.includes(duplicateSecondLine.replace(duplicateTarget, duplicateReplacement)),
           'near-cursor replacement not applied to the intended occurrence'
@@ -455,7 +522,7 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
         const diskAfterNearCursor = await window.mana.novel.readChapter(novelId, chapterFile);
 
         placeCursorNearOccurrence(chapterEditor, normalizedNearCursorOriginal, 0);
-        const normalizedNearCursorResult = await sendPrompt('我已经把光标放到那句“今夜先别走”旁边了，你继续替换。', '那句引号形式不同的话也已经替换。');
+        const normalizedNearCursorResult = await sendPrompt('我已经把光标放到那句“今夜先别走”旁边了，你继续替换。', '那句引号形式不同的话也已经替换。', { confirmMutation: true });
         await waitFor(
           () => chapterEditor.value.includes(normalizedNearCursorReplacement) && !chapterEditor.value.includes(normalizedNearCursorOriginal),
           'normalized near-cursor replacement not applied'
@@ -494,12 +561,15 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
           selectionOverlayVisible: firstResult.selectionOverlayVisible,
           unsavedReplaceUi: chapterEditor.value.includes(unsavedReplacement) && !chapterEditor.value.includes(unsavedEditedLine),
           unsavedReplaceDisk: diskAfterUnsaved.includes(unsavedReplacement) && !diskAfterUnsaved.includes(unsavedEditedLine),
+          unsavedZeroWriteBeforeConfirm: unsavedResult.diskBeforeConfirmation.includes(unsavedEditedLine) && !unsavedResult.diskBeforeConfirmation.includes(unsavedReplacement),
           unsavedReplaceToolUsed: unsavedResult.body.includes('调用: replace_chapter_text'),
           autoReplaceUi: chapterEditor.value.includes(autoReplacement) && !chapterEditor.value.includes(autoOriginal),
           autoReplaceDisk: diskAfterAuto.includes(autoReplacement) && !diskAfterAuto.includes(autoOriginal),
+          autoZeroWriteBeforeConfirm: autoResult.diskBeforeConfirmation.includes(autoOriginal) && !autoResult.diskBeforeConfirmation.includes(autoReplacement),
           autoReplaceToolUsed: autoResult.body.includes('调用: replace_chapter_text'),
           firstReplaceUi: chapterEditor.value.includes(firstReplacement) && !chapterEditor.value.includes(firstOriginal),
           firstReplaceDisk: diskAfterFirst.includes(firstReplacement) && !diskAfterFirst.includes(firstOriginal),
+          firstZeroWriteBeforeConfirm: firstResult.diskBeforeConfirmation.includes(firstOriginal) && !firstResult.diskBeforeConfirmation.includes(firstReplacement),
           duplicatePromptedForCursor: duplicateResult.body.includes('调用: replace_chapter_text') && duplicateResult.body.includes('replace_text_near_cursor'),
           nearCursorToolUsed: nearCursorResult.body.includes('调用: replace_text_near_cursor'),
           nearCursorReplaceUi: chapterEditor.value.includes(duplicateFirstLine) && chapterEditor.value.includes(duplicateSecondLine.replace(duplicateTarget, duplicateReplacement)),
@@ -515,6 +585,48 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
         };
       })()
     `);
+
+    const editorGateResult = await mainWindow.webContents.executeJavaScript(`
+      (async () => {
+        try {
+          const novelId = ${JSON.stringify(entry.id)};
+          const chapterFile = ${JSON.stringify(chapterFile)};
+          const base = await window.mana.novel.readChapter(novelId, chapterFile);
+          const candidate = base + '\\n\\n阿宁回头确认门锁。';
+          const verification = await window.mana.novel.verifyChapterContent(novelId, {
+            name: chapterFile,
+            displayName: '第一章：天桥摊前',
+            title: '天桥摊前',
+            content: candidate,
+            userText: '编辑器插入正文严格验证回归',
+            editorContext: { type: 'chapter', novelId, chapterFileName: chapterFile, title: '第一章：天桥摊前' },
+          });
+          let wrongHashRejected = false;
+          try {
+            await window.mana.novel.saveChapter(novelId, chapterFile, candidate, { title: '天桥摊前' }, {
+              baseContent: base,
+              verifiedContentHash: 'wrong-editor-verification-hash',
+              source: 'ai',
+            });
+          } catch {
+            wrongHashRejected = true;
+          }
+          return {
+            strictVerifierPassed: verification?.status === 'passed' && !!verification?.contentHash,
+            wrongHashRejected,
+            wrongHashZeroWrite: await window.mana.novel.readChapter(novelId, chapterFile) === base,
+            verification,
+          };
+        } catch (error) {
+          return { error: error?.stack || error?.message || String(error) };
+        }
+      })()
+    `);
+
+    const threads = await chatHistory.listThreads(entry.id);
+    const persistedThread = threads[0] ? await chatHistory.getThread(threads[0].id) : null;
+    const persistedBranch = persistedThread ? chatHistory.getBranch(persistedThread) : [];
+    const successfulCommits = persistedBranch.filter((message) => message.role === 'assistant' && /已提交并写入/u.test(message.text || ''));
 
     if (r?.unsavedReplaceUi && r?.unsavedReplaceDisk && r?.unsavedReplaceToolUsed) {
       pass('CHAT_REPLACE_unsaved_editor_flush_before_backend_replace', 'chat send flushed unsaved editor content before replace_chapter_text ran');
@@ -532,6 +644,26 @@ async function runChatReplaceSelectionRegressionTest(mainWindow) {
       pass('CHAT_REPLACE_real_replace', 'selected text was replaced in editor and persisted to disk');
     } else {
       fail('CHAT_REPLACE_real_replace', JSON.stringify(r));
+    }
+
+    if (r?.unsavedZeroWriteBeforeConfirm && r?.autoZeroWriteBeforeConfirm && r?.firstZeroWriteBeforeConfirm) {
+      pass('CHAT_REPLACE_zero_disk_write_before_confirmation', 'backend and frontend chapter mutations left project files unchanged until the verified preview was confirmed');
+    } else {
+      fail('CHAT_REPLACE_zero_disk_write_before_confirmation', JSON.stringify(r));
+    }
+
+    if (editorGateResult?.strictVerifierPassed && editorGateResult?.wrongHashRejected && editorGateResult?.wrongHashZeroWrite) {
+      pass('CHAT_REPLACE_editor_ai_uses_strict_ipc_gate', 'editor AI candidate passed the shared strict verifier and a stale verification hash produced zero disk writes');
+    } else {
+      fail('CHAT_REPLACE_editor_ai_uses_strict_ipc_gate', JSON.stringify(editorGateResult));
+    }
+
+
+    if (successfulCommits.length >= 5 && successfulCommits.every((message) => message.executionTrace?.status === 'completed'
+      && message.executionTrace?.verification?.status === 'passed')) {
+      pass('CHAT_REPLACE_successful_commit_persists_passed_trace', 'every confirmed chapter commit persisted a completed execution trace with passed strict verification');
+    } else {
+      fail('CHAT_REPLACE_successful_commit_persists_passed_trace', JSON.stringify(successfulCommits.map((message) => message.executionTrace)));
     }
 
     if (r?.selectionOverlayVisible) {

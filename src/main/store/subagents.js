@@ -5,7 +5,43 @@ const { paths } = require('./paths');
 const { readJson, writeJson, listJsonFiles, deleteFile } = require('./jsonStore');
 const { BUILTIN_SUBAGENTS, LEGACY_AGENT_TO_SUBAGENT } = require('../seeds/builtinSubagents');
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
+
+function inferModelRequirements(sa = {}) {
+  const tags = new Set(sa.tags || []);
+  let workload = 'reasoning';
+  if (tags.has('chat')) workload = 'chat';
+  else if (tags.has('writing') || tags.has('editing')) workload = 'longform-writing';
+  else if (tags.has('import')) workload = 'structured-extraction';
+  else if (tags.has('review')) workload = 'review';
+  else if (tags.has('config')) workload = 'fast-utility';
+  const priority = sa.tier === 'opus' ? 'quality' : sa.tier === 'haiku' ? 'cost' : 'balanced';
+  return {
+    workload,
+    priority,
+    requires: {
+      tools: Array.isArray(sa.allowedTools) && sa.allowedTools.length > 0,
+      streaming: tags.has('writing') || tags.has('chat'),
+      thinking: sa.tier === 'opus' || tags.has('timeline'),
+      longContext: tags.has('writing') || tags.has('import') || tags.has('outline'),
+      structuredOutput: tags.has('import') || tags.has('review'),
+    },
+  };
+}
+
+function normalizeSubagent(sa) {
+  if (!sa || typeof sa !== 'object') return sa;
+  const inferred = inferModelRequirements(sa);
+  return {
+    ...sa,
+    modelRequirements: {
+      ...inferred,
+      ...(sa.modelRequirements || {}),
+      requires: { ...inferred.requires, ...(sa.modelRequirements?.requires || {}) },
+    },
+    schemaVersion: SCHEMA_VERSION,
+  };
+}
 
 function builtinFile(id) {
   return path.join(paths().subagentsBuiltin, `${id}.json`);
@@ -18,7 +54,7 @@ function userFile(id) {
 async function ensureBuiltinSeeds() {
   for (const sa of BUILTIN_SUBAGENTS) {
     const file = builtinFile(sa.id);
-    await writeJson(file, { ...sa, builtIn: true });
+    await writeJson(file, normalizeSubagent({ ...sa, builtIn: true }));
   }
 }
 
@@ -42,21 +78,21 @@ async function listSubagents() {
   for (const [id, sa] of builtinMap) {
     if (userMap.has(id)) {
       // User has overridden this builtin — return the overridden data
-      result.push({
+      result.push(normalizeSubagent({
         ...userMap.get(id),
         builtIn: true,
         isOverridden: true,
-      });
+      }));
     } else {
-      result.push({
+      result.push(normalizeSubagent({
         ...sa,
         isOverridden: false,
-      });
+      }));
     }
   }
   for (const [id, sa] of userMap) {
     if (!builtinMap.has(id)) {
-      result.push({ ...sa, isOverridden: false });
+      result.push(normalizeSubagent({ ...sa, isOverridden: false }));
     }
   }
 
@@ -70,7 +106,7 @@ async function getSubagent(id) {
 
 async function saveSubagent(sa) {
   if (!sa || !sa.id) throw new Error('subagent.id required');
-  const next = { ...sa, schemaVersion: SCHEMA_VERSION };
+  const next = normalizeSubagent(sa);
   await writeJson(userFile(sa.id), next);
   return next;
 }
@@ -113,4 +149,5 @@ module.exports = {
   cloneBuiltin,
   getSubagentByLegacyAgentId,
   SCHEMA_VERSION,
+  inferModelRequirements,
 };

@@ -3,6 +3,8 @@ import { Button, Input, Chip } from '@heroui/react';
 import { useI18n } from '@/i18n/LanguageContext.jsx';
 
 const TIER_OPTIONS = ['opus', 'sonnet', 'haiku'];
+const WORKLOAD_OPTIONS = ['chat', 'longform-writing', 'reasoning', 'review', 'structured-extraction', 'fast-utility'];
+const PRIORITY_OPTIONS = ['quality', 'balanced', 'cost', 'latency'];
 
 const READ_TOOLS = [
   'list_characters', 'read_character',
@@ -31,6 +33,12 @@ function emptySubagentTemplate() {
     name: 'sa-custom',
     displayName: 'New Subagent',
     tier: 'sonnet',
+    modelProfileId: '',
+    modelRequirements: {
+      workload: 'reasoning',
+      priority: 'balanced',
+      requires: { tools: false, streaming: false, thinking: false, longContext: false, structuredOutput: false },
+    },
     systemPrompt: '',
     allowedTools: [],
     runtimeHints: { maxTurns: 4 },
@@ -48,6 +56,7 @@ export function SubagentEditor() {
   const [draft, setDraft] = useState(null);
   const [savedFlash, setSavedFlash] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [modelSnapshot, setModelSnapshot] = useState(null);
 
   const refresh = useCallback(async () => {
     if (!mana?.config) {
@@ -55,7 +64,11 @@ export function SubagentEditor() {
       return;
     }
     try {
-      const list = await mana.config.listSubagents();
+      const [list, snapshot] = await Promise.all([
+        mana.config.listSubagents(),
+        mana.modelConfig?.snapshot?.().catch(() => null),
+      ]);
+      setModelSnapshot(snapshot);
       const sorted = (list || []).slice().sort((a, b) => {
         if (a.builtIn !== b.builtIn) return a.builtIn ? -1 : 1;
         return (a.displayName || a.id).localeCompare(b.displayName || b.id);
@@ -63,13 +76,13 @@ export function SubagentEditor() {
       setSubagents(sorted);
       if (!selectedId && sorted.length) {
         setSelectedId(sorted[0].id);
-        setDraft({ ...sorted[0] });
+        setDraft({ ...sorted[0], modelProfileId: snapshot?.routing?.subagentAssignments?.[sorted[0].id] || '' });
       } else if (selectedId) {
         const found = sorted.find((s) => s.id === selectedId);
-        if (found) setDraft({ ...found });
+        if (found) setDraft({ ...found, modelProfileId: snapshot?.routing?.subagentAssignments?.[found.id] || '' });
         else if (sorted.length) {
           setSelectedId(sorted[0].id);
-          setDraft({ ...sorted[0] });
+          setDraft({ ...sorted[0], modelProfileId: snapshot?.routing?.subagentAssignments?.[sorted[0].id] || '' });
         } else {
           setSelectedId(null);
           setDraft(null);
@@ -85,8 +98,8 @@ export function SubagentEditor() {
   const onSelect = useCallback((id) => {
     setSelectedId(id);
     const found = subagents.find((s) => s.id === id);
-    if (found) setDraft({ ...found });
-  }, [subagents]);
+    if (found) setDraft({ ...found, modelProfileId: modelSnapshot?.routing?.subagentAssignments?.[found.id] || '' });
+  }, [subagents, modelSnapshot]);
 
   const updateDraft = useCallback((patch) => {
     setDraft((d) => (d ? { ...d, ...patch } : d));
@@ -108,15 +121,22 @@ export function SubagentEditor() {
 
   const onSave = useCallback(async () => {
     if (!mana?.config || !draft) return;
+    const { modelProfileId, ...subagentDraft } = draft;
     const next = {
-      ...draft,
+      ...subagentDraft,
       runtimeHints: { ...(draft.runtimeHints || {}), maxTurns: Number(draft.runtimeHints?.maxTurns) || 4 },
-      schemaVersion: 1,
+      schemaVersion: 2,
     };
     await mana.config.saveSubagent(next);
+    if (mana.modelConfig && modelSnapshot) {
+      const snapshot = await mana.modelConfig.saveRouting({
+        subagentAssignments: { [draft.id]: modelProfileId },
+      }, modelSnapshot.revision);
+      setModelSnapshot(snapshot);
+    }
     flashSaved();
     await refresh();
-  }, [mana, draft, flashSaved, refresh]);
+  }, [mana, draft, modelSnapshot, flashSaved, refresh]);
 
   const onReset = useCallback(async () => {
     if (!mana?.config || !draft?.builtIn) return;
@@ -251,6 +271,63 @@ export function SubagentEditor() {
                   {TIER_OPTIONS.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </label>
+
+              <label className="flex flex-col gap-1 text-xs">
+                <span className="text-gray-500">模型档案</span>
+                <select
+                  className="bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-2 text-xs"
+                  value={draft.modelProfileId || ''}
+                  onChange={(e) => updateDraft({ modelProfileId: e.target.value })}
+                >
+                  <option value="">使用全局默认档案</option>
+                  {(modelSnapshot?.profiles || []).map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}
+                </select>
+                <span className="text-[10px] text-gray-600">运行时以模型档案为准；旧 Tier 仅用于兼容迁移。</span>
+              </label>
+
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex flex-col gap-1 text-xs">
+                  <span className="text-gray-500">任务负载</span>
+                  <select
+                    className="bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-2 text-xs"
+                    value={draft.modelRequirements?.workload || 'reasoning'}
+                    onChange={(e) => updateDraft({ modelRequirements: { ...(draft.modelRequirements || {}), workload: e.target.value } })}
+                  >
+                    {WORKLOAD_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-xs">
+                  <span className="text-gray-500">优先目标</span>
+                  <select
+                    className="bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-2 text-xs"
+                    value={draft.modelRequirements?.priority || 'balanced'}
+                    onChange={(e) => updateDraft({ modelRequirements: { ...(draft.modelRequirements || {}), priority: e.target.value } })}
+                  >
+                    {PRIORITY_OPTIONS.map((value) => <option key={value} value={value}>{value}</option>)}
+                  </select>
+                </label>
+              </div>
+
+              <div className="flex flex-wrap gap-3 text-[11px] text-gray-400">
+                {[
+                  ['tools', '工具调用'], ['streaming', '流式输出'], ['thinking', '深度思考'],
+                  ['longContext', '长上下文'], ['structuredOutput', '结构化输出'],
+                ].map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={!!draft.modelRequirements?.requires?.[key]}
+                      onChange={(e) => updateDraft({
+                        modelRequirements: {
+                          ...(draft.modelRequirements || {}),
+                          requires: { ...(draft.modelRequirements?.requires || {}), [key]: e.target.checked },
+                        },
+                      })}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
 
               <label className="flex flex-col gap-1 text-xs">
                 <span className="text-gray-500">{t('subagent.systemPrompt')}</span>

@@ -4,23 +4,16 @@ const mcpClient = require('../mcp/mcpClientStdio');
 const workflowOrchestrator = require('./workflowOrchestrator');
 const { getActiveNovelContext } = require('./activeNovelContext');
 const { runSubagent } = require('./runSubagent');
+const { parseJsonTextWithMeta } = require('./jsonText');
 
 const CONFIDENCE_THRESHOLD = 0.75;
 
 function parseJsonFromText(text) {
-  const raw = String(text || '').trim();
-  if (!raw) throw new Error('章节回写分析未返回内容');
-  const fence = /^```(?:json)?\s*([\s\S]*?)```\s*$/m.exec(raw);
-  const body = fence ? fence[1].trim() : raw;
   try {
-    return JSON.parse(body);
-  } catch {
-    const start = body.indexOf('{');
-    const end = body.lastIndexOf('}');
-    if (start >= 0 && end > start) {
-      return JSON.parse(body.slice(start, end + 1));
-    }
-    throw new Error('无法解析章节回写 JSON');
+    return parseJsonTextWithMeta(text).value;
+  } catch (error) {
+    if (!String(text || '').trim()) throw new Error('章节回写分析未返回内容');
+    throw error;
   }
 }
 
@@ -305,7 +298,8 @@ async function runAnalysisParsed(input, systemPrompt, draft, abortSignal, onProg
   emitProgress(onProgress, '写后同步：AI 正在分析章节摘要、时间线和大纲回写。', { stage: 'post_write_analysis' });
   const output = await runAnalysis(input, systemPrompt, abortSignal);
   try {
-    return { analysis: normalizeAnalysis(parseJsonFromText(output), draft), repaired: false };
+    const parsed = parseJsonTextWithMeta(output);
+    return { analysis: normalizeAnalysis(parsed.value, draft), repaired: parsed.repaired };
   } catch (firstErr) {
     emitProgress(onProgress, '写后同步：AI 返回的 JSON 不合法，正在自动修复一次。', {
       stage: 'post_write_json_repair',
@@ -339,7 +333,13 @@ function pickOutlineContext(nodes, draft) {
   };
 }
 
-async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
+async function persistChapterArtifacts({ draft, abortSignal, onProgress, steps }) {
+  const requestedSteps = new Set(Array.isArray(steps) && steps.length ? steps : ['summary', 'timeline', 'outline']);
+  const stepStatus = {
+    summary: requestedSteps.has('summary') ? 'pending' : 'skipped',
+    timeline: requestedSteps.has('timeline') ? 'pending' : 'skipped',
+    outline: requestedSteps.has('outline') ? 'pending' : 'skipped',
+  };
   if (!draft?.name || !draft?.text) {
     throw new Error('persistChapterArtifacts requires chapter name and text');
   }
@@ -416,7 +416,9 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
 
   const toolCalls = [];
   let summarySaved = false;
-  if (analysisReliable) {
+  if (!requestedSteps.has('summary')) {
+    summarySaved = true;
+  } else if (analysisReliable) {
     emitProgress(onProgress, '写后同步：写入章节摘要和设定补充。', { stage: 'post_write_summary' });
     const summaryResult = await callAutoTool('append_summary', {
       chapterRef: draft.name,
@@ -424,6 +426,7 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
       supplementMarkdown: analysis.supplementMarkdown,
     });
     summarySaved = !summaryResult.isError;
+    stepStatus.summary = summarySaved ? 'done' : 'failed';
     toolCalls.push({
       id: `auto-summary-${Date.now().toString(36)}`,
       name: 'append_summary',
@@ -443,6 +446,7 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
       supplementMarkdown: '',
     });
     summarySaved = !fallbackSummaryResult.isError;
+    stepStatus.summary = summarySaved ? 'done' : 'failed';
     toolCalls.push({
       id: `auto-summary-fallback-${Date.now().toString(36)}`,
       name: 'append_summary',
@@ -461,12 +465,17 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
   let timelineSynced = 0;
   let outlineUpdated = 0;
   const blockingWarnings = [];
-  if (!analysisReliable) {
+  if (!requestedSteps.has('timeline')) {
+    stepStatus.timeline = 'skipped';
+  } else if (!analysisReliable) {
+    stepStatus.timeline = 'skipped';
     pushUniqueWarning(warnings, 'AI 分析失败，已跳过时间线和大纲回写以避免覆盖旧数据。');
   } else if (!confidence.ok) {
+    stepStatus.timeline = 'skipped';
     timelineSynced = context.existingTimeline.length;
     pushUniqueWarning(warnings, '因写后分析置信度不足，已保留本章原有时间线，未覆盖。');
   } else if (!analysis.timelineEvents.length && context.existingTimeline.length && !analysis.timelineShouldClear) {
+    stepStatus.timeline = 'skipped';
     timelineSynced = context.existingTimeline.length;
     pushUniqueWarning(warnings, 'AI 未返回新的时间线事件，已保留本章原有时间线。');
   } else {
@@ -484,8 +493,10 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
       isError: timelineResult.isError,
     });
     if (timelineResult.isError) {
+      stepStatus.timeline = 'failed';
       warnings.push(`章节时间线同步失败：${trimMessage(timelineResult.text)}`);
     } else {
+      stepStatus.timeline = 'done';
       const timelinePayload = parseToolPayload(timelineResult.text);
       const timelineMessages = collectTimelineValidationMessages(timelinePayload);
       for (const warning of timelineMessages.warnings) {
@@ -501,16 +512,22 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
     }
   }
 
-  if (analysisReliable && confidence.ok) {
+  if (!requestedSteps.has('outline')) {
+    stepStatus.outline = 'skipped';
+  } else if (analysisReliable && confidence.ok) {
     emitProgress(onProgress, '写后同步：标记相关大纲节点为已写，并回填实际进展。', { stage: 'post_write_outline' });
     const outlineResult = await updateOutlineAfterWrite(draft, analysis);
     toolCalls.push(...outlineResult.toolCalls);
     outlineUpdated = outlineResult.updated || 0;
+    stepStatus.outline = (outlineResult.toolCalls || []).some((call) => call.isError) ? 'failed' : 'done';
     if (outlineResult.warning) {
       pushUniqueWarning(warnings, outlineResult.warning);
     }
   } else if (analysisReliable && !confidence.ok) {
+    stepStatus.outline = 'skipped';
     pushUniqueWarning(warnings, '因写后分析置信度不足，已跳过大纲实际进展回填。');
+  } else {
+    stepStatus.outline = 'skipped';
   }
 
   return {
@@ -522,6 +539,7 @@ async function persistChapterArtifacts({ draft, abortSignal, onProgress }) {
     blockingWarnings,
     warnings,
     toolCalls,
+    stepStatus,
   };
 }
 

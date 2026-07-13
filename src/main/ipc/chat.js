@@ -1,8 +1,7 @@
 'use strict';
 
 const { ipcMain } = require('electron');
-const providerManager = require('../providerManager');
-const modelAliases = require('../modelAliases');
+const { createProfileProvider } = require('../runtime/profileProvider');
 
 function safeIpc(handler) {
   return async (event, ...args) => {
@@ -15,52 +14,23 @@ function safeIpc(handler) {
 }
 
 async function chatComplete({ messages }) {
-  const provider = await providerManager.getActiveProvider();
-  if (!provider) throw new Error('No active provider configured');
-
-  const alias = await modelAliases.getAlias('opus');
-  const modelId = alias?.modelId || provider.models?.[0]?.id || '';
-  if (!modelId) throw new Error('No model configured for chat');
-
-  const apiKey = provider.apiKey || '';
-  if (!apiKey) throw new Error('Provider API key is missing');
-
-  const baseUrl = (provider.baseUrl || 'https://api.anthropic.com').replace(/\/$/, '');
-  const url = `${baseUrl}/v1/messages`;
-
-  const anthropicMessages = messages.map((m) => ({
-    role: m.role === 'system' ? 'user' : m.role,
-    content: m.text,
-  }));
-
+  const { provider, tier } = await createProfileProvider({ systemTask: 'chat', legacyTier: 'opus' }, { extra: { streaming: false } });
   let systemPrompt = '';
-  if (messages[0]?.role === 'system') {
-    systemPrompt = messages[0].text;
-    anthropicMessages.shift();
+  const canonicalMessages = (messages || []).map((message) => ({
+    role: message.role === 'system' ? 'user' : message.role,
+    content: [{ type: 'text', text: message.text || message.content || '' }],
+  }));
+  if (messages?.[0]?.role === 'system') {
+    systemPrompt = messages[0].text || messages[0].content || '';
+    canonicalMessages.shift();
   }
-
-  const body = {
-    model: modelId,
-    max_tokens: alias?.maxOutputTokens || 4096,
-    messages: anthropicMessages,
-    ...(systemPrompt ? { system: systemPrompt } : {}),
-    ...(alias?.temperature !== undefined ? { temperature: alias.temperature } : {}),
-  };
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify(body),
+  const result = await provider.sendMessage({
+    system: systemPrompt,
+    messages: canonicalMessages,
+    tools: [],
+    tier,
   });
-
-  const text = await res.text();
-  if (!res.ok) throw new Error(`Chat API ${res.status}: ${text}`);
-  const data = JSON.parse(text);
-  const content = data?.content?.[0]?.text || '';
+  const content = (result.content || []).filter((block) => block.type === 'text').map((block) => block.text || '').join('');
   return { text: content };
 }
 

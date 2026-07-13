@@ -119,10 +119,21 @@ async function runChatDeAiUiRegressionTest(mainWindow) {
       }
       return originalRunWorkflow(payload);
     };
-    anthropicProvider.sendMessage = async () => ({
-      stopReason: 'end_turn',
-      content: [{ type: 'text', text: '普通聊天兜底回复。' }],
-    });
+    anthropicProvider.sendMessage = async ({ system, messages, subagentId, onEvent }) => {
+      const systemText = String(system || '');
+      let text = '普通聊天兜底回复。';
+      if (systemText.includes('章节场景状态抽取器')) {
+        text = JSON.stringify({ extracted: {}, discrepancies: [], confidence: 0.99, evidenceParagraphIds: ['p-0'], sourceUsage: [] });
+      } else if (systemText.includes('章节逐约束独立验证器')) {
+        const serialized = JSON.stringify(messages || []);
+        const ids = [...serialized.matchAll(/\\"constraintId\\"\s*:\s*\\"([^\\"]+)\\"/gu)].map((match) => match[1]);
+        text = JSON.stringify({ checks: [...new Set(ids)].map((constraintId) => ({ constraintId, status: 'satisfied', summary: '满足', confidence: 0.99, evidenceParagraphIds: ['p-0'] })) });
+      } else if (subagentId) {
+        text = JSON.stringify({ issues: [], annotations: [] });
+      }
+      onEvent && onEvent({ kind: 'text', data: { delta: text } });
+      return { stopReason: 'end_turn', content: [{ type: 'text', text }] };
+    };
     mcpClient.callTool = async (payload) => {
       const name = payload?.name;
       const args = payload?.arguments || {};
@@ -219,7 +230,7 @@ async function runChatDeAiUiRegressionTest(mainWindow) {
           }
           return { ok: false, step: 'await_reply', bodyText: (document.body.innerText || '').slice(0, 1600) };
         }
-        return sendChatMessage('拿去ai味工具审查2-6章', ['我已并行审查 5 章', 'chapter-003.md：1 处', '暂不自动改正文']);
+        return sendChatMessage('拿去ai味工具审查2-6章', ['均衡灵敏度并行审查 5 章', 'chapter-003.md：1 处', '暂不自动改正文']);
       })()
     `);
     if (reviewTurn?.ok) {
@@ -228,7 +239,7 @@ async function runChatDeAiUiRegressionTest(mainWindow) {
       fail('DAU3_review_turn_renders_tool_result', JSON.stringify(reviewTurn));
     }
 
-    const applyTurn = await mainWindow.webContents.executeJavaScript(`
+    const previewTurn = await mainWindow.webContents.executeJavaScript(`
       (async () => {
         async function sendChatMessage(text, checks, timeout = 15000) {
           const input = document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]');
@@ -260,13 +271,53 @@ async function runChatDeAiUiRegressionTest(mainWindow) {
           }
           return { ok: false, step: 'await_reply', bodyText: (document.body.innerText || '').slice(0, 1800) };
         }
-        return sendChatMessage('方案A', ['已按上一次审查结果自动应用去 AI 味修改', 'chapter-003.md：1 处']);
+        return sendChatMessage('方案A', ['已生成去 AI 味 patch 预览，尚未写入正文', 'chapter-003.md：1 处', '确认应用']);
       })()
     `);
-    if (applyTurn?.ok) {
-      pass('DAU4_plan_a_applies_in_ui', 'plan A follow-up applied fixes through the real chat UI');
+    const chapterBeforeConfirm = await novelData.readChapter(novelDir, 'chapter-003.md');
+    if (previewTurn?.ok && chapterBeforeConfirm.includes('然后她笑了。那是一个很淡的笑。')) {
+      pass('DAU4_plan_a_previews_without_write', 'plan A generated a patch preview while the chapter file remained unchanged');
     } else {
-      fail('DAU4_plan_a_applies_in_ui', JSON.stringify(applyTurn));
+      fail('DAU4_plan_a_previews_without_write', JSON.stringify({ previewTurn, chapterBeforeConfirm }));
+    }
+
+    const screenshotDir = path.join(ROOT, 'qa-screenshots');
+    const screenshotPath = path.join(screenshotDir, 'de-ai-sharded-review-preview.png');
+    await fs.mkdir(screenshotDir, { recursive: true });
+    const screenshot = await mainWindow.webContents.capturePage();
+    await fs.writeFile(screenshotPath, screenshot.toPNG());
+    pass('DAU4b_preview_screenshot_saved', screenshotPath);
+
+    const confirmTurn = await mainWindow.webContents.executeJavaScript(`
+      (async () => {
+        const input = document.querySelector('textarea[placeholder="向 AI 提问…"], input[placeholder="向 AI 提问…"]');
+        if (!input) return { ok: false, step: 'find_input' };
+        const proto = input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+        const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+        if (setter) setter.call(input, '确认应用'); else input.value = '确认应用';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        const sendBtn = Array.from(document.querySelectorAll('button')).find((button) => {
+          if (button.disabled) return false;
+          const svg = button.querySelector('svg');
+          return svg && (svg.getAttribute('data-lucide') === 'send' || svg.classList.contains('lucide-send'));
+        });
+        if (!sendBtn) return { ok: false, step: 'find_send' };
+        sendBtn.click();
+        const startedAt = Date.now();
+        while (Date.now() - startedAt < 30000) {
+          const bodyText = document.body.innerText || '';
+          if (bodyText.includes('已按预览应用去 AI 味修改') && bodyText.includes('chapter-003.md：1 处')) return { ok: true };
+          await new Promise((resolve) => setTimeout(resolve, 250));
+        }
+        return { ok: false, step: 'await_reply', bodyText: (document.body.innerText || '').slice(-1800) };
+      })()
+    `);
+    if (confirmTurn?.ok) {
+      pass('DAU5_confirm_applies_verified_patch', 'explicit confirmation applied the strictly verified patch');
+    } else {
+      fail('DAU5_confirm_applies_verified_patch', JSON.stringify(confirmTurn));
     }
 
     const chapterThree = await novelData.readChapter(novelDir, 'chapter-003.md');
@@ -274,12 +325,12 @@ async function runChatDeAiUiRegressionTest(mainWindow) {
       chapterThree.includes('她笑了一下，笑意很淡，像把原本要出口的话收了回去。')
       && !chapterThree.includes('然后她笑了。那是一个很淡的笑。')
     ) {
-      pass('DAU5_plan_a_persists_rewritten_chapter', 'chapter-003.md was rewritten on disk after UI follow-up');
+      pass('DAU6_plan_a_persists_rewritten_chapter', 'chapter-003.md was rewritten on disk only after explicit confirmation');
     } else {
-      fail('DAU5_plan_a_persists_rewritten_chapter', chapterThree);
+      fail('DAU6_plan_a_persists_rewritten_chapter', chapterThree);
     }
   } catch (err) {
-    fail('DAU6_harness', err.message || String(err));
+    fail('DAU7_harness', err.message || String(err));
   } finally {
     providerManager.getActiveProvider = originalGetActiveProvider;
     modelAliases.getAlias = originalGetAlias;

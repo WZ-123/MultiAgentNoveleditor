@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>角色卡结构化编辑验收</title>
+    <link rel="stylesheet" href="/src/index.css" />
+  </head>
+  <body class="bg-vscode-bg">
+    <div id="root" class="h-screen"></div>
+    <script type="module">
+      import React from 'react';
+      import { createRoot } from 'react-dom/client';
+      import { DataTabContent } from '/src/components/DataTabContent.jsx';
+
+      let characters = [
+        {
+          id: 'shiratsuyu-rion',
+          name: '调月莉音',
+          gender: '女',
+          role: '被误标为原创的角色',
+          appearance: '尚未补全',
+          isOriginal: true,
+          sourceWork: '',
+          relationships: [],
+        },
+        {
+          id: 'wrong-character',
+          name: '误识别角色',
+          role: '章节标题误识别',
+          isOriginal: true,
+          relationships: [],
+        },
+      ];
+
+      window.__characterHarness = {
+        getCharacters: () => structuredClone(characters),
+      };
+      window.mana = {
+        novel: {
+          listCharacters: async () => structuredClone(characters),
+          readCharacter: async (_novelId, charId) => structuredClone(characters.find((item) => item.id === charId) || null),
+          writeCharacter: async (_novelId, character) => {
+            characters = characters.map((item) => item.id === character.id ? structuredClone(character) : item);
+            return structuredClone(character);
+          },
+          deleteCharacter: async (_novelId, charId) => {
+            const deleted = characters.find((item) => item.id === charId) || null;
+            characters = characters.filter((item) => item.id !== charId);
+            return structuredClone(deleted);
+          },
+          active: async () => null,
+        },
+        chatAgent: { onEvent: () => () => {} },
+      };
+
+      createRoot(document.getElementById('root')).render(
+        React.createElement(DataTabContent, { dataType: 'characters', novelId: 'character-ui-harness' })
+      );
+    </script>
+  </body>
+</html>

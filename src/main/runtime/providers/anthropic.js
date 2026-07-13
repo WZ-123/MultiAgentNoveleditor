@@ -9,6 +9,7 @@
  */
 
 const { fetchWithRetry } = require('./retry');
+const { normalizeProviderUsage } = require('./usage');
 
 const ANTHROPIC_VERSION = '2023-06-01';
 
@@ -20,13 +21,16 @@ function authHeader(apiKey) {
   };
 }
 
-function endpoint(baseUrl) {
+function endpoint(baseUrl, endpointOverride) {
+  if (endpointOverride) return endpointOverride;
   const b = (baseUrl || 'https://api.anthropic.com').replace(/\/$/, '');
+  if (/\/v1\/messages$/i.test(b)) return b;
+  if (/\/v1$/i.test(b)) return `${b}/messages`;
   return `${b}/v1/messages`;
 }
 
-function endpointLabel(baseUrl) {
-  const url = endpoint(baseUrl);
+function endpointLabel(baseUrl, endpointOverride) {
+  const url = endpoint(baseUrl, endpointOverride);
   if ((baseUrl || '').includes('api.anthropic.com')) return 'Anthropic API';
   return `Anthropic-compatible endpoint (${url})`;
 }
@@ -127,7 +131,12 @@ function buildBody({ system, messages, tools, model, maxTokens, extra, stream, t
   if (system) body.system = system;
   const normalizedTools = normalizeTools(tools);
   if (normalizedTools) body.tools = normalizedTools;
-  if (extra && typeof extra === 'object') Object.assign(body, extra);
+  if (extra && typeof extra === 'object') {
+    for (const [key, value] of Object.entries(extra)) {
+      if (['maxTokens', 'streaming', 'responseFormat', 'includeUsage'].includes(key)) continue;
+      body[key] = value;
+    }
+  }
   if (thinking && typeof thinking === 'object') body.thinking = thinking;
   return body;
 }
@@ -193,7 +202,7 @@ async function sendMessageStreaming(opts) {
   if (!apiKey) {
     throw new Error('Anthropic API key missing for tier');
   }
-  const url = endpoint(tier.baseUrl);
+  const url = endpoint(tier.baseUrl, tier.endpoint);
   const body = buildBody({
     system,
     messages,
@@ -205,7 +214,7 @@ async function sendMessageStreaming(opts) {
     thinking: tier.thinking,
   });
 
-  const label = endpointLabel(tier.baseUrl);
+  const label = endpointLabel(tier.baseUrl, tier.endpoint);
   const res = await fetchWithRetry(
     url,
     {
@@ -220,11 +229,15 @@ async function sendMessageStreaming(opts) {
 
   const blocks = [];
   let stopReason = 'end_turn';
+  let model = tier.model || '';
+  let usage = {};
   const partialJsonByIndex = new Map();
 
   for await (const ev of streamSse(res, abortSignal)) {
     const t = ev.type;
     if (t === 'message_start') {
+      model = ev.message?.model || model;
+      usage = { ...usage, ...(ev.message?.usage || {}) };
       onEvent && onEvent({ runId, nodeId, subagentId, kind: 'running', data: { model: ev.message?.model } });
     } else if (t === 'content_block_start') {
       const idx = ev.index;
@@ -232,7 +245,11 @@ async function sendMessageStreaming(opts) {
       if (cb?.type === 'text') {
         blocks[idx] = { type: 'text', text: '' };
       } else if (cb?.type === 'thinking') {
-        blocks[idx] = { type: 'thinking', thinking: '' };
+        blocks[idx] = { ...cb, type: 'thinking', thinking: cb.thinking || '' };
+      } else if (cb?.type === 'redacted_thinking') {
+        // Opaque encrypted block: preserve it byte-for-byte for a following
+        // tool_result request. It is never surfaced as readable thinking text.
+        blocks[idx] = { ...cb };
       } else if (cb?.type === 'tool_use') {
         blocks[idx] = { type: 'tool_use', id: cb.id, name: cb.name, input: {} };
         partialJsonByIndex.set(idx, '');
@@ -252,6 +269,9 @@ async function sendMessageStreaming(opts) {
         blocks[idx] = blocks[idx] || { type: 'thinking', thinking: '' };
         blocks[idx].thinking += d.thinking || '';
         onEvent && onEvent({ runId, nodeId, subagentId, kind: 'thinking', data: { delta: d.thinking } });
+      } else if (d?.type === 'signature_delta') {
+        blocks[idx] = blocks[idx] || { type: 'thinking', thinking: '' };
+        blocks[idx].signature = `${blocks[idx].signature || ''}${d.signature || ''}`;
       } else if (d?.type === 'input_json_delta') {
         const cur = partialJsonByIndex.get(idx) || '';
         partialJsonByIndex.set(idx, cur + (d.partial_json || ''));
@@ -266,9 +286,14 @@ async function sendMessageStreaming(opts) {
         } catch (_) {
           block.input = { __raw: raw };
         }
+        onEvent && onEvent({
+          runId, nodeId, subagentId, kind: 'tool_use',
+          data: { id: block.id, name: block.name, input: block.input, finalized: true },
+        });
       }
     } else if (t === 'message_delta') {
       if (ev.delta?.stop_reason) stopReason = ev.delta.stop_reason;
+      usage = { ...usage, ...(ev.usage || {}) };
     } else if (t === 'message_stop') {
       // done
     } else if (t === 'error') {
@@ -277,14 +302,20 @@ async function sendMessageStreaming(opts) {
   }
 
   const content = blocks.filter(Boolean);
-  return { stopReason: normalizeStopReason(stopReason, content), content };
+  return {
+    stopReason: normalizeStopReason(stopReason, content),
+    content,
+    model,
+    requestId: res.headers?.get?.('request-id') || res.headers?.get?.('x-request-id') || '',
+    usage: normalizeProviderUsage(usage, { input: { system, messages, tools }, output: content }),
+  };
 }
 
 async function sendMessageNonStreaming(opts) {
   const { system, messages, tools, tier, abortSignal } = opts;
   const apiKey = tier.apiKey || '';
   if (!apiKey) throw new Error('Anthropic API key missing for tier');
-  const url = endpoint(tier.baseUrl);
+  const url = endpoint(tier.baseUrl, tier.endpoint);
   const body = buildBody({
     system,
     messages,
@@ -295,7 +326,7 @@ async function sendMessageNonStreaming(opts) {
     stream: false,
     thinking: tier.thinking,
   });
-  const label = endpointLabel(tier.baseUrl);
+  const label = endpointLabel(tier.baseUrl, tier.endpoint);
   const res = await fetchWithRetry(
     url,
     {
@@ -309,7 +340,13 @@ async function sendMessageNonStreaming(opts) {
   );
   const data = await res.json();
   const content = data.content || [];
-  return { stopReason: normalizeStopReason(data.stop_reason || 'end_turn', content), content };
+  return {
+    stopReason: normalizeStopReason(data.stop_reason || 'end_turn', content),
+    content,
+    model: data.model || tier.model || '',
+    requestId: res.headers?.get?.('request-id') || res.headers?.get?.('x-request-id') || data.id || '',
+    usage: normalizeProviderUsage(data.usage, { input: { system, messages, tools }, output: content }),
+  };
 }
 
 async function sendMessage(opts) {

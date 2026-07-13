@@ -87,11 +87,12 @@ async function runConfigMigrationRegressionTest() {
     const appConfig = require(appConfigPath);
 
     const alias = await modelAliases.getAlias('sonnet');
-    const aliasesDisk = JSON.parse(await fs.readFile(aliasesFile, 'utf8'));
-    if (alias?.providerId === 'deepseek-v4-pro' && aliasesDisk.aliases?.[0]?.providerId === 'deepseek-v4-pro') {
-      pass('CFG1_alias_provider_name_is_migrated_to_provider_id', 'legacy alias providerId display name was normalized and persisted');
+    const modelConfigDisk = JSON.parse(await fs.readFile(path.join(userRoot, 'model-config.json'), 'utf8'));
+    const migratedProfile = modelConfigDisk.profiles?.find((profile) => profile.id === 'profile-longform-writing');
+    if (alias?.providerId === 'deepseek-v4-pro' && migratedProfile?.targetsByDriver?.['direct-api']?.primary?.providerId === 'deepseek-v4-pro') {
+      pass('CFG1_alias_provider_name_is_migrated_to_provider_id', 'legacy alias provider name was normalized into the unified model profile');
     } else {
-      fail('CFG1_alias_provider_name_is_migrated_to_provider_id', JSON.stringify({ alias, aliasesDisk }));
+      fail('CFG1_alias_provider_name_is_migrated_to_provider_id', JSON.stringify({ alias, modelConfigDisk }));
     }
 
     const cfg = await appConfig.load();

@@ -183,6 +183,149 @@ textarea::placeholder {
   letter-spacing: 0.01em;
 }
 
+.mana-chat-markdown {
+  min-width: 0;
+  white-space: normal;
+}
+
+.mana-chat-markdown > :first-child {
+  margin-top: 0;
+}
+
+.mana-chat-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.mana-chat-markdown p,
+.mana-chat-markdown ul,
+.mana-chat-markdown ol,
+.mana-chat-markdown blockquote,
+.mana-chat-markdown pre,
+.mana-chat-markdown .mana-chat-table-wrap {
+  margin: 0.65rem 0;
+}
+
+.mana-chat-markdown p {
+  white-space: pre-wrap;
+}
+
+.mana-chat-markdown h1,
+.mana-chat-markdown h2,
+.mana-chat-markdown h3,
+.mana-chat-markdown h4,
+.mana-chat-markdown h5,
+.mana-chat-markdown h6 {
+  margin: 0.9rem 0 0.45rem;
+  color: #f1f5f9;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.mana-chat-markdown h1 { font-size: 1.35rem; }
+.mana-chat-markdown h2 { font-size: 1.2rem; }
+.mana-chat-markdown h3 { font-size: 1.08rem; }
+
+.mana-chat-markdown ul,
+.mana-chat-markdown ol {
+  padding-left: 1.4rem;
+}
+
+.mana-chat-markdown ul { list-style: disc; }
+.mana-chat-markdown ol { list-style: decimal; }
+
+.mana-chat-markdown blockquote {
+  border-left: 3px solid rgba(56, 189, 248, 0.55);
+  padding-left: 0.85rem;
+  color: #cbd5e1;
+}
+
+.mana-chat-markdown code {
+  border-radius: 0.3rem;
+  background: rgba(15, 23, 42, 0.72);
+  padding: 0.12rem 0.32rem;
+  font-size: 0.9em;
+}
+
+.mana-chat-markdown pre {
+  overflow-x: auto;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 0.65rem;
+  background: rgba(15, 23, 42, 0.72);
+  padding: 0.75rem;
+  white-space: pre;
+}
+
+.mana-chat-markdown pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.mana-chat-markdown a {
+  color: #7dd3fc;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.mana-chat-markdown hr {
+  margin: 0.9rem 0;
+  border: 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.mana-chat-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 0.65rem;
+  outline: none;
+}
+
+.mana-chat-table-wrap:focus-visible {
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35);
+}
+
+.mana-chat-markdown table {
+  width: 100%;
+  min-width: 100%;
+  border-collapse: collapse;
+  line-height: 1.55;
+}
+
+.mana-chat-markdown th,
+.mana-chat-markdown td {
+  border-right: 1px solid rgba(148, 163, 184, 0.15);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.mana-chat-markdown th:last-child,
+.mana-chat-markdown td:last-child {
+  border-right: 0;
+}
+
+.mana-chat-markdown tr:last-child td {
+  border-bottom: 0;
+}
+
+.mana-chat-markdown th {
+  background: rgba(15, 23, 42, 0.62);
+  color: #f1f5f9;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mana-chat-markdown td:first-child {
+  white-space: nowrap;
+}
+
+.mana-chat-markdown tbody tr:nth-child(even) {
+  background: rgba(148, 163, 184, 0.045);
+}
+
 .mana-chat-actionbar {
   background: rgba(15, 23, 42, 0.84);
   border: 1px solid rgba(148, 163, 184, 0.16);

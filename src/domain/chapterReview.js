@@ -83,7 +83,11 @@ export function normalizeReviewIssue(raw, options = {}) {
     source,
     sourceAgent: source,
     category: safeText(raw.category || raw.kind || source).trim() || source,
+    patternId: raw.patternId != null ? safeText(raw.patternId) : undefined,
     severity: safeText(raw.severity).trim() || options.defaultSeverity || 'blocking',
+    confidence: Number.isFinite(Number(raw.confidence))
+      ? Math.max(0, Math.min(1, Number(raw.confidence)))
+      : undefined,
     status: reviewIncomplete ? 'open' : normalizeStatus(raw.status),
     paragraphIds,
     paragraphIndexes: paragraphIndexes.sort((left, right) => left - right),
@@ -135,7 +139,9 @@ export function isOpenReviewIssue(issue) {
 }
 
 export function hasBlockingReviewIssues(issues) {
-  return (Array.isArray(issues) ? issues : []).some(isOpenReviewIssue);
+  return (Array.isArray(issues) ? issues : []).some((issue) => (
+    isOpenReviewIssue(issue) && issue?.severity !== 'advisory'
+  ));
 }
 
 export function reviewSourceLabel(source) {

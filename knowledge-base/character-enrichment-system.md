@@ -1,6 +1,6 @@
 # 角色联网补全系统文档
 
-最后更新：2026-05-31
+最后更新：2026-07-12
 
 ## 1. 系统定位
 
@@ -261,6 +261,20 @@ const [characterMarks, setCharacterMarks] = useState([
 - **原创/二创单选**：切换角色类型
 - **作品下拉框**：仅当二创且引用多部作品时显示，选择具体归属
 
+### 导入后的角色卡维护
+
+角色卡列表提供单卡结构化编辑和删除：
+
+- 普通编辑使用中文字段表单，不需要用户记忆 JSON key；性别、原创/二创等状态使用受控选项。
+- 选择“二创角色”后必须填写 `sourceWork`；保存后该角色的联网补全入口才可用。
+- 选择“原创角色”会清空 `sourceWork` / `originalName`，避免卡片状态互相矛盾。
+- 删除角色需要二次确认；只删除角色卡，不修改小说正文。
+- 原有的整体 JSON 编辑保留为“高级 JSON”入口，用于扩展字段和批量修改。
+
+手动联网补全只接受用户已明确标记 `isOriginal === false` 的角色。若调用方传入原创或未确认角色，IPC 会返回带角色姓名的明确错误，不再进入补全引擎后静默记为“失败/跳过”。
+
+导入阶段点击“开始联网补全”前，必须先把当前的 `isOriginal` / `sourceWork` 标记写入 staging；补全后重新读取 staging 时也必须保留这两个字段，不得重置为默认原创。
+
 ---
 
 ## 7. 错误处理与降级策略
@@ -302,6 +316,7 @@ const [characterMarks, setCharacterMarks] = useState([
 | `src/main/ipc/import.js` | IPC 层：`getStagingCharacters` / `saveStagingCharacters` / `enrichStagingCharacters` |
 | `src/components/ImportNovelPanel.jsx` | 导入面板 UI：`fanwork-check` + `character-review` 步骤 |
 | `src/components/CharacterEnrichPanel.jsx` | 独立补全面板（手动触发时使用） |
+| `src/components/CharacterEditDialog.jsx` | 角色卡结构化编辑、归属校验与删除入口 |
 | `src/components/DataTabContent.jsx` | 数据浏览：角色卡展示、批量操作 |
 | `preload.js` | IPC 桥接暴露 |
 | `knowledge-base/western-enrichment-benchmark.md` | 欧美通用轨 benchmark 规则与 smoke 实测 |

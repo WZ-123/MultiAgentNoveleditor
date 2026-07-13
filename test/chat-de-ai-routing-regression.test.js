@@ -47,6 +47,7 @@ async function runChatDeAiRoutingRegressionTest() {
   const anthropicProvider = require(path.join(ROOT, 'src/main/runtime/providers/anthropic'));
   const mcpClient = require(path.join(ROOT, 'src/main/mcp/mcpClientStdio'));
   const driverRegistry = require(path.join(ROOT, 'src/main/runtime/drivers/registry'));
+  const chapterDraftService = require(path.join(ROOT, 'src/main/runtime/chapterDraftService'));
   const { getToolByName } = require(path.join(ROOT, 'src/main/mcp/tools'));
 
   const originalGetActiveProvider = providerManager.getActiveProvider;
@@ -57,6 +58,7 @@ async function runChatDeAiRoutingRegressionTest() {
   const originalListTools = mcpClient.listTools;
   const originalGetActiveNovel = mcpClient.getActiveNovel;
   const originalRegistryGetActive = driverRegistry.getActive;
+  const originalVerifyChapterContentStrict = chapterDraftService.verifyChapterContentStrict;
 
   let chatAgent = null;
   let sessionId = '';
@@ -78,6 +80,12 @@ async function runChatDeAiRoutingRegressionTest() {
       temperature: 0,
     });
     workflowOrchestrator.getActiveDriverId = () => 'direct-api';
+    chapterDraftService.verifyChapterContentStrict = async ({ text }) => ({
+      status: 'passed',
+      contentHash: require('node:crypto').createHash('sha256').update(String(text || '').replace(/\r\n/gu, '\n').trim()).digest('hex').slice(0, 16),
+      checks: [],
+      issues: [],
+    });
 
     let providerCallCount = 0;
     anthropicProvider.sendMessage = async () => {
@@ -108,31 +116,17 @@ async function runChatDeAiRoutingRegressionTest() {
         novelId: 'novel-de-ai-routing',
         type: 'chapter',
         title: 'chapter-001.md',
+        chapterFileName: 'chapter-001.md',
+        chapterDisplayName: '第一章：测试',
+        content: '然后她笑了。那是一个很淡的笑。',
         selectedText: '然后她笑了。那是一个很淡的笑。',
+        selectionStart: 0,
+        selectionEnd: 15,
       },
       messages: [],
     });
 
-    const frontendResolves = [];
-    const originalLength = emittedEvents.length;
-    const monitor = setInterval(() => {
-      for (let index = originalLength; index < emittedEvents.length; index += 1) {
-        const event = emittedEvents[index];
-        if (event.channel !== 'chatAgent:event') continue;
-        if (event.payload?.sessionId !== sessionId) continue;
-        if (event.payload?.kind !== 'frontend_action') continue;
-        const actionId = event.payload?.data?.actionId;
-        if (!actionId || frontendResolves.includes(actionId)) continue;
-        frontendResolves.push(actionId);
-        chatAgent.resolveFrontendAction(sessionId, actionId, { text: '选区替换成功', isError: false });
-      }
-    }, 10);
-
-    try {
-      await chatAgent.runTurn(sessionId, '把这句去AI味，润色得更像人写。');
-    } finally {
-      clearInterval(monitor);
-    }
+    await chatAgent.runTurn(sessionId, '把这句去AI味，润色得更像人写。');
 
     const frontendAction = emittedEvents.find((event) => event.channel === 'chatAgent:event'
       && event.payload?.sessionId === sessionId
@@ -145,17 +139,18 @@ async function runChatDeAiRoutingRegressionTest() {
     assert.equal(toolCalls[0]?.name, 'de_ai_ify');
     assert.equal(toolCalls[0]?.args?.text, '然后她笑了。那是一个很淡的笑。');
     assert.match(toolCalls[0]?.args?.guidance || '', /去AI味|更像人写/u);
-    assert.ok(frontendAction);
-    assert.equal(frontendAction?.payload?.data?.name, 'replace_selected_text');
-    assert.equal(frontendAction?.payload?.data?.input?.replacement, '她笑了一下，笑意很淡，像是把话先按回了心里。');
-    assert.match(lastAssistantText, /已按你当前选中的内容去 AI 味改写/u);
-    pass('CDR1_selected_de_ai_request_routes_to_tool_then_replace', 'selected-text de-ai requests bypass the provider and go through de_ai_ify + replace_selected_text');
+    assert.equal(frontendAction, undefined);
+    assert.equal(session?.pendingWriteChapter?.mutationTool, 'replace_selected_text');
+    assert.equal(session?.pendingWriteChapter?.mutationArgs?.replacement, '她笑了一下，笑意很淡，像是把话先按回了心里。');
+    assert.match(lastAssistantText, /已生成选区去 AI 味改写预览并通过严格验证/u);
+    pass('CDR1_selected_de_ai_request_routes_to_verified_preview', 'selected-text de-ai requests create a verified preview without immediately replacing editor text');
   } catch (err) {
     fail('CDR1_selected_de_ai_request_routes_to_tool_then_replace', err?.message || String(err));
   } finally {
     if (sessionId && chatAgent) {
       try { chatAgent.closeSession(sessionId); } catch { /* ignore */ }
     }
+    chapterDraftService.verifyChapterContentStrict = originalVerifyChapterContentStrict;
   }
 
   try {
@@ -201,12 +196,12 @@ async function runChatDeAiRoutingRegressionTest() {
       messages: [],
     });
 
-    await chatAgent.runTurn(sessionId, '重新审查一下第八章的ai味');
+    await chatAgent.runTurn(sessionId, '重新审查一下第八章的ＡＩ味');
 
     assert.equal(providerCallCount, 0);
     assert.deepEqual(toolCalls.map((call) => call.name), ['list_chapters', 'list_chapter_displays', 'review_de_ai_style']);
     assert.deepEqual(toolCalls[2]?.args?.chapterNames, ['chapter-008.md']);
-    pass('CDR3c_lowercase_aiwei_routes_to_chapter_de_ai_review', 'lowercase ai味 review wording now bypasses provider and calls review_de_ai_style directly');
+    pass('CDR3c_fullwidth_aiwei_routes_to_chapter_de_ai_review', 'fullwidth ＡＩ味 wording is normalized before routing to review_de_ai_style');
   } catch (err) {
     fail('CDR3c_lowercase_aiwei_routes_to_chapter_de_ai_review', err?.message || String(err));
   } finally {
@@ -241,7 +236,7 @@ async function runChatDeAiRoutingRegressionTest() {
 
     assert.ok(capturedToolNames.includes('list_skills'));
     assert.ok(capturedToolNames.includes('read_skill_content'));
-    assert.ok(capturedToolNames.includes('create_novel'));
+    assert.equal(capturedToolNames.includes('create_novel'), false);
     assert.ok(capturedToolNames.includes('list_novels'));
     assert.equal(capturedToolNames.includes('list_characters'), false);
     pass('CDR2_idle_provider_path_keeps_bootstrap_tooling_scoped', 'direct-api idle mode keeps explicit bootstrap/skill tools visible without leaking novel-only tools');
@@ -393,7 +388,7 @@ async function runChatDeAiRoutingRegressionTest() {
     assert.equal(providerCallCount, 0);
     assert.deepEqual(toolCalls.map((call) => call.name), ['list_chapters', 'list_chapter_displays', 'review_de_ai_style']);
     assert.deepEqual(toolCalls[2]?.args?.chapterNames, ['chapter-002.md', 'chapter-003.md', 'chapter-004.md', 'chapter-005.md', 'chapter-006.md']);
-    assert.match(lastAssistantText, /我已并行审查 5 章/u);
+    assert.match(lastAssistantText, /均衡灵敏度并行审查 5 章/u);
     assert.match(lastAssistantText, /chapter-003\.md：1 处/u);
     pass('CDR3b_bare_numeric_range_wording_routes_to_multi_chapter_de_ai_review', 'bare 2-6 wording now routes into review_de_ai_style without falling back to provider');
   } catch (err) {
@@ -606,6 +601,7 @@ async function runChatDeAiRoutingRegressionTest() {
     mcpClient.listTools = originalListTools;
     mcpClient.getActiveNovel = originalGetActiveNovel;
     driverRegistry.getActive = originalRegistryGetActive;
+    chapterDraftService.verifyChapterContentStrict = originalVerifyChapterContentStrict;
     if (originalElectronCache) {
       require.cache[electronModulePath] = originalElectronCache;
     } else {

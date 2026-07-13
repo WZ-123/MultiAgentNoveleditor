@@ -8,7 +8,7 @@
  *     entryNodeIds, nodes, edges, config: { maxRevisions }, schemaVersion }
  *
  * Node kinds: subagent | parallel | gate | human | output
- *  - subagent: { id, kind:'subagent', subagentId, tierOverride? , label? }
+ *  - subagent: { id, kind:'subagent', subagentId, modelProfileId? , label? }
  *  - parallel: { id, kind:'parallel', children: [nodeId...], label? }
  *  - gate    : { id, kind:'gate', expr, label? }   // expr currently: 'no_issues'
  *  - human   : { id, kind:'human', label? }
@@ -22,7 +22,7 @@
  * load and persist a `layout` map when the user moves nodes.
  */
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 const BUILTIN_DAGS = [
   // ---------- 写作质量最优 · 大纲 ----------
@@ -96,9 +96,9 @@ const BUILTIN_DAGS = [
     schemaVersion: SCHEMA_VERSION,
     entryNodeIds: ['n_drafter'],
     nodes: [
-      { id: 'n_drafter', kind: 'subagent', subagentId: 'sa-outline-drafter', tierOverride: 'haiku', label: '大纲草拟 (haiku)' },
-      { id: 'n_review', kind: 'subagent', subagentId: 'sa-character-reviewer', tierOverride: 'haiku', label: '人设审查 (haiku)' },
-      { id: 'n_time', kind: 'subagent', subagentId: 'sa-timeline-guardian', tierOverride: 'sonnet', label: '时空校验 (sonnet)' },
+      { id: 'n_drafter', kind: 'subagent', subagentId: 'sa-outline-drafter', modelProfileId: 'profile-fast-utility', label: '大纲草拟（快速档案）' },
+      { id: 'n_review', kind: 'subagent', subagentId: 'sa-character-reviewer', modelProfileId: 'profile-fast-utility', label: '人设审查（快速档案）' },
+      { id: 'n_time', kind: 'subagent', subagentId: 'sa-timeline-guardian', modelProfileId: 'profile-longform-writing', label: '时空校验（长篇档案）' },
       { id: 'n_human', kind: 'human', label: '人工审阅' },
       { id: 'n_out', kind: 'output', label: '输出大纲' },
     ],
@@ -120,14 +120,14 @@ const BUILTIN_DAGS = [
     schemaVersion: SCHEMA_VERSION,
     entryNodeIds: ['n_writer'],
     nodes: [
-      { id: 'n_writer', kind: 'subagent', subagentId: 'sa-writer', tierOverride: 'haiku', label: '章节撰写 (haiku)' },
+      { id: 'n_writer', kind: 'subagent', subagentId: 'sa-writer', modelProfileId: 'profile-fast-utility', label: '章节撰写（快速档案）' },
       { id: 'n_parallel_check', kind: 'parallel', children: ['n_character', 'n_timeline'], label: '并行硬检查' },
-      { id: 'n_character', kind: 'subagent', subagentId: 'sa-character-reviewer', tierOverride: 'haiku', label: '逻辑 / 人设校验 (haiku)' },
-      { id: 'n_timeline', kind: 'subagent', subagentId: 'sa-timeline-guardian', tierOverride: 'sonnet', label: '时空校验 (sonnet)' },
+      { id: 'n_character', kind: 'subagent', subagentId: 'sa-character-reviewer', modelProfileId: 'profile-fast-utility', label: '逻辑 / 人设校验（快速档案）' },
+      { id: 'n_timeline', kind: 'subagent', subagentId: 'sa-timeline-guardian', modelProfileId: 'profile-longform-writing', label: '时空校验（长篇档案）' },
       { id: 'n_gate', kind: 'gate', expr: 'no_issues', label: '若无 issues 则放行' },
-      { id: 'n_revise', kind: 'subagent', subagentId: 'sa-writer', tierOverride: 'haiku', label: '按硬伤修订 (haiku)' },
+      { id: 'n_revise', kind: 'subagent', subagentId: 'sa-writer', modelProfileId: 'profile-fast-utility', label: '按硬伤修订（快速档案）' },
       { id: 'n_human', kind: 'human', label: '人工审阅' },
-      { id: 'n_lore', kind: 'subagent', subagentId: 'sa-lore-updater', tierOverride: 'haiku', label: '本章总结 (haiku)' },
+      { id: 'n_lore', kind: 'subagent', subagentId: 'sa-lore-updater', modelProfileId: 'profile-fast-utility', label: '本章总结（快速档案）' },
       { id: 'n_out', kind: 'output', label: '输出章节' },
     ],
     edges: [

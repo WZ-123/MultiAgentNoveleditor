@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { User, Globe, Book, Pen, Calendar, Loader2, Edit3, Save, X, Sparkles, Package, Plus, ShieldAlert } from 'lucide-react';
+import { User, Globe, Book, Pen, Calendar, Loader2, Edit3, Save, X, Sparkles, Package, Plus, ShieldAlert, Trash2 } from 'lucide-react';
 import { CharacterEnrichPanel } from './CharacterEnrichPanel.jsx';
+import { CharacterEditDialog } from './CharacterEditDialog.jsx';
 import { saveDataTabEdit } from './dataTabSave.mjs';
 
 /**
@@ -86,6 +87,8 @@ export function DataTabContent({ dataType, novelId }) {
   const [saveFeedback, setSaveFeedback] = useState('');
   const [showEnrichPanel, setShowEnrichPanel] = useState(false);
   const [enrichSelectedIds, setEnrichSelectedIds] = useState([]);
+  const [editingCharacter, setEditingCharacter] = useState(null);
+  const [savingCharacter, setSavingCharacter] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [regenerating, setRegenerating] = useState(false);
   // Hierarchical outline state
@@ -229,16 +232,16 @@ export function DataTabContent({ dataType, novelId }) {
 
   if (editing) {
     return (
-      <div className="h-full flex flex-col bg-vscode-bg">
+      <div className="h-full flex flex-col bg-vscode-bg" data-testid="data-tab-editor">
         <div className="flex items-center justify-between px-3 py-1 border-b border-vscode-panel-border bg-vscode-sidebar">
           <span className="text-xs text-gray-400 font-mono">编辑 JSON / Markdown</span>
           <div className="flex gap-1 items-center">
             {saveFeedback && <span className={`text-[10px] ${saveFeedback.includes('失败') ? 'text-rose-400' : 'text-green-400'}`}>{saveFeedback}</span>}
             <button onClick={() => setEditing(false)} className="px-2 py-0.5 text-gray-400 hover:text-gray-200 text-xs"><X size={12}/>取消</button>
-            <button onClick={saveEdit} disabled={saving} className="px-3 py-0.5 bg-blue-700 text-white rounded hover:bg-blue-600 text-xs disabled:opacity-40 flex items-center gap-1"><Save size={12}/>{saving?'保存中':'保存'}</button>
+            <button data-testid="data-tab-save" onClick={saveEdit} disabled={saving} className="px-3 py-0.5 bg-blue-700 text-white rounded hover:bg-blue-600 text-xs disabled:opacity-40 flex items-center gap-1"><Save size={12}/>{saving?'保存中':'保存'}</button>
           </div>
         </div>
-        <textarea className="flex-1 w-full bg-transparent text-gray-300 font-mono text-xs p-4 resize-none outline-none border-none" value={editText} onChange={(e) => setEditText(e.target.value)} />
+        <textarea data-testid="data-tab-editor-textarea" className="flex-1 w-full bg-transparent text-gray-300 font-mono text-xs p-4 resize-none outline-none border-none" value={editText} onChange={(e) => setEditText(e.target.value)} />
       </div>
     );
   }
@@ -271,6 +274,41 @@ export function DataTabContent({ dataType, novelId }) {
       setError(err?.message || String(err));
     }
     setRegenerating(false);
+  };
+
+  const saveCharacter = async (character) => {
+    if (!mana?.novel?.writeCharacter || !novelId) return;
+    setSavingCharacter(true);
+    setError('');
+    try {
+      await mana.novel.writeCharacter(novelId, character);
+      setSaveFeedback(`已保存角色「${character.name || character.id}」`);
+      setEditingCharacter(null);
+      setRefreshKey((key) => key + 1);
+    } catch (err) {
+      setError(err?.message || String(err));
+    } finally {
+      setSavingCharacter(false);
+    }
+  };
+
+  const deleteCharacter = async (character) => {
+    if (!mana?.novel?.deleteCharacter || !novelId || !character?.id) return;
+    const confirmed = window.confirm(`确定删除角色「${character.name || character.id}」吗？\n\n这会删除该角色卡，不会修改小说正文。`);
+    if (!confirmed) return;
+    setSavingCharacter(true);
+    setError('');
+    try {
+      const deleted = await mana.novel.deleteCharacter(novelId, character.id);
+      if (!deleted) throw new Error(`角色不存在或已被删除: ${character.id}`);
+      setSaveFeedback(`已删除角色「${character.name || character.id}」`);
+      setEditingCharacter(null);
+      setRefreshKey((key) => key + 1);
+    } catch (err) {
+      setError(err?.message || String(err));
+    } finally {
+      setSavingCharacter(false);
+    }
   };
 
   const createAsset = async () => {
@@ -365,9 +403,9 @@ export function DataTabContent({ dataType, novelId }) {
           <div className="flex gap-2">
             {Array.isArray(data) && data.length > 0 && (
               <button
-                onClick={() => { setEnrichSelectedIds((data || []).map((c) => c.id)); setShowEnrichPanel(true); }}
+                onClick={() => { setEnrichSelectedIds((data || []).filter((c) => c.isOriginal === false).map((c) => c.id)); setShowEnrichPanel(true); }}
                 className="px-2 py-0.5 bg-amber-900/40 text-amber-400 hover:text-amber-300 border border-amber-700/40 rounded text-xs flex items-center gap-1"
-                title="联网搜索原作角色信息来补全人设"
+                title="联网搜索已标记为二创的角色"
               >
                 <Sparkles size={11}/>联网补全人设
               </button>
@@ -381,7 +419,12 @@ export function DataTabContent({ dataType, novelId }) {
               {regenerating ? <Loader2 size={11} className="animate-spin"/> : <Pen size={11}/>}
               {regenerating ? '生成中...' : '重新生成'}
             </button>
-            <button onClick={startEdit} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><Edit3 size={11}/>编辑</button>
+            <button
+              data-testid="data-tab-edit"
+              onClick={startEdit}
+              className="px-2 py-0.5 bg-vscode-active-item text-gray-500 hover:text-gray-300 rounded text-xs flex items-center gap-1"
+              title="高级用法：直接编辑全部角色的 JSON。普通修改请使用角色卡上的编辑按钮。"
+            ><Edit3 size={11}/>高级 JSON</button>
           </div>
         </div>
         {!data || !Array.isArray(data) || data.length === 0 ? (
@@ -404,13 +447,32 @@ export function DataTabContent({ dataType, novelId }) {
                     {ch.isOriginal !== true && ch.sourceWork && (
                       <span className="text-[10px] bg-blue-900/40 text-blue-400 px-1 rounded" title={`出自《${ch.sourceWork}》`}>同人</span>
                     )}
+                    {ch.isOriginal === undefined && (
+                      <span className="text-[10px] bg-amber-900/40 text-amber-400 px-1 rounded">归属未确认</span>
+                    )}
                     <button
                       onClick={() => { setEnrichSelectedIds([ch.id]); setShowEnrichPanel(true); }}
                       className="text-amber-500/60 hover:text-amber-400"
-                      title={ch.isOriginal === true ? '原创角色无需补全' : '联网补全该角色'}
-                      disabled={ch.isOriginal === true}
+                      title={ch.isOriginal === true ? '当前标记为原创，请先编辑角色归属' : ch.isOriginal === false ? '联网补全该角色' : '请先编辑并确认角色归属'}
+                      disabled={ch.isOriginal !== false}
                     >
                       <Sparkles size={12} />
+                    </button>
+                    <button
+                      onClick={() => setEditingCharacter(ch)}
+                      className="text-blue-400/60 hover:text-blue-300"
+                      title="编辑角色卡"
+                      aria-label={`编辑角色卡 ${s(ch.name || ch.id)}`}
+                    >
+                      <Edit3 size={12} />
+                    </button>
+                    <button
+                      onClick={() => deleteCharacter(ch)}
+                      className="text-rose-500/60 hover:text-rose-400"
+                      title="删除角色"
+                      aria-label={`删除角色 ${s(ch.name || ch.id)}`}
+                    >
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 </div>
@@ -499,6 +561,15 @@ export function DataTabContent({ dataType, novelId }) {
             onComplete={() => { setRefreshKey((k) => k + 1); }}
           />
         )}
+        {editingCharacter && (
+          <CharacterEditDialog
+            character={editingCharacter}
+            saving={savingCharacter}
+            onCancel={() => setEditingCharacter(null)}
+            onSave={saveCharacter}
+            onDelete={deleteCharacter}
+          />
+        )}
       </div>
     );
   }
@@ -524,7 +595,7 @@ export function DataTabContent({ dataType, novelId }) {
           <div className="flex gap-2">
             <button onClick={createAsset} className="px-2 py-0.5 bg-blue-700 text-white hover:bg-blue-600 rounded text-xs flex items-center gap-1"><Plus size={11}/>新建资产</button>
             <button onClick={auditAssetList} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><ShieldAlert size={11}/>审计资产</button>
-            <button onClick={startEdit} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><Edit3 size={11}/>编辑 JSON</button>
+            <button data-testid="data-tab-edit" onClick={startEdit} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><Edit3 size={11}/>编辑 JSON</button>
           </div>
         </div>
         {audit?.issues?.length > 0 && (
@@ -593,7 +664,7 @@ export function DataTabContent({ dataType, novelId }) {
       <div className="h-full overflow-y-auto p-4 text-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="text-lg font-bold text-gray-200 flex items-center gap-2"><Globe size={18}/>世界观</div>
-          <button onClick={startEdit} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><Edit3 size={11}/>编辑</button>
+          <button data-testid="data-tab-edit" onClick={startEdit} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><Edit3 size={11}/>编辑</button>
         </div>
         {data?.lore ? (
           <div className="whitespace-pre-wrap text-gray-300 leading-relaxed">{s(data.lore)}</div>
@@ -621,7 +692,7 @@ export function DataTabContent({ dataType, novelId }) {
       <div className="h-full overflow-y-auto p-4 text-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="text-lg font-bold text-gray-200 flex items-center gap-2"><Calendar size={18}/>时间线 ({data.length || 0})</div>
-          <button onClick={startEdit} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><Edit3 size={11}/>编辑</button>
+          <button data-testid="data-tab-edit" onClick={startEdit} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><Edit3 size={11}/>编辑</button>
         </div>
         {!data || !Array.isArray(data) || data.length === 0 ? (
           <div className="text-gray-500 italic">暂无时间线事件</div>
@@ -662,7 +733,7 @@ export function DataTabContent({ dataType, novelId }) {
               {outlineCurrentFile?.label || ''}
             </span>
           </div>
-          <button onClick={startEdit} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><Edit3 size={11}/>编辑</button>
+          <button data-testid="data-tab-edit" onClick={startEdit} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><Edit3 size={11}/>编辑</button>
         </div>
         <div className="flex flex-1 overflow-hidden">
           {/* Tree sidebar */}
@@ -733,7 +804,7 @@ export function DataTabContent({ dataType, novelId }) {
       <div className="h-full overflow-y-auto p-4 text-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="text-lg font-bold text-gray-200 flex items-center gap-2"><Pen size={18}/>文风</div>
-          <button onClick={startEdit} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><Edit3 size={11}/>编辑</button>
+          <button data-testid="data-tab-edit" onClick={startEdit} className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1"><Edit3 size={11}/>编辑</button>
         </div>
         <div className="text-gray-300 whitespace-pre-wrap leading-relaxed">{text}</div>
       </div>

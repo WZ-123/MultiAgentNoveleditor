@@ -29,8 +29,8 @@ async function runChapterSaveSnapshotRegressionTest() {
 
     const appCode = await fs.readFile(path.join(ROOT, 'src/App.jsx'), 'utf8');
     assert.ok(appCode.includes('const applySavedChapterSnapshot = useCallback('));
-    assert.ok(appCode.includes('const saved = await window.mana.novel.saveChapter(activeNovelId, name, content, { title: chapTitle });'));
-    assert.ok(appCode.includes('applySavedChapterSnapshot(activeChapterId, saved, { content, isContentLoaded: true, isDirty: false });'));
+    assert.match(appCode, /const saved = await window\.mana\.novel\.saveChapter\(\s*activeNovelId,\s*name,\s*content,\s*\{ title: chapTitle \}/u);
+    assert.ok(appCode.includes('applySavedChapterSnapshot(chapterId, saved, { content, isContentLoaded: true, isDirty: false });'));
     assert.ok(appCode.includes('.then((saved) => applySavedChapterSnapshot(chapterId, saved, { content: ch.content, isContentLoaded: true, isDirty: false }))'));
     pass('CSS2_renderer_reconciles_after_save', 'manual save, autosave, and close-tab save all reapply the canonical title/displayName snapshot');
   } catch (err) {

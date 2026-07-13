@@ -28,6 +28,7 @@ async function run() {
       { title: '碧蓝航线:爱宕', snippet: '目标角色', url: 'https://moegirl.test/atago', source: 'moegirl' },
     ];
     searchEngine.SOURCES.biligame.search = async () => [];
+    searchEngine.SOURCES.bangumi.search = async () => [];
     searchEngine.SOURCES.bing.search = async () => {
       await new Promise((resolve) => setTimeout(resolve, 5));
       return [
@@ -50,7 +51,7 @@ async function run() {
     // DuckDuckGo is now last-resort only; primary sources returned results, so DDG should not appear
     assert.deepEqual(
       result.sourceDetails.map((item) => item.source),
-      ['moegirl', 'biligame', 'bing', 'wikipedia']
+      ['biligame', 'bangumi', 'moegirl', 'bing', 'wikipedia']
     );
     pass('CSPR1_character_results_follow_cultural_source_priority', 'moegirl result remains first even if Bing resolves earlier; DuckDuckGo excluded when primary sources succeed');
   } catch (err) {

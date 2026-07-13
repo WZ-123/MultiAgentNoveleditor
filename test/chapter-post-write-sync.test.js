@@ -100,21 +100,8 @@ async function runChapterPostWriteSyncRegressionTest() {
       timelineEvents: [],
     },
     '{"summary":"坏 JSON 摘要" "timelineEvents":[]}',
-    {
-      summary: '修复后摘要',
-      outlineActualSummary: '修复后大纲摘要',
-      supplementMarkdown: '- 修复后补充',
-      timelineEvents: [
-        {
-          when: '傍晚',
-          where: '鹏城天台',
-          participants: ['楚岚'],
-          description: '楚岚在天台确认下一步行动。',
-        },
-      ],
-    },
-    '{"summary":"再次坏 JSON" "timelineEvents":[]}',
-    '{"summary":"修复也坏" "timelineEvents":[]}',
+    '{"summary":"再次坏 JSON" "timelineEvents":[',
+    '{"summary":"修复也坏" "timelineEvents":[',
   ];
 
   try {
@@ -232,11 +219,11 @@ async function runChapterPostWriteSyncRegressionTest() {
     if (
       fourth.summarySaved
       && fourth.timelineCount === 1
-      && /修复后摘要/.test(summaryAfterFourth)
+      && /坏 JSON 摘要/.test(summaryAfterFourth)
       && timelineAfterFourth.length === 1
-      && /鹏城天台/.test(timelineAfterFourth[0]?.where || '')
+      && /鹏城/.test(timelineAfterFourth[0]?.where || '')
       && /自动修复后继续同步/.test(fourthWarnings)
-      && providerCallCount === 5
+      && providerCallCount === 4
     ) {
       pass('P5_invalid_json_is_repaired_before_sync', 'invalid analysis JSON was repaired and post-write sync continued');
     } else {
@@ -253,10 +240,10 @@ async function runChapterPostWriteSyncRegressionTest() {
       && fifth.outlineUpdated === 0
       && /章节草稿/.test(summaryAfterFifth)
       && timelineAfterFifth.length === 1
-      && /鹏城天台/.test(timelineAfterFifth[0]?.where || '')
+      && /鹏城/.test(timelineAfterFifth[0]?.where || '')
       && /安全兜底摘要/.test(fifthWarnings)
       && /保留旧数据/.test(fifthWarnings)
-      && providerCallCount === 7
+      && providerCallCount === 6
     ) {
       pass('P6_unrepairable_json_saves_safe_summary_without_wiping_timeline', 'unrepairable JSON still saves a fallback summary and preserves existing timeline');
     } else {

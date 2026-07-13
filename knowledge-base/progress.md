@@ -711,7 +711,6 @@ Workflow Run：`https://github.com/WZ-123/MultiAgentNovelAssistant/actions/runs/
 | HeroUI 路径 | 修复现有依赖（已完成） |
 | MCP server 形态 | Phase 6 已切真 stdio child_process.fork；in-process client.js 通过 `MANA_USE_STDIO_MCP=0` 保留为回滚路径 |
 
-
 ## 2026-05-04 — AI Chat 深度集成
 
 ### 目标
@@ -768,3 +767,10 @@ Workflow Run：`https://github.com/WZ-123/MultiAgentNovelAssistant/actions/runs/
 2. chatAgent.js system prompt: 当没有小说时明确声明"No novel is currently open"，并告诉 AI 可用的选项（create_novel / list_novels）
 3. chatAgent.js 工具过滤: 没有小说时只暴露 read_skill、create_novel、list_novels + 前端操作工具
 4. 新增规则: "If a tool fails, DO NOT retry the same tool."
+
+## 2026-07-13 — 去 AI 味文风基线与防过度润色
+
+- 审查与改写会读取文风记忆、POV、场景线索、人物声音、代表台词、现有对白和当前保留段落，全部作为只读软基线。
+- 去 AI 味改写限定为命中问题句的最小必要修改，不新增装饰性内容，不主动磨平短句、停顿、留白和不规则节奏。
+- 新增轻量漂移检查：拦截明显扩写、凭空增加对白/比喻/环境/心理，以及未经段落功能审查授权的段落压平；候选不合格时自动重试一次。
+- 验证：定向回归 28/28、Electron 编辑器流程 2/2、Vite production build、真实 Provider 去 AI 味调用均通过。

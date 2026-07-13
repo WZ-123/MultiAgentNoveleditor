@@ -28,6 +28,9 @@ function capabilities() {
     supportsStreamingTokens: true,
     supportsHumanInLoop: false,
     supportsToolConfirmation: true,
+    supportedAdapterIds: ['anthropic-messages'],
+    supportsCustomProvider: true,
+    supportedProfileParameters: ['effortLevel'],
     workflowExecution: 'autonomous',
     requires: ['claude>=1.5'],
   };

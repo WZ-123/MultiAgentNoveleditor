@@ -104,6 +104,20 @@ async function runQualityCrossParagraphRegressionTest() {
     assert.equal(mechanicalSingleSentenceParagraphs.includes('p21'), false);
     assert.equal(mechanicalSingleSentenceParagraphs.includes('p22'), false);
     pass('QCP5_mechanical_single_sentence_runs_are_flagged', 'three adjacent non-dialogue one-sentence paragraphs are flagged as choppy while dialogue lines are ignored');
+
+    const normalizedVariants = detectCrossParagraphQualityAnnotations([
+      { id: 'v1', index: 0, text: '没有愤怒,没有悲伤,只是疲惫。' },
+      { id: 'v2', index: 1, text: '不是用钱,不是用药,不是用暴力。是靠一碗热粥。' },
+      { id: 'v3', index: 2, text: '...' },
+      { id: 'v4', index: 3, text: '⋯⋯' },
+      { id: 'v5', index: 4, text: '随后他们沉默了。' },
+      { id: 'v6', index: 5, text: '那是一种谁也没有料到的默契。' },
+    ]);
+    assert.ok(normalizedVariants.some((annotation) => annotation.paragraphId === 'v1' && annotation.patternId === 'no_no_just'));
+    assert.ok(normalizedVariants.some((annotation) => annotation.paragraphId === 'v2' && annotation.patternId === 'multi_negative_enumeration'));
+    assert.ok(normalizedVariants.some((annotation) => annotation.paragraphId === 'v5' && annotation.note.includes('跨段 AI 套句')));
+    assert.ok(normalizedVariants.some((annotation) => annotation.paragraphId === 'v6' && annotation.note.includes('跨段 AI 套句')));
+    pass('QCP6_fullwidth_halfwidth_and_reaction_variants_are_normalized', 'mixed punctuation and expanded reaction pronouns are detected without changing paragraph IDs');
   } catch (err) {
     fail('QCP_regression', err?.message || String(err));
   }

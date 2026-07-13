@@ -14,6 +14,15 @@ if [[ $# -lt 1 ]]; then
   exit 1
 fi
 
+# The proxy resolver is a tiny Electron helper. Launching it inside the Codex
+# macOS sandbox can abort before JavaScript starts and trigger a native crash
+# dialog. In that environment, preserve any already configured proxy variables
+# and run the requested command directly instead of spawning a GUI framework.
+if [[ -n "${CODEX_SANDBOX:-}" && "${MANA_ALLOW_SANDBOX_ELECTRON_HELPER:-0}" != "1" ]]; then
+  echo "[with-electron-proxy] CODEX_SANDBOX detected; skipping Electron proxy resolver to avoid macOS crash dialogs." >&2
+  exec "$@"
+fi
+
 proxy="$(
   env -u ELECTRON_RUN_AS_NODE \
     "$ELECTRON_BIN" \

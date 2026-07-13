@@ -179,8 +179,8 @@ async function runChatToolRoutingRegressionTest() {
             id: 'toolu-routing-1',
             name: 'spawn_subagent',
             input: {
-              subagentId: 'sa-lore-updater',
-              input: '整理本章设定变更',
+              subagentId: 'writer',
+              input: '起草章节正文',
             },
           }],
         };
@@ -201,13 +201,13 @@ async function runChatToolRoutingRegressionTest() {
     assert.ok(capturedToolNames.includes('spawn_subagent'));
     assert.ok(capturedToolNames.includes('WebSearch'));
     assert.ok(capturedToolNames.includes('WebFetch'));
-    assert.ok(capturedToolNames.includes('set_workflow_phase'));
+    assert.equal(capturedToolNames.includes('set_workflow_phase'), false);
     assert.equal(capturedToolNames.includes('confirm_outline'), false);
     assert.equal(capturedToolNames.includes('write_chapter'), false);
     assert.equal(capturedToolNames.includes('update_world'), false);
     assert.equal(workflowCalls.length, 1);
     assert.equal(workflowCalls[0]?.mode, 'subagent');
-    assert.equal(workflowCalls[0]?.subagentId, 'sa-lore-updater');
+    assert.equal(workflowCalls[0]?.subagentId, 'sa-writer');
     assert.deepEqual(workflowCalls[0]?.novelContext, {
       novelId: 'novel-routing-regression',
       novelDir: '/tmp/novel-routing-regression',
@@ -220,10 +220,15 @@ async function runChatToolRoutingRegressionTest() {
       emittedEvents.some((event) => event.channel === 'chatAgent:event' && event.payload?.kind === 'tool_result' && event.payload?.data?.name === 'WebSearch' && event.payload?.data?.isError === false),
       true
     );
+    const directTurnDone = emittedEvents.find((event) => event.channel === 'chatAgent:event'
+      && event.payload?.sessionId === sessionId
+      && event.payload?.kind === 'turn_done');
+    assert.equal(directTurnDone?.payload?.data?.executionTrace?.schemaVersion, 1);
+    assert.equal(directTurnDone?.payload?.data?.executionTrace?.runtime?.path, 'direct-api');
 
     pass(
       'CTR1_provider_path_exposes_backend_and_web_tools_without_frontend_misroute',
-      'spawn_subagent and WebSearch stayed callable, forwarded active novel context, and did not emit frontend_action'
+      'spawn_subagent aliases writer to sa-writer, WebSearch stayed callable, forwarded active novel context, and did not emit frontend_action'
     );
 
     workflowCalls.length = 0;
@@ -252,6 +257,12 @@ async function runChatToolRoutingRegressionTest() {
     assert.equal(capturedDriverSystemPrompt.includes('spawn_subagent'), false);
     assert.equal(capturedDriverSystemPrompt.includes('set_workflow_phase'), false);
     assert.equal(capturedDriverSystemPrompt.includes('confirm_outline'), false);
+    const driverTurnDone = emittedEvents.find((event) => event.channel === 'chatAgent:event'
+      && event.payload?.sessionId === driverSessionId
+      && event.payload?.kind === 'turn_done');
+    assert.equal(driverTurnDone?.payload?.data?.executionTrace?.schemaVersion, 1);
+    assert.equal(driverTurnDone?.payload?.data?.executionTrace?.runtime?.path, 'driver');
+    assert.equal(driverTurnDone?.payload?.data?.executionTrace?.status, 'completed');
     pass(
       'CTR2_driver_prompt_only_mentions_callable_driver_tools',
       'driver-backed chat prompt no longer advertises frontend/session-only tools that Claude Code cannot call'
@@ -273,7 +284,7 @@ async function runChatToolRoutingRegressionTest() {
     idleSessionId = chatAgent.createSession({ editorContext: {}, messages: [] });
     await chatAgent.runTurn(idleSessionId, '帮我先梳理一下开新项目前要准备什么');
 
-    assert.ok(capturedIdleToolNames.includes('create_novel'));
+    assert.equal(capturedIdleToolNames.includes('create_novel'), false);
     assert.ok(capturedIdleToolNames.includes('list_novels'));
     assert.ok(capturedIdleToolNames.includes('WebSearch'));
     assert.ok(capturedIdleToolNames.includes('WebFetch'));
@@ -283,7 +294,7 @@ async function runChatToolRoutingRegressionTest() {
     assert.equal(capturedIdleSystemPrompt.includes('enrich_character'), false);
     pass(
       'CTR3_idle_prompt_only_mentions_bootstrap_and_web_tools',
-      'when no novel is active, the chat prompt no longer advertises novel-only tools that are filtered out of the actual tool list'
+      'an unclassified planning request only exposes read-only discovery; create_novel requires an explicit project-creation intent'
     );
 
     workflowOrchestrator.getActiveDriverId = () => 'direct-api';

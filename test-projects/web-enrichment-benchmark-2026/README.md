@@ -60,6 +60,8 @@ node scripts/eval-enrichment-benchmark.js \
   --report=test-projects/web-enrichment-benchmark-2026/benchmark-report-famous-western-acg.json
 ```
 
+验收会分别报告 `coverageRate`（端到端覆盖）、`referenceCoverageRate`（人工参考样本覆盖）、`referenceAccuracyRate`（仅已标注样本的正确率）和 `referenceWrongCharacterCount`（必须为 0）。未标注角色不会被默认算作正确；完整口径见 [测试契约](../../knowledge-base/character-enrichment-test-contract.md)。
+
 ## 报告
 
 - `benchmark-report.json` — 主 benchmark（手游特化轨）探测与补全结果

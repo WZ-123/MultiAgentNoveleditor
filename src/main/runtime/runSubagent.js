@@ -16,8 +16,8 @@
 const eventBus = require('./eventBus');
 const anthropic = require('./providers/anthropic');
 const openaiCompat = require('./providers/openaiCompat');
-const providerManager = require('../providerManager');
-const modelAliases = require('../modelAliases');
+const modelConfig = require('../modelConfig');
+const { resolveDirectCandidates } = require('./modelResolver');
 const subagentsStore = require('../store/subagents');
 const { buildSystemTimePromptBlock } = require('./systemTime');
 const {
@@ -28,6 +28,7 @@ const {
   isCacheableToolName,
   toolCacheKey,
 } = require('./contextAssembler');
+const { addUsage, normalizeProviderUsage } = require('./providers/usage');
 
 let builtinSubagentsReadyPromise = null;
 
@@ -45,47 +46,6 @@ function pickProvider(type) {
   if (type === 'anthropic') return anthropic;
   if (type === 'openai-compat') return openaiCompat;
   throw new Error(`Unknown provider type: ${type}`);
-}
-
-async function resolveTier({ subagent, tierOverride }) {
-  const tierName = tierOverride || subagent.tier || 'sonnet';
-  const alias = await modelAliases.getAlias(tierName);
-  const providerId = alias?.providerId || null;
-  const provider = providerId
-    ? await providerManager.getProvider(providerId)
-    : await providerManager.getActiveProvider();
-  if (!provider) throw new Error(`没有可用的 AI 服务商，无法执行 subagent「${subagent.displayName || subagent.id}」`);
-  if (!provider.apiKey) throw new Error(`AI 服务商 API Key 未设置`);
-  const modelId = alias?.modelId || provider.models?.[0]?.id || '';
-  if (!modelId) throw new Error(`没有配置 AI 模型`);
-  // Validate URL format early — catch protocol/typo errors before the
-  // fetch call, avoiding unnecessary retry timeouts.
-  const baseUrl = provider.baseUrl || '';
-  if (baseUrl) {
-    try { new URL(baseUrl); } catch (_) {
-      throw new Error(`AI 服务商 API 地址无效：${baseUrl}`);
-    }
-  }
-  const isWriting = (subagent.tags || []).includes('writing') || subagent.id === 'sa-writer';
-  const maxTokens = Math.max(
-    Number(alias?.maxOutputTokens) || 8192,
-    isWriting ? 8192 : 4096
-  );
-  return {
-    tierName,
-    type: providerManager.inferProviderType(provider),
-    baseUrl: provider.baseUrl || '',
-    model: modelId,
-    apiKey: provider.apiKey,
-    extra: {
-      ...(provider.extra || {}),
-      maxTokens,
-      ...(alias?.temperature != null ? { temperature: alias.temperature } : {}),
-    },
-    thinking: alias?.thinking
-      ? { type: 'enabled', budget_tokens: alias.thinkingBudget || 16000 }
-      : undefined,
-  };
 }
 
 function applySystemTemplate(systemPrompt, { userLang }) {
@@ -119,6 +79,8 @@ async function runSubagent(opts = {}) {
     subagentId,
     input,
     tierOverride,
+    modelProfileId,
+    dagModelProfileId,
     systemPromptOverride,
     abortSignal,
     runId: providedRunId,
@@ -139,10 +101,19 @@ async function runSubagent(opts = {}) {
     throw e;
   }
 
-  await eventBus.emit({ runId, pipelineRunId, nodeId, subagentId, kind: 'queued', data: { tier: tierOverride || subagent.tier } });
-
-  const tier = await resolveTier({ subagent, tierOverride });
-  const provider = pickProvider(tier.type);
+  const tierCandidates = await resolveDirectCandidates({
+    modelProfileId,
+    dagModelProfileId,
+    subagentId,
+    legacyTier: tierOverride || subagent.tier || 'sonnet',
+  });
+  if (!tierCandidates.length) throw new Error(`Subagent「${subagent.displayName || subagent.id}」没有可用模型目标`);
+  let tierCandidateIndex = 0;
+  let tier = tierCandidates[0].tier;
+  await eventBus.emit({
+    runId, pipelineRunId, nodeId, subagentId, kind: 'queued',
+    data: { tier: tierOverride || subagent.tier, profileId: tier.profileId, model: tier.model, provenance: tier.provenance },
+  });
   let systemPrompt = systemPromptOverride
     ? applySystemTemplate(systemPromptOverride, { userLang })
     : applySystemTemplate(subagent.systemPrompt, { userLang });
@@ -194,8 +165,11 @@ async function runSubagent(opts = {}) {
     omitted: [],
     cached: [],
   };
+  const startedAt = Date.now();
+  let totalUsage = normalizeProviderUsage({});
+  const providerCalls = [];
 
-  await eventBus.emit({ runId, pipelineRunId, nodeId, subagentId, kind: 'running', data: { tier: tier.tierName, model: tier.model } });
+  await eventBus.emit({ runId, pipelineRunId, nodeId, subagentId, kind: 'running', data: { tier: tier.tierName, profileId: tier.profileId, model: tier.model, provenance: tier.provenance } });
 
   while (turnIdx < maxTurns) {
     if (abortSignal?.aborted) {
@@ -211,6 +185,10 @@ async function runSubagent(opts = {}) {
         tools,
         runtime: { kind: 'runSubagent', subagentId, turnIdx },
         manifest: manifestState,
+        modelLimits: {
+          contextWindow: Math.min(...tierCandidates.slice(tierCandidateIndex).map((item) => Number(item.tier.contextWindow) || 128000)),
+          maxOutputTokens: Math.max(...tierCandidates.slice(tierCandidateIndex).map((item) => Number(item.tier.extra?.maxTokens) || 4096)),
+        },
       });
       assembledContext.stats.trimmedCount += skillAssembly.stats.skillBlocksTrimmed || 0;
       assembledContext.stats.skill = skillAssembly.stats;
@@ -231,16 +209,55 @@ async function runSubagent(opts = {}) {
         kind: 'context_manifest',
         data: assembledContext.manifest,
       });
-      result = await provider.sendMessage({
-        system: assembledContext.system,
-        messages: assembledContext.messages,
-        tools: assembledContext.tools,
-        tier,
-        abortSignal,
+      while (true) {
+        const candidate = tierCandidates[tierCandidateIndex];
+        tier = candidate.tier;
+        const provider = pickProvider(tier.type);
+        let observable = false;
+        try {
+          result = await provider.sendMessage({
+            system: assembledContext.system,
+            messages: assembledContext.messages,
+            tools: assembledContext.tools,
+            tier,
+            abortSignal,
+            runId,
+            nodeId,
+            subagentId,
+            onEvent: (ev) => {
+              if (['text', 'thinking', 'tool_use', 'tool_result'].includes(ev?.kind)) observable = true;
+              return eventBus.emit({ runId, pipelineRunId, ...ev });
+            },
+          });
+          break;
+        } catch (err) {
+          const next = tierCandidates[tierCandidateIndex + 1];
+          if (turnIdx > 0 || observable || !next || !modelConfig.shouldFallback(err)) throw err;
+          const from = tier.provenance;
+          tierCandidateIndex += 1;
+          tier = next.tier;
+          await eventBus.emit({
+            runId, pipelineRunId, nodeId, subagentId, kind: 'model_fallback',
+            data: { from, to: tier.provenance, reason: err.message || String(err), fallbackIndex: tierCandidateIndex },
+          });
+        }
+      }
+      const callUsage = normalizeProviderUsage(result.usage);
+      totalUsage = addUsage(totalUsage, callUsage);
+      providerCalls.push({
+        turnIdx,
+        model: result.model || tier.model,
+        requestId: result.requestId || '',
+        provenance: tier.provenance,
+        usage: callUsage,
+      });
+      await eventBus.emit({
         runId,
+        pipelineRunId,
         nodeId,
         subagentId,
-        onEvent: (ev) => eventBus.emit({ runId, pipelineRunId, ...ev }),
+        kind: 'usage',
+        data: { turnIdx, model: result.model || tier.model, requestId: result.requestId || '', usage: callUsage, provenance: tier.provenance },
       });
     } catch (err) {
       await eventBus.emit({
@@ -395,7 +412,7 @@ async function runSubagent(opts = {}) {
   });
   await eventBus.emit({
     runId, pipelineRunId, nodeId, subagentId, kind: 'done',
-    data: { turns: turnIdx + 1 },
+    data: { turns: turnIdx + 1, durationMs: Date.now() - startedAt, usage: totalUsage, model: tier.model, provenance: tier.provenance },
   });
 
   const truncated = lastStopReason === 'max_tokens';
@@ -403,7 +420,24 @@ async function runSubagent(opts = {}) {
   if (truncated && output) {
     output += '\n\n[系统提示] 生成因输出 token 上限仍未写完。请再次调用本子代理续写，或拆成更小的写作任务。';
   }
-  return { runId, output, transcript, stopReason: lastStopReason, truncated };
+  return {
+    runId,
+    output,
+    transcript,
+    stopReason: lastStopReason,
+    truncated,
+    telemetry: {
+      model: tier.model,
+      providerType: tier.type,
+      tier: tier.tierName,
+      profileId: tier.profileId,
+      provenance: tier.provenance,
+      durationMs: Date.now() - startedAt,
+      turns: turnIdx + 1,
+      usage: totalUsage,
+      providerCalls,
+    },
+  };
 }
 
 const activeRuns = new Map();

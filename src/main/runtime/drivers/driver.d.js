@@ -43,6 +43,12 @@
  *   - 'hybrid': both modes available depending on options.
  * @property {string[]} requires                  Free-form requirement strings
  *   (e.g. ['claude>=1.5']) — informational only.
+ * @property {string[]=} supportedAdapterIds      Provider adapters accepted by
+ *   this driver when a profile target references a custom Provider.
+ * @property {boolean=} supportsCustomProvider    Whether profile targets may
+ *   inject Provider endpoint/auth into this driver.
+ * @property {string[]=} supportedProfileParameters Parameters consumed from
+ *   a driver target (e.g. effortLevel, thinking, maxOutputTokens).
  */
 
 /**

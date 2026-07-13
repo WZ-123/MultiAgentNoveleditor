@@ -52,6 +52,9 @@ function capabilities() {
     supportsStreamingTokens: true,
     supportsHumanInLoop: true,
     supportsToolConfirmation: true,
+    supportedAdapterIds: ['anthropic-messages', 'openai-chat-completions'],
+    supportsCustomProvider: true,
+    supportedProfileParameters: ['contextLimit', 'maxOutputTokens', 'temperature', 'thinking', 'thinkingBudget', 'reasoningEffort'],
     workflowExecution: 'spec',
     requires: [],
   };
@@ -104,6 +107,8 @@ async function run(handle, opts = {}) {
       systemPromptOverride: spec.systemPromptOverride,
       presetOverride: spec.presetOverride,
       tierOverride: spec.tierOverride,
+      modelProfileId: spec.modelProfileId,
+      dagModelProfileId: spec.dagModelProfileId,
       runId: handle.runId || spec.runId,
       pipelineRunId: spec.pipelineRunId,
       nodeId: spec.nodeId,

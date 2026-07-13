@@ -29,28 +29,11 @@ const {
   pageHasMultipleSkins,
   mergeSkinArrays,
 } = require('./wikiContentParser');
-const providerManager = require('../providerManager');
-const modelAliases = require('../modelAliases');
+const { createProfileProvider } = require('../runtime/profileProvider');
 const appConfig = require('../store/appConfig');
 
-function pickProvider(type) {
-  if (type === 'anthropic') return require('../runtime/providers/anthropic');
-  if (type === 'openai-compat') return require('../runtime/providers/openaiCompat');
-  throw new Error(`Unsupported provider: ${type}`);
-}
-
 async function _resolveProvider() {
-  const alias = await modelAliases.getAlias('haiku');
-  const providerId = alias?.providerId || null;
-  const provider = providerId
-    ? await providerManager.getProvider(providerId)
-    : await providerManager.getActiveProvider();
-  if (!provider) throw new Error('没有可用的 AI 服务商');
-  const type = providerManager.inferProviderType(provider);
-  return {
-    provider: pickProvider(type),
-    tier: { type, model: alias?.modelId || provider.models?.[0]?.id, apiKey: provider.apiKey, baseUrl: provider.baseUrl || '', extra: { maxTokens: 4096 } },
-  };
+  return createProfileProvider({ systemTask: 'character-enrichment', legacyTier: 'haiku' }, { extra: { maxTokens: 4096 } });
 }
 
 function _parseJson(raw) {

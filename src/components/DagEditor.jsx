@@ -68,14 +68,14 @@ function autoLayout(dag) {
   return layout;
 }
 
-function dagToFlow(dag, subagentMap) {
+function dagToFlow(dag, subagentMap, profileMap = {}) {
   const layout = dag.layout && Object.keys(dag.layout).length ? dag.layout : autoLayout(dag);
   const nodes = (dag.nodes || []).map((n) => {
     const subagentName = n.subagentId ? (subagentMap[n.subagentId]?.displayName || n.subagentId) : null;
     const lines = [
       n.label || n.id,
       n.kind === 'subagent' && subagentName ? `· ${subagentName}` : null,
-      n.tierOverride ? `tier=${n.tierOverride}` : null,
+      n.modelProfileId ? `档案=${profileMap[n.modelProfileId]?.name || n.modelProfileId}` : (n.tierOverride ? `旧Tier=${n.tierOverride}` : null),
       n.kind === 'gate' ? `expr=${n.expr || '?'}` : null,
     ].filter(Boolean);
     return {
@@ -124,7 +124,7 @@ function flowToDag(prevDag, flowNodes, flowEdges) {
   return { ...prevDag, nodes: nextNodes, edges: nextEdges, layout };
 }
 
-function NodeInspector({ node, allSubagents, onChange, readOnly }) {
+function NodeInspector({ node, allSubagents, profiles, onChange, readOnly }) {
   const { t } = useI18n();
   if (!node) return null;
   const raw = node.data.raw || {};
@@ -161,17 +161,15 @@ function NodeInspector({ node, allSubagents, onChange, readOnly }) {
             </select>
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-gray-500">{t('dag.tierOverride')}</span>
+            <span className="text-gray-500">模型档案覆盖</span>
             <select
               className="bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1.5"
-              value={raw.tierOverride || ''}
-              onChange={(e) => update({ tierOverride: e.target.value || undefined })}
+              value={raw.modelProfileId || ''}
+              onChange={(e) => update({ modelProfileId: e.target.value || undefined })}
               disabled={readOnly}
             >
-              <option value="">(use subagent default)</option>
-              <option value="opus">opus</option>
-              <option value="sonnet">sonnet</option>
-              <option value="haiku">haiku</option>
+              <option value="">使用 Subagent 默认档案</option>
+              {(profiles || []).map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}
             </select>
           </label>
         </>
@@ -199,8 +197,9 @@ function NodeInspector({ node, allSubagents, onChange, readOnly }) {
   );
 }
 
-function GraphPane({ dag, subagentMap, readOnly, onCommit }) {
-  const initial = useMemo(() => dagToFlow(dag, subagentMap), [dag, subagentMap]);
+function GraphPane({ dag, subagentMap, profiles, readOnly, onCommit }) {
+  const profileMap = useMemo(() => Object.fromEntries((profiles || []).map((profile) => [profile.id, profile])), [profiles]);
+  const initial = useMemo(() => dagToFlow(dag, subagentMap, profileMap), [dag, subagentMap, profileMap]);
   const [nodes, setNodes] = useState(initial.nodes);
   const [edges, setEdges] = useState(initial.edges);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
@@ -208,13 +207,13 @@ function GraphPane({ dag, subagentMap, readOnly, onCommit }) {
 
   useEffect(() => {
     if (lastDagRef.current?.id !== dag.id) {
-      const fresh = dagToFlow(dag, subagentMap);
+      const fresh = dagToFlow(dag, subagentMap, profileMap);
       setNodes(fresh.nodes);
       setEdges(fresh.edges);
       setSelectedNodeId(null);
       lastDagRef.current = dag;
     }
-  }, [dag, subagentMap]);
+  }, [dag, subagentMap, profileMap]);
 
   const onNodesChange = useCallback((changes) => {
     setNodes((n) => applyNodeChanges(changes, n));
@@ -239,12 +238,12 @@ function GraphPane({ dag, subagentMap, readOnly, onCommit }) {
       const lines = [
         nextRaw.label || nextRaw.id,
         nextRaw.kind === 'subagent' && subName ? `· ${subName}` : null,
-        nextRaw.tierOverride ? `tier=${nextRaw.tierOverride}` : null,
+        nextRaw.modelProfileId ? `档案=${profileMap[nextRaw.modelProfileId]?.name || nextRaw.modelProfileId}` : (nextRaw.tierOverride ? `旧Tier=${nextRaw.tierOverride}` : null),
         nextRaw.kind === 'gate' ? `expr=${nextRaw.expr || '?'}` : null,
       ].filter(Boolean);
       return { ...n, data: { ...n.data, raw: nextRaw, label: lines.join('\n') } };
     }));
-  }, [subagentMap]);
+  }, [subagentMap, profileMap]);
 
   const onAddNode = useCallback((kind) => {
     if (readOnly) return;
@@ -327,6 +326,7 @@ function GraphPane({ dag, subagentMap, readOnly, onCommit }) {
           <NodeInspector
             node={selectedNode}
             allSubagents={Object.values(subagentMap)}
+            profiles={profiles}
             onChange={handleInspectorChange}
             readOnly={readOnly}
           />
@@ -346,6 +346,7 @@ export function DagEditor() {
   const [selectedId, setSelectedId] = useState(null);
   const [savedFlash, setSavedFlash] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [profiles, setProfiles] = useState([]);
 
   const refresh = useCallback(async () => {
     if (!mana?.config) {
@@ -353,9 +354,10 @@ export function DagEditor() {
       return;
     }
     try {
-      const [dagList, subList] = await Promise.all([
+      const [dagList, subList, snapshot] = await Promise.all([
         mana.config.listDags(),
         mana.config.listSubagents(),
+        mana.modelConfig?.snapshot?.().catch(() => null),
       ]);
       const sortedDags = (dagList || []).slice().sort((a, b) => {
         if (a.builtIn !== b.builtIn) return a.builtIn ? -1 : 1;
@@ -364,6 +366,7 @@ export function DagEditor() {
       });
       setDags(sortedDags);
       setSubagents(subList || []);
+      setProfiles(snapshot?.profiles || []);
       if (!selectedId && sortedDags.length) setSelectedId(sortedDags[0].id);
       else if (selectedId && !sortedDags.find((d) => d.id === selectedId)) {
         setSelectedId(sortedDags[0]?.id || null);
@@ -465,6 +468,7 @@ export function DagEditor() {
                 key={selectedDag.id}
                 dag={selectedDag}
                 subagentMap={subagentMap}
+                profiles={profiles}
                 readOnly={!!selectedDag.builtIn}
                 onCommit={onCommit}
               />

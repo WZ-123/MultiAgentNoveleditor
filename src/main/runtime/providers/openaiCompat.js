@@ -1,6 +1,7 @@
 'use strict';
 
 const { fetchWithRetry } = require('./retry');
+const { normalizeProviderUsage } = require('./usage');
 
 /**
  * OpenAI-compat (Chat Completions) adapter.
@@ -19,9 +20,16 @@ const { fetchWithRetry } = require('./retry');
  *   - choices[0].message.tool_calls[*]    -> { type:'tool_use', id, name, input }
  */
 
-function endpoint(baseUrl) {
+function endpoint(baseUrl, endpointOverride) {
+  if (endpointOverride) return endpointOverride;
   const b = (baseUrl || '').replace(/\/$/, '');
+  if (/\/chat\/completions$/i.test(b)) return b;
   return `${b}/chat/completions`;
+}
+
+function applyReasoning(body, tier) {
+  if (!tier?.thinking) return;
+  body.reasoning_effort = tier.extra?.reasoningEffort || tier.extra?.effortLevel || 'high';
 }
 
 function normalizeStopReason(stopReason, content) {
@@ -147,18 +155,21 @@ async function sendMessageStreaming(opts) {
   const { system, messages, tools, tier, abortSignal, onEvent, runId, nodeId, subagentId } = opts;
   const apiKey = tier.apiKey || '';
   if (!apiKey) throw new Error('OpenAI-compat API key missing for tier');
-  const url = endpoint(tier.baseUrl);
+  const url = endpoint(tier.baseUrl, tier.endpoint);
   const body = {
     model: tier.model,
     stream: true,
     messages: convertMessages({ system, messages }),
   };
+  if (tier.extra?.includeUsage !== false) body.stream_options = { include_usage: true };
+  if (tier.extra?.maxTokens) body.max_tokens = tier.extra.maxTokens;
+  applyReasoning(body, tier);
   const cvtTools = convertTools(tools);
   if (cvtTools) body.tools = cvtTools;
   if (tier.extra?.responseFormat) body.response_format = tier.extra.responseFormat;
   if (tier.extra && typeof tier.extra === 'object') {
     for (const [k, v] of Object.entries(tier.extra)) {
-      if (k === 'streaming' || k === 'responseFormat' || k === 'thinking') continue;
+      if (k === 'streaming' || k === 'responseFormat' || k === 'thinking' || k === 'maxTokens' || k === 'includeUsage') continue;
       body[k] = v;
     }
   }
@@ -178,8 +189,14 @@ async function sendMessageStreaming(opts) {
   let assistantText = '';
   const toolCallsByIndex = new Map();
   let stopReason = 'end_turn';
+  let usage = {};
+  let model = tier.model || '';
+  let responseId = '';
 
   for await (const chunk of streamSse(res, abortSignal)) {
+    if (chunk.usage) usage = chunk.usage;
+    if (chunk.model) model = chunk.model;
+    if (chunk.id) responseId = chunk.id;
     const choice = chunk.choices?.[0];
     if (!choice) continue;
     const delta = choice.delta || {};
@@ -223,24 +240,32 @@ async function sendMessageStreaming(opts) {
     });
   }
 
-  return { stopReason: normalizeStopReason(stopReason, content), content };
+  return {
+    stopReason: normalizeStopReason(stopReason, content),
+    content,
+    model,
+    requestId: res.headers?.get?.('x-request-id') || responseId,
+    usage: normalizeProviderUsage(usage, { input: body.messages, output: content }),
+  };
 }
 
 async function sendMessageNonStreaming(opts) {
   const { system, messages, tools, tier, abortSignal } = opts;
   const apiKey = tier.apiKey || '';
   if (!apiKey) throw new Error('OpenAI-compat API key missing for tier');
-  const url = endpoint(tier.baseUrl);
+  const url = endpoint(tier.baseUrl, tier.endpoint);
   const body = {
     model: tier.model,
     messages: convertMessages({ system, messages }),
   };
+  if (tier.extra?.maxTokens) body.max_tokens = tier.extra.maxTokens;
+  applyReasoning(body, tier);
   const cvtTools = convertTools(tools);
   if (cvtTools) body.tools = cvtTools;
   if (tier.extra?.responseFormat) body.response_format = tier.extra.responseFormat;
   if (tier.extra && typeof tier.extra === 'object') {
     for (const [k, v] of Object.entries(tier.extra)) {
-      if (k === 'streaming' || k === 'responseFormat' || k === 'thinking') continue;
+      if (k === 'streaming' || k === 'responseFormat' || k === 'thinking' || k === 'maxTokens' || k === 'includeUsage') continue;
       body[k] = v;
     }
   }
@@ -272,7 +297,13 @@ async function sendMessageNonStreaming(opts) {
   let stopReason = 'end_turn';
   if (choice?.finish_reason === 'tool_calls') stopReason = 'tool_use';
   else if (choice?.finish_reason === 'length') stopReason = 'max_tokens';
-  return { stopReason: normalizeStopReason(stopReason, content), content };
+  return {
+    stopReason: normalizeStopReason(stopReason, content),
+    content,
+    model: data.model || tier.model || '',
+    requestId: res.headers?.get?.('x-request-id') || data.id || '',
+    usage: normalizeProviderUsage(data.usage, { input: body.messages, output: content }),
+  };
 }
 
 async function sendMessage(opts) {

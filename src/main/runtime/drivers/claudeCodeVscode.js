@@ -44,7 +44,7 @@ const { generateId, paths: appPaths } = require('../../store/paths');
 const subagentsStore = require('../../store/subagents');
 const appConfig = require('../../store/appConfig');
 const providerManager = require('../../providerManager');
-const modelAliases = require('../../modelAliases');
+const modelConfig = require('../../modelConfig');
 const mcpClient = require('../../mcp/mcpClientStdio');
 
 const { writeAgentsDir } = require('./shared/agentMdWriter');
@@ -174,6 +174,9 @@ function capabilities() {
     supportsStreamingTokens: true,
     supportsHumanInLoop: false,
     supportsToolConfirmation: true,
+    supportedAdapterIds: ['anthropic-messages'],
+    supportsCustomProvider: true,
+    supportedProfileParameters: ['effortLevel'],
     workflowExecution: 'autonomous',
     requires: ['claude>=1.5'],
   };
@@ -248,6 +251,8 @@ async function prepare(spec) {
   // 3. Write .claude/agents/*.md
   const agentsResult = await writeAgentsDir(agentsDir, subagents, {
     userLang: spec.userLang || 'zh-CN',
+    driverId: id,
+    modelProfileId: spec.modelProfileId,
   });
 
   // 4. Write .claude/settings.json — pre-approve the non-interactive built-in
@@ -283,23 +288,30 @@ async function prepare(spec) {
   if (mode === 'subagent') {
     const sa = subagents.find((s) => s.id === spec.subagentId || s.name === spec.subagentId);
     if (sa?.tier) {
-      const alias = await modelAliases.getAlias(sa.tier);
-      if (alias) {
+      const targets = await modelConfig.resolveTargets({
+        driverId: id,
+        subagentId: sa.id,
+        modelProfileId: spec.modelProfileId,
+        legacyTier: spec.tierOverride || sa.tier,
+      });
+      const resolved = targets[0];
+      if (resolved) {
         const globalEnv = providerManager.getActiveEnv() || {};
         aliasEnv = {};
         // If alias points to a different provider, swap the endpoint.
-        if (alias.providerId) {
-          const provider = await providerManager.getProvider(alias.providerId);
-          if (provider) {
-            if (provider.baseUrl) aliasEnv.ANTHROPIC_BASE_URL = provider.baseUrl;
-            if (provider.apiKey) {
-              aliasEnv.ANTHROPIC_AUTH_TOKEN = provider.apiKey;
-              aliasEnv.ANTHROPIC_API_KEY = provider.apiKey;
-            }
+        const provider = resolved.provider;
+        if (provider) {
+          if (provider.adapterId !== 'anthropic-messages') {
+            throw new Error(`模型档案「${resolved.profileName}」为 Claude Code 配置了不兼容的 Provider 协议`);
+          }
+          if (provider.baseUrl) aliasEnv.ANTHROPIC_BASE_URL = provider.baseUrl;
+          if (provider.apiKey) {
+            aliasEnv.ANTHROPIC_AUTH_TOKEN = provider.apiKey;
+            aliasEnv.ANTHROPIC_API_KEY = provider.apiKey;
           }
         }
-        if (alias.modelId) aliasEnv.ANTHROPIC_MODEL = alias.modelId;
-        if (alias.effortLevel) aliasEnv.CLAUDE_CODE_EFFORT_LEVEL = alias.effortLevel;
+        if (resolved.target.modelId) aliasEnv.ANTHROPIC_MODEL = resolved.target.modelId;
+        if (resolved.target.params?.effortLevel) aliasEnv.CLAUDE_CODE_EFFORT_LEVEL = resolved.target.params.effortLevel;
         // Only inject if we actually changed something.
         if (Object.keys(aliasEnv).length === 0) aliasEnv = null;
       }

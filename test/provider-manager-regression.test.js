@@ -57,7 +57,8 @@ async function runProviderManagerRegressionTest() {
     const active = await providerManager.getActiveProvider();
     const current = await providerManager.current();
     const byName = await providerManager.getProvider('DeepSeek V4 Pro');
-    const diskAfterLoad = JSON.parse(await fs.readFile(providersFile, 'utf8'));
+    const modelConfigFile = path.join(userRoot, 'model-config.json');
+    const diskAfterLoad = JSON.parse(await fs.readFile(modelConfigFile, 'utf8'));
 
     if (active?.type === 'anthropic' && current?.id === 'deepseek-v4-pro' && byName?.id === 'deepseek-v4-pro') {
       pass('PM1_provider_type_is_inferred_and_getProvider_normalizes_name', 'missing provider.type was inferred and provider lookup accepts display names');
@@ -65,9 +66,9 @@ async function runProviderManagerRegressionTest() {
       fail('PM1_provider_type_is_inferred_and_getProvider_normalizes_name', JSON.stringify({ active, current, byName }));
     }
 
-    const persistedType = (diskAfterLoad.providers || []).find((p) => p.id === 'deepseek-v4-pro')?.type;
-    if (persistedType === 'anthropic') {
-      pass('PM2_provider_upgrade_is_persisted_to_disk', 'upgraded provider type was written back to providers.json');
+    const persistedProvider = (diskAfterLoad.providers || []).find((p) => p.id === 'deepseek-v4-pro');
+    if (persistedProvider?.adapterId === 'anthropic-messages' && !JSON.stringify(diskAfterLoad).includes('sk-test')) {
+      pass('PM2_provider_upgrade_is_persisted_to_disk', 'provider migrated to model-config.json and API key was removed from public config');
     } else {
       fail('PM2_provider_upgrade_is_persisted_to_disk', JSON.stringify(diskAfterLoad));
     }

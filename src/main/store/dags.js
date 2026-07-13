@@ -5,6 +5,24 @@ const { paths } = require('./paths');
 const { readJson, writeJson, listJsonFiles, deleteFile } = require('./jsonStore');
 const { BUILTIN_DAGS, SCHEMA_VERSION } = require('../seeds/builtinDags');
 
+const LEGACY_PROFILE_MAP = {
+  opus: 'profile-deep-reasoning',
+  sonnet: 'profile-longform-writing',
+  haiku: 'profile-fast-utility',
+};
+
+function normalizeDag(dag) {
+  if (!dag || typeof dag !== 'object') return dag;
+  return {
+    ...dag,
+    nodes: (dag.nodes || []).map((node) => ({
+      ...node,
+      modelProfileId: node.modelProfileId || LEGACY_PROFILE_MAP[node.tierOverride] || undefined,
+    })),
+    schemaVersion: SCHEMA_VERSION,
+  };
+}
+
 function builtinFile(id) {
   return path.join(paths().pipelinesBuiltin, `${id}.json`);
 }
@@ -18,7 +36,7 @@ async function ensureBuiltinSeeds() {
     const file = builtinFile(dag.id);
     const existing = await readJson(file, null);
     if (!existing || existing.schemaVersion !== dag.schemaVersion) {
-      await writeJson(file, { ...dag, builtIn: true });
+      await writeJson(file, normalizeDag({ ...dag, builtIn: true }));
     }
   }
 }
@@ -29,7 +47,7 @@ async function listDags() {
     const files = await listJsonFiles(dir);
     for (const f of files) {
       const obj = await readJson(f, null);
-      if (obj && obj.id) out.push(obj);
+      if (obj && obj.id) out.push(normalizeDag(obj));
     }
   }
   // user override > builtin if same id (clones use new ids so this rarely matters)
@@ -50,7 +68,7 @@ async function saveDag(dag) {
   if (dag.builtIn) {
     throw new Error('Cannot overwrite builtin DAG; clone first.');
   }
-  const next = { ...dag, builtIn: false, schemaVersion: SCHEMA_VERSION };
+  const next = normalizeDag({ ...dag, builtIn: false });
   await writeJson(userFile(dag.id), next);
   return next;
 }

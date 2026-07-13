@@ -357,9 +357,9 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
       const marks = (chars || []).map((ch) => ({
         id: ch.id || ch.name || String(Math.random()),
         name: ch.name || ch.id || '?',
-        isOriginal: true,
+        isOriginal: ch.isOriginal === false ? false : true,
         selected: true,
-        sourceWork: '',
+        sourceWork: ch.isOriginal === false ? (ch.sourceWork || '') : '',
         data: ch,
       }));
       setCharacterMarks(marks);
@@ -386,6 +386,14 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
     setEnriching(true);
     setError('');
     try {
+      // Persist the user's origin/work assignments before enrichment. The
+      // backend reads character JSON from staging and must see isOriginal=false.
+      const markedCharacters = characterMarks.map((m) => ({
+        ...m.data,
+        isOriginal: m.isOriginal,
+        sourceWork: m.isOriginal ? '' : (m.sourceWork || ''),
+      }));
+      await mana.import.saveStagingCharacters(importResult.importId, markedCharacters);
       const result = await mana.import.enrichStagingCharacters(importResult.importId, workAssignments);
       setEnrichProgress({ runId: result.runId, status: 'done', results: result.results });
       // Reload characters after enrichment

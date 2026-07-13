@@ -22,7 +22,7 @@
 
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const modelAliases = require('../../../modelAliases');
+const modelConfig = require('../../../modelConfig');
 
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
 
@@ -41,10 +41,18 @@ const MCP_SERVER_NAME = 'novel-tools';
 // the driver before spawning Claude Code), so they don't need user interaction.
 const DEFAULT_BUILTIN_TOOLS = ['Read', 'Grep', 'WebFetch', 'WebSearch'];
 
-async function mapTierToModel(tier) {
-  if (!tier) return DEFAULT_MODEL;
-  const alias = await modelAliases.getAlias(tier);
-  return alias?.modelId || DEFAULT_MODEL;
+async function mapTierToModel(tier, opts = {}) {
+  try {
+    const targets = await modelConfig.resolveTargets({
+      driverId: opts.driverId || 'claude-code-vscode',
+      subagentId: opts.subagentId,
+      modelProfileId: opts.modelProfileId,
+      legacyTier: tier,
+    });
+    return targets[0]?.target?.modelId || DEFAULT_MODEL;
+  } catch {
+    return DEFAULT_MODEL;
+  }
 }
 
 /**
@@ -96,7 +104,11 @@ async function renderAgentMd(subagent, opts = {}) {
   }
   const description = subagent.displayName || subagent.name;
   const tools = buildToolsList(subagent.allowedTools, opts);
-  const model = await mapTierToModel(subagent.tier);
+  const model = await mapTierToModel(subagent.tier, {
+    driverId: opts.driverId,
+    subagentId: subagent.id,
+    modelProfileId: opts.modelProfileId,
+  });
   const body = applyTemplate(subagent.systemPrompt, { userLang: opts.userLang });
 
   // YAML frontmatter — keep field order stable for diff readability.

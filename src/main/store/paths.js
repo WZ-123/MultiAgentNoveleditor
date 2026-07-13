@@ -33,6 +33,7 @@ function paths() {
   return {
     root,
     appConfig: path.join(root, 'app-config.json'),
+    modelConfig: path.join(root, 'model-config.json'),
     feedbackOutbox: path.join(root, 'feedback-outbox'),
     feedbackIndex: path.join(root, 'feedback-outbox', 'index.json'),
     secrets: path.join(root, 'secrets.json'),
@@ -85,6 +86,8 @@ function novelPaths(novelDir) {
     charactersIndex: path.join(novelDir, '.mana', 'characters-index.json'),
     revisions: path.join(novelDir, '.mana', 'revisions'),
     chapterRevisions: path.join(novelDir, '.mana', 'revisions', 'chapters'),
+    harnessState: path.join(novelDir, '.mana', 'harness-state'),
+    harnessChapterStates: path.join(novelDir, '.mana', 'harness-state', 'chapters'),
   };
 }
 

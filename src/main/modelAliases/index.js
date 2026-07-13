@@ -1,183 +1,89 @@
 'use strict';
 
-/**
- * Model alias manager — maps user-editable aliases (opus / sonnet / haiku)
- * to {providerId, modelId, params} so the same model can be assigned to
- * multiple aliases with different effort / thinking / token settings.
- */
+/** Legacy Alias facade backed by semantic model profiles. */
 
-const path = require('node:path');
-const providerManager = require('../providerManager');
-const { readJson, writeJson } = require('../store/jsonStore');
-const { paths: appPaths } = require('../store/paths');
+const modelConfig = require('../modelConfig');
 
-const SCHEMA_VERSION = 2;
+const TIERS = ['opus', 'sonnet', 'haiku'];
 
-let cache = null;
-
-function _file() {
-  return path.join(appPaths().root, 'modelAliases.json');
-}
-
-function _defaultAliases() {
-  return [
-    {
-      id: 'opus',
-      displayName: 'Opus',
-      providerId: 'anthropic',
-      modelId: 'claude-opus-4-7',
-      contextWindow: 200000,
-      maxOutputTokens: 8192,
-      thinking: true,
-      thinkingBudget: 32000,
-      temperature: 0.7,
-      effortLevel: 'max',
-    },
-    {
-      id: 'sonnet',
-      displayName: 'Sonnet',
-      providerId: 'anthropic',
-      modelId: 'claude-sonnet-4-6',
-      contextWindow: 200000,
-      maxOutputTokens: 8192,
-      thinking: false,
-      thinkingBudget: 0,
-      temperature: 0.7,
-      effortLevel: 'high',
-    },
-    {
-      id: 'haiku',
-      displayName: 'Haiku',
-      providerId: 'anthropic',
-      modelId: 'claude-haiku-4-5-20251001',
-      contextWindow: 200000,
-      maxOutputTokens: 4096,
-      thinking: false,
-      thinkingBudget: 0,
-      temperature: 0.9,
-      effortLevel: 'low',
-    },
-  ];
-}
-
-function _defaultState() {
+async function aliasForTier(tier) {
+  const state = await modelConfig.load();
+  const profileId = state.routing.legacyTierProfileMap?.[tier];
+  const profile = state.profiles.find((item) => item.id === profileId);
+  const target = profile?.targetsByDriver?.['direct-api']?.primary;
+  if (!profile || !target) return null;
+  const params = target.params || {};
   return {
-    schemaVersion: SCHEMA_VERSION,
-    aliases: _defaultAliases(),
+    id: tier,
+    displayName: profile.name,
+    profileId: profile.id,
+    providerId: target.providerId || null,
+    modelId: target.modelId || '',
+    contextWindow: params.contextLimit,
+    maxOutputTokens: params.maxOutputTokens,
+    thinking: !!params.thinking,
+    thinkingBudget: params.thinkingBudget || 0,
+    temperature: params.temperature,
+    effortLevel: params.effortLevel,
   };
 }
-
-function _defaultAliasById(id) {
-  return _defaultAliases().find((alias) => alias.id === id) || null;
-}
-
-async function _normalizeAlias(alias) {
-  if (!alias || typeof alias !== 'object' || !alias.id) return null;
-  const defaults = _defaultAliasById(alias.id);
-  const normalized = {
-    ...(defaults || {}),
-    ...alias,
-  };
-
-  if (typeof normalized.providerId === 'string' && normalized.providerId.trim()) {
-    const provider = await providerManager.getProvider(normalized.providerId);
-    normalized.providerId = provider?.id || normalized.providerId.trim();
-  } else if (defaults?.providerId) {
-    normalized.providerId = defaults.providerId;
-  }
-
-  if (!normalized.displayName && defaults?.displayName) normalized.displayName = defaults.displayName;
-  if (!normalized.modelId && defaults?.modelId) normalized.modelId = defaults.modelId;
-  if (normalized.contextWindow == null && defaults?.contextWindow != null) normalized.contextWindow = defaults.contextWindow;
-  if (normalized.maxOutputTokens == null && defaults?.maxOutputTokens != null) normalized.maxOutputTokens = defaults.maxOutputTokens;
-  if (normalized.thinking == null && defaults?.thinking != null) normalized.thinking = defaults.thinking;
-  if (normalized.thinkingBudget == null && defaults?.thinkingBudget != null) normalized.thinkingBudget = defaults.thinkingBudget;
-  if (normalized.temperature == null && defaults?.temperature != null) normalized.temperature = defaults.temperature;
-  if (!normalized.effortLevel && defaults?.effortLevel) normalized.effortLevel = defaults.effortLevel;
-
-  return normalized;
-}
-
-async function _load() {
-  if (cache) return cache;
-  const file = _file();
-  const savedState = await readJson(file, null);
-  const state = savedState || _defaultState();
-  let changed = !savedState || savedState.schemaVersion !== SCHEMA_VERSION;
-  if (!Array.isArray(state.aliases)) {
-    state.aliases = [];
-    changed = true;
-  }
-  const normalizedAliases = [];
-  for (const alias of state.aliases) {
-    const normalized = await _normalizeAlias(alias);
-    if (!normalized) {
-      changed = true;
-      continue;
-    }
-    if (JSON.stringify(normalized) !== JSON.stringify(alias)) changed = true;
-    normalizedAliases.push(normalized);
-  }
-  state.aliases = normalizedAliases;
-  state.schemaVersion = SCHEMA_VERSION;
-  if (changed) {
-    await writeJson(file, state);
-  }
-  cache = state;
-  return state;
-}
-
-async function _save(state) {
-  await writeJson(_file(), state);
-  cache = state;
-}
-
-// ---------- Public API ----------
 
 async function list() {
-  const state = await _load();
-  return state.aliases;
+  return (await Promise.all(TIERS.map(aliasForTier))).filter(Boolean);
 }
 
 async function getAlias(id) {
-  const state = await _load();
-  return state.aliases.find((a) => a.id === id) || null;
+  return aliasForTier(id);
 }
 
 async function saveAlias(alias) {
-  if (!alias || !alias.id) throw new Error('saveAlias: alias.id required');
-  const state = await _load();
-  const normalizedAlias = await _normalizeAlias(alias);
-  if (!normalizedAlias) throw new Error('saveAlias: alias.id required');
-  const idx = state.aliases.findIndex((a) => a.id === alias.id);
-  if (idx >= 0) {
-    state.aliases[idx] = { ...state.aliases[idx], ...normalizedAlias };
-  } else {
-    state.aliases.push(normalizedAlias);
-  }
-  await _save(state);
+  if (!alias?.id || !TIERS.includes(alias.id)) throw new Error('saveAlias: legacy tier id required');
+  const state = await modelConfig.load();
+  const profileId = state.routing.legacyTierProfileMap?.[alias.id];
+  const profile = state.profiles.find((item) => item.id === profileId);
+  if (!profile) throw new Error(`Legacy profile for '${alias.id}' not found`);
+  const next = JSON.parse(JSON.stringify(profile));
+  const target = next.targetsByDriver?.['direct-api']?.primary;
+  if (!target) throw new Error(`Legacy profile '${profile.name}' has no Direct API target`);
+  target.providerId = alias.providerId || target.providerId;
+  target.modelId = alias.modelId || target.modelId;
+  target.params = {
+    ...(target.params || {}),
+    ...(alias.contextWindow != null ? { contextLimit: Number(alias.contextWindow) } : {}),
+    ...(alias.maxOutputTokens != null ? { maxOutputTokens: Number(alias.maxOutputTokens) } : {}),
+    ...(alias.temperature != null ? { temperature: Number(alias.temperature) } : {}),
+    thinking: !!alias.thinking,
+    thinkingBudget: Number(alias.thinkingBudget) || 0,
+    effortLevel: alias.effortLevel || target.params?.effortLevel,
+  };
+  await modelConfig.saveProfile(next);
   return { ok: true };
 }
 
 async function deleteAlias(id) {
-  const state = await _load();
-  const idx = state.aliases.findIndex((a) => a.id === id);
-  if (idx === -1) throw new Error(`Alias '${id}' not found`);
-  state.aliases.splice(idx, 1);
-  await _save(state);
-  return { ok: true };
+  throw new Error(`Alias '${id}' 是兼容映射，不能删除；请在模型中心修改或删除对应模型档案`);
 }
 
 async function resetToDefaults() {
-  const state = { schemaVersion: SCHEMA_VERSION, aliases: _defaultAliases() };
-  await _save(state);
+  const state = await modelConfig.load();
+  const defaults = {
+    opus: ['claude-opus-4-7', { maxOutputTokens: 8192, temperature: 0.7, thinking: true, thinkingBudget: 32000, effortLevel: 'max' }],
+    sonnet: ['claude-sonnet-4-6', { maxOutputTokens: 8192, temperature: 0.7, thinking: false, thinkingBudget: 0, effortLevel: 'high' }],
+    haiku: ['claude-haiku-4-5-20251001', { maxOutputTokens: 4096, temperature: 0.9, thinking: false, thinkingBudget: 0, effortLevel: 'low' }],
+  };
+  await modelConfig.transaction((draft) => {
+    for (const tier of TIERS) {
+      const profileId = draft.routing.legacyTierProfileMap[tier];
+      const profile = draft.profiles.find((item) => item.id === profileId);
+      const target = profile?.targetsByDriver?.['direct-api']?.primary;
+      if (!target) continue;
+      target.providerId = 'anthropic';
+      target.modelId = defaults[tier][0];
+      target.params = { ...target.params, ...defaults[tier][1], contextLimit: 200000 };
+    }
+    return draft;
+  }, state.revision);
   return { ok: true };
 }
 
-module.exports = {
-  list,
-  getAlias,
-  saveAlias,
-  deleteAlias,
-  resetToDefaults,
-};
+module.exports = { list, getAlias, saveAlias, deleteAlias, resetToDefaults, __defaultGetAlias: getAlias };

@@ -4,6 +4,12 @@
   "description": "A multi-platform Electron application",
   "main": "main.js",
   "scripts": {
+    "test:harness": "node scripts/run-harness-benchmark.js --mode=offline --profile=full",
+    "benchmark:harness:offline": "node scripts/run-harness-benchmark.js --mode=offline",
+    "benchmark:harness:live": "node scripts/run-harness-benchmark.js --mode=live",
+    "benchmark:harness:eval": "node scripts/eval-harness-benchmark.js",
+    "benchmark:harness:compare": "node scripts/compare-harness-benchmark.js",
+    "benchmark:harness:replay": "node scripts/replay-harness-benchmark.js",
     "dev": "npm run start",
     "dev:auth": "node scripts/dev-auth.js",
     "dev:auth:fresh": "node scripts/dev-auth.js --fresh",
@@ -16,9 +22,12 @@
     "build": "node scripts/build-release.js",
     "build:beta": "node scripts/build-release.js",
     "build:win": "node scripts/build-release.js --win",
+    "build:portable:win": "node scripts/build-release.js --win portable",
     "verify:win-package": "node scripts/verify-win-package.js",
     "build:mac": "node scripts/build-release.js --mac",
-    "build:linux": "node scripts/build-release.js --linux"
+    "build:portable:mac": "node scripts/build-release.js --mac zip",
+    "build:linux": "node scripts/build-release.js --linux",
+    "build:portable:linux": "node scripts/build-release.js --linux AppImage"
   },
   "keywords": [
     "Electron",
@@ -102,11 +111,14 @@
     "epub": "^2.1.1",
     "fast-glob": "^3.3.3",
     "framer-motion": "^12.38.0",
+    "https-proxy-agent": "^5.0.1",
     "lucide-react": "^0.563.0",
     "postcss": "^8.5.6",
     "proper-lockfile": "^4.1.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18"
   }

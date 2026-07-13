@@ -30,8 +30,7 @@ function log(...args) {
 }
 
 function errorExit(msg) {
-  console.error('[build-release] ERROR:', msg);
-  process.exit(1);
+  throw new Error(`[build-release] ${msg}`);
 }
 
 function injectValue(content, key, value) {

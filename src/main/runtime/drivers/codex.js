@@ -28,6 +28,9 @@ function capabilities() {
     supportsStreamingTokens: true,
     supportsHumanInLoop: false,
     supportsToolConfirmation: true,
+    supportedAdapterIds: ['openai-chat-completions'],
+    supportsCustomProvider: false,
+    supportedProfileParameters: ['reasoningEffort'],
     workflowExecution: 'autonomous',
     requires: ['codex>=0.x'],
   };

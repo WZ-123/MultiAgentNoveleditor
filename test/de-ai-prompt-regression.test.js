@@ -107,11 +107,12 @@ async function runDeAiPromptRegressionTest() {
   try {
     const { BUILTIN_SUBAGENTS } = require(path.join(ROOT, 'src/main/seeds/builtinSubagents'));
     const proseQuality = BUILTIN_SUBAGENTS.find((subagent) => subagent.id === 'sa-prose-quality');
+    const deAiRewriter = BUILTIN_SUBAGENTS.find((subagent) => subagent.id === 'sa-de-ai-ifier');
     const writer = BUILTIN_SUBAGENTS.find((subagent) => subagent.id === 'sa-writer');
 
     assert.ok(proseQuality?.systemPrompt.includes('不是……，也不是……，而是……'));
     assert.ok(proseQuality?.systemPrompt.includes('不是……，不是……，是……'));
-    assert.ok(proseQuality?.systemPrompt.includes('并非……抑或……而是……'));
+    assert.ok(proseQuality?.systemPrompt.includes('避免用另一句固定模板替换原模板'));
     assert.ok(proseQuality?.systemPrompt.includes('然后她笑了。'));
     assert.ok(proseQuality?.systemPrompt.includes('那是一个……'));
     assert.ok(proseQuality?.systemPrompt.includes('如果一个 AI 套句被拆到了相邻两段之间'));
@@ -143,6 +144,13 @@ async function runDeAiPromptRegressionTest() {
     assert.ok(proseQuality?.systemPrompt.includes('感官清单式枚举'));
     assert.ok(proseQuality?.systemPrompt.includes('机械的一句一段'));
     assert.ok(proseQuality?.systemPrompt.includes('段落功能审查'));
+    assert.ok(proseQuality?.systemPrompt.includes('styleBaseline'));
+    assert.ok(proseQuality?.systemPrompt.includes('不符合通用“优美文风”就报错'));
+    assert.ok(deAiRewriter?.systemPrompt.includes('采用最小必要修改'));
+    assert.ok(deAiRewriter?.systemPrompt.includes('不得新增原文没有的动作、对白、景物、感官、心理、比喻'));
+    assert.ok(deAiRewriter?.systemPrompt.includes('自然不等于圆润'));
+    assert.ok(deAiRewriter?.systemPrompt.includes('不要把短句批量接成长句'));
+    assert.ok(deAiRewriter?.systemPrompt.includes('不追求“更优美”'));
     assert.ok(writer?.systemPrompt.includes('比喻堆叠'));
     assert.ok(writer?.systemPrompt.includes('出场说明书'));
     assert.ok(writer?.systemPrompt.includes('全知作者跳出'));

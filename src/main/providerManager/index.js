@@ -1,522 +1,275 @@
 'use strict';
 
 /**
- * In-app provider manager for Direct API mode.
- * Reads/writes provider config directly under <userData>/providers.json.
- * No longer manages external Claude Code environment variables.
+ * Compatibility facade for the unified modelConfig domain.
+ * New code should use modelConfig + modelResolver directly. Legacy IPC and
+ * callers remain functional while the v2 Provider/Alias APIs are phased out.
  */
 
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const crypto = require('node:crypto');
-const { readJson, writeJson } = require('../store/jsonStore');
-const { paths: appPaths } = require('../store/paths');
+const modelConfig = require('../modelConfig');
 
-const SCHEMA_VERSION = 2;
 const CURRENT_ENV_FILE = path.join(os.homedir(), '.ccs', 'current-env.json');
-const CCS_LEGACY_PROVIDERS = path.join(os.homedir(), '.claude', 'providers.json');
-
 let cachedEnv = null;
 let cachedEnvMtimeMs = 0;
-let providersCache = null;
-
-function _providersFile() {
-  return path.join(appPaths().root, 'providers.json');
-}
-
-function getProviderStateTokenSync() {
-  const file = _providersFile();
-  try {
-    const raw = fs.readFileSync(file, 'utf8');
-    const hash = crypto.createHash('sha1').update(raw).digest('hex');
-    return `providers:${hash}`;
-  } catch (err) {
-    if (err?.code === 'ENOENT') return `providers:missing:v${SCHEMA_VERSION}`;
-    return `providers:error:${err?.code || 'unknown'}`;
-  }
-}
-
-function _normalizeId(name) {
-  return String(name).trim().toLowerCase().replace(/\s+/g, '-');
-}
 
 function inferProviderType(provider) {
+  if (provider?.adapterId === 'anthropic-messages') return 'anthropic';
+  if (provider?.adapterId === 'openai-chat-completions') return 'openai-compat';
   if (provider?.type === 'anthropic' || provider?.type === 'openai-compat') return provider.type;
-  const baseUrl = String(provider?.baseUrl || '').trim().toLowerCase().replace(/\/$/, '');
-  const id = String(provider?.id || '').trim().toLowerCase();
-  const name = String(provider?.name || '').trim().toLowerCase();
-  if (id === 'anthropic' || name === 'anthropic') return 'anthropic';
-  if (!baseUrl) return 'openai-compat';
-  if (baseUrl.includes('/anthropic')) return 'anthropic';
-  if (baseUrl.includes('api.anthropic.com')) return 'anthropic';
-  return 'openai-compat';
+  const baseUrl = String(provider?.baseUrl || '').toLowerCase();
+  return baseUrl.includes('anthropic') ? 'anthropic' : 'openai-compat';
 }
 
-function _numberFromAny(...values) {
-  for (const value of values) {
-    if (value == null || value === '') continue;
-    const n = Number(value);
-    if (Number.isFinite(n) && n > 0) return n;
-  }
-  return undefined;
+function adapterFromType(type, provider) {
+  if (type === 'anthropic') return 'anthropic-messages';
+  if (type === 'openai-compat') return 'openai-chat-completions';
+  return inferProviderType(provider) === 'anthropic' ? 'anthropic-messages' : 'openai-chat-completions';
 }
 
-function _boolFromAny(...values) {
-  for (const value of values) {
-    if (value === true || value === 'true') return true;
-    if (value === false || value === 'false') return false;
-  }
-  return undefined;
+function detect() {
+  return { available: true, version: 'model-config-v3' };
 }
 
-function _inferModelCapabilities(modelId, providerType) {
-  const id = String(modelId || '').toLowerCase();
-  const caps = {
-    contextWindow: providerType === 'anthropic' ? 200000 : 128000,
-    maxOutputTokens: providerType === 'anthropic' ? 8192 : 4096,
-    supportsThinking: false,
-    thinkingBudget: 0,
-  };
-
-  if (id.includes('claude')) {
-    caps.contextWindow = 200000;
-    caps.maxOutputTokens = 8192;
-    caps.supportsThinking = /opus|sonnet/.test(id);
-    caps.thinkingBudget = caps.supportsThinking ? 32000 : 0;
-  }
-
-  if (id.includes('gpt-5') || id.includes('gpt-4.1') || id.includes('o3') || id.includes('o4')) {
-    caps.contextWindow = 128000;
-    caps.maxOutputTokens = id.includes('mini') || id.includes('nano') ? 8192 : 16384;
-    caps.supportsThinking = id.includes('gpt-5') || /^o[134]/.test(id);
-    caps.thinkingBudget = caps.supportsThinking ? 16000 : 0;
-  }
-
-  if (id.includes('deepseek-v4') || id.includes('dsv4')) {
-    caps.contextWindow = 1024000;
-    caps.maxOutputTokens = id.includes('flash') ? 4096 : 8192;
-    caps.supportsThinking = !id.includes('flash');
-    caps.thinkingBudget = caps.supportsThinking ? 32000 : 0;
-  } else if (id.includes('deepseek-reasoner')) {
-    caps.contextWindow = 64000;
-    caps.maxOutputTokens = 8192;
-    caps.supportsThinking = true;
-    caps.thinkingBudget = 32000;
-  } else if (id.includes('deepseek')) {
-    caps.contextWindow = 128000;
-    caps.maxOutputTokens = 8192;
-  }
-
-  if (id.includes('kimi') || id.includes('moonshot')) {
-    caps.contextWindow = id.includes('k2') ? 262144 : 128000;
-    caps.maxOutputTokens = 8192;
-    caps.supportsThinking = /thinking|reason|k2/.test(id);
-    caps.thinkingBudget = caps.supportsThinking ? 16000 : 0;
-  }
-
-  return caps;
-}
-
-function _normalizeDiscoveredModel(raw, providerType) {
-  if (!raw || typeof raw !== 'object') return null;
-  const id = String(raw.id || raw.name || raw.model || '').trim();
-  if (!id) return null;
-  const inferred = _inferModelCapabilities(id, providerType);
-  const contextWindow = _numberFromAny(
-    raw.contextWindow,
-    raw.context_window,
-    raw.context_length,
-    raw.max_context_length,
-    raw.max_context_tokens,
-    raw.input_token_limit,
-    raw.max_input_tokens,
-    raw.maxInputTokens,
-    raw.capabilities?.contextWindow,
-    raw.capabilities?.context_window,
-    inferred.contextWindow
-  );
-  const maxOutputTokens = _numberFromAny(
-    raw.maxOutputTokens,
-    raw.max_output_tokens,
-    raw.output_token_limit,
-    raw.max_completion_tokens,
-    raw.capabilities?.maxOutputTokens,
-    raw.capabilities?.max_output_tokens,
-    inferred.maxOutputTokens
-  );
-  const supportsThinking = _boolFromAny(
-    raw.supportsThinking,
-    raw.supports_thinking,
-    raw.reasoning,
-    raw.capabilities?.supportsThinking,
-    raw.capabilities?.reasoning,
-    inferred.supportsThinking
-  );
-  const thinkingBudget = _numberFromAny(
-    raw.thinkingBudget,
-    raw.thinking_budget,
-    raw.reasoning_budget,
-    raw.capabilities?.thinkingBudget,
-    raw.capabilities?.thinking_budget,
-    inferred.thinkingBudget
-  ) || 0;
-
-  return {
-    id,
-    name: String(raw.display_name || raw.displayName || raw.name || id),
-    contextWindow,
-    maxOutputTokens,
-    supportsThinking: !!supportsThinking,
-    thinkingBudget: supportsThinking ? thinkingBudget : 0,
-    discoveredAt: new Date().toISOString(),
-  };
-}
-
-function _modelListUrlCandidates(baseUrl, providerType) {
-  const trimmed = String(baseUrl || '').trim().replace(/\/+$/, '');
-  if (!trimmed) return [];
-  const withoutChat = trimmed.replace(/\/chat\/completions$/i, '');
-  const withoutMessages = withoutChat.replace(/\/messages$/i, '');
-  const candidates = [];
-  const add = (url) => {
-    if (url && !candidates.includes(url)) candidates.push(url);
-  };
-
-  if (/\/v1$/i.test(withoutMessages)) {
-    add(`${withoutMessages}/models`);
-  } else if (/\/models$/i.test(withoutMessages)) {
-    add(withoutMessages);
-  } else {
-    add(`${withoutMessages}/v1/models`);
-    add(`${withoutMessages}/models`);
-  }
-
-  if (providerType === 'anthropic' && /\/anthropic$/i.test(withoutMessages)) {
-    add(`${withoutMessages}/v1/models`);
-  }
-
-  return candidates;
-}
-
-function _discoveryHeaders(provider) {
-  if (provider.type === 'anthropic') {
-    return {
-      'x-api-key': provider.apiKey || '',
-      'anthropic-version': '2023-06-01',
-      'Content-Type': 'application/json',
-    };
-  }
-  return {
-    Authorization: `Bearer ${provider.apiKey || ''}`,
-    'Content-Type': 'application/json',
-  };
-}
-
-function _extractModelList(data) {
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.data)) return data.data;
-  if (Array.isArray(data?.models)) return data.models;
-  if (Array.isArray(data?.items)) return data.items;
-  return [];
-}
-
-function _builtinAnthropic() {
-  return {
-    id: 'anthropic',
-    name: 'Anthropic',
-    type: 'anthropic',
-    baseUrl: '',
-    apiKey: '',
-    isBuiltin: true,
-    models: [
-      { id: 'claude-opus-4-7',   name: 'Claude Opus 4.7',   contextWindow: 200000 },
-      { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', contextWindow: 200000 },
-      { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', contextWindow: 200000 },
-    ],
-  };
-}
-
-function _defaultState() {
-  return {
-    schemaVersion: SCHEMA_VERSION,
-    providers: [_builtinAnthropic()],
-    activeProviderId: 'anthropic',
-  };
-}
-
-function _upgradeProvider(p) {
-  if (!p) return p;
-  if (!p.type) {
-    p.type = inferProviderType(p);
-  }
-  if (!Array.isArray(p.models)) {
-    // Soft migration: seed with a single default model derived from provider name
-    const modelId = p.id === 'anthropic' ? 'claude-sonnet-4-6' : _normalizeId(p.name);
-    const modelName = p.id === 'anthropic' ? 'Claude Sonnet 4.6' : p.name;
-    p.models = [
-      { id: modelId, name: modelName, contextWindow: 200000 },
-    ];
-  }
-  return p;
-}
-
-async function _loadState() {
-  if (providersCache) return providersCache;
-  const file = _providersFile();
-  let state = await readJson(file, null);
-  let changed = false;
-
-  if (!state || typeof state !== 'object') {
-    state = await _tryMigrateFromCcs();
-    if (state) changed = true;
-  }
-
-  if (!state || typeof state !== 'object') {
-    state = _defaultState();
-    changed = true;
-  }
-
-  state.schemaVersion = SCHEMA_VERSION;
-  if (!Array.isArray(state.providers)) state.providers = [];
-  if (!state.providers.find((p) => p.id === 'anthropic')) {
-    state.providers.unshift(_builtinAnthropic());
-    changed = true;
-  }
-  state.providers.forEach((p) => {
-    if (p.id === 'anthropic') p.isBuiltin = true;
-    const beforeType = p.type;
-    _upgradeProvider(p);
-    if (beforeType !== p.type) changed = true;
-  });
-  if (!state.activeProviderId) {
-    state.activeProviderId = 'anthropic';
-    changed = true;
-  }
-
-  if (changed) {
-    await writeJson(file, state);
-  }
-
-  providersCache = state;
-  return state;
-}
-
-async function _saveState(state) {
-  const file = _providersFile();
-  await writeJson(file, state);
-  providersCache = state;
-}
-
-async function _tryMigrateFromCcs() {
+async function list() {
+  const snapshot = await modelConfig.publicSnapshot();
+  let activeProviderId = null;
   try {
-    const legacy = await readJson(CCS_LEGACY_PROVIDERS, null);
-    if (!legacy || typeof legacy !== 'object') return null;
-    const providers = [_builtinAnthropic()];
-    for (const [name, cfg] of Object.entries(legacy)) {
-      const id = _normalizeId(name);
-      if (id === 'anthropic') continue;
-      providers.push({
-        id,
-        name,
-        type: inferProviderType({ id, name, baseUrl: cfg.base_url || '' }),
-        baseUrl: cfg.base_url || '',
-        apiKey: cfg.api_key || '',
-        isBuiltin: false,
-        models: [
-          { id, name, contextWindow: 200000 },
-        ],
-      });
-    }
-    let activeId = 'anthropic';
-    const env = _readCurrentEnvSync();
-    if (env?.ANTHROPIC_BASE_URL) {
-      const match = providers.find((p) => p.baseUrl === env.ANTHROPIC_BASE_URL);
-      if (match) activeId = match.id;
-    }
-    return { schemaVersion: SCHEMA_VERSION, providers, activeProviderId: activeId };
+    activeProviderId = (await modelConfig.resolvePreview({ driverId: 'direct-api' }))[0]?.providerId || null;
+  } catch {}
+  return snapshot.providers.map((provider) => ({
+    ...provider,
+    type: modelConfig.legacyTypeFromAdapter(provider.adapterId),
+    active: provider.id === activeProviderId,
+    hasApiKey: !!provider.auth?.hasApiKey,
+  }));
+}
+
+async function current() {
+  try {
+    const preview = (await modelConfig.resolvePreview({ driverId: 'direct-api' }))[0];
+    if (!preview?.providerId) return null;
+    return (await list()).find((provider) => provider.id === preview.providerId) || null;
   } catch {
     return null;
   }
+}
+
+async function getProvider(id) {
+  const provider = await modelConfig.getProviderInternal(id, { includeSecret: true });
+  if (!provider) return null;
+  return { ...provider, type: inferProviderType(provider) };
+}
+
+async function getProviderPublic(id) {
+  const snapshot = await modelConfig.publicSnapshot();
+  const provider = snapshot.providers.find((item) => item.id === String(id || '').trim().toLowerCase().replace(/\s+/g, '-')) || null;
+  return provider ? { ...provider, type: modelConfig.legacyTypeFromAdapter(provider.adapterId) } : null;
+}
+
+async function getActiveProvider() {
+  const cur = await current();
+  return cur ? getProvider(cur.id) : null;
+}
+
+async function use(name) {
+  const provider = await modelConfig.getProviderInternal(name);
+  if (!provider) throw new Error(`Provider '${name}' not found`);
+  if (!provider.models?.length) throw new Error(`Provider '${provider.name}' 没有可用模型`);
+  const state = await modelConfig.load();
+  const profileId = state.routing.defaultProfileId;
+  const profile = state.profiles.find((item) => item.id === profileId);
+  if (!profile) throw new Error('默认模型档案不存在');
+  const next = JSON.parse(JSON.stringify(profile));
+  const group = next.targetsByDriver['direct-api'];
+  group.primary.providerId = provider.id;
+  group.primary.modelId = provider.models[0].id;
+  await modelConfig.saveProfile(next);
+  return { ok: true, profileId };
+}
+
+async function add({ id, name, type, adapterId, baseUrl, apiKey, models } = {}) {
+  await modelConfig.saveProvider({
+    id,
+    name,
+    adapterId: adapterId || adapterFromType(type, { baseUrl }),
+    baseUrl,
+    apiKey,
+    models: models || [],
+  });
+  return { ok: true };
+}
+
+async function update(payload = {}) {
+  const snapshot = await modelConfig.saveProvider({
+    ...payload,
+    adapterId: payload.adapterId || adapterFromType(payload.type, payload),
+  }, payload.expectedRevision);
+  return { ok: true, revision: snapshot.revision };
+}
+
+async function remove(name, replacementProviderId) {
+  await modelConfig.deleteProvider(name, replacementProviderId);
+  return { ok: true };
+}
+
+async function addModel(providerId, model) {
+  const provider = await modelConfig.getProviderInternal(providerId);
+  if (!provider) throw new Error(`Provider '${providerId}' not found`);
+  const models = [...(provider.models || [])];
+  const idx = models.findIndex((item) => item.id === model?.id);
+  const normalized = modelConfig.modelRecord(model, model?.source || 'manual');
+  if (!normalized.id) throw new Error('模型 ID 不能为空');
+  if (idx >= 0) models[idx] = { ...models[idx], ...normalized };
+  else models.push(normalized);
+  await modelConfig.saveProvider({ ...provider, models });
+  return { ok: true };
+}
+
+async function removeModel(providerId, modelId, replacementModelId) {
+  const provider = await modelConfig.getProviderInternal(providerId);
+  if (!provider) throw new Error(`Provider '${providerId}' not found`);
+  const state = await modelConfig.load();
+  const refs = [];
+  for (const profile of state.profiles) {
+    for (const [driverId, group] of Object.entries(profile.targetsByDriver || {})) {
+      for (const target of [group?.primary, ...(group?.fallbacks || [])].filter(Boolean)) {
+        if (target.providerId === provider.id && target.modelId === modelId) refs.push({ profileId: profile.id, profileName: profile.name, driverId, targetId: target.id });
+      }
+    }
+  }
+  if (refs.length && !replacementModelId) {
+    const err = new Error(`模型正被 ${refs.length} 个档案目标引用，请先选择替代模型`);
+    err.code = 'MODEL_IN_USE';
+    err.references = refs;
+    throw err;
+  }
+  if (replacementModelId && !provider.models.some((item) => item.id === replacementModelId)) throw new Error('替代模型不存在');
+  await modelConfig.transaction((draft) => {
+    const targetProvider = draft.providers.find((item) => item.id === provider.id);
+    targetProvider.models = targetProvider.models.filter((item) => item.id !== modelId);
+    for (const profile of draft.profiles) {
+      for (const group of Object.values(profile.targetsByDriver || {})) {
+        for (const target of [group?.primary, ...(group?.fallbacks || [])].filter(Boolean)) {
+          if (target.providerId === provider.id && target.modelId === modelId) target.modelId = replacementModelId;
+        }
+      }
+    }
+    return draft;
+  });
+  return { ok: true };
+}
+
+function candidateModelUrls(provider) {
+  if (provider.endpoints?.models) return [provider.endpoints.models];
+  const base = String(provider.baseUrl || '').replace(/\/+$/, '');
+  if (!base) return [];
+  if (/\/models$/i.test(base)) return [base];
+  if (/\/v1$/i.test(base)) return [`${base}/models`];
+  return [`${base}/v1/models`, `${base}/models`];
+}
+
+function discoveryHeaders(provider) {
+  if (provider.adapterId === 'anthropic-messages') {
+    return { 'x-api-key': provider.apiKey || '', 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' };
+  }
+  if (provider.auth?.mode === 'x-api-key') return { [provider.auth.headerName || 'api-key']: provider.apiKey || '', 'Content-Type': 'application/json' };
+  return { Authorization: `Bearer ${provider.apiKey || ''}`, 'Content-Type': 'application/json' };
+}
+
+function extractModels(data) {
+  if (Array.isArray(data)) return data;
+  for (const key of ['data', 'models', 'items']) if (Array.isArray(data?.[key])) return data[key];
+  return [];
+}
+
+function inferCaps(id, adapterId) {
+  const value = String(id || '').toLowerCase();
+  const caps = { contextWindow: adapterId === 'anthropic-messages' ? 200000 : 128000, maxOutputTokens: adapterId === 'anthropic-messages' ? 8192 : 4096, supportsThinking: false, thinkingBudget: 0 };
+  if (/claude|deepseek.*reason|deepseek-v4|gpt-5|\bo[134]/.test(value)) {
+    caps.supportsThinking = !/flash|haiku|nano/.test(value);
+    caps.thinkingBudget = caps.supportsThinking ? 32000 : 0;
+  }
+  if (/deepseek-v4|dsv4/.test(value)) caps.contextWindow = 1024000;
+  if (/kimi|moonshot/.test(value)) caps.contextWindow = value.includes('k2') ? 262144 : 128000;
+  return caps;
+}
+
+function normalizeDiscovered(raw, provider) {
+  const id = String(raw?.id || raw?.name || raw?.model || '').trim();
+  if (!id) return null;
+  const inferred = inferCaps(id, provider.adapterId);
+  return modelConfig.modelRecord({
+    id,
+    name: raw.display_name || raw.displayName || raw.name || id,
+    contextWindow: raw.contextWindow || raw.context_window || raw.context_length || raw.max_context_length || raw.input_token_limit || inferred.contextWindow,
+    maxOutputTokens: raw.maxOutputTokens || raw.max_output_tokens || raw.output_token_limit || raw.max_completion_tokens || inferred.maxOutputTokens,
+    supportsThinking: raw.supportsThinking ?? raw.supports_thinking ?? raw.reasoning ?? inferred.supportsThinking,
+    thinkingBudget: raw.thinkingBudget || raw.thinking_budget || raw.reasoning_budget || inferred.thinkingBudget,
+    supportsTools: raw.capabilities?.tools !== false,
+    supportsStreaming: raw.capabilities?.streaming !== false,
+    discoveredAt: new Date().toISOString(),
+    source: 'discovered',
+  }, 'discovered');
+}
+
+async function discoverModels(providerId, { save = false, timeoutMs = 12000 } = {}) {
+  const provider = await getProvider(providerId);
+  if (!provider) throw new Error(`Provider '${providerId}' not found`);
+  if (!provider.apiKey) return { ok: false, error: 'API Key 未配置' };
+  const urls = candidateModelUrls(provider);
+  const errors = [];
+  for (const url of urls) {
+    try {
+      const signal = typeof AbortSignal?.timeout === 'function' ? AbortSignal.timeout(timeoutMs) : undefined;
+      const res = await fetch(url, { method: 'GET', headers: discoveryHeaders(provider), signal });
+      if (!res.ok) {
+        errors.push(`${url} → HTTP ${res.status}`);
+        continue;
+      }
+      const data = await res.json();
+      const models = extractModels(data).map((raw) => normalizeDiscovered(raw, provider)).filter(Boolean);
+      if (!models.length) {
+        errors.push(`${url} → 响应中没有模型列表`);
+        continue;
+      }
+      if (save) await modelConfig.saveProvider({ ...provider, models });
+      const compatibleModels = models.map((model) => ({
+        ...model,
+        contextWindow: model.capabilities.contextWindow,
+        maxOutputTokens: model.capabilities.maxOutputTokens,
+        supportsThinking: model.capabilities.supportsThinking,
+        thinkingBudget: model.capabilities.thinkingBudget,
+      }));
+      return { ok: true, models: compatibleModels, endpoint: url, saved: !!save };
+    } catch (err) {
+      errors.push(`${url} → ${err.name === 'TimeoutError' ? '请求超时' : (err.message || String(err))}`);
+    }
+  }
+  return { ok: false, error: `模型发现失败：${errors.join('；')}` };
+}
+
+async function testConnection(providerId) {
+  const result = await discoverModels(providerId, { save: false, timeoutMs: 10000 });
+  return result.ok
+    ? { ok: true, message: `连接成功，发现 ${result.models.length} 个模型`, endpoint: result.endpoint }
+    : result;
 }
 
 function _readCurrentEnvSync() {
   try {
     const stat = fs.statSync(CURRENT_ENV_FILE);
     if (cachedEnv && stat.mtimeMs === cachedEnvMtimeMs) return cachedEnv;
-    const raw = fs.readFileSync(CURRENT_ENV_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === 'object') {
-      cachedEnv = parsed;
-      cachedEnvMtimeMs = stat.mtimeMs;
-      return cachedEnv;
-    }
-  } catch { /* missing or unreadable */ }
-  cachedEnv = null;
-  cachedEnvMtimeMs = 0;
-  return null;
-}
-
-// ---------- Public API ----------
-
-function detect() {
-  return { available: true, version: 'builtin' };
-}
-
-async function list() {
-  const state = await _loadState();
-  return state.providers.map((p) => ({
-    id: p.id,
-    name: p.name,
-    type: p.type,
-    baseUrl: p.baseUrl,
-    active: p.id === state.activeProviderId,
-    models: p.models || [],
-    isBuiltin: !!p.isBuiltin,
-  }));
-}
-
-async function current() {
-  const state = await _loadState();
-  const p = state.providers.find((p) => p.id === state.activeProviderId);
-  if (!p) return null;
-  return { id: p.id, name: p.name, type: p.type, baseUrl: p.baseUrl, models: p.models || [] };
-}
-
-async function getProvider(id) {
-  const state = await _loadState();
-  const normalizedId = _normalizeId(id || '');
-  return state.providers.find((p) => p.id === normalizedId) || null;
-}
-
-async function getActiveProvider() {
-  const state = await _loadState();
-  return state.providers.find((p) => p.id === state.activeProviderId) || null;
-}
-
-async function use(name) {
-  if (!name || typeof name !== 'string') throw new Error('use(name): name required');
-  const state = await _loadState();
-  const id = _normalizeId(name);
-  const provider = state.providers.find((p) => p.id === id);
-  if (!provider) throw new Error(`Provider '${name}' not found`);
-
-  state.activeProviderId = id;
-  await _saveState(state);
-
-  return { ok: true };
-}
-
-async function add({ name, type, baseUrl, apiKey } = {}) {
-  if (!name || typeof name !== 'string') throw new Error('add: name required');
-  const state = await _loadState();
-  const id = _normalizeId(name);
-  if (state.providers.find((p) => p.id === id)) {
-    throw new Error(`Provider '${name}' already exists`);
+    cachedEnv = JSON.parse(fs.readFileSync(CURRENT_ENV_FILE, 'utf8'));
+    cachedEnvMtimeMs = stat.mtimeMs;
+    return cachedEnv;
+  } catch {
+    cachedEnv = null;
+    cachedEnvMtimeMs = 0;
+    return null;
   }
-  state.providers.push({
-    id,
-    name: name.trim(),
-    type: type || inferProviderType({ id, name, baseUrl }),
-    baseUrl: (baseUrl || '').trim(),
-    apiKey: (apiKey || '').trim(),
-    isBuiltin: false,
-    models: [],
-  });
-  await _saveState(state);
-  return { ok: true };
-}
-
-async function remove(name) {
-  if (!name || typeof name !== 'string') throw new Error('remove: name required');
-  const state = await _loadState();
-  const id = _normalizeId(name);
-  const idx = state.providers.findIndex((p) => p.id === id);
-  if (idx === -1) throw new Error(`Provider '${name}' not found`);
-  if (state.providers[idx].isBuiltin) {
-    throw new Error(`Cannot remove built-in provider '${name}'`);
-  }
-  state.providers.splice(idx, 1);
-  if (state.activeProviderId === id) {
-    state.activeProviderId = 'anthropic';
-  }
-  await _saveState(state);
-  return { ok: true };
-}
-
-async function addModel(providerId, model) {
-  if (!providerId || !model || !model.id) throw new Error('addModel: providerId and model.id required');
-  const state = await _loadState();
-  const p = state.providers.find((p) => p.id === _normalizeId(providerId));
-  if (!p) throw new Error(`Provider '${providerId}' not found`);
-  if (!Array.isArray(p.models)) p.models = [];
-  const idx = p.models.findIndex((m) => m.id === model.id);
-  if (idx >= 0) {
-    p.models[idx] = { ...p.models[idx], ...model };
-  } else {
-    p.models.push(model);
-  }
-  await _saveState(state);
-  return { ok: true };
-}
-
-async function removeModel(providerId, modelId) {
-  const state = await _loadState();
-  const p = state.providers.find((p) => p.id === _normalizeId(providerId));
-  if (!p) throw new Error(`Provider '${providerId}' not found`);
-  if (!Array.isArray(p.models)) p.models = [];
-  p.models = p.models.filter((m) => m.id !== modelId);
-  await _saveState(state);
-  return { ok: true };
-}
-
-async function discoverModels(providerId) {
-  const state = await _loadState();
-  const p = state.providers.find((p) => p.id === _normalizeId(providerId));
-  if (!p) throw new Error(`Provider '${providerId}' not found`);
-  const baseUrl = (p.baseUrl || (p.type === 'anthropic' ? 'https://api.anthropic.com' : '')).replace(/\/$/, '');
-  if (!baseUrl) {
-    return { ok: false, error: 'Provider baseUrl is required for model discovery.' };
-  }
-  if (!p.apiKey) {
-    return { ok: false, error: 'API key is required for model discovery.' };
-  }
-
-  const urls = _modelListUrlCandidates(baseUrl, p.type);
-  const errors = [];
-  for (const url of urls) {
-    try {
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: _discoveryHeaders(p),
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        errors.push(`${url} -> ${res.status}: ${text.slice(0, 300)}`);
-        continue;
-      }
-      const data = await res.json();
-      const models = _extractModelList(data)
-        .map((m) => _normalizeDiscoveredModel(m, p.type))
-        .filter(Boolean);
-      if (!models.length) {
-        errors.push(`${url} -> no models in response`);
-        continue;
-      }
-      return { ok: true, models, endpoint: url };
-    } catch (err) {
-      errors.push(`${url} -> ${err.message || String(err)}`);
-    }
-  }
-
-  return {
-    ok: false,
-    error: `Model discovery failed. Tried ${urls.length} endpoint(s): ${errors.join(' | ')}`,
-  };
-}
-
-function getActiveEnv() {
-  return _readCurrentEnvSync();
 }
 
 module.exports = {
@@ -524,14 +277,18 @@ module.exports = {
   list,
   current,
   getProvider,
+  getProviderPublic,
   getActiveProvider,
-  getProviderStateTokenSync,
+  getProviderStateTokenSync: modelConfig.stateTokenSync,
   use,
   add,
+  update,
   remove,
   addModel,
   removeModel,
   discoverModels,
-  getActiveEnv,
+  testConnection,
+  getActiveEnv: _readCurrentEnvSync,
   inferProviderType,
+  __defaultGetActiveProvider: getActiveProvider,
 };

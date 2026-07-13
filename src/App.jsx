@@ -29,6 +29,7 @@ import { NovelDataBrowser } from '@/components/NovelDataBrowser.jsx';
 import { DataTabContent } from '@/components/DataTabContent.jsx';
 import { countMeaningfulCharacters } from '@/domain/text.js';
 import { collectPreferredTextMatches } from '@/domain/textMatch.js';
+import { assessDeAiMinimality, minimalityRetryInstruction } from '@/services/deAiMinimality.mjs';
 import { useI18n } from '@/i18n/LanguageContext.jsx';
 import DiffMatchPatch from 'diff-match-patch';
 
@@ -38,11 +39,40 @@ const SETTINGS_PREFIX = 'settings:';
 const DATA_PREFIX = 'data:'; // character, world, outline, timeline, style
 const DEFAULT_RIGHT_PANEL_WIDTH = 640;
 const MIN_RIGHT_PANEL_WIDTH = 420;
+const FIXED_LEFT_CHROME_WIDTH = 48 + 256;
 const RIGHT_PANEL_WIDTH_STORAGE_KEY = 'mana-right-panel-width-v1';
 const EDITOR_CONTEXT_MENU_WIDTH = 220;
 const diffMatchPatch = new DiffMatchPatch();
 const makeId = (prefix) =>
   `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+function editorDeAiReferenceSamples(content, range, maxSamples = 4) {
+  const text = String(content || '').replace(/\r\n/gu, '\n');
+  const start = Number.isFinite(Number(range?.start)) ? Number(range.start) : -1;
+  const end = Number.isFinite(Number(range?.end)) ? Number(range.end) : start;
+  if (!text || start < 0 || end < start) return [];
+  const toParagraphs = (value) => value.split(/\n\s*\n/gu)
+    .map((item) => item.trim())
+    .filter((item) => item.length >= 12 && !/^#{1,6}\s/u.test(item));
+  const before = toParagraphs(text.slice(0, start)).slice(-2);
+  const after = toParagraphs(text.slice(end)).slice(0, 2);
+  return [...before, ...after].filter((item, index, list) => list.indexOf(item) === index).slice(0, maxSamples);
+}
+
+function editorDeAiCharacterVoices(characters, contextText, maxCharacters = 5) {
+  const haystack = String(contextText || '').normalize('NFKC').toLocaleLowerCase('zh-CN');
+  return (Array.isArray(characters) ? characters : []).filter((character) => {
+    const names = [character?.name, ...(Array.isArray(character?.aliases) ? character.aliases : [])]
+      .map((item) => String(item || '').normalize('NFKC').trim().toLocaleLowerCase('zh-CN'))
+      .filter((item) => item.length >= 2);
+    return names.some((name) => haystack.includes(name));
+  }).slice(0, maxCharacters).map((character) => ({
+    name: character.name || character.id || '',
+    personality: String(character.personality || '').slice(0, 500),
+    speechStyle: String(character.speechStyle || character.attributes?.语言特点 || '').slice(0, 500),
+    quotes: String(character.quotes || '').slice(0, 500),
+  })).filter((item) => item.name && (item.personality || item.speechStyle || item.quotes));
+}
 
 const EDITOR_AI_ACTIONS = {
   rewrite: {
@@ -67,7 +97,7 @@ const EDITOR_AI_ACTIONS = {
     label: '去 AI 味润色',
     requiresSelection: true,
     mode: 'replace',
-    instruction: '润色选中文本：重点去除 AI 味。避免「不是……而是……」「那是一种……」「仿佛……」「空气中弥漫着……」等模板化表达，改成具体动作、对白、触感、表情或场面推进。只输出润色后的正文，不要解释。',
+    instruction: '只对选中文本做最小必要的去 AI 味修改。删除或压缩「不是……而是……」「那是一种……」「仿佛……」「空气中弥漫着……」等机械模板，但不要新增原文没有的动作、对白、景物、感官、心理、比喻或情绪解释；保留原有短句、停顿、留白、粗粝感和不规则节奏，不强求优美或圆润。若没有明确问题，原样输出。只输出处理后的正文，不要解释。',
   },
   strongerScene: {
     label: '增强现场感',
@@ -87,8 +117,10 @@ const EDITOR_AI_SYSTEM_PROMPT = '你是中文小说正文编辑助手。输出�
 
 function clampRightPanelWidth(width) {
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1440;
-  const maxWidth = Math.max(MIN_RIGHT_PANEL_WIDTH, Math.floor(viewportWidth * 0.75));
-  return Math.min(Math.max(width, MIN_RIGHT_PANEL_WIDTH), maxWidth);
+  const availableWidth = Math.max(0, viewportWidth - FIXED_LEFT_CHROME_WIDTH);
+  const minWidth = Math.min(MIN_RIGHT_PANEL_WIDTH, availableWidth);
+  const maxWidth = Math.max(minWidth, Math.min(Math.floor(viewportWidth * 0.75), availableWidth));
+  return Math.min(Math.max(width, minWidth), maxWidth);
 }
 
 function readInitialRightPanelWidth() {
@@ -598,7 +630,7 @@ function App() {
         case 'subagent': return t('subagent.title');
         case 'dag': return t('dag.title');
         case 'config-helper': return '配置助手';
-        case 'models': return t('settings.llmTitle');
+        case 'models': return '模型中心';
         case 'storage': return '存储空间';
         case 'writing': return '写作设置';
         case 'lan-remote': return '局域网遥控';
@@ -1082,6 +1114,7 @@ function App() {
           source,
           revisionLabel: options.revisionLabel || (source === 'autosave' ? '自动保存' : '手动保存'),
           createRevision: options.createRevision !== false,
+          verifiedContentHash: options.verifiedContentHash || undefined,
         }
       );
       applySavedChapterSnapshot(chapterId, saved, { content, isContentLoaded: true, isDirty: false });
@@ -1371,10 +1404,21 @@ function App() {
     throw new Error('未找到稳定的光标位置，请重新聚焦编辑器后再试');
   }, [activeChapter, editorSelection]);
 
-  const replaceSelectedText = (replacement) => {
+  const resolveVerifiedPreviewRange = (rangeOverride, current, mode) => {
+    const start = Number(rangeOverride?.expectedStart);
+    const end = Number(rangeOverride?.expectedEnd);
+    if (!Number.isInteger(start) || !Number.isInteger(end)) return null;
+    if (start < 0 || end < start || end > current.length) throw new Error('已验证预览的编辑范围无效，请重新生成预览');
+    const expectedText = String(rangeOverride?.expectedText || '');
+    if (current.substring(start, end) !== expectedText) throw new Error('章节内容或目标范围在确认前已变化，请重新生成预览');
+    if (mode === 'replace' && end <= start) throw new Error('已验证预览没有稳定的选中文本，请重新选择后再试');
+    return { start, end, text: expectedText };
+  };
+
+  const replaceSelectedText = (replacement, rangeOverride = null) => {
     if (!activeChapterId || !activeChapter) throw new Error('当前没有打开的章节');
-    const { start, end } = resolveEditorSelectionRange('replace');
     const current = activeChapter.content;
+    const { start, end } = resolveVerifiedPreviewRange(rangeOverride, current, 'replace') || resolveEditorSelectionRange('replace');
     const before = current.substring(0, start);
     const after = current.substring(end);
     const newContent = before + replacement + after;
@@ -1385,11 +1429,21 @@ function App() {
     return `Text replaced successfully (${end - start} chars)`;
   };
 
-  const replaceTextNearCursor = (targetText, replacement) => {
+  const replaceTextNearCursor = (targetText, replacement, rangeOverride = null) => {
     if (!activeChapterId || !activeChapter) throw new Error('当前没有打开的章节');
     const current = activeChapter.content || '';
     const needle = String(targetText || '');
     if (!needle) throw new Error('targetText 不能为空');
+
+    const verifiedRange = resolveVerifiedPreviewRange(rangeOverride, current, 'replace');
+    if (verifiedRange) {
+      const nextContent = current.substring(0, verifiedRange.start) + replacement + current.substring(verifiedRange.end);
+      updateActiveChapterContent(nextContent);
+      const nextPos = verifiedRange.start + replacement.length;
+      pendingEditorSelectionRef.current = { start: verifiedRange.start, end: nextPos };
+      setEditorSelection({ text: '', start: nextPos, end: nextPos });
+      return `Text replaced near cursor successfully (${verifiedRange.end - verifiedRange.start} chars)`;
+    }
 
     const selectionCoversTarget = (selectedText) => {
       const text = String(selectedText || '');
@@ -1474,10 +1528,10 @@ function App() {
     return `Text replaced near cursor successfully (${best.end - best.start} chars)`;
   };
 
-  const insertTextAtCursor = (text) => {
+  const insertTextAtCursor = (text, rangeOverride = null) => {
     if (!activeChapterId || !activeChapter) throw new Error('当前没有打开的章节');
-    const { start, end } = resolveEditorSelectionRange('insert');
     const current = activeChapter.content;
+    const { start, end } = resolveVerifiedPreviewRange(rangeOverride, current, 'insert') || resolveEditorSelectionRange('insert');
     const before = current.substring(0, start);
     const after = current.substring(end);
     const newContent = before + text + after;
@@ -1488,7 +1542,34 @@ function App() {
     return `Text inserted successfully (${text.length} chars)`;
   };
 
-  const buildEditorAiUserPrompt = useCallback((action, range, customInstruction = '') => {
+  const loadEditorDeAiBaseline = useCallback(async (range) => {
+    const current = activeChapter?.content || '';
+    const contextText = current.substring(Math.max(0, range.start - 1800), Math.min(current.length, range.end + 900));
+    const [styleResult, charactersResult] = await Promise.allSettled([
+      activeNovelId && window.mana?.novel?.readStyleMemory
+        ? window.mana.novel.readStyleMemory(activeNovelId)
+        : Promise.resolve(''),
+      activeNovelId && window.mana?.novel?.listCharacters
+        ? window.mana.novel.listCharacters(activeNovelId)
+        : Promise.resolve([]),
+    ]);
+    const fullStyleMemory = styleResult.status === 'fulfilled' ? String(styleResult.value || '') : '';
+    const styleMemory = fullStyleMemory.length > 6000
+      ? `[仅载入最近的文风记忆]\n${fullStyleMemory.slice(-6000)}`
+      : fullStyleMemory;
+    const characters = charactersResult.status === 'fulfilled' ? charactersResult.value : [];
+    const referenceSamples = editorDeAiReferenceSamples(current, range);
+    return {
+      styleMemory,
+      characterVoices: editorDeAiCharacterVoices(characters, contextText),
+      referenceSamples,
+      dialogueSamples: referenceSamples.filter((item) => /^[“"「『]/u.test(item) || /[”"」』]$/u.test(item)),
+      povRule: '保持选中文本当前的人称和视角距离，不切换 POV，也不替 POV 人物解释其未明确表达的心理。',
+      rhythmRule: '以前后文和作者当前保留段落的句长、停顿与段落疏密为准，保留粗粝、跳跃、留白和不规则节奏。',
+    };
+  }, [activeChapter, activeNovelId]);
+
+  const buildEditorAiUserPrompt = useCallback((action, range, customInstruction = '', deAiBaseline = null) => {
     const current = activeChapter?.content || '';
     const before = current.substring(Math.max(0, range.start - 1800), range.start);
     const after = current.substring(range.end, Math.min(current.length, range.end + 900));
@@ -1499,6 +1580,14 @@ function App() {
       '',
       `当前章节：${activeChapter?.displayName || activeChapter?.fileName || '未命名章节'}`,
     ];
+    if (deAiBaseline) {
+      lines.push('', '作品与人物基线（只读软参考，不得复制原句）：');
+      if (deAiBaseline.styleMemory) lines.push('', '文风记忆：', deAiBaseline.styleMemory);
+      if (deAiBaseline.characterVoices?.length) lines.push('', `人物声音基线：${JSON.stringify(deAiBaseline.characterVoices)}`);
+      if (deAiBaseline.referenceSamples?.length) lines.push('', '作者当前保留的相邻段落：', deAiBaseline.referenceSamples.join('\n\n'));
+      if (deAiBaseline.dialogueSamples?.length) lines.push('', '本章既有对白样本：', deAiBaseline.dialogueSamples.join('\n'));
+      lines.push('', `POV：${deAiBaseline.povRule}`, `场景节奏：${deAiBaseline.rhythmRule}`);
+    }
     if (before) lines.push('', '光标/选区前文：', before);
     if (selectedText) lines.push('', '选中文本：', selectedText);
     if (after) lines.push('', '选区/光标后文：', after);
@@ -1536,15 +1625,30 @@ function App() {
     try {
       await flushActiveChapterToDisk({ silent: true });
       const client = createRemoteAIClient();
-      const result = await client.completeForAgent(
-        action.mode === 'insert' ? 'chapter_draft' : 'agent5',
+      const deAiBaseline = actionId === 'deAi' ? await loadEditorDeAiBaseline(range) : null;
+      const userPrompt = buildEditorAiUserPrompt(action, range, customInstruction, deAiBaseline);
+      const callEditorAgent = (prompt) => client.completeForAgent(
+        actionId === 'deAi' ? 'de_ai_rewrite' : (action.mode === 'insert' ? 'chapter_draft' : 'agent5'),
         [
           { role: 'system', content: EDITOR_AI_SYSTEM_PROMPT },
-          { role: 'user', content: buildEditorAiUserPrompt(action, range, customInstruction) },
+          { role: 'user', content: prompt },
         ],
         { expectJson: false }
       );
-      const output = cleanEditorAiOutput(result);
+      let result = await callEditorAgent(userPrompt);
+      let output = cleanEditorAiOutput(result);
+      let minimality = null;
+      if (actionId === 'deAi') {
+        minimality = assessDeAiMinimality(range.text || '', output, { guidance: customInstruction || action.instruction });
+        if (!minimality.ok) {
+          result = await callEditorAgent(`${userPrompt}\n\n${minimalityRetryInstruction(minimality)}`);
+          output = cleanEditorAiOutput(result);
+          minimality = assessDeAiMinimality(range.text || '', output, { guidance: customInstruction || action.instruction });
+        }
+        if (!minimality.ok) {
+          throw new Error(`两版候选都偏离最小必要修改原则：${minimality.violations.map((item) => item.label).join('；')}`);
+        }
+      }
       if (!output) throw new Error('AI 没有返回可插入的正文');
       const current = activeChapter.content || '';
       const insertionPoint = action.mode === 'insert' ? range.end : range.start;
@@ -1555,16 +1659,51 @@ function App() {
       if (action.mode !== 'insert' && current.substring(safeStart, safeEnd) !== range.text) {
         throw new Error('选中文本已变化，请重新选中后再试');
       }
-      setEditorAiPreview({
+      const previewId = makeId('editor-ai-preview');
+      const candidateContent = current.substring(0, safeStart) + output + current.substring(safeEnd);
+      const preview = {
+        id: previewId,
         actionId,
         actionLabel: action.label,
         mode: action.mode,
         range: { start: safeStart, end: safeEnd, text: range.text || '' },
         original: action.mode === 'insert' ? '' : current.substring(safeStart, safeEnd),
         output,
+        minimality,
         customInstruction,
+        baseContent: current,
+        verification: { status: 'running', checks: [], issues: [], blockingCount: 0, contentHash: '' },
+      };
+      setEditorAiPreview(preview);
+      const verification = await window.mana?.novel?.verifyChapterContent?.(activeNovelId, {
+        name: activeChapter.fileName,
+        displayName: activeChapter.displayName || activeChapter.fileName,
+        title: getChapterSaveTitle(activeChapter, candidateContent),
+        content: candidateContent,
+        userText: customInstruction || action.instruction,
+        editorContext: {
+          type: 'chapter',
+          novelId: activeNovelId,
+          chapterFileName: activeChapter.fileName,
+          title: activeChapter.displayName || activeChapter.fileName,
+          selectedText: range.text || '',
+        },
       });
-      showSaveToast('success', `${action.label}已生成预览`);
+      const finalVerification = verification || {
+        status: 'blocked',
+        checks: [],
+        issues: [{ severity: 'blocking', summary: '严格验证服务不可用。' }],
+        blockingCount: 1,
+        contentHash: '',
+      };
+      setEditorAiPreview((currentPreview) => currentPreview?.id === previewId
+        ? { ...currentPreview, verification: finalVerification }
+        : currentPreview);
+      if (finalVerification.status === 'passed' && Number(finalVerification.blockingCount || 0) === 0) {
+        showSaveToast('success', `${action.label}已生成并通过严格验证`);
+      } else {
+        showSaveToast('error', `${action.label}预览未通过严格验证，已禁止写入`);
+      }
     } catch (err) {
       showSaveToast('error', `${action.label}失败：${err?.message || String(err)}`);
     } finally {
@@ -1572,8 +1711,10 @@ function App() {
     }
   }, [
     activeChapter,
+    activeNovelId,
     buildEditorAiUserPrompt,
     flushActiveChapterToDisk,
+    loadEditorDeAiBaseline,
     resolveEditorSelectionRange,
     showSaveToast,
   ]);
@@ -1597,18 +1738,49 @@ function App() {
       return;
     }
     const nextContent = current.substring(0, start) + output + current.substring(end);
+    let verification = editorAiPreview.verification || null;
+    if (current !== editorAiPreview.baseContent || verification?.status !== 'passed' || Number(verification?.blockingCount || 0) > 0) {
+      setEditorAiPreview((preview) => preview ? { ...preview, baseContent: current, verification: { ...(preview.verification || {}), status: 'running' } } : preview);
+      try {
+        verification = await window.mana?.novel?.verifyChapterContent?.(activeNovelId, {
+          name: activeChapter.fileName,
+          displayName: activeChapter.displayName || activeChapter.fileName,
+          title: getChapterSaveTitle(activeChapter, nextContent),
+          content: nextContent,
+          userText: editorAiPreview.customInstruction || editorAiPreview.actionLabel || '编辑器 AI 章节变更',
+          editorContext: {
+            type: 'chapter',
+            novelId: activeNovelId,
+            chapterFileName: activeChapter.fileName,
+            title: activeChapter.displayName || activeChapter.fileName,
+            selectedText: range.text || '',
+          },
+        });
+      } catch (err) {
+        verification = {
+          status: 'blocked', checks: [], blockingCount: 1, contentHash: '',
+          issues: [{ severity: 'blocking', summary: err?.message || String(err) }],
+        };
+      }
+      setEditorAiPreview((preview) => preview ? { ...preview, baseContent: current, verification } : preview);
+    }
+    if (verification?.status !== 'passed' || Number(verification?.blockingCount || 0) > 0 || !verification?.contentHash) {
+      showSaveToast('error', '严格验证未通过，章节内容保持不变');
+      return;
+    }
     const nextPos = start + output.length;
-    updateActiveChapterContent(nextContent, { scheduleSave: false });
-    pendingEditorSelectionRef.current = mode === 'insert'
-      ? { start: nextPos, end: nextPos }
-      : { start, end: nextPos };
-    setEditorSelection({ text: '', start: nextPos, end: nextPos });
     setSaveStatus('saving');
     try {
       await saveChapterContentToDisk(activeChapterId, nextContent, {
         source: 'ai',
         revisionLabel: actionLabel || 'AI 修改',
+        baseContent: current,
+        verifiedContentHash: verification.contentHash,
       });
+      pendingEditorSelectionRef.current = mode === 'insert'
+        ? { start: nextPos, end: nextPos }
+        : { start, end: nextPos };
+      setEditorSelection({ text: '', start: nextPos, end: nextPos });
       setSaveStatus('saved');
       showSaveToast('success', `${actionLabel || 'AI 修改'}已应用并保存`);
       setTimeout(() => setSaveStatus(null), 2000);
@@ -1617,7 +1789,7 @@ function App() {
       setSaveStatus('save-failed');
       showSaveToast('error', `AI 修改保存失败：${err?.message || String(err)}`);
     }
-  }, [activeChapter, activeChapterId, editorAiPreview, saveChapterContentToDisk, showSaveToast]);
+  }, [activeChapter, activeChapterId, activeNovelId, editorAiPreview, saveChapterContentToDisk, showSaveToast]);
 
   const regenerateEditorAiPreview = useCallback(async () => {
     if (!editorAiPreview) return;
@@ -1800,7 +1972,10 @@ function App() {
            <ActivityBarItem
             icon={<Settings size={24} />}
             active={activeSidebarItem === 'settings'}
-            onClick={() => setActiveSidebarItem('settings')}
+            onClick={() => {
+              setActiveSidebarItem('settings');
+              if (window.innerWidth < 1100) setRightPanelOpen(false);
+            }}
             label={t('app.settings')}
           />
         </div>
@@ -1945,6 +2120,8 @@ function App() {
                                 <div key={chapter.id} className="group flex items-center gap-1 pl-10 pr-1 py-1 hover:bg-vscode-active-item">
                                   <button
                                     type="button"
+                                    data-testid="chapter-tree-item"
+                                    data-chapter-file={chapter.fileName}
                                     className="flex-1 text-left pl-2 pr-1 py-0.5 cursor-pointer"
                                     onClick={() => openChapterInEditor(chapter.id)}
                                   >{chapter.displayName || chapter.fileName}</button>
@@ -2302,12 +2479,20 @@ function App() {
                   </span>
                 ))}
               </div>
+              <div data-testid="editor-ai-strict-verification" className={`mt-3 rounded border px-3 py-2 ${editorAiPreview.verification?.status === 'passed' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : editorAiPreview.verification?.status === 'running' ? 'border-sky-500/30 bg-sky-500/10 text-sky-200' : 'border-rose-500/30 bg-rose-500/10 text-rose-200'}`}>
+                严格验证：{editorAiPreview.verification?.status === 'running' ? '进行中' : editorAiPreview.verification?.status === 'passed' ? '通过' : '未通过，禁止写入'}
+                {Array.isArray(editorAiPreview.verification?.issues) && editorAiPreview.verification.issues.length > 0 && (
+                  <div className="mt-1 space-y-1 text-[11px]">
+                    {editorAiPreview.verification.issues.slice(0, 6).map((issue, index) => <div key={`${issue.id || 'issue'}-${index}`}>{issue.summary || '验证问题'}</div>)}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex items-center justify-end gap-2 border-t border-vscode-panel-border px-4 py-3">
               <button type="button" className="rounded border border-vscode-panel-border px-3 py-1 text-xs text-gray-300 hover:bg-vscode-active-item" onClick={() => navigator.clipboard?.writeText(editorAiPreview.output || '')}>复制结果</button>
               <button type="button" className="rounded border border-vscode-panel-border px-3 py-1 text-xs text-gray-300 hover:bg-vscode-active-item" onClick={regenerateEditorAiPreview} disabled={!!editorAiStatus}>重新生成</button>
               <button type="button" className="rounded border border-vscode-panel-border px-3 py-1 text-xs text-gray-300 hover:bg-vscode-active-item" onClick={() => setEditorAiPreview(null)}>拒绝</button>
-              <button type="button" className="rounded bg-blue-600 px-4 py-1 text-xs text-white hover:bg-blue-500" onClick={acceptEditorAiPreview}>接受并保存</button>
+              <button data-testid="editor-ai-accept" type="button" className="rounded bg-blue-600 px-4 py-1 text-xs text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40" onClick={acceptEditorAiPreview} disabled={editorAiPreview.verification?.status !== 'passed' || Number(editorAiPreview.verification?.blockingCount || 0) > 0}>接受并保存</button>
             </div>
           </div>
         </div>

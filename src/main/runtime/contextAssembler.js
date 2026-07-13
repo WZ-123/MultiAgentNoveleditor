@@ -1,5 +1,7 @@
 'use strict';
 
+const { classifyChatTaskContract } = require('./chatToolRegistry');
+
 const DEFAULT_TOOL_RESULT_CHAR_LIMIT = 12000;
 const DEFAULT_ERROR_TOOL_RESULT_CHAR_LIMIT = 20000;
 const DEFAULT_SKILL_BLOCK_CHAR_LIMIT = 24000;
@@ -196,12 +198,40 @@ function countToolChars(tools) {
   }, 0);
 }
 
-function assembleProviderContext({ system, messages, tools, runtime = {}, manifest = {}, toolPolicy = null } = {}) {
+function messageHasBlock(message, type) {
+  return Array.isArray(message?.content) && message.content.some((block) => block?.type === type);
+}
+
+function fitMessagesToContext(messages, { contextWindow, maxOutputTokens, fixedTokens } = {}) {
+  const source = Array.isArray(messages) ? messages : [];
+  const windowTokens = Number(contextWindow) || 0;
+  if (!windowTokens) return { messages: source, omittedMessages: 0 };
+  const availableTokens = Math.max(1024, windowTokens - (Number(maxOutputTokens) || 4096) - (Number(fixedTokens) || 0) - 1024);
+  const out = source.slice();
+  let omittedMessages = 0;
+  while (out.length > 1 && estimateTokens(out) > availableTokens) {
+    out.shift();
+    omittedMessages += 1;
+    // Never begin with an orphan tool result or assistant tool call.
+    while (out.length > 1 && (messageHasBlock(out[0], 'tool_result') || messageHasBlock(out[0], 'tool_use'))) {
+      out.shift();
+      omittedMessages += 1;
+    }
+  }
+  return { messages: out, omittedMessages };
+}
+
+function assembleProviderContext({ system, messages, tools, runtime = {}, manifest = {}, toolPolicy = null, modelLimits = null } = {}) {
   const systemText = safeString(system);
-  const nextMessages = Array.isArray(messages) ? messages : [];
   const nextTools = Array.isArray(tools) ? tools : undefined;
-  const messageCounts = countMessageChars(nextMessages);
   const toolChars = countToolChars(nextTools);
+  const fittedMessages = fitMessagesToContext(messages, {
+    contextWindow: modelLimits?.contextWindow,
+    maxOutputTokens: modelLimits?.maxOutputTokens,
+    fixedTokens: estimateTokens(systemText) + Math.ceil(toolChars / 2),
+  });
+  const nextMessages = fittedMessages.messages;
+  const messageCounts = countMessageChars(nextMessages);
   const stats = {
     runtime,
     systemChars: systemText.length,
@@ -212,7 +242,10 @@ function assembleProviderContext({ system, messages, tools, runtime = {}, manife
     toolsChars: toolChars,
     toolCount: Array.isArray(nextTools) ? nextTools.length : 0,
     estimatedInputTokens: Math.ceil((systemText.length + messageCounts.chars + toolChars) / 2),
-    trimmedCount: messageCounts.trimmedToolResultCount,
+    trimmedCount: messageCounts.trimmedToolResultCount + fittedMessages.omittedMessages,
+    omittedMessages: fittedMessages.omittedMessages,
+    contextWindow: Number(modelLimits?.contextWindow) || null,
+    maxOutputTokens: Number(modelLimits?.maxOutputTokens) || null,
   };
   return {
     system: systemText,
@@ -288,32 +321,20 @@ function buildContextManifest({ runtime = {}, stats = {}, included, trimmed, omi
 }
 
 function classifyChatToolPolicy(userText, session = {}) {
-  const text = safeString(userText).toLowerCase();
-  const phase = safeString(session?.workflowPhase).toLowerCase();
-  if (/人设|角色卡|角色资料|人物卡|character|ooc|补全角色|修改角色|创建角色|删除角色|enrich/.test(text)) {
-    return { id: 'character_edit', reason: 'character-edit-intent' };
-  }
-  if (/世界观|设定|地点|地名|lore|world|place|places|势力/.test(text) && /修改|更新|补充|新增|删除|改|调整|查看|查询|读/.test(text)) {
-    return { id: 'world_edit', reason: 'world-edit-intent' };
-  }
-  if (/去\s*a\s*i\s*味|ai味|套话|八股|机翻腔|模型味|审查|检查|review|一致性|事实核对|错漏|冲突|段落功能|一句一段/.test(text)) {
-    return { id: 'review', reason: 'review-intent' };
-  }
-  if (phase === 'writing' || /写下一章|续写|写作|草稿|章节|改写|修订|润色|正文|剧情|大纲|保存这个章节|确认写入/.test(text)) {
-    return { id: 'writing', reason: phase === 'writing' ? 'workflow-phase-writing' : 'writing-intent' };
-  }
-  return { id: 'general', reason: 'default-general' };
+  return classifyChatTaskContract(userText, session);
 }
 
 function classifyCharacterContextPolicy(userText, session = {}, chatToolPolicy = null) {
   const editorContext = session?.editorContext || {};
   const text = safeString(userText).toLowerCase();
-  const policyId = chatToolPolicy?.id || classifyChatToolPolicy(userText, session).id;
+  const contract = chatToolPolicy || classifyChatToolPolicy(userText, session);
+  const policyId = contract.id;
+  const policyLabels = Array.isArray(contract.labels) ? contract.labels : [policyId];
   const hasActiveNovel = !!(editorContext?.novelId || session?.activeNovelId);
   if (!hasActiveNovel) {
     return { id: 'none', shouldPreload: false, reason: 'no-active-novel' };
   }
-  if (!['writing', 'review'].includes(policyId)) {
+  if (!policyLabels.some((label) => label === 'writing' || label === 'review')) {
     return { id: 'none', shouldPreload: false, reason: `tool-policy-${policyId}` };
   }
   const isChapterEditor = editorContext?.type === 'chapter' && !!(editorContext?.chapterFileName || editorContext?.title);
@@ -323,21 +344,23 @@ function classifyCharacterContextPolicy(userText, session = {}, chatToolPolicy =
     return { id: 'none', shouldPreload: false, reason: 'no-current-chapter-target' };
   }
   return {
-    id: policyId === 'review' ? 'review_scene_characters' : 'writing_scene_characters',
+    id: policyLabels.includes('review') ? 'review_scene_characters' : 'writing_scene_characters',
     shouldPreload: true,
-    reason: policyId === 'review' ? 'review-needs-scene-character-context' : 'writing-needs-scene-character-context',
-    maxChars: policyId === 'review' ? 14000 : 18000,
+    reason: policyLabels.includes('review') ? 'review-needs-scene-character-context' : 'writing-needs-scene-character-context',
+    maxChars: policyLabels.includes('review') ? 14000 : 18000,
   };
 }
 
 function classifyRetrievalContextPolicy(userText, session = {}, chatToolPolicy = null) {
   const editorContext = session?.editorContext || {};
-  const policyId = chatToolPolicy?.id || classifyChatToolPolicy(userText, session).id;
+  const contract = chatToolPolicy || classifyChatToolPolicy(userText, session);
+  const policyId = contract.id;
+  const policyLabels = Array.isArray(contract.labels) ? contract.labels : [policyId];
   const hasActiveNovel = !!(editorContext?.novelId || session?.activeNovelId);
   if (!hasActiveNovel) {
     return { id: 'none', shouldPreload: false, reason: 'no-active-novel' };
   }
-  if (!['writing', 'review'].includes(policyId)) {
+  if (!policyLabels.some((label) => label === 'writing' || label === 'review')) {
     return { id: 'none', shouldPreload: false, reason: `tool-policy-${policyId}` };
   }
   const isChapterEditor = editorContext?.type === 'chapter' && !!(editorContext?.chapterFileName || editorContext?.title);
@@ -348,11 +371,11 @@ function classifyRetrievalContextPolicy(userText, session = {}, chatToolPolicy =
     return { id: 'none', shouldPreload: false, reason: 'no-current-chapter-target' };
   }
   return {
-    id: policyId === 'review' ? 'review_retrieved_context' : 'writing_retrieved_context',
+    id: policyLabels.includes('review') ? 'review_retrieved_context' : 'writing_retrieved_context',
     shouldPreload: true,
-    reason: policyId === 'review' ? 'review-needs-retrieved-context' : 'writing-needs-retrieved-context',
-    maxChars: policyId === 'review' ? 12000 : 14000,
-    maxItems: policyId === 'review' ? 10 : 12,
+    reason: policyLabels.includes('review') ? 'review-needs-retrieved-context' : 'writing-needs-retrieved-context',
+    maxChars: policyLabels.includes('review') ? 12000 : 14000,
+    maxItems: policyLabels.includes('review') ? 10 : 12,
   };
 }
 
@@ -360,7 +383,7 @@ const TOOL_POLICY_ALLOWLISTS = {
   writing: new Set([
     'list_characters', 'read_character_context', 'read_character_memory', 'assemble_scene_context',
     'read_outline', 'read_outline_nodes', 'read_outline_chapter', 'read_outline_section', 'read_outline_volume',
-    'list_chapters', 'list_chapter_displays', 'read_chapter', 'write_chapter',
+    'list_chapters', 'list_chapter_displays', 'read_chapter', 'read_chapter_summary', 'write_chapter',
     'suggest_next_chapter_name', 'get_chapter_naming_rule',
     'query_world', 'query_timeline', 'check_timeline_feasibility', 'check_outline_scene_feasibility',
     'read_style_memory', 'append_style_memory', 'append_summary',
@@ -372,7 +395,7 @@ const TOOL_POLICY_ALLOWLISTS = {
   ]),
   review: new Set([
     'list_characters', 'read_character_context', 'read_character_memory',
-    'list_chapters', 'list_chapter_displays', 'read_chapter',
+    'list_chapters', 'list_chapter_displays', 'read_chapter', 'read_chapter_summary',
     'read_outline', 'read_outline_nodes', 'query_world', 'query_timeline',
     'review_character_consistency', 'review_de_ai_style', 'review_paragraph_function', 'de_ai_ify',
     'replace_selected_text', 'replace_text_near_cursor', 'insert_text_at_cursor', 'get_full_editor_content',
@@ -391,14 +414,24 @@ const TOOL_POLICY_ALLOWLISTS = {
     'list_characters', 'query_timeline',
     'spawn_subagent', 'get_system_time', 'WebSearch', 'WebFetch', 'search_index', 'search_novel', 'retrieve_context',
   ]),
+  asset_edit: new Set([
+    'list_assets', 'read_asset', 'query_assets', 'grant_asset', 'revoke_asset', 'apply_asset_patch',
+    'list_characters', 'read_character_context', 'read_character_memory',
+    'list_chapters', 'list_chapter_displays', 'read_chapter', 'read_chapter_summary',
+    'query_timeline', 'search_index', 'search_novel', 'retrieve_context',
+    'spawn_subagent', 'get_system_time', 'WebSearch', 'WebFetch',
+  ]),
+  project_setup: new Set([
+    'create_novel', 'list_novels', 'list_staging_projects', 'get_staging_project',
+    'read_skill', 'list_skills', 'read_skill_content', 'get_system_time', 'WebSearch', 'WebFetch',
+  ]),
   general: new Set([
     'list_characters', 'read_character_context',
-    'list_chapters', 'list_chapter_displays', 'read_outline', 'read_outline_nodes', 'read_chapter',
+    'list_chapters', 'list_chapter_displays', 'read_outline', 'read_outline_nodes', 'read_chapter', 'read_chapter_summary',
     'query_world', 'query_timeline', 'read_style_memory', 'read_skill', 'list_skills', 'read_skill_content',
     'search_index', 'search_novel', 'retrieve_context',
-    'replace_selected_text', 'replace_text_near_cursor', 'insert_text_at_cursor', 'get_full_editor_content',
-    'set_workflow_phase',
-    'create_novel', 'list_novels',
+    'get_full_editor_content',
+    'list_novels',
     'spawn_subagent', 'get_system_time', 'WebSearch', 'WebFetch',
   ]),
 };
@@ -406,12 +439,20 @@ const TOOL_POLICY_ALLOWLISTS = {
 function applyToolPolicy(tools, policy) {
   const list = Array.isArray(tools) ? tools : [];
   const policyId = policy?.id || 'general';
-  const allow = TOOL_POLICY_ALLOWLISTS[policyId] || TOOL_POLICY_ALLOWLISTS.general;
+  const policyLabels = Array.isArray(policy?.labels) && policy.labels.length ? policy.labels : [policyId];
+  const allow = new Set();
+  for (const label of policyLabels) {
+    for (const name of TOOL_POLICY_ALLOWLISTS[label] || TOOL_POLICY_ALLOWLISTS.general) allow.add(name);
+  }
   const filtered = list.filter((tool) => allow.has(tool?.name));
   return {
     tools: filtered,
     summary: {
       id: policyId,
+      labels: policyLabels,
+      operation: policy?.operation || 'read',
+      risk: policy?.risk || 'low',
+      phaseHint: policy?.phaseHint || '',
       reason: policy?.reason || '',
       beforeCount: list.length,
       afterCount: filtered.length,

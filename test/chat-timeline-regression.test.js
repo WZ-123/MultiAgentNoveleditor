@@ -179,8 +179,15 @@ async function runChatTimelineRegressionTest() {
     } else {
       fail('T3_history_persists_append_then_update', JSON.stringify(assistantMessages));
     }
+    if (assistantMessages.every((message) => message.executionTrace?.schemaVersion === 1
+      && message.executionTrace?.status === 'completed'
+      && !Object.prototype.hasOwnProperty.call(message.executionTrace, 'thinking'))) {
+      pass('T4_history_persists_execution_trace_without_thinking', 'both turns persisted replayable trace metadata while raw thinking remained session-only');
+    } else {
+      fail('T4_history_persists_execution_trace_without_thinking', JSON.stringify(assistantMessages.map((message) => message.executionTrace)));
+    }
   } catch (err) {
-    fail('T4_harness', err.message || String(err));
+    fail('T5_harness', err.message || String(err));
   } finally {
     providerManager.getActiveProvider = originalGetActiveProvider;
     modelAliases.getAlias = originalGetAlias;

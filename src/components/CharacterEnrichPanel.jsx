@@ -43,24 +43,38 @@ const STATUS_COLOR = {
  */
 export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete, initialSelectedIds }) {
   const mana = typeof window !== 'undefined' ? window.mana : null;
-  const [fanworkName, setFanworkName] = useState('');
+  const [fanworkName, setFanworkName] = useState(() => {
+    const initialIds = new Set(Array.isArray(initialSelectedIds) ? initialSelectedIds : []);
+    const initialCharacter = (characters || []).find((ch) => initialIds.has(ch.id || ch.name) && ch.isOriginal === false);
+    return initialCharacter?.sourceWork || '';
+  });
   const [running, setRunning] = useState(false);
   const [runId, setRunId] = useState('');
   const [logs, setLogs] = useState([]);
   const [charStatus, setCharStatus] = useState(() => {
     const m = {};
     for (const ch of (characters || [])) {
-      m[ch.id || ch.name] = { id: ch.id || ch.name, name: ch.name || ch.id, status: 'pending', message: '' };
+      m[ch.id || ch.name] = {
+        id: ch.id || ch.name,
+        name: ch.name || ch.id,
+        isOriginal: ch.isOriginal,
+        sourceWork: ch.sourceWork || '',
+        status: ch.isOriginal === false ? 'pending' : 'skipped',
+        message: ch.isOriginal === true ? '当前标记为原创，请先编辑角色卡' : '尚未确认角色归属',
+      };
     }
     return m;
   });
   const [selectedIds, setSelectedIds] = useState(() => {
     const s = new Set();
     if (Array.isArray(initialSelectedIds) && initialSelectedIds.length > 0) {
-      for (const id of initialSelectedIds) s.add(id);
+      for (const id of initialSelectedIds) {
+        const ch = (characters || []).find((item) => (item.id || item.name) === id);
+        if (ch?.isOriginal === false) s.add(id);
+      }
     } else {
       for (const ch of (characters || [])) {
-        s.add(ch.id || ch.name);
+        if (ch.isOriginal === false) s.add(ch.id || ch.name);
       }
     }
     return s;
@@ -68,7 +82,6 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
   const [summary, setSummary] = useState(null);
   const [completionNotice, setCompletionNotice] = useState(null);
   const logEndRef = useRef(null);
-  const autoCloseTimerRef = useRef(null);
 
   // Auto-detect fanwork name from world meta on mount
   useEffect(() => {
@@ -78,7 +91,7 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
         mana.fs.readJson(`${active.dir}/world/meta.json`, null)
           .then((meta) => {
             if (meta?.possibleFanworkOf && meta.possibleFanworkOf !== 'null' && meta.possibleFanworkOf !== '原创作品') {
-              setFanworkName(meta.possibleFanworkOf);
+              setFanworkName((current) => current || meta.possibleFanworkOf);
             }
           })
           .catch(() => {});
@@ -101,16 +114,16 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
         setLogs((prev) => [...prev, message || `完成: ${successCount} 成功, ${failCount} 失败`]);
         setSummary((s) => s ? { ...s, done: s.total } : s);
         setRunning(false);
-        setCompletionNotice({ successCount, failCount, message: message || `完成: ${successCount} 成功, ${failCount} 失败` });
+        setCompletionNotice({ successCount: successCount || 0, failCount: failCount || 0, message: message || `完成: ${successCount} 成功, ${failCount} 失败` });
         onComplete?.();
-        // 2 秒后自动关闭
-        autoCloseTimerRef.current = setTimeout(() => {
-          if (document.visibilityState !== 'hidden') onClose?.();
-        }, 2000);
       } else if (charName && charName !== '_all') {
         setCharStatus((prev) => ({
           ...prev,
-          [charName]: { ...(prev[charName] || { name: charName }), status: status || 'pending', message: (message || '').split('\n')[0] },
+          ...(() => {
+            const matching = Object.values(prev).find((item) => item.name === charName);
+            const key = matching?.id || charName;
+            return { [key]: { ...(matching || { id: key, name: charName }), status: status || 'pending', message: (message || '').split('\n')[0] } };
+          })(),
         }));
         // Split multi-line messages into separate log entries for readability
         const basePrefix = `[${charName}] ${STATUS_LABEL[status] || status}`;
@@ -138,13 +151,6 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
-  // Clean up auto-close timer on unmount
-  useEffect(() => {
-    return () => {
-      if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
-    };
-  }, []);
-
   const startEnrichment = async () => {
     if (!mana?.novel?.enrichCharacters || running) return;
     if (selectedIds.size === 0) {
@@ -157,7 +163,12 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
     setCharStatus((prev) => {
       const next = {};
       for (const k of Object.keys(prev)) {
-        next[k] = { ...prev[k], status: selectedIds.has(k) ? 'pending' : 'skipped', message: '' };
+        const item = prev[k];
+        next[k] = {
+          ...item,
+          status: selectedIds.has(k) ? 'pending' : 'skipped',
+          message: item.isOriginal === true ? '当前标记为原创，请先编辑角色卡' : item.isOriginal === false ? '' : '尚未确认角色归属',
+        };
       }
       return next;
     });
@@ -191,6 +202,7 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
   const charList = useMemo(() => {
     return Object.values(charStatus);
   }, [charStatus]);
+  const eligibleIds = useMemo(() => charList.filter((ch) => ch.isOriginal === false).map((ch) => ch.id), [charList]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
@@ -249,9 +261,9 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
 
           {/* Completion notice */}
           {completionNotice && (
-            <div className="bg-green-900/20 border border-green-700/40 rounded p-2 text-center">
-              <div className="text-green-400 text-xs font-semibold">{completionNotice.message}</div>
-              <div className="text-green-500/70 text-[10px] mt-0.5">2 秒后自动关闭...</div>
+            <div className={`${completionNotice.successCount > 0 ? 'bg-green-900/20 border-green-700/40' : 'bg-rose-900/20 border-rose-700/40'} border rounded p-2 text-center`}>
+              <div className={`${completionNotice.successCount > 0 ? 'text-green-400' : 'text-rose-400'} text-xs font-semibold`}>{completionNotice.message}</div>
+              <div className="text-gray-500 text-[10px] mt-0.5">运行结果会保留在此处，请确认日志后关闭。</div>
             </div>
           )}
 
@@ -261,7 +273,7 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
               <label className="text-gray-500 text-[11px]">选择要补全的角色</label>
               <div className="flex gap-2 text-[10px]">
                 <button
-                  onClick={() => setSelectedIds(new Set(Object.keys(charStatus)))}
+                  onClick={() => setSelectedIds(new Set(eligibleIds))}
                   disabled={running}
                   className="text-blue-400 hover:text-blue-300 disabled:opacity-40"
                 >全选</button>
@@ -277,6 +289,7 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
                 const Icon = STATUS_ICON[ch.status] || Clock;
                 const isSpinning = ch.status === 'searching' || ch.status === 'fetching' || ch.status === 'extracting';
                 const isSelected = selectedIds.has(ch.id);
+                const isEligible = ch.isOriginal === false;
                 return (
                   <div key={ch.id} className="flex items-center gap-2 px-3 py-1.5 text-xs">
                     <input
@@ -290,11 +303,14 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
                           return next;
                         });
                       }}
-                      disabled={running}
+                      disabled={running || !isEligible}
                       className="accent-blue-500"
                     />
                     <Icon size={12} className={`shrink-0 ${isSpinning ? 'animate-spin' : ''} ${STATUS_COLOR[ch.status] || 'text-gray-500'}`} />
-                    <span className={`flex-1 truncate ${isSelected ? 'text-gray-300' : 'text-gray-600'}`}>{ch.name}</span>
+                    <span className={`flex-1 truncate ${isSelected ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {ch.name}
+                      {!isEligible && <span className="ml-1 text-[9px] text-gray-600">({ch.isOriginal === true ? '原创' : '未确认'})</span>}
+                    </span>
                     <span className={`text-[10px] ${STATUS_COLOR[ch.status] || 'text-gray-500'}`}>
                       {STATUS_LABEL[ch.status] || ch.status}
                     </span>
@@ -308,8 +324,13 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
               })}
             </div>
             <div className="text-[10px] text-gray-600 mt-0.5">
-              已选择 {selectedIds.size} / {charList.length} 个角色
+              已选择 {selectedIds.size} / {eligibleIds.length} 个可补全的二创角色
             </div>
+            {eligibleIds.length === 0 && (
+              <div className="mt-1 rounded border border-amber-800/40 bg-amber-950/20 px-2 py-1.5 text-[10px] text-amber-400">
+                没有已确认的二创角色。请关闭此窗口，点击角色卡上的编辑按钮，把角色归属改为“二创角色”并填写原作。
+              </div>
+            )}
           </div>
 
           {/* Log output */}
@@ -355,7 +376,7 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
             </button>
             <button
               onClick={startEnrichment}
-              disabled={running || !characters?.length}
+              disabled={running || selectedIds.size === 0}
               className="px-3 py-1.5 text-xs bg-blue-700 text-white rounded hover:bg-blue-600 disabled:opacity-40 flex items-center gap-1"
             >
               {running ? <Loader2 size={12} className="animate-spin" /> : <Globe size={12} />}

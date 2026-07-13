@@ -27,6 +27,7 @@ const {
   splitIntoParagraphs,
 } = require('../runtime/chapterCharacterReview');
 const { getSystemTimeInfo } = require('../runtime/systemTime');
+const chapterHarnessState = require('../store/chapterHarnessState');
 
 function textResult(obj) {
   const text = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
@@ -168,7 +169,71 @@ function _excerptParagraph(text) {
   return compacted.length > 80 ? `${compacted.slice(0, 80)}...` : compacted;
 }
 
-function _normalizeQualityAnnotations(paragraphs, rawAnnotations) {
+const QUALITY_REVIEW_CHUNK_SIZE = 12;
+const QUALITY_REVIEW_CHUNK_OVERLAP = 2;
+const QUALITY_REVIEW_MAX_CONCURRENCY = 3;
+let qualityReviewActiveCount = 0;
+const qualityReviewQueue = [];
+
+function _drainQualityReviewQueue() {
+  while (qualityReviewActiveCount < QUALITY_REVIEW_MAX_CONCURRENCY && qualityReviewQueue.length > 0) {
+    const next = qualityReviewQueue.shift();
+    qualityReviewActiveCount += 1;
+    Promise.resolve()
+      .then(next.task)
+      .then(next.resolve, next.reject)
+      .finally(() => {
+        qualityReviewActiveCount -= 1;
+        _drainQualityReviewQueue();
+      });
+  }
+}
+
+function _runQualityReviewLimited(task) {
+  return new Promise((resolve, reject) => {
+    qualityReviewQueue.push({ task, resolve, reject });
+    _drainQualityReviewQueue();
+  });
+}
+
+function _buildOverlappingParagraphChunks(paragraphs, size = QUALITY_REVIEW_CHUNK_SIZE, overlap = QUALITY_REVIEW_CHUNK_OVERLAP) {
+  const list = Array.isArray(paragraphs) ? paragraphs : [];
+  if (!list.length) return [];
+  if (list.length <= size) return [list];
+  const chunks = [];
+  let start = 0;
+  while (start < list.length) {
+    const end = Math.min(list.length, start + size);
+    chunks.push(list.slice(start, end));
+    if (end >= list.length) break;
+    start = Math.max(start + 1, end - overlap);
+  }
+  return chunks;
+}
+
+function _inferQualityPatternId(annotation) {
+  const explicit = _compactText(annotation?.patternId);
+  if (explicit) return explicit;
+  const kind = _compactText(annotation?.kind) || 'other';
+  const note = _compactText(annotation?.note);
+  if (kind === 'not_but_overuse') return /连续否定/u.test(note) ? 'multi_negative_enumeration' : 'not_but_overuse';
+  if (kind === 'choppy') return /段落功能|一句一段|单句段/u.test(note) ? 'paragraph_function' : 'choppy';
+  if (kind === 'incoherent') return 'incoherent';
+  if (/比喻/u.test(note)) return 'simile_overuse';
+  if (/章末/u.test(note)) return 'ending_template';
+  if (/破折号/u.test(note)) return 'dash_overuse';
+  if (/省略号|分隔线/u.test(note)) return 'ellipsis_separator_overuse';
+  if (/意象/u.test(note)) return 'stock_image';
+  if (/标签式/u.test(note)) return 'label_descriptor';
+  if (/感官|清单/u.test(note)) return 'sensory_checklist';
+  return `other:${note.slice(0, 24) || 'unspecified'}`;
+}
+
+function _qualitySeverityRank(value) {
+  return ({ low: 1, advisory: 1, medium: 2, high: 3, blocking: 4 })[_compactText(value)] || 0;
+}
+
+function _normalizeQualityAnnotations(paragraphs, rawAnnotations, options = {}) {
   const paragraphMap = new Map((Array.isArray(paragraphs) ? paragraphs : []).map((paragraph) => [paragraph.id, paragraph]));
   const validIds = new Set(paragraphMap.keys());
   const annotations = [];
@@ -188,7 +253,8 @@ function _normalizeQualityAnnotations(paragraphs, rawAnnotations) {
 
     const note = _compactText(annotation?.note);
     const kind = _compactText(annotation?.kind) || 'other';
-    const key = `${targets.join(',')}::${kind}::${note}`;
+    const patternId = _inferQualityPatternId(annotation);
+    const key = `${targets.join(',')}::${kind}::${patternId}`;
     if (seen.has(key)) continue;
     seen.add(key);
 
@@ -204,13 +270,46 @@ function _normalizeQualityAnnotations(paragraphs, rawAnnotations) {
       paragraphIndexes,
       excerpt: _excerptParagraph(firstParagraph?.text || ''),
       kind,
+      patternId,
       note,
-      severity: _compactText(annotation?.severity),
+      evidence: _compactText(annotation?.evidence) || _excerptParagraph(firstParagraph?.text || ''),
+      confidence: Number.isFinite(Number(annotation?.confidence))
+        ? Math.max(0, Math.min(1, Number(annotation.confidence)))
+        : (Number.isFinite(Number(options.defaultConfidence)) ? Number(options.defaultConfidence) : 0.72),
+      severity: _compactText(annotation?.severity) || options.defaultSeverity || 'medium',
       suggestedAction: _compactText(annotation?.suggestedAction),
+      reviewSource: options.source || 'model',
+      reviewVotes: 1,
     });
   }
 
   return annotations.sort((left, right) => left.paragraphIndex - right.paragraphIndex);
+}
+
+function _mergeNormalizedQualityAnnotations(...groups) {
+  const merged = new Map();
+  for (const annotation of groups.flat()) {
+    if (!annotation) continue;
+    const ids = Array.isArray(annotation.paragraphIds) ? annotation.paragraphIds : [annotation.paragraphId].filter(Boolean);
+    const key = `${ids.join(',')}::${annotation.kind || 'other'}::${annotation.patternId || _inferQualityPatternId(annotation)}`;
+    const previous = merged.get(key);
+    if (!previous) {
+      merged.set(key, { ...annotation, paragraphIds: ids });
+      continue;
+    }
+    merged.set(key, {
+      ...previous,
+      confidence: Math.max(Number(previous.confidence) || 0, Number(annotation.confidence) || 0),
+      severity: _qualitySeverityRank(annotation.severity) > _qualitySeverityRank(previous.severity)
+        ? annotation.severity
+        : previous.severity,
+      evidence: previous.evidence || annotation.evidence,
+      suggestedAction: previous.suggestedAction || annotation.suggestedAction,
+      reviewSource: previous.reviewSource === annotation.reviewSource ? previous.reviewSource : 'hybrid',
+      reviewVotes: (Number(previous.reviewVotes) || 1) + (Number(annotation.reviewVotes) || 1),
+    });
+  }
+  return Array.from(merged.values()).sort((left, right) => left.paragraphIndex - right.paragraphIndex);
 }
 
 async function _loadQualityReviewHelpers() {
@@ -221,6 +320,191 @@ async function _loadQualityReviewHelpers() {
     buildParagraphFunctionReviewPayload: mod.buildParagraphFunctionReviewPayload,
     detectParagraphFunctionAnnotations: mod.detectParagraphFunctionAnnotations,
   };
+}
+
+function _fitDeAiBaselineText(value, maxChars, sourceRef, label) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  return fitTextForModel(text, { maxChars, sourceRef, label, kind: 'de_ai_style_baseline' }).text;
+}
+
+function _isDialogueReference(text) {
+  const value = _compactText(text);
+  return /^[“"「『]/u.test(value)
+    || /[”"」』]$/u.test(value)
+    || /^[^：:]{1,16}[：:][“"「『]/u.test(value);
+}
+
+function _selectDeAiReferenceSamples(paragraphs, excludedIndexes = [], focusIndexes = [], maxSamples = 4) {
+  const excluded = new Set((Array.isArray(excludedIndexes) ? excludedIndexes : []).filter(Number.isInteger));
+  const focus = (Array.isArray(focusIndexes) ? focusIndexes : []).filter(Number.isInteger);
+  const candidates = (Array.isArray(paragraphs) ? paragraphs : []).filter((paragraph) => {
+    const text = _compactText(paragraph?.text);
+    return Number.isInteger(paragraph?.index)
+      && !excluded.has(paragraph.index)
+      && text.length >= 12
+      && !/^#{1,6}\s/u.test(text);
+  });
+  if (!candidates.length) return [];
+
+  if (focus.length) {
+    return candidates
+      .map((paragraph) => ({
+        paragraph,
+        distance: Math.min(...focus.map((index) => Math.abs(paragraph.index - index))),
+      }))
+      .sort((left, right) => left.distance - right.distance || left.paragraph.index - right.paragraph.index)
+      .slice(0, maxSamples)
+      .map(({ paragraph }) => _fitDeAiBaselineText(paragraph.text, 600, `chapter-paragraph:${paragraph.id}`, 'author_reference_sample'));
+  }
+
+  const positions = [0, Math.floor((candidates.length - 1) / 2), candidates.length - 1];
+  const picked = [];
+  for (const position of positions) {
+    const paragraph = candidates[position];
+    if (!paragraph || picked.some((item) => item.index === paragraph.index)) continue;
+    picked.push(paragraph);
+  }
+  for (const paragraph of candidates) {
+    if (picked.length >= maxSamples) break;
+    if (!picked.some((item) => item.index === paragraph.index)) picked.push(paragraph);
+  }
+  return picked.slice(0, maxSamples).map((paragraph) => (
+    _fitDeAiBaselineText(paragraph.text, 600, `chapter-paragraph:${paragraph.id}`, 'author_reference_sample')
+  ));
+}
+
+function _parseChapterOrdinal(chapterName, displays) {
+  const list = Array.isArray(displays) ? displays : [];
+  const displayIndex = list.findIndex((item) => item?.name === chapterName || item?.fileName === chapterName);
+  if (displayIndex >= 0) return displayIndex + 1;
+  const matched = String(chapterName || '').match(/chapter-(\d+)/iu);
+  return matched ? Number(matched[1]) : null;
+}
+
+function _matchesDeAiChapterNode(node, chapterName, ordinal) {
+  if (chapterName && (node?.chapterRef === chapterName || node?.writtenChapterRef === chapterName)) return true;
+  return Number.isInteger(ordinal) && Number(node?.chapterIndex) === ordinal;
+}
+
+function _characterLookupKeys(character) {
+  return [character?.id, character?.name, ...(Array.isArray(character?.aliases) ? character.aliases : [])]
+    .map((item) => _compactText(item).toLocaleLowerCase('zh-CN'))
+    .filter(Boolean);
+}
+
+async function _buildDeAiStyleBaseline({
+  ctx,
+  chapterName = '',
+  paragraphs = [],
+  targetIndexes = [],
+  referenceSamples = [],
+} = {}) {
+  const dir = ctx?.novelDir || '';
+  const explicitReferences = (Array.isArray(referenceSamples) ? referenceSamples : [])
+    .map((item) => _fitDeAiBaselineText(item, 600, 'caller:reference-sample', 'author_reference_sample'))
+    .filter(Boolean)
+    .slice(0, 4);
+  if (!dir) {
+    return {
+      styleMemory: '',
+      pov: [],
+      sceneSignals: [],
+      characterVoices: [],
+      referenceSamples: explicitReferences,
+      dialogueSamples: [],
+      rhythmRule: '以目标片段及相邻上下文现有的句长、停顿和段落疏密为准，不主动把节奏修整得更均匀。',
+    };
+  }
+
+  const [styleMemory, outlineData, displays, characters] = await Promise.all([
+    novelData.readStyleMemory(dir).catch(() => ''),
+    novelData.readOutlineNodes(dir).catch(() => null),
+    novelData.listChaptersWithDisplay(dir).catch(() => []),
+    novelData.listCharacters(dir).catch(() => []),
+  ]);
+  const ordinal = _parseChapterOrdinal(chapterName, displays);
+  const matchingNodes = (Array.isArray(outlineData?.nodes) ? outlineData.nodes : [])
+    .filter((node) => _matchesDeAiChapterNode(node, chapterName, ordinal));
+  const characterIds = new Set(matchingNodes.flatMap((node) => [
+    node?.pov,
+    ...(Array.isArray(node?.characters) ? node.characters : []),
+  ]).map((item) => _compactText(item).toLocaleLowerCase('zh-CN')).filter(Boolean));
+  const chapterText = (Array.isArray(paragraphs) ? paragraphs : []).map((paragraph) => paragraph?.text || '').join('\n');
+  const selectedCharacters = (Array.isArray(characters) ? characters : []).filter((character) => {
+    if (_characterLookupKeys(character).some((key) => characterIds.has(key))) return true;
+    return _characterLookupKeys(character).some((key) => key.length >= 2 && chapterText.toLocaleLowerCase('zh-CN').includes(key));
+  }).slice(0, 5);
+  const characterByKey = new Map();
+  for (const character of selectedCharacters) {
+    for (const key of _characterLookupKeys(character)) characterByKey.set(key, character);
+  }
+  const pov = Array.from(new Set(matchingNodes.map((node) => _compactText(node?.pov)).filter(Boolean))).map((id) => {
+    const character = characterByKey.get(id.toLocaleLowerCase('zh-CN'));
+    return character?.name ? `${character.name}（${id}）` : id;
+  });
+  const sceneSignals = matchingNodes.slice(0, 6).map((node) => ({
+    title: _compactText(node?.title),
+    setting: _compactText(node?.setting),
+    location: _compactText(node?.location),
+    summary: _fitDeAiBaselineText(node?.summary, 500, `outline:${node?.id || 'scene'}`, 'scene_summary'),
+  })).filter((item) => Object.values(item).some(Boolean));
+  const characterVoices = selectedCharacters.map((character) => ({
+    id: character.id || '',
+    name: character.name || character.id || '',
+    personality: _fitDeAiBaselineText(character.personality, 500, `character:${character.id}:personality`, 'character_personality'),
+    speechStyle: _fitDeAiBaselineText(character.speechStyle || character.attributes?.语言特点, 500, `character:${character.id}:speech`, 'character_speech_style'),
+    quotes: _fitDeAiBaselineText(character.quotes, 500, `character:${character.id}:quotes`, 'character_quote_samples'),
+  })).filter((item) => item.name && (item.personality || item.speechStyle || item.quotes));
+  const chosenReferences = explicitReferences.length
+    ? explicitReferences
+    : _selectDeAiReferenceSamples(paragraphs, targetIndexes, targetIndexes, 4);
+  const dialogueSamples = (Array.isArray(paragraphs) ? paragraphs : [])
+    .filter((paragraph) => !targetIndexes.includes(paragraph.index) && _isDialogueReference(paragraph.text))
+    .slice(0, 3)
+    .map((paragraph) => _fitDeAiBaselineText(paragraph.text, 500, `chapter-dialogue:${paragraph.id}`, 'chapter_dialogue_sample'));
+
+  return {
+    styleMemory: _fitDeAiBaselineText(styleMemory, 4000, 'style:memory', 'style_memory'),
+    pov,
+    sceneSignals,
+    characterVoices,
+    referenceSamples: chosenReferences,
+    dialogueSamples,
+    rhythmRule: '以目标片段、前后相邻段和作者已保留样本的句长、停顿与段落疏密为准；保留有意的粗粝、跳跃、留白和不规则节奏，不主动变得圆润整齐。',
+  };
+}
+
+function _deAiBaselineSummary(baseline) {
+  return {
+    hasStyleMemory: !!baseline?.styleMemory,
+    povCount: Array.isArray(baseline?.pov) ? baseline.pov.length : 0,
+    sceneSignalCount: Array.isArray(baseline?.sceneSignals) ? baseline.sceneSignals.length : 0,
+    characterVoiceCount: Array.isArray(baseline?.characterVoices) ? baseline.characterVoices.length : 0,
+    referenceSampleCount: Array.isArray(baseline?.referenceSamples) ? baseline.referenceSamples.length : 0,
+    dialogueSampleCount: Array.isArray(baseline?.dialogueSamples) ? baseline.dialogueSamples.length : 0,
+  };
+}
+
+function _formatDeAiStyleBaseline(baseline) {
+  if (!baseline || typeof baseline !== 'object') return '';
+  const lines = ['作品与人物基线（均为只读软参考，不得复制原句，也不得压过目标原文事实）：'];
+  if (baseline.styleMemory) lines.push(`- 文风记忆：\n${baseline.styleMemory}`);
+  if (Array.isArray(baseline.pov) && baseline.pov.length) lines.push(`- POV 人物：${baseline.pov.join('、')}`);
+  if (Array.isArray(baseline.sceneSignals) && baseline.sceneSignals.length) {
+    lines.push(`- 当前场景线索：${JSON.stringify(baseline.sceneSignals)}`);
+  }
+  if (Array.isArray(baseline.characterVoices) && baseline.characterVoices.length) {
+    lines.push(`- 人物声音基线：${JSON.stringify(baseline.characterVoices)}`);
+  }
+  if (Array.isArray(baseline.dialogueSamples) && baseline.dialogueSamples.length) {
+    lines.push(`- 本章既有对白样本：\n${baseline.dialogueSamples.join('\n')}`);
+  }
+  if (Array.isArray(baseline.referenceSamples) && baseline.referenceSamples.length) {
+    lines.push(`- 作者当前保留的段落样本：\n${baseline.referenceSamples.join('\n\n')}`);
+  }
+  if (baseline.rhythmRule) lines.push(`- 场景节奏：${baseline.rhythmRule}`);
+  return lines.length > 1 ? lines.join('\n') : '';
 }
 
 async function _reviewChapterParagraphFunction(chapterName, focus, ctx) {
@@ -272,7 +556,7 @@ async function _reviewChapterParagraphFunction(chapterName, focus, ctx) {
   };
 }
 
-async function _reviewChapterDeAiStyle(chapterName, focus, ctx) {
+async function _reviewChapterDeAiStyle(chapterName, focus, sensitivity, ctx) {
   const dir = requireNovel(ctx);
   const chapterText = await novelData.readChapter(dir, chapterName);
   if (!_cleanText(chapterText)) {
@@ -281,44 +565,77 @@ async function _reviewChapterDeAiStyle(chapterName, focus, ctx) {
 
   const paragraphs = splitIntoParagraphs(chapterText);
   const { buildQualityReviewPayload, detectCrossParagraphQualityAnnotations } = await _loadQualityReviewHelpers();
-  const payload = buildQualityReviewPayload(paragraphs);
-  payload.chapterName = chapterName;
-  payload.focus = _cleanText(focus);
-
-  // Overall hard timeout for the subagent call (4 min). This matches the
-  // MCP SDK client's timeout (5 min) with margin, and prevents the server
-  // from hanging orphaned when the client disconnects.
-  const QUALITY_REVIEW_TIMEOUT_MS = 240_000;
-  const timeoutSignal = AbortSignal.timeout(QUALITY_REVIEW_TIMEOUT_MS);
-  const workflowOrchestrator = require('../runtime/workflowOrchestrator');
-  const result = await workflowOrchestrator.runWorkflow({
-    mode: 'subagent',
-    subagentId: 'sa-prose-quality',
-    input: JSON.stringify(payload),
-    abortSignal: timeoutSignal,
-    novelContext: ctx?.novel
-      ? { novelId: ctx.novel.id || null, novelDir: ctx.novelDir || null }
-      : undefined,
+  const chunks = _buildOverlappingParagraphChunks(paragraphs);
+  const deterministicAnnotations = _normalizeQualityAnnotations(
+    paragraphs,
+    detectCrossParagraphQualityAnnotations(paragraphs),
+    { source: 'deterministic', defaultConfidence: 0.78, defaultSeverity: 'medium' }
+  );
+  const deterministicTargetIndexes = Array.from(new Set(deterministicAnnotations.flatMap((annotation) => (
+    Array.isArray(annotation.paragraphIndexes) ? annotation.paragraphIndexes : [annotation.paragraphIndex]
+  )).filter(Number.isInteger)));
+  const styleBaseline = await _buildDeAiStyleBaseline({
+    ctx,
+    chapterName,
+    paragraphs,
+    targetIndexes: deterministicTargetIndexes,
   });
 
-  const parsed = _parseJsonText(String(result.output || ''), { annotations: [] });
-  const modelAnnotations = _normalizeQualityAnnotations(paragraphs, parsed?.annotations);
-  const crossParagraphAnnotations = _normalizeQualityAnnotations(
-    paragraphs,
-    detectCrossParagraphQualityAnnotations(paragraphs)
-  );
-  const merged = [];
-  const seen = new Set();
-  for (const annotation of [...modelAnnotations, ...crossParagraphAnnotations]) {
-    const key = `${annotation.paragraphId}::${annotation.kind}::${annotation.note}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    merged.push(annotation);
+  // Each model shard has its own timeout. A shared limiter bounds concurrency
+  // across chapters so multi-chapter review does not create a provider retry storm.
+  const QUALITY_REVIEW_TIMEOUT_MS = 180_000;
+  const workflowOrchestrator = require('../runtime/workflowOrchestrator');
+  const settled = await Promise.allSettled(chunks.map((chunk, chunkIndex) => _runQualityReviewLimited(async () => {
+    const payload = buildQualityReviewPayload(chunk);
+    payload.chapterName = chapterName;
+    payload.focus = _cleanText(focus);
+    payload.sensitivity = sensitivity;
+    payload.styleBaseline = styleBaseline;
+    payload.shard = {
+      index: chunkIndex,
+      count: chunks.length,
+      paragraphIndexes: chunk.map((paragraph) => paragraph.index),
+      overlapParagraphs: QUALITY_REVIEW_CHUNK_OVERLAP,
+    };
+    const result = await workflowOrchestrator.runWorkflow({
+      mode: 'subagent',
+      subagentId: 'sa-prose-quality',
+      input: JSON.stringify(payload),
+      abortSignal: AbortSignal.timeout(QUALITY_REVIEW_TIMEOUT_MS),
+      novelContext: ctx?.novel
+        ? { novelId: ctx.novel.id || null, novelDir: ctx.novelDir || null }
+        : undefined,
+    });
+    const parsed = _parseJsonText(String(result.output || ''), { annotations: [] });
+    return _normalizeQualityAnnotations(paragraphs, parsed?.annotations, {
+      source: `model-shard-${chunkIndex + 1}`,
+      defaultConfidence: 0.72,
+      defaultSeverity: 'medium',
+    });
+  })));
+
+  const successfulShards = settled.filter((item) => item.status === 'fulfilled');
+  const failedShards = settled.filter((item) => item.status === 'rejected');
+  if (!successfulShards.length && !deterministicAnnotations.length) {
+    throw failedShards[0]?.reason || new Error(`AI 味审查失败：${chapterName}`);
   }
+  const modelAnnotations = successfulShards.flatMap((item) => item.value || []);
+  const confidenceThreshold = ({ conservative: 0.85, balanced: 0.65, aggressive: 0 })[sensitivity] ?? 0.65;
+  const merged = _mergeNormalizedQualityAnnotations(modelAnnotations, deterministicAnnotations)
+    .filter((annotation) => (Number(annotation.confidence) || 0) >= confidenceThreshold);
 
   return {
     chapterName,
-    annotations: merged.sort((left, right) => left.paragraphIndex - right.paragraphIndex),
+    paragraphCount: paragraphs.length,
+    shardCount: chunks.length,
+    completedShardCount: successfulShards.length,
+    failedShardCount: failedShards.length,
+    reviewIncomplete: failedShards.length > 0,
+    sensitivity,
+    confidenceThreshold,
+    deterministicAnnotationCount: deterministicAnnotations.length,
+    styleBaseline: _deAiBaselineSummary(styleBaseline),
+    annotations: merged,
   };
 }
 
@@ -1087,17 +1404,39 @@ const TOOLS = [
     },
   },
   {
+    name: 'read_chapter_summary',
+    description: '读取指定章节已经保存的结构化摘要。摘要不存在时返回空字符串；不会临时调用模型生成摘要。',
+    inputSchema: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] },
+    handler: async (args, ctx) => {
+      const dir = requireNovel(ctx);
+      return textResult(await novelData.readSummary(dir, args.name));
+    },
+  },
+  {
+    name: 'rebuild_chapter_harness_state',
+    description: '根据当前已保存章节和时间线重建章节 Harness 状态索引。只写入 .mana 派生状态，不修改正文、角色卡、大纲或时间线。',
+    inputSchema: { type: 'object', properties: {} },
+    requiresConfirmation: true,
+    handler: async (_args, ctx) => {
+      const dir = requireNovel(ctx);
+      return textResult(await chapterHarnessState.rebuildStateIndex(dir));
+    },
+  },
+  {
     name: 'replace_chapter_text',
     description: '在指定章节中替换正文内容。优先按精确原文片段匹配；如果提供 beforeContext/afterContext，会像 IDE patch 一样结合上下文锚点和规范化匹配（兼容 CRLF、全角/半角、不可见空白）来定位目标。默认要求只命中 1 处。',
     inputSchema: {
       type: 'object',
       properties: {
         name: { type: 'string', description: '章节文件名，如 "chapter-002.md"' },
+        baseContent: { type: 'string', description: '可选。预览时读取的整章正文；提交时用于检测快照变化。' },
         targetText: { type: 'string', description: '要被替换的原始正文片段，建议提供足够长的唯一片段' },
         replacement: { type: 'string', description: '替换后的新文本' },
         expectedMatchCount: { type: 'number', description: '预期命中次数。默认 1；若与实际不符则失败。' },
         beforeContext: { type: 'string', description: '可选。targetText 前方附近的一小段原文上下文，用于像 IDE patch 一样锚定目标位置。' },
         afterContext: { type: 'string', description: '可选。targetText 后方附近的一小段原文上下文，用于像 IDE patch 一样锚定目标位置。' },
+        previewOnly: { type: 'boolean', description: '仅计算变更预览，不写入章节。由聊天 Harness 使用。' },
+        verifiedContentHash: { type: 'string', description: '严格验证通过的预览正文 hash；提交时必须匹配。' },
       },
       required: ['name', 'targetText', 'replacement'],
     },
@@ -1109,8 +1448,24 @@ const TOOLS = [
         expectedMatchCount: Number.isInteger(args.expectedMatchCount) ? args.expectedMatchCount : 1,
         beforeContext: typeof args.beforeContext === 'string' ? args.beforeContext : '',
         afterContext: typeof args.afterContext === 'string' ? args.afterContext : '',
+        baseContent: typeof args.baseContent === 'string' ? args.baseContent : '',
+        previewOnly: args.previewOnly === true,
+        verifiedContentHash: typeof args.verifiedContentHash === 'string' ? args.verifiedContentHash : '',
       });
       const afterSnapshot = { content: result.content || '', metadata: result.metadata || null, exists: true };
+      if (args.previewOnly === true) {
+        return textResult({
+          ok: true,
+          previewOnly: true,
+          name: result.name,
+          replacedCount: result.replacedCount,
+          matchCount: result.matchCount,
+          matchStrategy: result.matchStrategy,
+          baseContent: result.baseContent || beforeSnapshot.content || '',
+          afterContent: result.content || '',
+          ...buildChapterChangePayload(ctx, 'replace_chapter_text_preview', beforeSnapshot, afterSnapshot, result),
+        });
+      }
       const revision = await novelData.createChapterRevision(dir, result.name, result.content || '', result.metadata || null, {
         source: 'mcp',
         revisionLabel: 'MCP 替换正文',
@@ -1136,6 +1491,8 @@ const TOOLS = [
       properties: {
         name: { type: 'string', description: '章节文件名，如 "chapter-002.md"' },
         baseContent: { type: 'string', description: '可选。最近一次 read_chapter 得到的整章正文。若当前文件已变更，工具会拒绝应用，避免把旧快照 patch 打到新内容上。' },
+        previewOnly: { type: 'boolean', description: '仅计算变更预览，不写入章节。由聊天 Harness 使用。' },
+        verifiedContentHash: { type: 'string', description: '严格验证通过的预览正文 hash；提交时必须匹配。' },
         edits: {
           type: 'array',
           description: '同一章内要一次性应用的多处编辑。每条 edit 都基于同一份原文快照定位。',
@@ -1161,8 +1518,23 @@ const TOOLS = [
       const beforeSnapshot = await readChapterSnapshot(dir, payload.name);
       const result = await novelData.applyChapterPatch(dir, payload.name, payload.edits, {
         baseContent: payload.baseContent,
+        previewOnly: args.previewOnly === true,
+        verifiedContentHash: typeof args.verifiedContentHash === 'string' ? args.verifiedContentHash : '',
       });
       const afterSnapshot = { content: result.content || '', metadata: result.metadata || null, exists: true };
+      if (args.previewOnly === true) {
+        return textResult({
+          ok: true,
+          previewOnly: true,
+          name: result.name,
+          editCount: result.editCount,
+          replacedCount: result.replacedCount,
+          edits: result.edits,
+          baseContent: result.baseContent || beforeSnapshot.content || '',
+          afterContent: result.content || '',
+          ...buildChapterChangePayload(ctx, 'apply_chapter_patch_preview', beforeSnapshot, afterSnapshot, result),
+        });
+      }
       const revision = await novelData.createChapterRevision(dir, result.name, result.content || '', result.metadata || null, {
         source: 'mcp',
         revisionLabel: 'MCP 批量修改正文',
@@ -1405,6 +1777,7 @@ const TOOLS = [
         name: { type: 'string', description: '文件名，如 "chapter-003.md"。不传时若指定 insertAfter 则自动计算' },
         content: { type: 'string', description: 'Markdown 正文（不含 frontmatter，frontmatter 自动生成）' },
         baseContent: { type: 'string', description: '可选。最近一次 read_chapter 读到的整章正文。若当前文件已变化，工具会拒绝写入。' },
+        verifiedContentHash: { type: 'string', description: '严格验证通过的正文 hash；聊天 Harness 提交时必须与 content 匹配。' },
         title: { type: 'string', description: '章节标题，写入 frontmatter' },
         volumeIndex: { type: 'number', description: '所属卷索引，写入 frontmatter' },
         sectionIndex: { type: 'number', description: '所属节索引，写入 frontmatter' },
@@ -1425,9 +1798,10 @@ const TOOLS = [
       if (args.volumeIndex != null) meta.volume = args.volumeIndex;
       if (args.sectionIndex != null) meta.section = args.sectionIndex;
       const metaObj = Object.keys(meta).length > 0 ? meta : null;
-      const writeOptions = _hasOwn(args, 'baseContent')
-        ? { baseContent: typeof args.baseContent === 'string' ? args.baseContent : '' }
-        : undefined;
+      const writeOptions = {
+        ...(_hasOwn(args, 'baseContent') ? { baseContent: typeof args.baseContent === 'string' ? args.baseContent : '' } : {}),
+        ...(_hasOwn(args, 'verifiedContentHash') ? { verifiedContentHash: typeof args.verifiedContentHash === 'string' ? args.verifiedContentHash : '' } : {}),
+      };
       const beforeSnapshot = await readChapterSnapshot(dir, name);
       await novelData.writeChapterWithMeta(dir, name, args.content, metaObj, writeOptions);
       const afterSnapshot = await readChapterSnapshot(dir, name);
@@ -1534,12 +1908,19 @@ const TOOLS = [
   },
   {
     name: 'de_ai_ify',
-    description: '调用专门的去 AI 味改写器，对给定中文小说片段做去套话、去八股、保留原意的自然化改写。',
+    description: '调用专门的去 AI 味改写器，参考作品文风和人物声音做最小必要修改；去套话、去八股但不扩写或过度润色。',
     inputSchema: {
       type: 'object',
       properties: {
         text: { type: 'string', description: '需要去 AI 味改写的正文片段' },
         guidance: { type: 'string', description: '可选，额外改写要求，例如保留语气、压缩字数、维持冷淡口吻' },
+        beforeContext: { type: 'string', description: '可选，目标片段前方的只读上下文，仅用于保持衔接，不得输出' },
+        afterContext: { type: 'string', description: '可选，目标片段后方的只读上下文，仅用于保持衔接，不得输出' },
+        preserveConstraints: { type: 'array', items: { type: 'string' }, description: '可选，必须保留的事实、口吻、视角或专名约束' },
+        chapterName: { type: 'string', description: '可选，目标片段所在章节，用于读取该作品的文风、POV、场景和人物声音基线' },
+        targetParagraphIndexes: { type: 'array', items: { type: 'integer' }, description: '可选，本次允许修改的目标段落索引，用于排除参考样本' },
+        referenceSamples: { type: 'array', items: { type: 'string' }, description: '可选，作者当前保留的相邻段落样本，只用于保持句长、停顿和用词密度' },
+        problemEvidence: { type: 'array', items: { type: 'string' }, description: '可选，本次已命中的问题原文；提供后只允许修改这些问题句及必要连接处' },
       },
       required: ['text'],
     },
@@ -1547,28 +1928,81 @@ const TOOLS = [
       const sourceText = _cleanText(args.text);
       if (!sourceText) throw new Error('de_ai_ify requires non-empty text');
 
+      const chapterName = _cleanText(args.chapterName);
+      let chapterParagraphs = [];
+      if (ctx?.novelDir && chapterName) {
+        const chapterText = await novelData.readChapter(ctx.novelDir, chapterName).catch(() => '');
+        if (_cleanText(chapterText)) chapterParagraphs = splitIntoParagraphs(chapterText);
+      }
+      const targetParagraphIndexes = (Array.isArray(args.targetParagraphIndexes) ? args.targetParagraphIndexes : [])
+        .map(Number)
+        .filter(Number.isInteger);
+      const styleBaseline = await _buildDeAiStyleBaseline({
+        ctx,
+        chapterName,
+        paragraphs: chapterParagraphs,
+        targetIndexes: targetParagraphIndexes,
+        referenceSamples: args.referenceSamples,
+      });
+      const baselinePrompt = _formatDeAiStyleBaseline(styleBaseline);
+      const problemEvidence = (Array.isArray(args.problemEvidence) ? args.problemEvidence : [])
+        .map((item) => _fitDeAiBaselineText(item, 300, 'review:problem-evidence', 'problem_evidence'))
+        .filter(Boolean)
+        .slice(0, 8);
       const workflowOrchestrator = require('../runtime/workflowOrchestrator');
       const prompt = [
         '请对下面这段中文小说正文去 AI 味改写。',
-        '要求：保留情节事实、人物关系、时态、视角、专有名词；去掉 AI 八股和套话；输出自然的中文小说表达。',
+        '硬约束：保留情节事实、人物关系、时态、视角、专有名词；只处理明确的 AI 八股、套话或机械连接。',
+        '执行最小必要修改：不要新增原文没有的动作、对白、景物、感官、心理、比喻或情绪解释；不要为了“优美”“流畅”重写正常句子；保留作者有意的短句、停顿、留白、重复、粗粝感和不规则节奏。',
+        '除非问题证据明确指出机械拆段，否则不得把原有短句批量连接成长句，也不得把多段压成一个圆润整齐的段落。若原文没有明确问题，原样输出。',
         args.guidance ? `额外要求：${String(args.guidance).trim()}` : '',
+        problemEvidence.length
+          ? `本次命中的问题原文（只修改这些问题句及维持语法所必需的连接处）：\n${problemEvidence.join('\n')}`
+          : '',
+        Array.isArray(args.preserveConstraints) && args.preserveConstraints.length
+          ? `必须保留：${args.preserveConstraints.map((item) => _compactText(item)).filter(Boolean).join('；')}`
+          : '',
+        baselinePrompt,
+        _cleanText(args.beforeContext) ? `前文只读上下文（不要输出）：\n${_cleanText(args.beforeContext)}` : '',
         '',
-        '原文：',
+        '需要改写的目标原文（只输出这部分的改写结果）：',
         sourceText,
+        _cleanText(args.afterContext) ? `\n后文只读上下文（不要输出）：\n${_cleanText(args.afterContext)}` : '',
       ].filter(Boolean).join('\n');
 
-      const result = await workflowOrchestrator.runWorkflow({
-        mode: 'subagent',
-        subagentId: 'sa-de-ai-ifier',
-        input: prompt,
-        novelContext: ctx?.novel
-          ? { novelId: ctx.novel.id || null, novelDir: ctx.novelDir || null }
-          : undefined,
-      });
+      const runRewrite = (input) => workflowOrchestrator.runWorkflow({
+          mode: 'subagent',
+          subagentId: 'sa-de-ai-ifier',
+          input,
+          abortSignal: AbortSignal.timeout(180_000),
+          novelContext: ctx?.novel
+            ? { novelId: ctx.novel.id || null, novelDir: ctx.novelDir || null }
+            : undefined,
+        });
+      const minimality = await import(path.join(__dirname, '..', '..', 'services', 'deAiMinimality.mjs'));
+      let result = await runRewrite(prompt);
+      let revisedText = String(result.output || '').trim();
+      let assessment = minimality.assessDeAiMinimality(sourceText, revisedText, { guidance: args.guidance });
+      let attemptCount = 1;
+      if (!assessment.ok) {
+        attemptCount += 1;
+        result = await runRewrite(`${prompt}\n\n${minimality.minimalityRetryInstruction(assessment)}`);
+        revisedText = String(result.output || '').trim();
+        assessment = minimality.assessDeAiMinimality(sourceText, revisedText, { guidance: args.guidance });
+      }
+      const keptOriginal = !assessment.ok;
+      if (keptOriginal) revisedText = sourceText;
 
       return textResult({
-        revisedText: String(result.output || '').trim(),
+        revisedText,
         subagentId: 'sa-de-ai-ifier',
+        styleBaseline: _deAiBaselineSummary(styleBaseline),
+        minimality: assessment,
+        attemptCount,
+        keptOriginal,
+        warnings: keptOriginal
+          ? [`两版候选都违反最小必要修改原则，已保留原文：${assessment.violations.map((item) => item.label).join('；')}`]
+          : [],
       });
     },
   },
@@ -1654,7 +2088,7 @@ const TOOLS = [
   },
   {
     name: 'review_de_ai_style',
-    description: '按段审查一个或多个章节中的 AI 味、套话和机械行文问题，不直接改正文。传多个 chapterNames 时会在后端并行审查。',
+    description: '按段审查一个或多个章节中的 AI 味、套话和机械行文问题，不直接改正文。会把作品文风、POV、场景和人物声音作为软基线；传多个 chapterNames 时在后端并行审查。',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1665,6 +2099,7 @@ const TOOLS = [
           items: { type: 'string' },
         },
         focus: { type: 'string', description: '可选，用户对本次审查的补充说明，例如“重点找 AI 套话和短反应句”' },
+        sensitivity: { type: 'string', enum: ['conservative', 'balanced', 'aggressive'], description: '灵敏度：conservative 少误报；balanced 默认；aggressive 尽量找全。' },
       },
     },
     handler: async (args, ctx) => {
@@ -1679,9 +2114,12 @@ const TOOLS = [
       }
 
       const focus = _cleanText(args.focus);
+      const sensitivity = ['conservative', 'balanced', 'aggressive'].includes(args.sensitivity)
+        ? args.sensitivity
+        : 'balanced';
       const chapters = await Promise.all(requested.map(async (chapterName) => {
         try {
-          return await _reviewChapterDeAiStyle(chapterName, focus, ctx);
+          return await _reviewChapterDeAiStyle(chapterName, focus, sensitivity, ctx);
         } catch (err) {
           return {
             chapterName,
@@ -1696,9 +2134,13 @@ const TOOLS = [
       }
 
       return textResult({
-        reviewedWith: 'sa-prose-quality',
+        reviewedWith: 'sa-prose-quality-sharded',
         focus,
+        sensitivity,
         chapterCount: chapters.length,
+        shardCount: chapters.reduce((sum, chapter) => sum + (chapter.shardCount || 0), 0),
+        failedShardCount: chapters.reduce((sum, chapter) => sum + (chapter.failedShardCount || 0), 0),
+        reviewIncomplete: chapters.some((chapter) => chapter.reviewIncomplete || chapter.error),
         totalAnnotations: chapters.reduce((sum, chapter) => sum + (chapter.annotations?.length || 0), 0),
         chapters,
       });

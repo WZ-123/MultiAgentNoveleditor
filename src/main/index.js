@@ -17,6 +17,7 @@ const { registerRuntimeIpc } = require('./ipc/runtime');
 const { registerNovelIpc } = require('./ipc/novel');
 const { registerMcpIpc } = require('./ipc/mcp');
 const { registerProviderManagerIpc } = require('./ipc/providerManager');
+const { registerModelConfigIpc } = require('./ipc/modelConfig');
 const { registerModelAliasesIpc } = require('./ipc/modelAliases');
 const { registerChatIpc } = require('./ipc/chat');
 const { registerChatAgentIpc } = require('./ipc/chatAgent');
@@ -237,6 +238,7 @@ async function initBackend() {
   registerNovelIpc();
   registerMcpIpc();
   registerProviderManagerIpc();
+  registerModelConfigIpc();
   registerModelAliasesIpc();
   registerChatIpc();
   registerChatAgentIpc();

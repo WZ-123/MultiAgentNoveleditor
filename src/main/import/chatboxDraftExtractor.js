@@ -1,35 +1,14 @@
 'use strict';
 
 const JSON5 = require('json5');
-const providerManager = require('../providerManager');
-const modelAliases = require('../modelAliases');
+const { createProfileProvider } = require('../runtime/profileProvider');
 
 const SINGLE_PASS_CHAR_LIMIT = 60000;
 const BATCH_CHAR_LIMIT = 45000;
 const DEFAULT_BATCH_CONCURRENCY = 3;
 
-function pickProvider(type) {
-  if (type === 'anthropic') return require('../runtime/providers/anthropic');
-  if (type === 'openai-compat') return require('../runtime/providers/openaiCompat');
-  throw new Error(`Unsupported provider type: ${type}`);
-}
-
 async function resolveProvider() {
-  const alias = await modelAliases.getAlias('sonnet');
-  const providerId = alias?.providerId || null;
-  const provider = providerId
-    ? await providerManager.getProvider(providerId)
-    : await providerManager.getActiveProvider();
-  if (!provider) throw new Error('导入 Chatbox HTML 需要配置 AI 服务商。请先在设置中配置 API Key 和模型。');
-  const apiKey = provider.apiKey || '';
-  if (!apiKey) throw new Error('导入 Chatbox HTML 需要可用的 AI API Key。请先在设置中配置。');
-  const modelId = alias?.modelId || provider.models?.[0]?.id || '';
-  if (!modelId) throw new Error('导入 Chatbox HTML 需要配置 AI 模型。请先在设置中配置模型。');
-  const type = providerManager.inferProviderType(provider);
-  return {
-    provider: pickProvider(type),
-    tier: { type, model: modelId, apiKey, baseUrl: provider.baseUrl || '', extra: { maxTokens: 32768, streaming: false } },
-  };
+  return createProfileProvider({ systemTask: 'chatbox-extraction', legacyTier: 'sonnet' }, { extra: { maxTokens: 32768, streaming: false } });
 }
 
 function parseJsonFromText(text) {

@@ -46,6 +46,7 @@ const ALLOWED_PREFIXES = [
   'mana:import:',
   'mana:mcp:',
   'mana:modelAliases:',
+  'mana:modelConfig:',
   'mana:networkStatus:',
   'mana:novel:',
   'mana:offlineLog:',
@@ -478,6 +479,20 @@ function bridgeScript() {
     resetToDefaults: () => invoke('mana:modelAliases:resetToDefaults'),
   };
 
+  const modelConfig = {
+    snapshot: () => invoke('mana:modelConfig:snapshot'),
+    saveProvider: (provider, expectedRevision) => invoke('mana:modelConfig:saveProvider', { provider, expectedRevision }),
+    deleteProvider: (id, replacementProviderId, expectedRevision) => invoke('mana:modelConfig:deleteProvider', { id, replacementProviderId, expectedRevision }),
+    discoverModels: (providerId) => invoke('mana:modelConfig:discoverModels', { providerId }),
+    applyDiscoveredModels: (providerId, models, expectedRevision) => invoke('mana:modelConfig:applyDiscoveredModels', { providerId, models, expectedRevision }),
+    testProvider: (providerId) => invoke('mana:modelConfig:testProvider', { providerId }),
+    testProfile: (profileId) => invoke('mana:modelConfig:testProfile', { profileId }),
+    saveProfile: (profile, expectedRevision) => invoke('mana:modelConfig:saveProfile', { profile, expectedRevision }),
+    deleteProfile: (id, replacementProfileId, expectedRevision) => invoke('mana:modelConfig:deleteProfile', { id, replacementProfileId, expectedRevision }),
+    saveRouting: (routing, expectedRevision) => invoke('mana:modelConfig:saveRouting', { routing, expectedRevision }),
+    resolvePreview: (context) => invoke('mana:modelConfig:resolvePreview', context || {}),
+  };
+
   const chat = {
     complete: (payload) => invoke('mana:chat:complete', payload),
   };
@@ -551,6 +566,7 @@ function bridgeScript() {
     novel,
     mcp,
     ccs,
+    modelConfig,
     modelAliases,
     chat,
     chatAgent,

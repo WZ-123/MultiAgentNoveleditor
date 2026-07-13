@@ -7,11 +7,17 @@ const SCHEMA_VERSION = 2;
 
 const DEFAULT_WRITING_CONFIG = {
   mode: 'command_driven',
+  harnessMode: 'adaptive',
+  contextDepth: 'auto',
+  sceneGeneration: 'auto',
+  verificationLevel: 'auto',
   roleplayInteractionLevel: 'director_mediated',
   roleplayMaxInteractionRounds: 3,
   roleplayProfileGate: 'block_and_ask',
   roleplayAutofillScope: 'fill_missing_and_weak',
   roleplayAutofillAlignment: 'current_scene',
+  roleplayChatVisibility: 'compact',
+  roleplayPauseOnRisk: true,
   characterMemoryUpdate: 'after_confirmed_write',
 };
 
@@ -63,6 +69,9 @@ const DEFAULT_APP_CONFIG = {
   searchEngine: 'auto',
   enrichmentConcurrency: 10,
   enrichmentMode: 'traditional',
+  modelRuntime: {
+    offlineMockEnabled: false,
+  },
   writing: DEFAULT_WRITING_CONFIG,
   feishuSync: {
     enabled: true,
@@ -134,6 +143,10 @@ function normalizeDrivers(saved) {
 
 function normalizeWriting(savedWriting) {
   const merged = { ...DEFAULT_WRITING_CONFIG, ...(savedWriting && typeof savedWriting === 'object' ? savedWriting : {}) };
+  if (!['adaptive', 'legacy'].includes(merged.harnessMode)) merged.harnessMode = DEFAULT_WRITING_CONFIG.harnessMode;
+  if (!['auto', 'compact', 'deep'].includes(merged.contextDepth)) merged.contextDepth = DEFAULT_WRITING_CONFIG.contextDepth;
+  if (!['auto', 'chapter', 'scene'].includes(merged.sceneGeneration)) merged.sceneGeneration = DEFAULT_WRITING_CONFIG.sceneGeneration;
+  if (!['auto', 'fast', 'strict'].includes(merged.verificationLevel)) merged.verificationLevel = DEFAULT_WRITING_CONFIG.verificationLevel;
   const rawRounds = Number(merged.roleplayMaxInteractionRounds);
   const rounds = Number.isFinite(rawRounds) ? Math.trunc(rawRounds) : DEFAULT_WRITING_CONFIG.roleplayMaxInteractionRounds;
   merged.roleplayMaxInteractionRounds = Math.min(99, Math.max(0, rounds));

@@ -7,7 +7,7 @@
  * 通过 MCP 工具自主完成。此模块的 6-task 并行分析逻辑仅作为 direct-api
  * 替补路径保留。
  *
- * Uses providerManager + modelAliases (same as chatAgent) to run analysis
+ * Uses the unified semantic model profile router to run analysis
  * tasks in parallel. Each task emits eventBus events so the frontend can
  * show real-time per-task progress.
  *
@@ -21,34 +21,13 @@
 
 const fs = require('node:fs').promises;
 const path = require('node:path');
-const providerManager = require('../providerManager');
-const modelAliases = require('../modelAliases');
+const { createProfileProvider } = require('../runtime/profileProvider');
 const eventBus = require('../runtime/eventBus');
 const characterEnricher = require('./characterEnricher');
 const { splitIntoChunks, mergeChunkResults } = require('./resultMerger');
 
-function pickProvider(type) {
-  if (type === 'anthropic') return require('../runtime/providers/anthropic');
-  if (type === 'openai-compat') return require('../runtime/providers/openaiCompat');
-  throw new Error(`Unsupported provider type: ${type}`);
-}
-
 async function resolveProvider() {
-  const alias = await modelAliases.getAlias('sonnet');
-  const providerId = alias?.providerId || null;
-  const provider = providerId
-    ? await providerManager.getProvider(providerId)
-    : await providerManager.getActiveProvider();
-  if (!provider) throw new Error('没有配置 AI 服务商。请先在设置中配置 API Key 和模型。');
-  const apiKey = provider.apiKey || '';
-  if (!apiKey) throw new Error('AI 服务商 API Key 未设置。请先在设置中配置。');
-  const modelId = alias?.modelId || provider.models?.[0]?.id || '';
-  if (!modelId) throw new Error('没有配置 AI 模型。请先在设置中配置模型。');
-  const type = providerManager.inferProviderType(provider);
-  return {
-    provider: pickProvider(type),
-    tier: { type, model: modelId, apiKey, baseUrl: provider.baseUrl || '', extra: { maxTokens: 16384 } },
-  };
+  return createProfileProvider({ systemTask: 'import-analysis', legacyTier: 'sonnet' }, { extra: { maxTokens: 16384 } });
 }
 
 const MAX_TEXT_CHARS = 60000;

@@ -60,7 +60,7 @@ async function runMcpServerRestartRegressionTest() {
           baseUrl: '',
           apiKey: '',
           isBuiltin: true,
-          models: [{ id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', contextWindow: 200000 }],
+          models: [{ id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', contextWindow: 200000, maxOutputTokens: 16384 }],
         },
         {
           id: 'deepseek-v4-pro',
@@ -69,7 +69,7 @@ async function runMcpServerRestartRegressionTest() {
           baseUrl: 'https://api.deepseek.com/anthropic',
           apiKey: 'sk-test',
           isBuiltin: false,
-          models: [{ id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro', contextWindow: 200000 }],
+          models: [{ id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro', contextWindow: 200000, maxOutputTokens: 16384 }],
         },
       ],
       activeProviderId,
@@ -132,7 +132,7 @@ async function runMcpServerRestartRegressionTest() {
       assert.ok(Array.isArray(toolsA) && toolsA.length > 0, 'expected MCP tools from first provider-backed child');
       assert.ok(pidA, 'expected first provider-backed MCP child pid');
       assert.equal(serverTokenA, 'forced:token-provider');
-      assert.ok(providerTokenA && providerTokenA.startsWith('providers:'), 'expected provider token from first child');
+      assert.ok(providerTokenA && providerTokenA.startsWith('model-config:'), 'expected model-config token from first child');
 
       await providerManager.use('DeepSeek V4 Pro');
       const expectedProviderTokenB = providerManager.getProviderStateTokenSync();

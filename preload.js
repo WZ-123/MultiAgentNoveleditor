@@ -4,7 +4,10 @@ function unwrap(promise) {
   return promise.then((res) => {
     if (res && typeof res === 'object' && 'ok' in res) {
       if (res.ok) return res.value;
-      throw new Error(res.error || 'IPC error');
+      const err = new Error(res.error || 'IPC error');
+      if (res.code) err.code = res.code;
+      if (res.details) err.details = res.details;
+      throw err;
     }
     return res;
   });
@@ -105,6 +108,7 @@ const novel = {
   listChapterMetas: (id) => invoke('mana:novel:listChapterMetas', { id }),
   readChapter: (id, name) => invoke('mana:novel:readChapter', { id, name }),
   saveChapter: (id, name, content, metadata, options) => invoke('mana:novel:saveChapter', { id, name, content, metadata, options }),
+  verifyChapterContent: (id, payload) => invoke('mana:novel:verifyChapterContent', { id, ...(payload || {}) }),
   deleteChapter: (id, name) => invoke('mana:novel:deleteChapter', { id, name }),
   listChapterRevisions: (id, name) => invoke('mana:novel:listChapterRevisions', { id, name }),
   readChapterRevision: (id, name, revisionId) => invoke('mana:novel:readChapterRevision', { id, name, revisionId }),
@@ -173,6 +177,21 @@ const modelAliases = {
   saveAlias:     (alias) => invoke('mana:modelAliases:saveAlias', { alias }),
   deleteAlias:   (id) => invoke('mana:modelAliases:deleteAlias', { id }),
   resetToDefaults: () => invoke('mana:modelAliases:resetToDefaults'),
+};
+
+const modelConfig = {
+  snapshot: () => invoke('mana:modelConfig:snapshot'),
+  saveProvider: (provider, expectedRevision) => invoke('mana:modelConfig:saveProvider', { provider, expectedRevision }),
+  deleteProvider: (id, replacementProviderId, expectedRevision) => invoke('mana:modelConfig:deleteProvider', { id, replacementProviderId, expectedRevision }),
+  discoverModels: (providerId) => invoke('mana:modelConfig:discoverModels', { providerId }),
+  applyDiscoveredModels: (providerId, models, expectedRevision) => invoke('mana:modelConfig:applyDiscoveredModels', { providerId, models, expectedRevision }),
+  testProvider: (providerId) => invoke('mana:modelConfig:testProvider', { providerId }),
+  testProfile: (profileId) => invoke('mana:modelConfig:testProfile', { profileId }),
+  saveProfile: (profile, expectedRevision) => invoke('mana:modelConfig:saveProfile', { profile, expectedRevision }),
+  deleteProfile: (id, replacementProfileId, expectedRevision) => invoke('mana:modelConfig:deleteProfile', { id, replacementProfileId, expectedRevision }),
+  saveRouting: (routing, expectedRevision) => invoke('mana:modelConfig:saveRouting', { routing, expectedRevision }),
+  resolvePreview: (context) => invoke('mana:modelConfig:resolvePreview', context || {}),
+  importLegacyRendererConfig: (config) => invoke('mana:modelConfig:importLegacyRendererConfig', { config }),
 };
 
 const chat = {
@@ -316,6 +335,7 @@ contextBridge.exposeInMainWorld('mana', {
   novel,
   mcp,
   ccs,
+  modelConfig,
   modelAliases,
   chat,
   chatAgent,

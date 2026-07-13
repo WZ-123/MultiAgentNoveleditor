@@ -20,7 +20,7 @@ function registerProviderManagerIpc() {
   ipcMain.handle('mana:provider:use',           safeIpc(async (_e, { name }) => providerManager.use(name)));
   ipcMain.handle('mana:provider:add',           safeIpc(async (_e, payload) => providerManager.add(payload || {})));
   ipcMain.handle('mana:provider:remove',        safeIpc(async (_e, { name }) => providerManager.remove(name)));
-  ipcMain.handle('mana:provider:getProvider',   safeIpc(async (_e, { id }) => providerManager.getProvider(id)));
+  ipcMain.handle('mana:provider:getProvider',   safeIpc(async (_e, { id }) => providerManager.getProviderPublic(id)));
   ipcMain.handle('mana:provider:addModel',      safeIpc(async (_e, { providerId, model }) => providerManager.addModel(providerId, model)));
   ipcMain.handle('mana:provider:removeModel',   safeIpc(async (_e, { providerId, modelId }) => providerManager.removeModel(providerId, modelId)));
   ipcMain.handle('mana:provider:discoverModels', safeIpc(async (_e, { providerId }) => providerManager.discoverModels(providerId)));

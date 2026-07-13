@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "corpusVersion": "1.3.0",
+  "novels": {
+    "mist-harbor": {
+      "title": "雾港夜航",
+      "style": "克制的近距离第三人称。动作和环境承担情绪，不使用解释性总结；对话短而有潜台词。",
+      "characters": [
+        { "id": "lin-ye", "name": "林夜", "personality": "谨慎、寡言，习惯先观察出口", "speechStyle": "短句，很少反问" },
+        { "id": "su-qiao", "name": "苏桥", "personality": "敏锐但会掩饰紧张", "speechStyle": "用具体事实替代情绪判断" }
+      ],
+      "chapters": [
+        "林夜在雾港接到一只没有寄件人的铁盒。",
+        "苏桥确认铁盒来自十二年前停航的白礁线。",
+        "两人在旧票房找到被撕去一角的夜航表。",
+        "守夜人否认见过铁盒，却说漏了白礁钟声。",
+        "林夜发现铁盒夹层里有一枚蓝铜钥匙。",
+        "苏桥独自查到钥匙属于港务档案室，但没有告诉林夜。",
+        "暴雨封住北堤，两人改从修船坞进入旧港。",
+        "修船坞的账册显示白礁线最后一班船并未沉没。",
+        "林夜把账册页藏进外套内袋，钥匙仍由他保管。",
+        "午夜前，两人在档案室门外会合；苏桥仍隐瞒钥匙来历，林夜右手被铁丝划伤。"
+      ],
+      "summaries": ["收到铁盒", "确认航线", "发现航表", "守夜人露馅", "找到钥匙", "苏桥隐瞒调查", "转入旧港", "发现未沉没记录", "藏起账页", "抵达档案室并保留秘密"],
+      "nodes": [
+        { "id": "mh-11-a", "title": "门锁", "summary": "林夜用蓝铜钥匙打开档案室，苏桥不应表现出早已知道钥匙用途", "chapterIndex": 11, "chapterRef": "chapter-011.md", "characters": ["lin-ye", "su-qiao"], "location": "港务档案室门外", "when": "午夜", "pov": "lin-ye", "mustHappen": ["蓝铜钥匙打开档案室"], "informationBoundaries": ["林夜不知道苏桥早已查到钥匙来历"] },
+        { "id": "mh-11-b", "title": "空柜", "summary": "两人发现白礁线档案柜已被提前清空，只留下潮湿盐痕", "chapterIndex": 11, "chapterRef": "chapter-011.md", "characters": ["lin-ye", "su-qiao"], "location": "港务档案室", "when": "午夜后", "pov": "lin-ye", "mustHappen": ["档案柜已被清空"], "mustNotHappen": ["揭晓白礁线失踪者的最终去向"] }
+      ],
+      "timeline": [
+        { "id": "mh-10", "chapterRef": "chapter-010.md", "when": "午夜前", "where": "港务档案室门外", "participants": ["lin-ye", "su-qiao"], "description": "林夜右手受伤，蓝铜钥匙由林夜保管，苏桥隐瞒钥匙来历。" }
+      ]
+    },
+    "broken-beacon": {
+      "title": "断轨信标",
+      "style": "冷静、精确的科幻叙事；技术细节只写角色可感知的后果，避免百科式说明。",
+      "characters": [
+        { "id": "chen-an", "name": "陈岸", "personality": "守规程，受伤时也不夸大", "speechStyle": "先报数据，再下判断" },
+        { "id": "luo-xi", "name": "洛汐", "personality": "行动果断，对未知保持敬畏", "speechStyle": "简洁命令句" }
+      ],
+      "chapters": [
+        "勘测艇在断轨区捕获一段重复信号。",
+        "陈岸确认信号周期不符合任何现役信标。",
+        "洛汐申请靠近废弃中继站。",
+        "艇体被碎片擦伤，左舷推进器降至六成。",
+        "维修无人机补住裂口，却耗尽备用树脂。",
+        "信号里出现勘测艇三小时后的识别码。",
+        "陈岸拒绝把未来信号写入公开日志。",
+        "洛汐把唯一的磁钥交给陈岸保管。",
+        "两人穿过失压连廊，氧气余量降至四十分钟。",
+        "陈岸留在中继站控制舱，左腿固定；洛汐已前往相隔两公里的天线舱，磁钥仍在陈岸手中。"
+      ],
+      "summaries": ["发现信号", "识别异常", "申请靠近", "推进器受损", "耗尽树脂", "收到未来识别码", "隐瞒信号", "移交磁钥", "穿过连廊", "两人分处控制舱和天线舱"],
+      "nodes": [
+        { "id": "bb-11-a", "title": "无人走廊", "summary": "自动隔离门依次关闭，展示无人环境变化", "chapterIndex": 11, "chapterRef": "chapter-011.md", "characters": [], "location": "中继站连廊", "when": "任务时 03:12", "mustHappen": ["自动隔离门依次关闭"] },
+        { "id": "bb-11-b", "title": "控制舱", "summary": "陈岸在控制舱用磁钥恢复局部供电，但不能突然出现在天线舱", "chapterIndex": 11, "chapterRef": "chapter-011.md", "characters": ["chen-an"], "location": "控制舱", "when": "任务时 03:14", "pov": "chen-an", "mustHappen": ["磁钥恢复局部供电"], "mustNotHappen": ["陈岸无视左腿固定步行两公里"] },
+        { "id": "bb-11-c", "title": "天线舱", "summary": "洛汐从天线舱看到信标朝勘测艇转向，只能通过通信告知陈岸", "chapterIndex": 11, "chapterRef": "chapter-011.md", "characters": ["luo-xi"], "location": "天线舱", "when": "任务时 03:16", "pov": "luo-xi", "mustHappen": ["信标朝勘测艇转向"], "informationBoundaries": ["陈岸只能通过通信得知天线舱所见"] }
+      ],
+      "timeline": [
+        { "id": "bb-10", "chapterRef": "chapter-010.md", "when": "任务时 03:10", "where": "控制舱/天线舱", "participants": ["chen-an", "luo-xi"], "description": "陈岸左腿固定并持有磁钥；洛汐位于两公里外的天线舱。" }
+      ]
+    },
+    "paper-lantern": {
+      "title": "纸灯旧城",
+      "style": "第一人称回忆体，语气温和但不煽情；以旧物和称呼表现亲疏，不使用网络流行语。",
+      "characters": [
+        { "id": "xu-zhi", "name": "徐枝", "personality": "细心、念旧，不愿当面指责家人", "speechStyle": "委婉，常省略主语" },
+        { "id": "a-po", "name": "阿婆", "personality": "嘴硬心软，重视旧礼", "speechStyle": "旧城口语，称徐枝为枝囡" }
+      ],
+      "chapters": [
+        "我回到旧城，发现灯铺门上换了新锁。",
+        "邻居说阿婆住进了河西的小院。",
+        "我在阁楼找到父亲留下的半张灯样。",
+        "阿婆见我时只问火车累不累。",
+        "她否认收藏过另一半灯样。",
+        "我替她修好院里的竹帘。",
+        "雨天停电，阿婆点起父亲做的旧纸灯。",
+        "灯骨内侧露出与半张灯样相同的墨记。",
+        "我没有拆灯，只把发现告诉阿婆。",
+        "阿婆答应次日回灯铺，却把旧纸灯留在河西小院。"
+      ],
+      "summaries": ["回到旧城", "找到阿婆", "发现灯样", "重逢", "否认收藏", "修竹帘", "点旧灯", "发现墨记", "坦白发现", "约定回灯铺"],
+      "nodes": [
+        { "id": "pl-10a", "title": "插入的清晨", "summary": "插入在原第十章之后：我先到灯铺开窗，阿婆尚未抵达，旧纸灯仍在河西小院", "chapterIndex": 11, "chapterRef": "chapter-010a.md", "characters": ["xu-zhi"], "location": "灯铺", "when": "次日清晨", "pov": "xu-zhi", "mustHappen": ["我独自打开灯铺窗户"], "mustNotHappen": ["旧纸灯已经出现在灯铺", "阿婆改用现代网络流行语"] }
+      ],
+      "timeline": [
+        { "id": "pl-10", "chapterRef": "chapter-010.md", "when": "前一晚", "where": "河西小院", "participants": ["xu-zhi", "a-po"], "description": "阿婆约定次日回灯铺，旧纸灯仍留在河西小院。" }
+      ]
+    }
+  },
+  "cases": [
+    { "id": "target-arabic", "kind": "target", "novel": "mist-harbor", "profile": ["smoke", "core", "full"], "request": "开始写第11章", "expected": { "status": "resolved", "name": "chapter-011.md" } },
+    { "id": "target-chinese-fullwidth", "kind": "target", "novel": "mist-harbor", "profile": ["full"], "request": "写第十一章：空柜", "expected": { "status": "resolved", "name": "chapter-011.md" } },
+    { "id": "target-revision-conflict", "kind": "target-conflict", "novel": "mist-harbor", "profile": ["full"], "request": "修改第十一章", "expected": { "status": "blocked", "code": "revision_target_conflict" } },
+    { "id": "target-future-unmapped", "kind": "target", "novel": "mist-harbor", "profile": ["full"], "request": "写第十三章", "expected": { "status": "blocked", "code": "chapter_target_unresolved" } },
+    { "id": "context-priority", "kind": "context", "novel": "mist-harbor", "profile": ["smoke", "core", "full"], "request": "写第11章", "expected": { "criticalTypes": ["chapter", "outline", "timeline"] } },
+    { "id": "context-cache-hit", "kind": "cache-hit", "novel": "mist-harbor", "profile": ["full"], "request": "写第11章" },
+    { "id": "context-cache-invalidate", "kind": "cache-invalidate", "novel": "mist-harbor", "profile": ["full"], "request": "写第11章" },
+    { "id": "scene-without-character", "kind": "contracts", "novel": "broken-beacon", "profile": ["core", "full"], "expected": { "sceneId": "bb-11-a" } },
+    { "id": "independent-source-evidence", "kind": "judge-evidence", "novel": "mist-harbor", "profile": ["full"] },
+    { "id": "independent-source-evidence-rejects-invalid-paragraph", "kind": "judge-evidence-invalid", "novel": "mist-harbor", "profile": ["full"] },
+    { "id": "rolling-verified-state", "kind": "generation", "novel": "broken-beacon", "profile": ["core", "full"], "request": "写第11章", "live": true },
+    { "id": "knowledge-boundary", "kind": "generation", "novel": "mist-harbor", "profile": ["smoke", "core", "full"], "request": "写第11章", "live": true },
+    { "id": "location-consistency", "kind": "generation", "novel": "broken-beacon", "profile": ["core", "full"], "request": "写第11章", "live": true },
+    { "id": "asset-continuity", "kind": "generation", "novel": "broken-beacon", "profile": ["full"], "request": "写第11章", "live": true },
+    { "id": "state-direct-conflict-block", "kind": "generation-state-block", "novel": "broken-beacon", "profile": ["full"], "request": "写第11章" },
+    { "id": "state-absence-advisory", "kind": "generation-state-absence", "novel": "broken-beacon", "profile": ["full"], "request": "写第11章" },
+    { "id": "scene-retry", "kind": "generation-retry", "novel": "mist-harbor", "profile": ["full"], "request": "写第11章" },
+    { "id": "scene-fallback", "kind": "generation-fallback", "novel": "mist-harbor", "profile": ["full"], "request": "写第11章" },
+    { "id": "anchored-local-repair", "kind": "anchored-repair", "novel": "paper-lantern", "profile": ["core", "full"] },
+    { "id": "preconfirm-zero-write", "kind": "generation", "novel": "paper-lantern", "profile": ["core", "full"], "request": "写第11章", "live": true },
+    { "id": "snapshot-stale", "kind": "state-stale", "novel": "mist-harbor", "profile": ["full"] },
+    { "id": "postwrite-idempotent", "kind": "postwrite-idempotent", "novel": "paper-lantern", "profile": ["full"] }
+  ]
+}

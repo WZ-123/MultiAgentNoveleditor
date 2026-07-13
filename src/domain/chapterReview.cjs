@@ -157,10 +157,16 @@ function normalizeReviewIssue(raw, options = {}) {
   const excerpt = buildExcerpt(raw, paragraphIds, paragraphIndexes, lookup);
   return {
     id,
+    constraintId: safeText(raw.constraintId || '').trim() || undefined,
+    sceneId: safeText(raw.sceneId || '').trim() || undefined,
     source,
     sourceAgent: source,
     category,
+    patternId: raw.patternId != null ? safeText(raw.patternId) : undefined,
     severity,
+    confidence: Number.isFinite(Number(raw.confidence))
+      ? Math.max(0, Math.min(1, Number(raw.confidence)))
+      : undefined,
     status,
     paragraphIds,
     paragraphIndexes,
@@ -169,6 +175,9 @@ function normalizeReviewIssue(raw, options = {}) {
     detail: raw.detail != null ? safeText(raw.detail) : undefined,
     evidence: evidence || undefined,
     suggestedAction: raw.suggestedAction != null ? safeText(raw.suggestedAction) : undefined,
+    repairInstruction: raw.repairInstruction != null
+      ? safeText(raw.repairInstruction)
+      : (raw.suggestedAction != null ? safeText(raw.suggestedAction) : undefined),
     excerpt: excerpt || undefined,
     timelineKind: raw.timelineKind != null ? safeText(raw.timelineKind) : undefined,
     affectedOutlineNodeIds: Array.isArray(raw.affectedOutlineNodeIds)
@@ -222,7 +231,9 @@ function isOpenReviewIssue(issue) {
 }
 
 function hasBlockingReviewIssues(issues) {
-  return (Array.isArray(issues) ? issues : []).some(isOpenReviewIssue);
+  return (Array.isArray(issues) ? issues : []).some((issue) => (
+    isOpenReviewIssue(issue) && issue?.severity !== 'advisory'
+  ));
 }
 
 function getOpenReviewIssues(issues) {

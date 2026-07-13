@@ -105,3 +105,14 @@
   - 打包测试版验证授权流程
   - 如需支持"踢出旧设备"，在 SCF 端增加注销接口 + 客户端 UI
 - 涉及文件：`relay-worker/scf-app-final.js`、`src/main/license/authVerifier.js`、`src/main/store/appConfig.js`、`main.js`
+
+### [2026-07-13] 去 AI 味只增加文风基线与最小必要修改
+
+- 背景：并行分片审查和上下文改写已具备，继续增加复杂判定机制可能带来新的误报、漏报。
+- 用户目标：只做两项——审查/改写参考作品文风与人物声音；严格避免过度润色。
+- 决策结论：
+  1. 文风记忆、POV、场景线索、人物说话习惯/代表台词、当前保留段落和本章对白只作为软基线，不压过明确机械套话。
+  2. 改写采用最小必要修改；禁止凭空增加动作、对白、景物、感官、心理、比喻或情绪解释，保留粗粝、跳跃、短句、停顿和不规则节奏。
+  3. 不增加新的复杂 AI 味分类器；仅用高确定性漂移检查拦截无端扩写、装饰性新增和未经授权的段落压平，失败时重试一次，仍失败则保留原文。
+- 实施结果：MCP、聊天选区和编辑器右键入口均接入；真实 Electron 流程与真实 Provider 调用通过。
+- 涉及文件：`src/main/mcp/tools.js`、`src/main/runtime/chatAgent.js`、`src/main/seeds/builtinSubagents.js`、`src/services/deAiMinimality.mjs`、`src/App.jsx`

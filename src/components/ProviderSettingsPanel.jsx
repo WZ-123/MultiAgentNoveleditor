@@ -1,769 +1,379 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Input, Spinner } from '@heroui/react';
+import { Button, Input, Spinner, Chip } from '@heroui/react';
 import {
-  Check,
-  Cpu,
-  Plus,
-  RefreshCw,
-  Trash2,
-  X,
-  ChevronDown,
-  ChevronRight,
-  Wand2,
-  Save,
-  RotateCcw,
+  Activity, Check, ChevronDown, ChevronRight, Copy, Cpu, KeyRound,
+  Plus, RefreshCw, Save, ShieldAlert, TestTube2, Trash2, Wand2, X,
 } from 'lucide-react';
+
+const DRIVER_IDS = ['direct-api', 'claude-code-vscode', 'claude-code-cli', 'codex'];
+const SYSTEM_TASKS = [
+  ['chat', '主聊天'],
+  ['import-analysis', '导入分析'],
+  ['character-enrichment', '角色联网补全'],
+  ['chatbox-extraction', 'Chatbox 整理'],
+  ['config-helper', '配置助手'],
+];
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function newProvider() {
+  return { id: '', name: '', adapterId: 'openai-chat-completions', baseUrl: '', apiKey: '', auth: { mode: 'bearer' }, models: [] };
+}
+
+function targetId(prefix = 'target') {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function newProfile(providers) {
+  const provider = providers?.[0];
+  const model = provider?.models?.[0];
+  return {
+    id: '',
+    name: '',
+    description: '',
+    workloadTags: ['reasoning'],
+    priority: 'balanced',
+    targetsByDriver: provider && model ? {
+      'direct-api': {
+        primary: {
+          id: targetId('direct'), providerId: provider.id, modelId: model.id,
+          params: { contextLimit: model.capabilities?.contextWindow || 128000, maxOutputTokens: model.capabilities?.maxOutputTokens || 4096, temperature: 0.7, thinking: false, thinkingBudget: 0 },
+        },
+        fallbacks: [],
+      },
+    } : {},
+  };
+}
+
+function sectionButton(active, onClick, Icon, children) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs whitespace-nowrap ${active ? 'bg-primary-500/20 text-primary-300' : 'text-gray-400 hover:bg-vscode-list-hoverBackground'}`}
+    >
+      <Icon size={13} /> {children}
+    </button>
+  );
+}
+
+function ProviderEditor({ provider, snapshot, discovered, busy, onChange, onCancel, onSave, onTest, onDiscover, onApplyDiscovery, onClearKey }) {
+  const updateModel = (idx, patch) => {
+    const models = clone(provider.models || []);
+    models[idx] = { ...models[idx], ...patch, capabilities: { ...(models[idx]?.capabilities || {}), ...(patch.capabilities || {}) } };
+    onChange({ ...provider, models });
+  };
+  const removeModel = (idx) => onChange({ ...provider, models: (provider.models || []).filter((_item, index) => index !== idx) });
+  const addModel = () => onChange({
+    ...provider,
+    models: [...(provider.models || []), { id: '', name: '', capabilities: { contextWindow: 128000, maxOutputTokens: 4096, supportsThinking: false, supportsTools: true, supportsStreaming: true } }],
+  });
+  return (
+    <div data-testid="provider-editor" className="border border-primary-500/30 rounded p-4 space-y-3 bg-vscode-sidebar/30">
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-semibold text-gray-200">{provider.id ? `编辑 ${provider.name}` : '新增 Provider'}</div>
+        <Button isIconOnly size="sm" variant="light" onPress={onCancel}><X size={14} /></Button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <Input size="sm" label="名称" value={provider.name || ''} onChange={(e) => onChange({ ...provider, name: e.target.value })} />
+        <label className="text-xs text-gray-500">
+          Adapter
+          <select className="mt-1 w-full bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-2 text-gray-200" value={provider.adapterId} onChange={(e) => onChange({ ...provider, adapterId: e.target.value, auth: { ...(provider.auth || {}), mode: e.target.value === 'anthropic-messages' ? 'x-api-key' : 'bearer' } })}>
+            <option value="anthropic-messages">Anthropic Messages</option>
+            <option value="openai-chat-completions">OpenAI Chat Completions</option>
+          </select>
+        </label>
+        <Input className="md:col-span-2 font-mono" size="sm" label="Base URL" value={provider.baseUrl || ''} placeholder="https://api.example.com/v1" onChange={(e) => onChange({ ...provider, baseUrl: e.target.value })} />
+        <Input className="font-mono" size="sm" type="password" label={provider.auth?.hasApiKey ? 'API Key（留空保持不变）' : 'API Key'} value={provider.apiKey || ''} onChange={(e) => onChange({ ...provider, apiKey: e.target.value })} />
+        <div className="flex items-end gap-2">
+          {provider.id && <Button size="sm" variant="flat" onPress={onTest} isLoading={busy === 'test-provider'} startContent={<TestTube2 size={12} />}>验证连接</Button>}
+          {provider.id && provider.auth?.hasApiKey && <Button size="sm" color="danger" variant="light" onPress={onClearKey}>清空密钥</Button>}
+        </div>
+      </div>
+      {provider.auth?.keyStatus && !['missing', null].includes(provider.auth.keyStatus) && !provider.auth?.hasApiKey && (
+        <div className="border border-amber-500/40 bg-amber-500/10 rounded px-3 py-2 text-xs text-amber-200">
+          已发现旧的 API Key 记录，但系统安全存储无法读取。请重新输入 API Key 并保存。
+        </div>
+      )}
+
+      <div className="border-t border-vscode-panel-border pt-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-semibold text-gray-300">模型与能力</div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="flat" onPress={addModel} startContent={<Plus size={12} />}>手动添加</Button>
+            {provider.id && <Button size="sm" variant="flat" onPress={onDiscover} isLoading={busy === 'discover'} startContent={<Wand2 size={12} />}>发现模型</Button>}
+          </div>
+        </div>
+        {(provider.models || []).map((model, idx) => (
+          <div key={`${model.id}-${idx}`} className="grid grid-cols-12 gap-2 items-center text-xs">
+            <input className="col-span-3 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 font-mono" placeholder="模型 ID" value={model.id || ''} onChange={(e) => updateModel(idx, { id: e.target.value })} />
+            <input className="col-span-3 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1" placeholder="显示名称" value={model.name || ''} onChange={(e) => updateModel(idx, { name: e.target.value })} />
+            <input type="number" className="col-span-2 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1" title="上下文" value={model.capabilities?.contextWindow || ''} onChange={(e) => updateModel(idx, { capabilities: { contextWindow: Number(e.target.value) } })} />
+            <input type="number" className="col-span-2 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1" title="最大输出" value={model.capabilities?.maxOutputTokens || ''} onChange={(e) => updateModel(idx, { capabilities: { maxOutputTokens: Number(e.target.value) } })} />
+            <label className="col-span-1 flex items-center gap-1 text-[10px] text-gray-400"><input type="checkbox" checked={!!model.capabilities?.supportsThinking} onChange={(e) => updateModel(idx, { capabilities: { supportsThinking: e.target.checked } })} />思考</label>
+            <Button className="col-span-1" isIconOnly size="sm" variant="light" color="danger" onPress={() => removeModel(idx)}><Trash2 size={12} /></Button>
+          </div>
+        ))}
+        {!provider.models?.length && <div className="text-xs text-gray-500">尚无模型。保存 Provider 后可发现模型，或手动添加。</div>}
+      </div>
+
+      {discovered?.models?.length ? (
+        <div className="border border-emerald-500/30 rounded p-3 bg-emerald-500/5 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-emerald-300">发现 {discovered.models.length} 个模型，尚未写入配置。</span>
+            <Button size="sm" color="success" variant="flat" onPress={onApplyDiscovery}>应用发现结果</Button>
+          </div>
+          <div className="mt-2 max-h-24 overflow-y-auto font-mono text-[10px] text-gray-400">{discovered.models.map((model) => model.id).join(' · ')}</div>
+        </div>
+      ) : null}
+
+      <div className="flex justify-end gap-2">
+        <Button size="sm" variant="flat" onPress={onCancel}>取消</Button>
+        <Button size="sm" color="primary" onPress={onSave} isLoading={busy === 'save-provider'} startContent={<Save size={12} />}>保存 Provider</Button>
+      </div>
+    </div>
+  );
+}
+
+function TargetEditor({ driverId, group, providers, onChange }) {
+  const isDirect = driverId === 'direct-api';
+  const targets = [group.primary, ...(group.fallbacks || [])];
+  const updateTarget = (idx, patch) => {
+    const next = clone(group);
+    if (idx === 0) next.primary = { ...next.primary, ...patch, params: { ...(next.primary.params || {}), ...(patch.params || {}) } };
+    else next.fallbacks[idx - 1] = { ...next.fallbacks[idx - 1], ...patch, params: { ...(next.fallbacks[idx - 1].params || {}), ...(patch.params || {}) } };
+    onChange(next);
+  };
+  const addFallback = () => onChange({ ...group, fallbacks: [...(group.fallbacks || []), { ...clone(group.primary), id: targetId(`${driverId}-fallback`) }] });
+  const removeFallback = (idx) => onChange({ ...group, fallbacks: group.fallbacks.filter((_item, index) => index !== idx - 1) });
+  return (
+    <div className="border border-vscode-panel-border rounded p-3 space-y-2">
+      <div className="flex items-center justify-between"><span className="text-xs font-semibold text-gray-300">{driverId}</span><Button size="sm" variant="light" onPress={addFallback}>+ 备用目标</Button></div>
+      {targets.map((target, idx) => {
+        const selectedProvider = providers.find((provider) => provider.id === target.providerId);
+        return (
+          <div key={target.id} className="grid grid-cols-12 gap-2 items-center border-t border-vscode-panel-border/50 pt-2">
+            <span className="col-span-1 text-[10px] text-gray-500">{idx === 0 ? '主' : `备${idx}`}</span>
+            {isDirect ? (
+              <>
+                <select className="col-span-3 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-xs" value={target.providerId || ''} onChange={(e) => { const provider = providers.find((item) => item.id === e.target.value); updateTarget(idx, { providerId: e.target.value, modelId: provider?.models?.[0]?.id || '' }); }}>
+                  <option value="">选择 Provider</option>{providers.map((provider) => <option key={provider.id} value={provider.id}>{provider.name}</option>)}
+                </select>
+                <select className="col-span-3 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-xs" value={target.modelId || ''} onChange={(e) => { const model = selectedProvider?.models?.find((item) => item.id === e.target.value); updateTarget(idx, { modelId: e.target.value, params: { contextLimit: model?.capabilities?.contextWindow, maxOutputTokens: model?.capabilities?.maxOutputTokens, thinking: false, thinkingBudget: 0 } }); }}>
+                  <option value="">选择模型</option>{(selectedProvider?.models || []).map((model) => <option key={model.id} value={model.id}>{model.name || model.id}</option>)}
+                </select>
+                <input type="number" title="最大输出 Tokens" className="col-span-2 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-xs" value={target.params?.maxOutputTokens || ''} onChange={(e) => updateTarget(idx, { params: { maxOutputTokens: Number(e.target.value) } })} />
+                <label className="col-span-2 text-[10px] text-gray-400 flex items-center gap-1"><input type="checkbox" checked={!!target.params?.thinking} onChange={(e) => updateTarget(idx, { params: { thinking: e.target.checked, thinkingBudget: e.target.checked ? (target.params?.thinkingBudget || 16000) : 0 } })} />思考</label>
+              </>
+            ) : (
+              <>
+                <input className="col-span-5 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-xs font-mono" placeholder="Driver 模型 ID" value={target.modelId || ''} onChange={(e) => updateTarget(idx, { modelId: e.target.value })} />
+                <select className="col-span-3 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-xs" value={target.params?.effortLevel || 'high'} onChange={(e) => updateTarget(idx, { params: { effortLevel: e.target.value } })}><option value="low">low</option><option value="high">high</option><option value="max">max</option></select>
+                <span className="col-span-2 text-[10px] text-gray-600">Driver 自有认证</span>
+              </>
+            )}
+            {idx > 0 && <Button className="col-span-1" isIconOnly size="sm" variant="light" color="danger" onPress={() => removeFallback(idx)}><X size={11} /></Button>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ProfileEditor({ profile, providers, busy, onChange, onCancel, onSave, onTest }) {
+  const setDriverEnabled = (driverId, enabled) => {
+    const targetsByDriver = clone(profile.targetsByDriver || {});
+    if (!enabled) delete targetsByDriver[driverId];
+    else if (!targetsByDriver[driverId]) {
+      const provider = providers[0];
+      const model = provider?.models?.[0];
+      targetsByDriver[driverId] = {
+        primary: { id: targetId(driverId), ...(driverId === 'direct-api' ? { providerId: provider?.id || '', modelId: model?.id || '', params: { contextLimit: model?.capabilities?.contextWindow || 128000, maxOutputTokens: model?.capabilities?.maxOutputTokens || 4096, temperature: 0.7 } } : { modelId: '', params: { effortLevel: 'high' } }) },
+        fallbacks: [],
+      };
+    }
+    onChange({ ...profile, targetsByDriver });
+  };
+  return (
+    <div data-testid="profile-editor" className="border border-primary-500/30 rounded p-4 space-y-3 bg-vscode-sidebar/30">
+      <div className="flex items-center justify-between"><div className="text-sm font-semibold text-gray-200">{profile.id ? `编辑档案 · ${profile.name}` : '新增模型档案'}</div><Button isIconOnly size="sm" variant="light" onPress={onCancel}><X size={14} /></Button></div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <Input size="sm" label="档案名称" value={profile.name || ''} onChange={(e) => onChange({ ...profile, name: e.target.value })} />
+        <Input size="sm" label="说明" value={profile.description || ''} onChange={(e) => onChange({ ...profile, description: e.target.value })} />
+        <label className="text-xs text-gray-500">优先目标<select className="mt-1 w-full bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-2 text-gray-200" value={profile.priority || 'balanced'} onChange={(e) => onChange({ ...profile, priority: e.target.value })}><option value="quality">质量</option><option value="balanced">均衡</option><option value="cost">成本</option><option value="latency">延迟</option></select></label>
+      </div>
+      <div className="flex flex-wrap gap-3 text-xs text-gray-400">{DRIVER_IDS.map((driverId) => <label key={driverId} className="flex items-center gap-1"><input type="checkbox" checked={!!profile.targetsByDriver?.[driverId]} onChange={(e) => setDriverEnabled(driverId, e.target.checked)} />{driverId}</label>)}</div>
+      {DRIVER_IDS.filter((driverId) => profile.targetsByDriver?.[driverId]).map((driverId) => <TargetEditor key={driverId} driverId={driverId} group={profile.targetsByDriver[driverId]} providers={providers} onChange={(group) => onChange({ ...profile, targetsByDriver: { ...profile.targetsByDriver, [driverId]: group } })} />)}
+      <div className="flex justify-end gap-2"><Button size="sm" variant="flat" onPress={onCancel}>取消</Button>{profile.id && <Button size="sm" variant="flat" onPress={onTest} isLoading={busy === 'test-profile'} startContent={<TestTube2 size={12} />}>最小推理测试</Button>}<Button size="sm" color="primary" onPress={onSave} isLoading={busy === 'save-profile'} startContent={<Save size={12} />}>保存档案</Button></div>
+    </div>
+  );
+}
 
 export function ProviderSettingsPanel() {
   const mana = typeof window !== 'undefined' ? window.mana : null;
-
-  const [providers, setProviders] = useState([]);
-  const [current, setCurrent] = useState(null);
+  const [snapshot, setSnapshot] = useState(null);
+  const [subagents, setSubagents] = useState([]);
+  const [driver, setDriver] = useState(null);
+  const [section, setSection] = useState('overview');
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
-  const [busyAction, setBusyAction] = useState('');
-
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', type: 'openai-compat', baseUrl: '', apiKey: '' });
-
-  const [expandedProviders, setExpandedProviders] = useState(new Set());
-  const [modelForm, setModelForm] = useState({ providerId: '', id: '', name: '', contextWindow: 200000 });
-  const [discoverNotice, setDiscoverNotice] = useState('');
-
-  const [aliases, setAliases] = useState([]);
-  const [aliasLoading, setAliasLoading] = useState(false);
-  const [aliasSaving, setAliasSaving] = useState(false);
-  const [aliasError, setAliasError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [providerDraft, setProviderDraft] = useState(null);
+  const [profileDraft, setProfileDraft] = useState(null);
+  const [discovered, setDiscovered] = useState(null);
+  const [expanded, setExpanded] = useState(new Set());
+  const [routingDraft, setRoutingDraft] = useState(null);
+  const [replacement, setReplacement] = useState('');
 
   const refresh = useCallback(async () => {
-    if (!mana?.ccs) {
-      setError('IPC bridge unavailable');
-      setLoading(false);
-      return;
-    }
-    setError('');
-    setLoading(true);
+    if (!mana?.modelConfig) { setError('模型配置 IPC 不可用'); setLoading(false); return; }
+    setLoading(true); setError('');
     try {
-      const [list, cur, als] = await Promise.all([
-        mana.ccs.list(),
-        mana.ccs.current().catch(() => null),
-        mana.modelAliases.list().catch(() => []),
+      const [next, subs, activeDriver] = await Promise.all([
+        mana.modelConfig.snapshot(),
+        mana.config?.listSubagents?.().catch(() => []),
+        mana.runtime?.getActiveDriver?.().catch(() => null),
       ]);
-      console.debug('[ProviderSettingsPanel] provider.list() →', list);
-      setProviders(Array.isArray(list) ? list : []);
-      setCurrent(cur);
-      setAliases(Array.isArray(als) ? als : []);
-    } catch (err) {
-      setError(err?.message || String(err));
-    } finally {
-      setLoading(false);
-    }
+      setSnapshot(next); setRoutingDraft(clone(next.routing)); setSubagents(subs || []); setDriver(activeDriver);
+      if (typeof window !== 'undefined' && !window.localStorage.getItem('mana-model-config-v3-local-migrated')) {
+        const raw = window.localStorage.getItem('mana-agent-api-config-v2');
+        if (raw) {
+          const result = await mana.modelConfig.importLegacyRendererConfig(JSON.parse(raw));
+          if (result.imported) {
+            const migrated = await mana.modelConfig.snapshot();
+            setSnapshot(migrated);
+            setRoutingDraft(clone(migrated.routing));
+            setNotice(`已安全迁移 ${result.imported} 条旧 Agent API 配置。`);
+          }
+        }
+        window.localStorage.setItem('mana-model-config-v3-local-migrated', '1');
+      }
+    } catch (err) { setError(err.message || String(err)); }
+    finally { setLoading(false); }
   }, [mana]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  const refreshMcpTools = useCallback(async () => {
-    if (!mana?.mcp?.listTools) return;
-    await mana.mcp.listTools();
-  }, [mana]);
+  const providers = snapshot?.providers || [];
+  const profiles = snapshot?.profiles || [];
+  const profileMap = useMemo(() => Object.fromEntries(profiles.map((profile) => [profile.id, profile])), [profiles]);
 
-  const handleUse = useCallback(async (name) => {
-    setBusyAction(`use:${name}`);
-    setError('');
-    try {
-      await mana.ccs.use(name);
-      await refreshMcpTools();
-      await refresh();
-    } catch (err) {
-      setError(err?.message || String(err));
-    } finally {
-      setBusyAction('');
-    }
-  }, [mana, refresh, refreshMcpTools]);
-
-  const handleRemove = useCallback(async (name) => {
-    if (!confirm(`确认删除供应商 "${name}"？此操作只影响配置文件，不会删除任何 API key。`)) return;
-    setBusyAction(`remove:${name}`);
-    setError('');
-    try {
-      await mana.ccs.remove(name);
-      await refreshMcpTools();
-      await refresh();
-    } catch (err) {
-      setError(err?.message || String(err));
-    } finally {
-      setBusyAction('');
-    }
-  }, [mana, refresh, refreshMcpTools]);
-
-  const upsertDiscoveredModels = useCallback(async (providerName, models) => {
-    let count = 0;
-    for (const m of models || []) {
-      if (!m?.id) continue;
-      await mana.ccs.addModel(providerName, {
-        id: m.id,
-        name: m.name || m.id,
-        contextWindow: Number(m.contextWindow) || 128000,
-        maxOutputTokens: Number(m.maxOutputTokens) || 4096,
-        supportsThinking: !!m.supportsThinking,
-        thinkingBudget: Number(m.thinkingBudget) || 0,
-        discoveredAt: m.discoveredAt,
-      });
-      count += 1;
-    }
-    return count;
-  }, [mana]);
-
-  const handleAdd = useCallback(async ({ discover = false } = {}) => {
-    const { name, type, baseUrl, apiKey } = addForm;
-    if (!name.trim()) {
-      setError('请填写供应商名称');
-      return;
-    }
-    setBusyAction(discover ? 'add:discover' : 'add');
-    setError('');
-    setDiscoverNotice('');
-    try {
-      await mana.ccs.add({
-        name: name.trim(),
-        type,
-        baseUrl: baseUrl.trim() || undefined,
-        apiKey: apiKey.trim() || undefined,
-      });
-      if (discover) {
-        const res = await mana.ccs.discoverModels(name.trim());
-        if (!res.ok) {
-          setError(res.error || '供应商已添加，但自动检测模型失败');
-        } else {
-          const count = await upsertDiscoveredModels(name.trim(), res.models);
-          setDiscoverNotice(`已从 ${res.endpoint || '模型接口'} 检测并保存 ${count} 个模型。`);
-        }
-      }
-      await refreshMcpTools();
-      setAddForm({ name: '', type: 'openai-compat', baseUrl: '', apiKey: '' });
-      setShowAddForm(false);
-      await refresh();
-    } catch (err) {
-      setError(err?.message || String(err));
-    } finally {
-      setBusyAction('');
-    }
-  }, [mana, addForm, refresh, refreshMcpTools, upsertDiscoveredModels]);
-
-  const toggleExpand = useCallback((providerName) => {
-    setExpandedProviders((prev) => {
-      const next = new Set(prev);
-      if (next.has(providerName)) next.delete(providerName);
-      else next.add(providerName);
-      return next;
-    });
+  const act = useCallback(async (key, fn, success) => {
+    setBusy(key); setError(''); setNotice('');
+    try { const result = await fn(); if (result?.schemaVersion) { setSnapshot(result); setRoutingDraft(clone(result.routing)); } if (success) setNotice(success); return result; }
+    catch (err) { setError(err.message || String(err)); return null; }
+    finally { setBusy(''); }
   }, []);
 
-  const handleAddModel = useCallback(async (providerName) => {
-    const { id, name, contextWindow } = modelForm;
-    if (!id.trim()) {
-      setError('模型 ID 不能为空');
-      return;
-    }
-    setBusyAction(`addModel:${providerName}`);
-    setError('');
-    try {
-      await mana.ccs.addModel(providerName, {
-        id: id.trim(),
-        name: name.trim() || id.trim(),
-        contextWindow: Number(contextWindow) || 200000,
-      });
-      await refreshMcpTools();
-      setModelForm({ providerId: '', id: '', name: '', contextWindow: 200000 });
-      await refresh();
-    } catch (err) {
-      setError(err?.message || String(err));
-    } finally {
-      setBusyAction('');
-    }
-  }, [mana, modelForm, refresh, refreshMcpTools]);
-
-  const handleRemoveModel = useCallback(async (providerName, modelId) => {
-    if (!confirm(`确认删除模型 "${modelId}"？`)) return;
-    setBusyAction(`removeModel:${providerName}:${modelId}`);
-    setError('');
-    try {
-      await mana.ccs.removeModel(providerName, modelId);
-      await refreshMcpTools();
-      await refresh();
-    } catch (err) {
-      setError(err?.message || String(err));
-    } finally {
-      setBusyAction('');
-    }
-  }, [mana, refresh, refreshMcpTools]);
-
-  const handleDiscover = useCallback(async (providerName) => {
-    setBusyAction(`discover:${providerName}`);
-    setError('');
-    setDiscoverNotice('');
-    try {
-      const res = await mana.ccs.discoverModels(providerName);
-      if (!res.ok) {
-        setError(res.error || '自动发现失败');
-      } else if (!res.models || res.models.length === 0) {
-        setError('未发现可用模型');
-      } else {
-        const count = await upsertDiscoveredModels(providerName, res.models);
-        setDiscoverNotice(`已从 ${res.endpoint || '模型接口'} 检测并保存 ${count} 个模型。`);
-        await refreshMcpTools();
-        await refresh();
-      }
-    } catch (err) {
-      setError(err?.message || String(err));
-    } finally {
-      setBusyAction('');
-    }
-  }, [mana, refresh, refreshMcpTools, upsertDiscoveredModels]);
-
-  const providerOptions = useMemo(() => {
-    return providers.map((p) => ({ id: p.id || p.name, name: p.name, models: p.models || [] }));
-  }, [providers]);
-
-  const updateAliasField = useCallback((aliasId, field, value) => {
-    setAliases((prev) =>
-      prev.map((a) => (a.id === aliasId ? { ...a, [field]: value } : a))
-    );
-  }, []);
-
-  const updateAliasModel = useCallback((aliasId, modelId) => {
-    setAliases((prev) =>
-      prev.map((alias) => {
-        if (alias.id !== aliasId) return alias;
-        const provider = providerOptions.find((p) => p.id === alias.providerId);
-        const model = provider?.models?.find((m) => m.id === modelId);
-        if (!model) return { ...alias, modelId };
-        return {
-          ...alias,
-          modelId,
-          contextWindow: Number(model.contextWindow) || alias.contextWindow,
-          maxOutputTokens: Number(model.maxOutputTokens) || alias.maxOutputTokens,
-          thinking: model.supportsThinking ? alias.thinking : false,
-          thinkingBudget: model.supportsThinking
-            ? Number(model.thinkingBudget) || alias.thinkingBudget || 16000
-            : 0,
-        };
-      })
-    );
-  }, [providerOptions]);
-
-  const handleSaveAliases = useCallback(async () => {
-    setAliasSaving(true);
-    setAliasError('');
-    try {
-      for (const alias of aliases) {
-        await mana.modelAliases.saveAlias(alias);
-      }
-    } catch (err) {
-      setAliasError(err?.message || String(err));
-    } finally {
-      setAliasSaving(false);
-    }
-  }, [mana, aliases]);
-
-  const handleResetAliases = useCallback(async () => {
-    if (!confirm('确定重置所有 Alias 为默认值？自定义配置将丢失。')) return;
-    setAliasSaving(true);
-    setAliasError('');
-    try {
-      await mana.modelAliases.resetToDefaults();
-      await refresh();
-    } catch (err) {
-      setAliasError(err?.message || String(err));
-    } finally {
-      setAliasSaving(false);
-    }
-  }, [mana, refresh]);
-
-  const renderProviderRow = (p) => {
-    const isActive = p.active;
-    const isBusyUse = busyAction === `use:${p.name}`;
-    const isBusyRemove = busyAction === `remove:${p.name}`;
-    const isExpanded = expandedProviders.has(p.name);
-    const displayUrl = !p.baseUrl || p.baseUrl.startsWith('(')
-      ? '默认 https://api.anthropic.com'
-      : p.baseUrl;
-    const displayType = p.type === 'anthropic' ? 'Anthropic-compatible' : 'OpenAI-compatible';
-
-    return (
-      <div key={p.name}>
-        <div
-          className={`flex items-center gap-3 px-3 py-2 rounded border cursor-pointer overflow-hidden ${
-            isActive
-              ? 'border-primary-500 bg-primary-500/10'
-              : 'border-vscode-panel-border bg-vscode-sidebar/30'
-          }`}
-          onClick={() => toggleExpand(p.name)}
-        >
-          <div className="shrink-0">
-            {isExpanded ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
-          </div>
-          <div className="w-4 shrink-0 flex items-center justify-center">
-            {isActive ? (
-              <Check size={14} className="text-primary-400" />
-            ) : (
-              <span className="w-3 h-3 rounded-full border border-gray-500" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm text-gray-200 font-medium truncate">{p.name}</div>
-            <div className="text-[11px] text-gray-500 truncate font-mono">{displayUrl}</div>
-            <div className="text-[10px] text-gray-600 truncate">协议: {displayType}</div>
-          </div>
-          {isActive ? (
-            <span className="text-[10px] uppercase tracking-wide text-primary-400 shrink-0">使用中</span>
-          ) : (
-            <Button
-              size="sm"
-              variant="flat"
-              className="shrink-0"
-              onClick={(e) => { e.stopPropagation(); handleUse(p.name); }}
-              isDisabled={!!busyAction}
-              isLoading={isBusyUse}
-            >
-              使用
-            </Button>
-          )}
-          <Button
-            size="sm"
-            variant="light"
-            color="danger"
-            isIconOnly
-            className="shrink-0"
-            onClick={(e) => { e.stopPropagation(); handleRemove(p.name); }}
-            isDisabled={!!busyAction || p.isBuiltin}
-            isLoading={isBusyRemove}
-            aria-label={`删除 ${p.name}`}
-          >
-            <Trash2 size={14} />
-          </Button>
-        </div>
-
-        {isExpanded && (
-          <div className="mt-1 ml-4 border-l border-vscode-panel-border pl-3 space-y-2">
-            <div className="text-[11px] text-gray-400 font-medium pt-1">模型列表</div>
-            {(p.models || []).length === 0 ? (
-              <div className="text-[11px] text-gray-500 italic">暂无模型</div>
-            ) : (
-              <div className="space-y-1">
-                {(p.models || []).map((m) => (
-                  <div key={m.id} className="flex items-center justify-between text-[11px] text-gray-300 bg-vscode-sidebar/20 rounded px-2 py-1">
-                    <div className="truncate">
-                      <span className="font-mono text-gray-400">{m.id}</span>
-                      {m.name !== m.id && <span className="ml-1 text-gray-500">({m.name})</span>}
-                      <span className="ml-2 text-gray-600">ctx={m.contextWindow || '?'}</span>
-                      {m.maxOutputTokens ? <span className="ml-1 text-gray-600">out={m.maxOutputTokens}</span> : null}
-                      {m.supportsThinking ? <span className="ml-1 text-primary-400">thinking</span> : null}
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="light"
-                      color="danger"
-                      isIconOnly
-                      className="min-w-0 w-5 h-5"
-                      onPress={() => handleRemoveModel(p.name, m.id)}
-                      isDisabled={!!busyAction}
-                    >
-                      <X size={10} />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-center gap-2">
-              <Input
-                size="sm"
-                placeholder="模型 ID"
-                className="text-[11px] font-mono"
-                value={modelForm.providerId === (p.id || p.name) ? modelForm.id : ''}
-                onChange={(e) => setModelForm({ providerId: p.id || p.name, id: e.target.value, name: modelForm.name, contextWindow: modelForm.contextWindow })}
-              />
-              <Input
-                size="sm"
-                placeholder="显示名称"
-                className="text-[11px]"
-                value={modelForm.providerId === (p.id || p.name) ? modelForm.name : ''}
-                onChange={(e) => setModelForm((s) => ({ ...s, providerId: p.id || p.name, name: e.target.value }))}
-              />
-              <Input
-                size="sm"
-                type="number"
-                placeholder="上下文"
-                className="text-[11px] w-20"
-                value={modelForm.providerId === (p.id || p.name) ? modelForm.contextWindow : 200000}
-                onChange={(e) => setModelForm((s) => ({ ...s, providerId: p.id || p.name, contextWindow: Number(e.target.value) }))}
-              />
-              <Button
-                size="sm"
-                variant="flat"
-                isIconOnly
-                onPress={() => handleAddModel(p.name)}
-                isDisabled={!!busyAction}
-                aria-label="添加模型"
-              >
-                <Plus size={12} />
-              </Button>
-              {!p.isBuiltin && (
-                <Button
-                  size="sm"
-                  variant="flat"
-                  onPress={() => handleDiscover(p.name)}
-                  isDisabled={!!busyAction}
-                  isLoading={busyAction === `discover:${p.name}`}
-                  startContent={<Wand2 size={12} />}
-                  aria-label="检测模型"
-                  title="检测模型"
-                >
-                  检测模型
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    );
+  const saveProvider = async () => {
+    const payload = clone(providerDraft);
+    if (!payload.name?.trim()) { setError('Provider 名称不能为空'); return; }
+    if (!payload.apiKey) delete payload.apiKey;
+    const next = await act('save-provider', () => mana.modelConfig.saveProvider(payload, snapshot.revision), 'Provider 已保存');
+    if (!next) return;
+    setProviderDraft(null); setDiscovered(null);
   };
 
-  const renderAddForm = () => (
-    <div className="border border-vscode-panel-border bg-vscode-sidebar/30 rounded p-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-gray-300">添加供应商</span>
-        <Button
-          size="sm"
-          variant="light"
-          isIconOnly
-          onPress={() => { setShowAddForm(false); setError(''); }}
-          aria-label="关闭"
-        >
-          <X size={14} />
-        </Button>
-      </div>
-      <Input
-        size="sm"
-        label="名称"
-        placeholder="例如 anthropic / kimi-k2.6 / deepseek-v4"
-        value={addForm.name}
-        onChange={(e) => setAddForm((s) => ({ ...s, name: e.target.value }))}
-      />
-      <label className="text-xs text-gray-400 block">
-        协议类型
-        <select
-          className="mt-1 w-full rounded border border-vscode-panel-border bg-vscode-sidebar px-2 py-1.5 text-sm text-gray-200"
-          value={addForm.type}
-          onChange={(e) => setAddForm((s) => ({ ...s, type: e.target.value }))}
-        >
-          <option value="openai-compat">OpenAI-compatible</option>
-          <option value="anthropic">Anthropic-compatible</option>
-        </select>
-      </label>
-      <Input
-        size="sm"
-        label="Base URL"
-        placeholder="例如 https://api.openai.com/v1 或 https://api.anthropic.com"
-        className="font-mono"
-        value={addForm.baseUrl}
-        onChange={(e) => {
-          const baseUrl = e.target.value;
-          const lower = baseUrl.toLowerCase();
-          setAddForm((s) => ({
-            ...s,
-            baseUrl,
-            type: lower.includes('anthropic') ? 'anthropic' : s.type,
-          }));
-        }}
-      />
-      <Input
-        size="sm"
-        type="password"
-        label="API Key"
-        placeholder="sk-..."
-        className="font-mono"
-        value={addForm.apiKey}
-        onChange={(e) => setAddForm((s) => ({ ...s, apiKey: e.target.value }))}
-      />
-      <div className="flex justify-end gap-2 pt-1">
-        <Button size="sm" variant="flat" onPress={() => { setShowAddForm(false); setError(''); }}>
-          取消
-        </Button>
-        <Button
-          size="sm"
-          color="primary"
-          onPress={() => handleAdd({ discover: false })}
-          isLoading={busyAction === 'add'}
-          isDisabled={!addForm.name.trim() || !!busyAction}
-        >
-          添加
-        </Button>
-        <Button
-          size="sm"
-          color="primary"
-          variant="flat"
-          startContent={<Wand2 size={12} />}
-          onPress={() => handleAdd({ discover: true })}
-          isLoading={busyAction === 'add:discover'}
-          isDisabled={!addForm.name.trim() || !addForm.apiKey.trim() || !!busyAction}
-        >
-          添加并检测模型
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderAliasCard = (alias) => {
-    const selectedProvider = providerOptions.find((p) => p.id === alias.providerId);
-    const models = selectedProvider?.models || [];
-
-    return (
-      <div key={alias.id} className="border border-vscode-panel-border bg-vscode-sidebar/20 rounded p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-gray-300 uppercase tracking-wide">{alias.displayName || alias.id}</span>
-          <span className="text-[10px] text-gray-500 font-mono">{alias.id}</span>
-        </div>
-
-        <div className="space-y-1.5">
-          <div>
-            <label className="text-[10px] text-gray-500 block mb-0.5">供应商</label>
-            <select
-              className="w-full text-xs bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-gray-200"
-              value={alias.providerId || ''}
-              onChange={(e) => updateAliasField(alias.id, 'providerId', e.target.value)}
-            >
-              <option value="">-- 选择供应商 --</option>
-              {providerOptions.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-[10px] text-gray-500 block mb-0.5">模型</label>
-            <select
-              className="w-full text-xs bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-gray-200"
-              value={alias.modelId || ''}
-              onChange={(e) => updateAliasModel(alias.id, e.target.value)}
-            >
-              <option value="">-- 选择模型 --</option>
-              {models.map((m) => (
-                <option key={m.id} value={m.id}>{m.name || m.id}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[10px] text-gray-500 block mb-0.5">上下文长度</label>
-              <input
-                type="number"
-                className="w-full text-xs bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-gray-200 outline-none focus:border-primary-500"
-                value={alias.contextWindow || ''}
-                onChange={(e) => updateAliasField(alias.id, 'contextWindow', Number(e.target.value))}
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-gray-500 block mb-0.5">最大输出 Tokens</label>
-              <input
-                type="number"
-                className="w-full text-xs bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-gray-200 outline-none focus:border-primary-500"
-                value={alias.maxOutputTokens || ''}
-                onChange={(e) => updateAliasField(alias.id, 'maxOutputTokens', Number(e.target.value))}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-1.5 cursor-pointer">
-              <input
-                type="checkbox"
-                className="accent-primary-500 w-3.5 h-3.5"
-                checked={!!alias.thinking}
-                onChange={(e) => updateAliasField(alias.id, 'thinking', e.target.checked)}
-              />
-              <span className="text-[11px] text-gray-300">思考模式</span>
-            </label>
-            {alias.thinking && (
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] text-gray-500">预算</span>
-                <input
-                  type="number"
-                  className="w-20 text-xs bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-gray-200 outline-none focus:border-primary-500"
-                  value={alias.thinkingBudget || 0}
-                  onChange={(e) => updateAliasField(alias.id, 'thinkingBudget', Number(e.target.value))}
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[10px] text-gray-500 block mb-0.5">温度 (0-2)</label>
-              <input
-                type="number"
-                step={0.1}
-                min={0}
-                max={2}
-                className="w-full text-xs bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-gray-200 outline-none focus:border-primary-500"
-                value={alias.temperature ?? 0.7}
-                onChange={(e) => updateAliasField(alias.id, 'temperature', Number(e.target.value))}
-              />
-            </div>
-            <div>
-              <label className="text-[10px] text-gray-500 block mb-0.5">Effort Level</label>
-              <select
-                className="w-full text-xs bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-gray-200 outline-none focus:border-primary-500"
-                value={alias.effortLevel || 'high'}
-                onChange={(e) => updateAliasField(alias.id, 'effortLevel', e.target.value)}
-              >
-                <option value="low">low</option>
-                <option value="high">high</option>
-                <option value="max">max</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  const discover = async () => {
+    const result = await act('discover', () => mana.modelConfig.discoverModels(providerDraft.id));
+    if (!result) return;
+    if (!result.ok) { setError(result.error || '模型发现失败'); return; }
+    setDiscovered(result); setNotice(`发现 ${result.models.length} 个模型，请确认后应用。`);
   };
+
+  const applyDiscovery = async () => {
+    const next = await act('apply-discovery', () => mana.modelConfig.applyDiscoveredModels(providerDraft.id, discovered.models, snapshot.revision), '模型发现结果已应用');
+    if (!next) return;
+    setProviderDraft(clone(next.providers.find((provider) => provider.id === providerDraft.id)));
+    setDiscovered(null);
+  };
+
+  const saveProfile = async () => {
+    if (!profileDraft.name?.trim()) { setError('档案名称不能为空'); return; }
+    const next = await act('save-profile', () => mana.modelConfig.saveProfile(profileDraft, snapshot.revision), '模型档案已保存');
+    if (!next) return;
+    setProfileDraft(null);
+  };
+
+  const saveRouting = async () => {
+    const next = await act('save-routing', () => mana.modelConfig.saveRouting(routingDraft, snapshot.revision), '模型分配已保存');
+    if (!next) return;
+    setRoutingDraft(clone(next.routing));
+  };
+
+  const recommendProfile = (subagent) => {
+    const workload = subagent.modelRequirements?.workload;
+    const priority = subagent.modelRequirements?.priority;
+    return profiles.find((profile) => profile.workloadTags?.includes(workload) && profile.priority === priority)
+      || profiles.find((profile) => profile.workloadTags?.includes(workload))
+      || profiles.find((profile) => profile.priority === priority)
+      || profiles[0];
+  };
+
+  if (loading) return <div className="h-full flex items-center justify-center gap-2 text-sm text-gray-400"><Spinner size="sm" /> 正在加载模型中心…</div>;
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden">
-      <div className="h-9 px-3 flex items-center justify-between border-b border-vscode-panel-border bg-vscode-sidebar shrink-0">
-        <div className="flex items-center gap-2">
-          <Cpu size={14} className="text-gray-400" />
-          <span className="text-xs font-bold text-gray-400 uppercase">模型供应商</span>
-        </div>
+    <div data-testid="model-center" className="flex flex-col h-full overflow-hidden">
+      <div className="h-11 px-4 flex items-center justify-between border-b border-vscode-panel-border bg-vscode-sidebar shrink-0">
+        <div className="flex items-center gap-2 whitespace-nowrap"><Cpu size={15} className="text-primary-400 shrink-0" /><span className="text-sm font-bold text-gray-300">模型中心</span><Chip size="sm" variant="flat">Schema v{snapshot?.schemaVersion}</Chip></div>
+        <div className="flex items-center gap-1">{sectionButton(section === 'overview', () => setSection('overview'), Activity, '总览')}{sectionButton(section === 'providers', () => setSection('providers'), KeyRound, 'Provider')}{sectionButton(section === 'profiles', () => setSection('profiles'), Cpu, '模型档案')}{sectionButton(section === 'assignments', () => setSection('assignments'), Wand2, '分配矩阵')}<Button size="sm" isIconOnly variant="light" onPress={refresh}><RefreshCw size={13} /></Button></div>
       </div>
+      <div className="flex-1 overflow-y-auto p-5">
+        <div className="max-w-5xl mx-auto space-y-4">
+          {error && <div className="border border-rose-500/40 bg-rose-500/10 rounded px-3 py-2 text-xs text-rose-300">{error}</div>}
+          {notice && <div className="border border-emerald-500/40 bg-emerald-500/10 rounded px-3 py-2 text-xs text-emerald-200">{notice}</div>}
+          {snapshot?.secretStatus?.storageMode === 'restricted-plaintext' && <div className="border border-amber-500/40 bg-amber-500/10 rounded px-3 py-2 text-xs text-amber-200 flex items-center gap-2"><ShieldAlert size={14} />系统安全存储不可用，密钥以受限权限（0600）保存在本机。</div>}
 
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="max-w-2xl space-y-4">
-          {error ? (
-            <div className="border border-rose-500/40 bg-rose-500/10 rounded px-3 py-2 text-xs text-rose-300">
-              {error}
-            </div>
-          ) : null}
-          {discoverNotice ? (
-            <div className="border border-emerald-500/40 bg-emerald-500/10 rounded px-3 py-2 text-xs text-emerald-200">
-              {discoverNotice}
-            </div>
-          ) : null}
-
-          {loading ? (
-            <div className="flex items-center gap-2 text-xs text-gray-400 py-6">
-              <Spinner size="sm" aria-label="正在加载供应商" /> 正在加载供应商…
-            </div>
-          ) : (
+          {section === 'overview' && (
             <>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-2 overflow-hidden">
-                  <div className="min-w-0">
-                    <div className="text-sm font-bold text-gray-300 truncate">Direct API 模型供应商</div>
-                    {current ? (
-                      <div className="text-[11px] text-gray-500 mt-0.5 truncate">
-                        当前：<span className="text-gray-300">{current.name}</span>
-                        {current.type ? (
-                          <span> · {current.type === 'anthropic' ? 'Anthropic-compatible' : 'OpenAI-compatible'}</span>
-                        ) : null}
-                        {current.baseUrl ? (
-                          <span className="font-mono"> · {current.baseUrl}</span>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <div className="text-[11px] text-gray-500 mt-0.5">尚未选择供应商</div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="flat"
-                      onPress={refresh}
-                      isDisabled={loading || !!busyAction}
-                      isIconOnly
-                      aria-label="刷新"
-                    >
-                      <RefreshCw size={12} />
-                    </Button>
-                    {!showAddForm ? (
-                      <Button
-                        size="sm"
-                        variant="flat"
-                        onPress={() => setShowAddForm(true)}
-                        startContent={<Plus size={12} />}
-                      >
-                        添加供应商
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-
-                {showAddForm ? renderAddForm() : null}
-
-                <div className="space-y-1.5">
-                  {providers.length === 0 ? (
-                    <div className="text-xs text-gray-500 italic px-2 py-3">
-                      暂无供应商。点击「添加供应商」开始配置。
-                    </div>
-                  ) : (
-                    providers.map(renderProviderRow)
-                  )}
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                {[
+                  ['当前 Driver', driver?.displayName || driver?.id || 'direct-api'],
+                  ['默认档案', profileMap[snapshot?.routing?.defaultProfileId]?.name || '未配置'],
+                  ['Provider', `${providers.length} 个`],
+                  ['配置环境', snapshot?.environment?.kind === 'development' ? '开发版' : '安装版'],
+                ].map(([label, value]) => <div key={label} className="border border-vscode-panel-border rounded p-3 bg-vscode-sidebar/20"><div className="text-[10px] text-gray-500">{label}</div><div className="text-sm text-gray-200 mt-1 truncate">{value}</div></div>)}
               </div>
-
-              {/* Alias Configuration */}
-              <div className="border-t border-vscode-panel-border pt-4 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="text-sm font-bold text-gray-300">Alias 配置</div>
-                    <div className="text-[11px] text-gray-500 mt-0.5 truncate">
-                      兼容 Anthropic Messages API 格式，仅在 Direct API 模式下生效
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="light"
-                      isIconOnly
-                      onPress={handleResetAliases}
-                      isDisabled={aliasSaving}
-                      aria-label="重置默认值"
-                      title="重置默认值"
-                    >
-                      <RotateCcw size={12} />
-                    </Button>
-                    <Button
-                      size="sm"
-                      color="primary"
-                      onPress={handleSaveAliases}
-                      isLoading={aliasSaving}
-                      startContent={<Save size={12} />}
-                    >
-                      保存 Alias 配置
-                    </Button>
-                  </div>
-                </div>
-
-                {aliasError ? (
-                  <div className="border border-rose-500/40 bg-rose-500/10 rounded px-3 py-2 text-xs text-rose-300">
-                    {aliasError}
-                  </div>
-                ) : null}
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {aliases.map(renderAliasCard)}
-                </div>
+              <div className="border border-vscode-panel-border rounded p-4 space-y-2">
+                <div className="text-sm font-semibold text-gray-300">系统任务路由</div>
+                {SYSTEM_TASKS.map(([id, label]) => <div key={id} className="flex justify-between text-xs border-t border-vscode-panel-border/40 pt-2"><span className="text-gray-400">{label}</span><span className="text-gray-200">{profileMap[snapshot.routing.systemAssignments?.[id]]?.name || profileMap[snapshot.routing.defaultProfileId]?.name || '未配置'}</span></div>)}
               </div>
+              <div className="text-[11px] text-gray-600 break-all">配置位置：{snapshot?.environment?.configRoot}</div>
+            </>
+          )}
 
-              <div className="text-[11px] text-gray-500 leading-relaxed border-t border-vscode-panel-border pt-3 space-y-1">
-                <p>
-                  如需为单个 Subagent 配置不同的模型 / Tier，请在上方 Alias 区域调整对应 tier 的映射。
-                </p>
-                <p>
-                  检测模型会按协议尝试常见模型列表接口，并优先使用供应商返回的上下文、输出上限与思考能力字段；供应商未返回时会按模型 ID 使用保守默认值。
-                </p>
+          {section === 'providers' && (
+            <>
+              <div className="flex justify-between items-center"><div><div className="text-sm font-semibold text-gray-300">Provider 连接</div><div className="text-[11px] text-gray-500">Provider 只描述连接；实际模型选择由模型档案决定。</div></div><Button size="sm" color="primary" variant="flat" onPress={() => { setProviderDraft(newProvider()); setDiscovered(null); }} startContent={<Plus size={12} />}>新增 Provider</Button></div>
+              {providerDraft && <ProviderEditor provider={providerDraft} snapshot={snapshot} discovered={discovered} busy={busy} onChange={setProviderDraft} onCancel={() => { setProviderDraft(null); setDiscovered(null); }} onSave={saveProvider} onTest={async () => { const result = await act('test-provider', () => mana.modelConfig.testProvider(providerDraft.id)); if (!result) return; if (!result.ok) { setError(result.error || '连接失败'); return; } setNotice(result.message || '连接成功'); }} onDiscover={discover} onApplyDiscovery={applyDiscovery} onClearKey={async () => { const next = await act('clear-key', () => mana.modelConfig.saveProvider({ id: providerDraft.id, name: providerDraft.name, adapterId: providerDraft.adapterId, baseUrl: providerDraft.baseUrl, apiKey: '' }, snapshot.revision), '密钥已清空'); if (!next) return; setProviderDraft(clone(next.providers.find((provider) => provider.id === providerDraft.id))); }} />}
+              <div className="space-y-2">{providers.map((provider) => {
+                const refs = profiles.flatMap((profile) => Object.values(profile.targetsByDriver || {}).flatMap((group) => [group.primary, ...(group.fallbacks || [])].filter((target) => target?.providerId === provider.id).map(() => profile.name)));
+                return <div key={provider.id} className="border border-vscode-panel-border rounded p-3 bg-vscode-sidebar/20"><div className="flex items-center gap-3"><button type="button" onClick={() => setExpanded((prev) => { const next = new Set(prev); next.has(provider.id) ? next.delete(provider.id) : next.add(provider.id); return next; })}>{expanded.has(provider.id) ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</button><div className="flex-1 min-w-0"><div className="text-sm text-gray-200 font-medium">{provider.name}</div><div className="text-[10px] text-gray-500 font-mono truncate">{provider.baseUrl} · {provider.adapterId}</div></div><Chip size="sm" color={provider.auth?.hasApiKey ? 'success' : 'warning'} variant="flat">{provider.auth?.hasApiKey ? '密钥已保存' : '缺少密钥'}</Chip><Button size="sm" variant="flat" onPress={() => { setProviderDraft(clone(provider)); setDiscovered(null); }}>编辑</Button>{!provider.isBuiltin && <Button isIconOnly size="sm" color="danger" variant="light" onPress={async () => { if (!confirm(`删除 Provider「${provider.name}」？${refs.length ? `\n将把 ${refs.length} 个引用迁移到所选替代 Provider。` : ''}`)) return; await act('delete-provider', () => mana.modelConfig.deleteProvider(provider.id, refs.length ? replacement : null, snapshot.revision), 'Provider 已删除'); }}><Trash2 size={13} /></Button>}</div>{expanded.has(provider.id) && <div className="mt-3 pl-7 space-y-2"><div className="text-[11px] text-gray-500">模型：{provider.models.map((model) => model.id).join(' · ') || '无'}；引用档案：{[...new Set(refs)].join('、') || '无'}</div>{refs.length > 0 && !provider.isBuiltin && <label className="text-[11px] text-gray-500">删除时替换为：<select className="ml-2 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1" value={replacement} onChange={(e) => setReplacement(e.target.value)}><option value="">请选择</option>{providers.filter((item) => item.id !== provider.id).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}</div>}</div>;
+              })}</div>
+            </>
+          )}
+
+          {section === 'profiles' && (
+            <>
+              <div className="flex justify-between items-center"><div><div className="text-sm font-semibold text-gray-300">语义模型档案</div><div className="text-[11px] text-gray-500">同一档案可为不同 Driver 指定不同模型，并配置显式备用链。</div></div><Button size="sm" color="primary" variant="flat" onPress={() => setProfileDraft(newProfile(providers))} startContent={<Plus size={12} />}>新增档案</Button></div>
+              {profileDraft && <ProfileEditor profile={profileDraft} providers={providers} busy={busy} onChange={setProfileDraft} onCancel={() => setProfileDraft(null)} onSave={saveProfile} onTest={async () => { if (!confirm('最小推理测试会发送一条极短请求，可能产生少量 API 费用。继续吗？')) return; const result = await act('test-profile', () => mana.modelConfig.testProfile(profileDraft.id)); if (!result) return; setNotice(`测试成功：${result.modelId}${result.requestId ? ` · ${result.requestId}` : ''}`); }} />}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{profiles.map((profile) => {
+                const refs = Object.values(snapshot.routing.systemAssignments || {}).filter((id) => id === profile.id).length + Object.values(snapshot.routing.subagentAssignments || {}).filter((id) => id === profile.id).length + (snapshot.routing.defaultProfileId === profile.id ? 1 : 0);
+                return <div key={profile.id} className="border border-vscode-panel-border rounded p-4 bg-vscode-sidebar/20 space-y-2"><div className="flex items-center gap-2"><div className="flex-1"><div className="text-sm font-semibold text-gray-200">{profile.name}</div><div className="text-[10px] text-gray-500">{profile.description}</div></div><Chip size="sm" variant="flat">{profile.priority}</Chip></div><div className="flex flex-wrap gap-1">{Object.keys(profile.targetsByDriver || {}).map((id) => <Chip key={id} size="sm" variant="bordered">{id}</Chip>)}</div><div className="text-[10px] text-gray-600">{refs} 处引用 · {profile.id}</div><div className="flex justify-end gap-2"><Button size="sm" variant="light" onPress={() => setProfileDraft({ ...clone(profile), id: '', name: `${profile.name} 副本` })} startContent={<Copy size={11} />}>复制</Button><Button size="sm" variant="flat" onPress={() => setProfileDraft(clone(profile))}>编辑</Button><Button size="sm" color="danger" variant="light" onPress={async () => { const alternatives = profiles.filter((item) => item.id !== profile.id); const replacementId = refs ? alternatives[0]?.id : null; if (!confirm(`删除档案「${profile.name}」？${refs ? `\n${refs} 处引用将迁移到「${profileMap[replacementId]?.name || '无'}」。` : ''}`)) return; await act('delete-profile', () => mana.modelConfig.deleteProfile(profile.id, replacementId, snapshot.revision), '模型档案已删除'); }} isDisabled={profiles.length <= 1}><Trash2 size={11} /></Button></div></div>;
+              })}</div>
+            </>
+          )}
+
+          {section === 'assignments' && routingDraft && (
+            <>
+              <div className="flex justify-between items-center"><div><div className="text-sm font-semibold text-gray-300">模型分配矩阵</div><div className="text-[11px] text-gray-500">推荐只填入待保存状态，不会在运行时自动改模。</div></div><div className="flex gap-2"><Button size="sm" variant="flat" onPress={() => setRoutingDraft((routing) => { const next = clone(routing); for (const subagent of subagents) { const recommended = recommendProfile(subagent); if (recommended) next.subagentAssignments[subagent.id] = recommended.id; } return next; })} startContent={<Wand2 size={12} />}>应用全部推荐</Button><Button size="sm" color="primary" onPress={saveRouting} isLoading={busy === 'save-routing'} startContent={<Save size={12} />}>保存分配</Button></div></div>
+              <div className="border border-vscode-panel-border rounded overflow-hidden"><div className="grid grid-cols-12 gap-2 px-3 py-2 bg-vscode-sidebar text-[10px] uppercase text-gray-500"><span className="col-span-4">对象</span><span className="col-span-3">需求</span><span className="col-span-5">模型档案</span></div>
+                <div className="grid grid-cols-12 gap-2 px-3 py-2 items-center border-t border-vscode-panel-border/50"><span className="col-span-4 text-xs text-gray-300">全局默认</span><span className="col-span-3 text-[10px] text-gray-500">未显式绑定时使用</span><select className="col-span-5 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-xs" value={routingDraft.defaultProfileId || ''} onChange={(e) => setRoutingDraft({ ...routingDraft, defaultProfileId: e.target.value })}>{profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}</select></div>
+                {SYSTEM_TASKS.map(([id, label]) => <div key={id} className="grid grid-cols-12 gap-2 px-3 py-2 items-center border-t border-vscode-panel-border/50"><span className="col-span-4 text-xs text-gray-300">{label}</span><span className="col-span-3 text-[10px] text-gray-500">系统任务</span><select className="col-span-5 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-xs" value={routingDraft.systemAssignments?.[id] || routingDraft.defaultProfileId} onChange={(e) => setRoutingDraft({ ...routingDraft, systemAssignments: { ...routingDraft.systemAssignments, [id]: e.target.value } })}>{profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}</select></div>)}
+                {subagents.map((subagent) => { const recommended = recommendProfile(subagent); const selected = routingDraft.subagentAssignments?.[subagent.id] || ''; return <div key={subagent.id} className="grid grid-cols-12 gap-2 px-3 py-2 items-center border-t border-vscode-panel-border/50"><div className="col-span-4"><div className="text-xs text-gray-300">{subagent.displayName || subagent.id}</div><div className="text-[9px] text-gray-600 font-mono">{subagent.id}</div></div><div className="col-span-3 text-[10px] text-gray-500">{subagent.modelRequirements?.workload || '未标注'} · {subagent.modelRequirements?.priority || 'balanced'}</div><div className="col-span-5 flex gap-2"><select className="flex-1 bg-vscode-sidebar border border-vscode-panel-border rounded px-2 py-1 text-xs" value={selected} onChange={(e) => setRoutingDraft({ ...routingDraft, subagentAssignments: { ...routingDraft.subagentAssignments, [subagent.id]: e.target.value } })}><option value="">使用全局默认</option>{profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}</select>{recommended && recommended.id !== selected && <Button size="sm" variant="light" onPress={() => setRoutingDraft({ ...routingDraft, subagentAssignments: { ...routingDraft.subagentAssignments, [subagent.id]: recommended.id } })}>推荐：{recommended.name}</Button>}</div></div>; })}
               </div>
             </>
           )}

@@ -1,5 +1,5 @@
 function compactText(text) {
-  return String(text || '').replace(/\s+/g, ' ').trim();
+  return String(text || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
 }
 
 function trimLeadingQuotes(text) {
@@ -11,7 +11,7 @@ function isSplitReactionLead(text) {
   if (!normalized) return false;
   const sentences = normalized.split(/(?<=[。！？])/u).filter(Boolean);
   const tail = sentences[sentences.length - 1] || normalized;
-  return /然后[她他它][^。！？]{0,14}(?:笑了|沉默了|抬起头(?:来)?了?|抬起头|抬眼(?:看了?)?|抬眼|点了点头|闭上了眼|开口了?)[。！？]?$/u.test(tail);
+  return /(?:然后|随后|接着|忽然|这时)[她他它我你](?:们)?[^。！？]{0,14}(?:笑了|沉默了|抬起头(?:来)?了?|抬起头|抬眼(?:看了?)?|抬眼|点了点头|闭上了眼|开口了?)[。！？]?$/u.test(tail);
 }
 
 function isSplitReactionExplanation(text) {
@@ -23,8 +23,8 @@ function isSplitNotButPair(leftText, rightText) {
   const left = compactText(leftText);
   const right = trimLeadingQuotes(rightText);
   if (!left || !right) return false;
-  const leftLooksIncomplete = /不是[^。！？；]{0,40}(?:，也不是[^。！？；]{0,40})?$/u.test(left)
-    || /不是[^。！？；]{0,40}，?$/u.test(left);
+  const leftLooksIncomplete = /不是[^。！？；;]{0,40}(?:[,，]也不是[^。！？；;]{0,40})?$/u.test(left)
+    || /不是[^。！？；;]{0,40}[,，]?$/u.test(left);
   const rightLooksLikeTurn = /^(?:而是|更像是|是)[^。！？]?/u.test(right);
   return leftLooksIncomplete && rightLooksLikeTurn;
 }
@@ -34,8 +34,8 @@ function isSplitMultiNegativePair(leftText, rightText) {
   const right = trimLeadingQuotes(rightText);
   if (!left || !right) return false;
   // Left ends with 2+ "不是X" clauses (consecutive negatives, possibly separated by 、or ，)
-  const leftHasMultiNegative = /(?:不是[^。！？；]{0,40}[、，]){1,}不是[^。！？；]{0,40}[。]?$/u.test(left)
-    || /不是[^。！？；]{0,40}[、，]不是[^。！？；]{0,40}[。]?$/u.test(left);
+  const leftHasMultiNegative = /(?:不是[^。！？；;]{0,40}[、，,]){1,}不是[^。！？；;]{0,40}[。]?$/u.test(left)
+    || /不是[^。！？；;]{0,40}[、，,]不是[^。！？；;]{0,40}[。]?$/u.test(left);
   // Right starts with "是"/"那是"/"他是" (the reveal)
   const rightIsReveal = /^(?:那是|他是|这是|是)(?![^。！？；]{0,20}(?:不是|也不是))/u.test(right);
   return leftHasMultiNegative && rightIsReveal;
@@ -44,14 +44,14 @@ function isSplitMultiNegativePair(leftText, rightText) {
 function hasNoNoJustPattern(text) {
   const t = compactText(text);
   if (!t) return false;
-  return /没有[^。！？；]{0,20}[、，]没有[^。！？；]{0,20}[、，]?只是/u.test(t);
+  return /没有[^。！？；;]{0,20}[、，,]没有[^。！？；;]{0,20}[、，,]?只是/u.test(t);
 }
 
 function hasMultiNegativeEnumeration(text) {
   const t = compactText(text);
   if (!t) return false;
   // 3+ "不是X" clauses in the same sentence/paragraph followed by a reveal
-  return /(?:不是[^。！？；]{0,40}[、，]){2,}不是[^。！？；]{0,40}[。]?\s*(?:那是|他是|这是|是)/u.test(t);
+  return /(?:不是[^。！？；;]{0,40}[、，,]){2,}不是[^。！？；;]{0,40}[。]?\s*(?:那是|他是|这是|是)/u.test(t);
 }
 
 const STOCK_IMAGE_PATTERNS = [
@@ -72,7 +72,7 @@ function isAiEndingTriad(text) {
 }
 
 function isEllipsisSeparator(text) {
-  return /^…{2,}$/u.test(compactText(text));
+  return /^(?:(?:…|⋯){2,}|\.{3,})$/u.test(compactText(text));
 }
 
 function countLikeSimiles(text) {
@@ -240,7 +240,21 @@ function detectHeuristicParagraphAnnotations(paragraphs) {
       annotations.push({
         paragraphId: paragraph.id,
         kind: 'not_but_overuse',
+        patternId: 'no_no_just',
+        confidence: 0.95,
+        severity: 'high',
         note: '「没有A，没有B，只是C」属于 not-but 同类八股：先连否两个状态，再用「只是」兜答案，建议删掉整套对照骨架，把 C 直接写成状态或动作。',
+      });
+    }
+
+    if (hasMultiNegativeEnumeration(normalized)) {
+      annotations.push({
+        paragraphId: paragraph.id,
+        kind: 'not_but_overuse',
+        patternId: 'multi_negative_enumeration',
+        confidence: 0.95,
+        severity: 'high',
+        note: '连续否定铺排：同段反复罗列「不是 A/B/C」后再用「是/那是」兜出结论，建议删掉否定排比，直接写进叙事。',
       });
     }
 
@@ -321,20 +335,20 @@ export function detectCrossParagraphQualityAnnotations(paragraphs) {
 
     if (isSplitReactionLead(current.text) && isSplitReactionExplanation(next.text)) {
       const note = '跨段 AI 套句：上一段以独立短反应句收尾，下一段再用「那是一个……」式解释；即使拆成两段也应视为同一问题，建议并回上文直叙。';
-      annotations.push({ paragraphId: current.id, kind: 'choppy', note });
-      annotations.push({ paragraphId: next.id, kind: 'choppy', note });
+      annotations.push({ paragraphId: current.id, kind: 'choppy', patternId: 'reaction_then_explanation', confidence: 0.94, severity: 'high', note });
+      annotations.push({ paragraphId: next.id, kind: 'choppy', patternId: 'reaction_then_explanation', confidence: 0.94, severity: 'high', note });
     }
 
     if (isSplitNotButPair(current.text, next.text)) {
       const note = '跨段 AI 套句：对照骨架被拆到了相邻两段里，仍属于「不是……而是……/更像是……」类八股，建议删掉对照骨架直接直叙。';
-      annotations.push({ paragraphId: current.id, kind: 'not_but_overuse', note });
-      annotations.push({ paragraphId: next.id, kind: 'not_but_overuse', note });
+      annotations.push({ paragraphId: current.id, kind: 'not_but_overuse', patternId: 'split_not_but', confidence: 0.94, severity: 'high', note });
+      annotations.push({ paragraphId: next.id, kind: 'not_but_overuse', patternId: 'split_not_but', confidence: 0.94, severity: 'high', note });
     }
 
     if (isSplitMultiNegativePair(current.text, next.text)) {
       const note = '跨段 AI 套句：连续否定铺排被拆到了相邻两段里（前一段结尾「不是A、不是B」、后一段开头「是D」），建议砍掉整套否定排比，把正句直接写进叙事。';
-      annotations.push({ paragraphId: current.id, kind: 'not_but_overuse', note });
-      annotations.push({ paragraphId: next.id, kind: 'not_but_overuse', note });
+      annotations.push({ paragraphId: current.id, kind: 'not_but_overuse', patternId: 'split_multi_negative', confidence: 0.96, severity: 'high', note });
+      annotations.push({ paragraphId: next.id, kind: 'not_but_overuse', patternId: 'split_multi_negative', confidence: 0.96, severity: 'high', note });
     }
   }
 

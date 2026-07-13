@@ -28,6 +28,8 @@
 - [scripts/eval-enrichment-benchmark.js](/Users/potablewater/Desktop/MultiAgentNovelAssistant/scripts/eval-enrichment-benchmark.js)
 - [test-projects/web-enrichment-benchmark-2026](/Users/potablewater/Desktop/MultiAgentNovelAssistant/test-projects/web-enrichment-benchmark-2026)
 
+验收口径以 [联网人设补全测试契约](character-enrichment-test-contract.md) 为准：将“能否抓到正文”“是否抓到正确角色”“字段是否有证据”拆开统计，避免用单一成功率掩盖误页或未标注样本。
+
 ---
 
 ## 2. 流程总览
@@ -162,10 +164,14 @@ node scripts/run-enrichment-benchmark.js \
 ### 5.2 `acceptance-report.json`
 
 核心字段：
-- `successRate`
-- `accuracyRate`
+- `coverageRate`：端到端通过完整度和锚定校验的比例
+- `referenceCoverageRate`：有人工参考标注的样本覆盖率
+- `referenceAccuracyRate`：只在已标注样本上计算的端到端正确率
+- `referenceWrongCharacterCount`：已标注样本命中禁止串入词的数量（必须为 0）
 - `perGame`
 - `details[]`
+
+`successRate` 与 `accuracyRate` 暂时保留给旧消费方；新逻辑应使用三个语义明确的新字段。没有参考标注的样本不再默认视为准确。
 
 ### 5.3 先看哪里
 
@@ -314,7 +320,7 @@ node scripts/run-enrichment-benchmark.js \
 2. 重跑单作品或补充 roster smoke
 3. 如果 smoke 变好，再跑单作品补全
 4. 如果单作品通过，再跑主 benchmark
-5. 最后跑 acceptance
+5. 最后跑 acceptance，并检查覆盖率、参考覆盖率、参考准确率与串角色数
 
 不要跳过中间层级直接全量回归。
 

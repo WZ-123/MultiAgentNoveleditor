@@ -6,6 +6,7 @@
  */
 
 const path = require('node:path');
+const { createHash } = require('node:crypto');
 const fs = require('node:fs').promises;
 const fastGlob = require('fast-glob');
 const lockfile = require('proper-lockfile');
@@ -16,6 +17,9 @@ const { resolveAnchoredTextMatches } = require('../../domain/textMatch.cjs');
 
 // Global mutex per file path for jsonl writes (in-process serialization)
 const _mutex = new Map();
+function chapterContentHash(value) {
+  return createHash('sha256').update(String(value || '').replace(/\r\n/gu, '\n').trim()).digest('hex').slice(0, 16);
+}
 async function withMutex(key, fn) {
   const prev = _mutex.get(key) || Promise.resolve();
   let release;
@@ -1800,6 +1804,9 @@ async function writeChapterWithMeta(novelDir, name, content, metadata) {
   const safe = String(name).replace(/[^\w.\-]/g, '_');
   if (arguments.length >= 5) {
     const options = arguments[4] || {};
+    if (_hasOwn(options, 'verifiedContentHash') && chapterContentHash(content || '') !== options.verifiedContentHash) {
+      throw new Error('chapter verification hash mismatch: content changed after strict verification');
+    }
     if (_hasOwn(options, 'baseContent')) {
       const expectedBaseContent = typeof options.baseContent === 'string' ? options.baseContent : '';
       const existing = await readChapterWithMeta(novelDir, safe);
@@ -2143,6 +2150,9 @@ async function replaceChapterText(novelDir, name, targetText, replacementText, o
 
   const { content, metadata } = await readChapterWithMeta(novelDir, safeName);
   const current = content || '';
+  if (typeof options.baseContent === 'string' && options.baseContent && options.baseContent !== current) {
+    throw new Error('chapter snapshot mismatch: the chapter changed after it was read. Read the latest chapter again before applying this replacement.');
+  }
   const replacement = typeof replacementText === 'string' ? replacementText : '';
   const resolved = _resolveReplaceChapterMatches(current, search, options);
   const matchCount = resolved.matches.length;
@@ -2158,7 +2168,12 @@ async function replaceChapterText(novelDir, name, targetText, replacementText, o
   }
 
   const nextContent = _applyRangesToText(current, resolved.matches, replacement);
-  await writeChapterWithMeta(novelDir, safeName, nextContent, metadata || null);
+  if (options.verifiedContentHash && chapterContentHash(nextContent) !== options.verifiedContentHash) {
+    throw new Error('chapter verification hash mismatch: preview content changed after strict verification');
+  }
+  if (options.previewOnly !== true) {
+    await writeChapterWithMeta(novelDir, safeName, nextContent, metadata || null);
+  }
   return {
     name: safeName,
     matchCount,
@@ -2166,6 +2181,8 @@ async function replaceChapterText(novelDir, name, targetText, replacementText, o
     matchStrategy: resolved.strategy,
     content: nextContent,
     metadata: metadata || null,
+    baseContent: current,
+    previewOnly: options.previewOnly === true,
   };
 }
 
@@ -2186,13 +2203,21 @@ async function applyChapterPatch(novelDir, name, edits, options = {}) {
   const resolvedRanges = _assertNonOverlappingPatchRanges(resolvedEdits, 'chapter patch edits');
   const nextContent = _applyResolvedEditRanges(current, resolvedRanges);
 
-  await writeChapterWithMeta(novelDir, safeName, nextContent, metadata || null, { baseContent: current });
+  if (options.verifiedContentHash && chapterContentHash(nextContent) !== options.verifiedContentHash) {
+    throw new Error('chapter verification hash mismatch: preview content changed after strict verification');
+  }
+
+  if (options.previewOnly !== true) {
+    await writeChapterWithMeta(novelDir, safeName, nextContent, metadata || null, { baseContent: current });
+  }
   return {
     name: safeName,
     editCount: resolvedEdits.length,
     replacedCount: resolvedRanges.length,
     content: nextContent,
     metadata: metadata || null,
+    baseContent: current,
+    previewOnly: options.previewOnly === true,
     edits: resolvedEdits.map((edit) => ({
       index: edit.editIndex,
       matchCount: edit.matchCount,

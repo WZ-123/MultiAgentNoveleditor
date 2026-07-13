@@ -10,9 +10,11 @@ const appConfig = require('../store/appConfig');
 const offlineLog = require('../store/offlineLog');
 const networkStatus = require('../store/networkStatus');
 const characterEnricher = require('../import/characterEnricher');
+const { assertFanworkCharacters } = require('../import/characterEnrichmentEligibility');
 const { extractCharacters } = require('../import/analyzer');
 const eventBus = require('../runtime/eventBus');
 const clientEvents = require('../runtime/clientEvents');
+const chapterDraftService = require('../runtime/chapterDraftService');
 
 function notifyChapterChanged(name, action, title) {
   if (!name) return;
@@ -177,9 +179,13 @@ function registerNovelIpc() {
     } else if ('title' in finalMeta) {
       delete finalMeta.title;
     }
-    const writeOptions = options && Object.prototype.hasOwnProperty.call(options, 'baseContent')
-      ? { baseContent: typeof options.baseContent === 'string' ? options.baseContent : '' }
-      : undefined;
+    const writeOptions = {};
+    if (options && Object.prototype.hasOwnProperty.call(options, 'baseContent')) {
+      writeOptions.baseContent = typeof options.baseContent === 'string' ? options.baseContent : '';
+    }
+    if (options && typeof options.verifiedContentHash === 'string' && options.verifiedContentHash) {
+      writeOptions.verifiedContentHash = options.verifiedContentHash;
+    }
     const result = await novelData.writeChapterWithMeta(np.root, name, content, finalMeta, writeOptions);
     const revision = options && options.createRevision !== false
       ? await novelData.createChapterRevision(np.root, result.name || name, content, finalMeta, {
@@ -196,6 +202,34 @@ function registerNovelIpc() {
       ...snapshot,
       metadata: finalMeta,
       revision,
+    };
+  }));
+
+  ipcMain.handle('mana:novel:verifyChapterContent', safeIpc(async (_e, { id, name, displayName, title, content, userText, editorContext }) => {
+    const np = await novelsStore.pathsFor(id);
+    const verification = await chapterDraftService.verifyChapterContentStrict({
+      name,
+      displayName,
+      title,
+      text: content,
+      userText,
+      editorContext,
+      runtimeDeps: { novelDir: np.root },
+    });
+    const checks = Array.isArray(verification?.checks) ? verification.checks : [];
+    const issues = (Array.isArray(verification?.issues) ? verification.issues : []).map((issue, index) => ({
+      id: String(issue?.issueId || issue?.id || `issue-${index + 1}`),
+      status: String(issue?.status || 'open'),
+      severity: issue?.severity === 'blocking' ? 'blocking' : 'advisory',
+      summary: String(issue?.summary || issue?.message || issue?.code || '验证未通过'),
+      evidenceParagraphIds: Array.isArray(issue?.evidenceParagraphIds) ? issue.evidenceParagraphIds.map(String) : [],
+    }));
+    return {
+      status: verification?.status === 'passed' ? 'passed' : 'blocked',
+      contentHash: String(verification?.contentHash || ''),
+      checks,
+      issues,
+      blockingCount: issues.filter((issue) => issue.severity === 'blocking' && issue.status !== 'resolved').length,
     };
   }));
 
@@ -393,6 +427,8 @@ function registerNovelIpc() {
       }
     }
 
+    assertFanworkCharacters(characters);
+
     // Try to auto-detect fanwork name from world meta
     let resolvedFanworkName = fanworkName;
     if (!resolvedFanworkName) {
@@ -407,13 +443,14 @@ function registerNovelIpc() {
     const resolvedRunId = eventBus.ensureRunId(runId || `enrich-${id}-${Date.now()}`);
 
     // Progress callback emits events via eventBus so renderer can subscribe
+    let progressQueue = Promise.resolve();
     const onProgress = (evt) => {
-      eventBus.emit({
+      progressQueue = progressQueue.then(() => eventBus.emit({
         runId: resolvedRunId,
         subagentId: 'character-enricher',
         kind: 'progress',
         data: evt,
-      }).catch(() => {});
+      })).catch(() => {});
     };
 
     const enriched = await characterEnricher.enrichCharacters(
@@ -422,6 +459,7 @@ function registerNovelIpc() {
       'zh-CN',
       { fanworkNameOverride: resolvedFanworkName, onProgress }
     );
+    await progressQueue;
 
     // Write enriched characters back to disk
     let written = 0;

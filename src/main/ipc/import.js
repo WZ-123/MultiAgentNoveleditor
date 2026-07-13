@@ -226,13 +226,14 @@ function registerImportIpc() {
       const group = allChars.filter((c) => charIds.includes(c.id));
       if (!group.length) continue;
 
+      let progressQueue = Promise.resolve();
       const onProgress = (evt) => {
-        eventBus.emit({
+        progressQueue = progressQueue.then(() => eventBus.emit({
           runId,
           subagentId: 'character-enricher',
           kind: 'progress',
           data: { ...evt, workName },
-        }).catch(() => {});
+        })).catch(() => {});
       };
 
       const enriched = await characterEnricher.enrichCharacters(
@@ -241,6 +242,7 @@ function registerImportIpc() {
         'zh-CN',
         { fanworkNameOverride: workName, onProgress }
       );
+      await progressQueue;
 
       // Write enriched characters back to staging
       for (const ch of enriched) {

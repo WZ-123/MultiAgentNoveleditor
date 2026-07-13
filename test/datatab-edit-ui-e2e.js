@@ -116,12 +116,13 @@ async function runDataTabEditUiE2E(mainWindow) {
         }
 
         async function saveViaEditor(nextText) {
-          const editButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent.includes('编辑'));
+          const editButton = document.querySelector('[data-testid="data-tab-edit"]');
           if (!editButton) throw new Error('edit button not found');
           editButton.click();
-          await sleep(200);
+          const startedAt = Date.now();
+          while (!document.querySelector('[data-testid="data-tab-editor-textarea"]') && Date.now() - startedAt < 5000) await sleep(100);
 
-          const textarea = document.querySelector('textarea');
+          const textarea = document.querySelector('[data-testid="data-tab-editor-textarea"]');
           if (!textarea) throw new Error('editor textarea not found');
           const proto = HTMLTextAreaElement.prototype;
           const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
@@ -130,7 +131,7 @@ async function runDataTabEditUiE2E(mainWindow) {
           textarea.dispatchEvent(new Event('input', { bubbles: true }));
           await sleep(100);
 
-          const saveButton = Array.from(document.querySelectorAll('button')).find((button) => button.textContent.includes('保存'));
+          const saveButton = document.querySelector('[data-testid="data-tab-save"]');
           if (!saveButton) throw new Error('save button not found');
           saveButton.click();
           await sleep(800);

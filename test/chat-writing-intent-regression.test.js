@@ -159,8 +159,19 @@ async function runChatWritingIntentRegressionTest() {
       };
     };
 
-    chapterDraftService.generateChapterDraft = async ({ mode, userText, pendingChapterDraft, editorContext }) => {
+    chapterDraftService.generateChapterDraft = async ({ mode, userText, pendingChapterDraft, editorContext, onRoleplayEvent }) => {
       chapterCalls.push({ mode, userText, hadPendingDraft: !!pendingChapterDraft, selectedText: editorContext?.selectedText || '', targetTitle: editorContext?.title || '' });
+      if (typeof onRoleplayEvent === 'function') {
+        onRoleplayEvent({
+          eventId: `test-roleplay-${chapterCalls.length}`,
+          type: 'session_start',
+          chapterRef: editorContext?.title || 'chapter-003.md',
+          title: '测试角色驱动事件',
+          summary: '测试用角色驱动事件应随 assistant 消息持久化。',
+          details: { sceneCount: 1 },
+          riskLevel: 'none',
+        });
+      }
       const revised = mode === 'revise';
       const targetName = editorContext?.type === 'chapter' && editorContext?.title
         ? editorContext.title
@@ -243,6 +254,45 @@ async function runChatWritingIntentRegressionTest() {
     } else {
       fail('W5_chat_history_keeps_review_turns', JSON.stringify({ branch, toolNames }));
     }
+
+    const roleplayEventMessages = branch.filter((message) => Array.isArray(message.roleplayEvents) && message.roleplayEvents.length > 0);
+    if (
+      roleplayEventMessages.length >= 2
+      && roleplayEventMessages.every((message) => message.role === 'assistant')
+      && roleplayEventMessages[0].roleplayEvents[0]?.type === 'session_start'
+    ) {
+      pass('W5b_chat_history_persists_roleplay_events', 'roleplay UI events are stored on assistant messages without becoming chat text');
+    } else {
+      fail('W5b_chat_history_persists_roleplay_events', JSON.stringify({ roleplayEventMessages, branch }));
+    }
+
+    const emptyDraftThread = await chatHistory.createThread({ title: '空草稿失败回归', novelId: seeded.entry.id });
+    const emptyDraftSessionId = chatAgent.createSession({
+      editorContext: { novelId: seeded.entry.id, chapterCount: 3, novelTitle: '聊天写作意图回归小说' },
+      messages: [],
+      threadId: emptyDraftThread.id,
+    });
+    const generateBeforeEmptyDraft = chapterDraftService.generateChapterDraft;
+    chapterDraftService.generateChapterDraft = async () => ({
+      draft: null,
+      blockingIssues: [],
+      draftGenerationFailed: true,
+      assistantText: '这次章节草稿没有生成成功：章节草稿为空\n\n我没有写入任何章节。',
+    });
+    await chatAgent.runTurn(emptyDraftSessionId, '继续写下一章');
+    const emptyDraftBranch = chatHistory.getBranch(await chatHistory.getThread(emptyDraftThread.id));
+    const emptyDraftAssistant = emptyDraftBranch.find((message) => message.role === 'assistant');
+    if (
+      emptyDraftAssistant
+      && /章节草稿没有生成成功/.test(emptyDraftAssistant.text || '')
+      && !chatAgent.getSession(emptyDraftSessionId)?.pendingChapterDraft
+    ) {
+      pass('W5c_empty_chapter_draft_returns_chat_message', 'empty writer output is surfaced as a recoverable chat message');
+    } else {
+      fail('W5c_empty_chapter_draft_returns_chat_message', JSON.stringify({ emptyDraftBranch, pending: chatAgent.getSession(emptyDraftSessionId)?.pendingChapterDraft }));
+    }
+    chapterDraftService.generateChapterDraft = generateBeforeEmptyDraft;
+    chatAgent.closeSession(emptyDraftSessionId);
 
     const secondThread = await chatHistory.createThread({ title: '普通聊天回归', novelId: seeded.entry.id });
     const secondSessionId = chatAgent.createSession({

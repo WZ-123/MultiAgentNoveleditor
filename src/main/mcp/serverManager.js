@@ -24,6 +24,7 @@ const { fork } = require('node:child_process');
 const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
 const { ForkChildTransport } = require('./forkChildTransport');
 const { paths } = require('../store/paths');
+const secrets = require('../store/secrets');
 const eventBus = require('../runtime/eventBus');
 const pkg = require('../../../package.json');
 
@@ -333,6 +334,10 @@ function _spawnChild(serverToken) {
     ...process.env,
     ELECTRON_RUN_AS_NODE: '1',
     MANA_MCP_SERVER_TOKEN: serverToken,
+    // The child cannot access Electron safeStorage in Node mode. It can request
+    // a configured provider key through the private fork IPC channel; values
+    // are never placed in the environment or persisted in child storage.
+    MANA_MCP_SECRET_BRIDGE: '1',
   };
   if (userDataRoot) env.MANA_USER_DATA_ROOT = userDataRoot;
 
@@ -416,6 +421,29 @@ async function _handleChildMessage(msg) {
           });
         },
       });
+      break;
+    }
+    case 'secret-read-request': {
+      const requestId = String(msg.requestId || '');
+      const secretRef = String(msg.secretRef || '');
+      // Only Direct API provider credentials may cross this private channel.
+      // Never expose arbitrary application secrets to the MCP child.
+      const allowed = /^provider:[a-z0-9._-]+:api-key$/iu.test(secretRef);
+      let status = { value: '', present: false, readable: false, issue: 'not-allowed' };
+      if (allowed) {
+        try {
+          status = await secrets.getSecretStatus(secretRef);
+        } catch {
+          status = { value: '', present: false, readable: false, issue: 'read-failed' };
+        }
+      }
+      try {
+        if (child && !child.killed && requestId) {
+          child.send({ type: 'secret-read-response', requestId, status });
+        }
+      } catch {
+        // The child will time out and retain the normal unavailable-key error.
+      }
       break;
     }
     case 'log':

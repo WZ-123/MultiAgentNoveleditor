@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "reportPath": "baseline-live-core.json",
+  "corpusVersion": "1.3.0",
+  "benchmarkPolicyVersion": "2.2.0",
+  "promptSignature": "0bef0e3363ed0751deb65d45903f2b9246ec941d1d55df1345ea38804ce11e4d",
+  "modelIds": [
+    "deepseek-v4-flash",
+    "deepseek-v4-pro"
+  ],
+  "policyRebasedFrom": "2.1.0",
+  "acceptance": {
+    "passed": true,
+    "summary": {
+      "deterministicPassRate": 1,
+      "liveCasePass": true,
+      "criticalSourceRecall": 1,
+      "stateConsistency": 1,
+      "stateVerificationCompletion": 1,
+      "softConstraintCoverage": 1,
+      "allSampleCriticalSourceRecall": 0.9833333333333334,
+      "allSampleStateConsistency": 0.9583333333333334,
+      "allSampleStateVerificationCompletion": 1,
+      "allSampleSoftConstraintCoverage": 1,
+      "acceptedLiveSamples": 10,
+      "failedLiveSamples": 2,
+      "quality": {
+        "characterVoice": 5,
+        "causalCoherence": 5,
+        "knowledgeBoundary": 5,
+        "styleAdherence": 5,
+        "sceneTransition": 5,
+        "proseNaturalness": 5
+      },
+      "minimumQualitySample": 4,
+      "totalTokens": 709356,
+      "p95LatencyMs": 427988
+    },
+    "comparison": null
+  }
+}
