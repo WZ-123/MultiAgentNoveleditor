@@ -1,0 +1,19 @@
+[mcp/serverManager] setActiveNovel called: {
+  novelId: 'novel-mtahekqc-hegt4n',
+  novelDir: '/var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-codex-runtime-p4-ui-5OCXfz/user-data/codex-p4-ui-novel-1787772193139'
+}
+TEST_PASS CRP4UI1_default_codex_chat_completes: {"ok":true,"firstStatusMs":62.300000071525574,"threadId":"thread-mtahen69-5h0cf0","emptyInput":{"disabled":true,"messageCountUnchanged":true,"noTaskStatus":true},"noShadowToggle":true,"codexVisible":true,"reasoningVisible":false,"sendFound":true,"bodyTail":"资源管理器\n↻\n卷1\n+节\n✎\n🗑\n节1\n+章\n✎\n🗑\n第1章\n✎\n🗑\n小说数据\n角色卡\n打开\n资产/物品\n打开\n世界观\n打开\n时间线\n打开\n大纲\n打开\n文风\n打开\n小说结构\n无活动章节\n无打开文件\n小说: Codex P4 写作验收小说\nDirect API\nAI 聊天\n// 请选择或打开文件\nAI 聊天\n×\nCASE_P4_CHAT\n准备协作\n一键反馈问题\n已完成\nCodex\n阶段：已完成 · 已保存 0 个检查点 · 文件未写入\nCASE_P4_CHAT\n\nP4_CHAT_OK"}
+TEST_PASS CRP4UI1A_whitespace_input_is_not_submitted: {"disabled":true,"messageCountUnchanged":true,"noTaskStatus":true}
+TEST_PASS CRP4UI2_first_status_within_300ms: firstStatusMs=62.300000071525574
+TEST_PASS CRP4UI3_no_shadow_switch_and_codex_status_visible: {"ok":true,"firstStatusMs":62.300000071525574,"threadId":"thread-mtahen69-5h0cf0","emptyInput":{"disabled":true,"messageCountUnchanged":true,"noTaskStatus":true},"noShadowToggle":true,"codexVisible":true,"reasoningVisible":false,"sendFound":true,"bodyTail":"资源管理器\n↻\n卷1\n+节\n✎\n🗑\n节1\n+章\n✎\n🗑\n第1章\n✎\n🗑\n小说数据\n角色卡\n打开\n资产/物品\n打开\n世界观\n打开\n时间线\n打开\n大纲\n打开\n文风\n打开\n小说结构\n无活动章节\n无打开文件\n小说: Codex P4 写作验收小说\nDirect API\nAI 聊天\n// 请选择或打开文件\nAI 聊天\n×\nCASE_P4_CHAT\n准备协作\n一键反馈问题\n已完成\nCodex\n阶段：已完成 · 已保存 0 个检查点 · 文件未写入\nCASE_P4_CHAT\n\nP4_CHAT_OK"}
+TEST_PASS CRP4UI3D_repeated_unchanged_questions_never_leave_composer_busy: {"ok":true,"completedTaskRunIds":["72cc69e9-83bc-475a-92ee-2c2e4ca7fe3f","4c89160e-7e27-4532-bc35-c1a998839bd7","595e3ec6-47cf-4752-8d84-af996a3db85b","c19b9fbf-ab4c-4c0a-8c0f-3b92e0954b7f","2dab2d9d-bd08-412d-9be4-7c9b2e994236"],"persistedAnswerCount":5,"uniqueAnswerIds":5,"composerEnabled":true}
+TEST_PASS CRP4UI3E_repeated_answers_are_persisted_exactly_once: {"ok":true,"completedTaskRunIds":["72cc69e9-83bc-475a-92ee-2c2e4ca7fe3f","4c89160e-7e27-4532-bc35-c1a998839bd7","595e3ec6-47cf-4752-8d84-af996a3db85b","c19b9fbf-ab4c-4c0a-8c0f-3b92e0954b7f","2dab2d9d-bd08-412d-9be4-7c9b2e994236"],"persistedAnswerCount":5,"uniqueAnswerIds":5,"composerEnabled":true}
+TEST_PASS CRP4UI3F_question_only_turns_write_no_novel_files
+TEST_PASS CRP4UI3G_window_restore_rehydrates_one_persisted_terminal_snapshot: {"latestState":"completed","composerEnabled":true,"statusCards":1}
+TEST_PASS CRP4UI3AA_model_center_params_reach_real_gateway_request: {"maxOutputTokens":4096,"reasoning":{"effort":"high"}}
+TEST_PASS CRP4UI3H_error_storm_does_not_retry_or_fake_progress
+TEST_PASS CRP4UI3I_silent_hang_converges_to_manual_continue_and_releases_input: {"state":"interrupted","resumeVisible":true,"noProgressVisible":true,"composerEnabled":true}
+TEST_PASS CRP4UI3J_silent_hang_cancels_all_gateway_requests_without_hidden_call
+TEST_FAIL codex_runtime_p4_ui_error: ReferenceError: Cannot access 'artifactDir' before initialization
+    at runCodexRuntimeP4UiRegressionTest (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/codex-runtime-p4-ui-e2e.js:282:42)
+    at async WebContents.<anonymous> (/Users/potablewater/Desktop/MultiAgentNovelAssistant/main.js:556:27)

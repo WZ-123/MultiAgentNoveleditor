@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 7,
+  "revision": 6,
+  "credentials": [
+    {
+      "id": "credential-ec8e43e9-b407-4c44-b717-345ce24e0ea3",
+      "name": "DeepSeek API Key",
+      "secretRef": "credential:credential-ec8e43e9-b407-4c44-b717-345ce24e0ea3:api-key"
+    }
+  ],
+  "connections": [
+    {
+      "id": "connection-f631a103-62c3-48ee-ae8f-04e40193a6a1",
+      "kind": "api",
+      "name": "DeepSeek Responses",
+      "credentialId": "credential-ec8e43e9-b407-4c44-b717-345ce24e0ea3",
+      "baseUrl": "https://api.deepseek.com",
+      "queryParams": {},
+      "auth": {
+        "mode": "bearer"
+      },
+      "templateId": "deepseek",
+      "modelsUrl": "https://api.deepseek.com/models",
+      "discovery": {
+        "status": "ok",
+        "discoveredAt": "2026-09-13T19:03:32.444Z",
+        "errorCode": null
+      },
+      "models": [
+        {
+          "id": "deepseek-flash",
+          "name": "deepseek-flash",
+          "capabilities": {
+            "contextWindow": null,
+            "maxOutputTokens": null,
+            "inputModalities": [],
+            "supportsTools": null,
+            "supportsStructuredOutput": null,
+            "reasoningEfforts": [],
+            "verbosityLevels": []
+          },
+          "fieldSources": {},
+          "availability": "available",
+          "verification": {
+            "responses": "ok",
+            "tools": "ok",
+            "verifiedEfforts": [
+              "none"
+            ],
+            "verifiedAt": "2026-09-13T19:03:34.771Z",
+            "credentialRevision": 1,
+            "errorCode": null
+          },
+          "source": "provider"
+        },
+        {
+          "id": "deepseek-v4-pro",
+          "name": "deepseek-v4-pro",
+          "capabilities": {
+            "contextWindow": null,
+            "maxOutputTokens": null,
+            "inputModalities": [],
+            "supportsTools": null,
+            "supportsStructuredOutput": null,
+            "reasoningEfforts": [],
+            "verbosityLevels": []
+          },
+          "fieldSources": {},
+          "availability": "available",
+          "verification": {
+            "responses": "unknown",
+            "tools": "unknown",
+            "verifiedEfforts": [],
+            "verifiedAt": null,
+            "credentialRevision": null,
+            "errorCode": null
+          },
+          "source": "provider"
+        }
+      ]
+    }
+  ],
+  "activeSelection": {
+    "connectionId": "connection-f631a103-62c3-48ee-ae8f-04e40193a6a1",
+    "modelId": "deepseek-flash",
+    "reasoningEffort": "none"
+  }
+}

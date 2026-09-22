@@ -1,0 +1,5 @@
+{"timestamp":"2026-09-04T20:44:35.837Z","type":"ready","pid":46331,"proxy":"http://127.0.0.1:58915","muted":true}
+{"timestamp":"2026-09-05T02:58:18.542Z","type":"ready","pid":4457,"proxy":"http://127.0.0.1:63692","muted":true}
+{"timestamp":"2026-09-05T04:08:41.247Z","type":"operator-stopped-baseline-loop","current":{"id":"chapter-001-fresh-03","action":"turn","elapsedMs":1003120,"confirmations":8,"events":76},"reason":"Repeated delete/rewrite and read-after-write failures reproduced; switch to tested remediation. This is an externally interrupted baseline, not natural completion."}
+{"timestamp":"2026-09-05T04:10:06.482Z","phase":"remediated","type":"ready","pid":15371,"proxy":"http://127.0.0.1:65244","muted":true}
+{"timestamp":"2026-09-05T04:44:08.875Z","phase":"remediated-v2","type":"ready","pid":22144,"proxy":"http://127.0.0.1:50048","muted":true}

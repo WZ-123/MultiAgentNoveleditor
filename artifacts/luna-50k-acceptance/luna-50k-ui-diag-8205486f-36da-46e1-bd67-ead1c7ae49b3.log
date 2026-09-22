@@ -1,0 +1,7 @@
+TEST_PASS luna_50k_project_ready novelId=novel-mto68ufc-6mdazd
+TEST_SCREENSHOT /Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/luna-50k-acceptance/screenshots/01-project-ready.png
+TEST_FAIL luna_50k_ui: Error: 界面显示执行中，但宿主没有活动 run
+    at sendTurn (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/luna-50k-ui-e2e.js:105:23)
+    at async Object.runLunaFiftyKUiE2E (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/luna-50k-ui-e2e.js:135:22)
+    at async createWindow (/Users/potablewater/Desktop/MultiAgentNovelAssistant/main.js:109:22)
+    at async /Users/potablewater/Desktop/MultiAgentNovelAssistant/main.js:159:3

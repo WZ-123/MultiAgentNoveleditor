@@ -1,0 +1,21 @@
+{
+  "sourceSha256": {
+    "src/main/codex-runtime/codexSessionService.js": "eaa09e8f32110fb34164a1e59cfa7c8d495ac9b5dbf5a678a6770bd4c16b81a8",
+    "src/main/codex-runtime/chatRunLifecycle.js": "f91b956f0472b989b62498910facc6656a1d693ab6ff634efbeecf475c7ce9f4",
+    "src/main/codex-runtime/nativeChangePolicy.js": "fb0220200cafeb1d8da95775533e240bb8f83116999510b0b79a2a375a5e533b",
+    "src/main/codex-runtime/taskLedger.js": "1f5dadec0baa3f2fa4b5c052f041f53904548ef68d4214d846e7e2cbdcda2bd2",
+    "src/main/store/chatRuns.js": "3c9db9d56b96b3dfc9e21cb652799b13270cef235859dd1252b1cb305010f53b",
+    "src/main/store/chatHistory.js": "4b29218b6057ed7604587036985f3baffbe2064bcfd8e0036a5cb6266058b94d",
+    "src/components/AiChatPanel.jsx": "0bae9f0b233b52babbfd577c87b269fb22c5e4ace2027af3d0dfe79710d429f4",
+    "src/components/chatRunState.mjs": "a65f36977020485d80a066eaceba43cc81b1f513487b59a5f143d59b024766d9",
+    "src/App.jsx": "c7d03623734df5089702491a580d96fc3f5e292ee2c4ce1fce9e50d232106575",
+    "src/components/DataTabContent.jsx": "21b7e80fcaa08ef67e6f1c797ed04c42f88f272a7c307b3998cdd6ebfdb5619b",
+    "src/components/NovelDataBrowser.jsx": "c01f43a69de215074d1505c43678bb6402054b54f40f28850d74601d0aaec433",
+    "test/chat-chain-contract.test.js": "26e91ee72af4fbd5ebebd10b1d796d4b1cf7f17dfcb6c3901da78e75b477e7ee",
+    "test/chat-chain-lan.test.js": "870ed63edfa55e708f21f2bd609059deed0ebd1f516453c6db72132d7fca34ea",
+    "test/codex-native-ui-e2e.js": "c153fc24eaf95dc80d8dac5c0028b48e7e33c2bde7b6fe55ce831919eddcbdd9",
+    "scripts/run-codex-native-ui-e2e.js": "05a0cb5991da107c71fc3539d408175318833af5fa1af10e281033c669c459c5"
+  },
+  "note": "工作区包含此前已有改动；这是当前实现关键文件指纹，不是相对 HEAD 的改动归属清单。",
+  "recordedAt": "2026-09-21T18:52:30.562399+00:00"
+}

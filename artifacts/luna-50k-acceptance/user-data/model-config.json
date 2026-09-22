@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 7,
+  "revision": 3,
+  "credentials": [],
+  "connections": [
+    {
+      "id": "codex-subscription",
+      "kind": "codexSubscription",
+      "name": "Codex 订阅",
+      "credentialId": "",
+      "baseUrl": "",
+      "queryParams": {},
+      "auth": {
+        "mode": "managed"
+      },
+      "templateId": "codex-subscription",
+      "modelsUrl": "",
+      "discovery": {
+        "status": "ok",
+        "discoveredAt": "2026-09-05T09:13:38.066Z",
+        "errorCode": null
+      },
+      "models": [
+        {
+          "id": "gpt-6-astra",
+          "name": "GPT-6-Astra",
+          "capabilities": {
+            "contextWindow": null,
+            "maxOutputTokens": null,
+            "inputModalities": [
+              "text",
+              "image"
+            ],
+            "supportsTools": true,
+            "supportsStructuredOutput": null,
+            "reasoningEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ],
+            "verbosityLevels": []
+          },
+          "fieldSources": {},
+          "availability": "available",
+          "verification": {
+            "responses": "ok",
+            "tools": "ok",
+            "verifiedEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ],
+            "verifiedAt": "2026-09-05T09:13:38.066Z",
+            "credentialRevision": null,
+            "errorCode": null
+          },
+          "source": "codex"
+        },
+        {
+          "id": "gpt-5.6-sol",
+          "name": "GPT-5.6-Sol",
+          "capabilities": {
+            "contextWindow": null,
+            "maxOutputTokens": null,
+            "inputModalities": [
+              "text",
+              "image"
+            ],
+            "supportsTools": true,
+            "supportsStructuredOutput": null,
+            "reasoningEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ],
+            "verbosityLevels": []
+          },
+          "fieldSources": {},
+          "availability": "available",
+          "verification": {
+            "responses": "ok",
+            "tools": "ok",
+            "verifiedEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ],
+            "verifiedAt": "2026-09-05T09:13:38.066Z",
+            "credentialRevision": null,
+            "errorCode": null
+          },
+          "source": "codex"
+        },
+        {
+          "id": "gpt-5.6-terra",
+          "name": "GPT-5.6-Terra",
+          "capabilities": {
+            "contextWindow": null,
+            "maxOutputTokens": null,
+            "inputModalities": [
+              "text",
+              "image"
+            ],
+            "supportsTools": true,
+            "supportsStructuredOutput": null,
+            "reasoningEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ],
+            "verbosityLevels": []
+          },
+          "fieldSources": {},
+          "availability": "available",
+          "verification": {
+            "responses": "ok",
+            "tools": "ok",
+            "verifiedEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max",
+              "ultra"
+            ],
+            "verifiedAt": "2026-09-05T09:13:38.066Z",
+            "credentialRevision": null,
+            "errorCode": null
+          },
+          "source": "codex"
+        },
+        {
+          "id": "gpt-5.6-luna",
+          "name": "GPT-5.6-Luna",
+          "capabilities": {
+            "contextWindow": null,
+            "maxOutputTokens": null,
+            "inputModalities": [
+              "text",
+              "image"
+            ],
+            "supportsTools": true,
+            "supportsStructuredOutput": null,
+            "reasoningEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ],
+            "verbosityLevels": []
+          },
+          "fieldSources": {},
+          "availability": "available",
+          "verification": {
+            "responses": "ok",
+            "tools": "ok",
+            "verifiedEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ],
+            "verifiedAt": "2026-09-05T09:13:38.066Z",
+            "credentialRevision": null,
+            "errorCode": null
+          },
+          "source": "codex"
+        },
+        {
+          "id": "gpt-5.5",
+          "name": "GPT-5.5",
+          "capabilities": {
+            "contextWindow": null,
+            "maxOutputTokens": null,
+            "inputModalities": [
+              "text",
+              "image"
+            ],
+            "supportsTools": true,
+            "supportsStructuredOutput": null,
+            "reasoningEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh"
+            ],
+            "verbosityLevels": []
+          },
+          "fieldSources": {},
+          "availability": "available",
+          "verification": {
+            "responses": "ok",
+            "tools": "ok",
+            "verifiedEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh"
+            ],
+            "verifiedAt": "2026-09-05T09:13:38.066Z",
+            "credentialRevision": null,
+            "errorCode": null
+          },
+          "source": "codex"
+        },
+        {
+          "id": "gpt-5.4-mini",
+          "name": "GPT-5.4-Mini",
+          "capabilities": {
+            "contextWindow": null,
+            "maxOutputTokens": null,
+            "inputModalities": [
+              "text",
+              "image"
+            ],
+            "supportsTools": true,
+            "supportsStructuredOutput": null,
+            "reasoningEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh"
+            ],
+            "verbosityLevels": []
+          },
+          "fieldSources": {},
+          "availability": "available",
+          "verification": {
+            "responses": "ok",
+            "tools": "ok",
+            "verifiedEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh"
+            ],
+            "verifiedAt": "2026-09-05T09:13:38.066Z",
+            "credentialRevision": null,
+            "errorCode": null
+          },
+          "source": "codex"
+        },
+        {
+          "id": "gpt-5.3-codex-spark",
+          "name": "GPT-5.3-Codex-Spark",
+          "capabilities": {
+            "contextWindow": null,
+            "maxOutputTokens": null,
+            "inputModalities": [
+              "text"
+            ],
+            "supportsTools": true,
+            "supportsStructuredOutput": null,
+            "reasoningEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh"
+            ],
+            "verbosityLevels": []
+          },
+          "fieldSources": {},
+          "availability": "available",
+          "verification": {
+            "responses": "ok",
+            "tools": "ok",
+            "verifiedEfforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh"
+            ],
+            "verifiedAt": "2026-09-05T09:13:38.066Z",
+            "credentialRevision": null,
+            "errorCode": null
+          },
+          "source": "codex"
+        }
+      ]
+    }
+  ],
+  "activeSelection": {
+    "connectionId": "codex-subscription",
+    "modelId": "gpt-5.6-luna",
+    "reasoningEffort": "medium"
+  }
+}

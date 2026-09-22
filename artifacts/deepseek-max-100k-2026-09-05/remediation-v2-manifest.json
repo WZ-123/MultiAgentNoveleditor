@@ -1,0 +1,17 @@
+{
+  "at": "2026-09-05T04:44:01.173Z",
+  "phase": "remediated-v2",
+  "changes": [
+    "approved deletion passes store confirmation",
+    "missing chapter distinct from empty chapter",
+    "committed chapter notifications refresh UI",
+    "single acceptance interval 3500–4000"
+  ],
+  "files": {
+    "src/main/codex-runtime/codexSessionService.js": "103467676549a2647d2af1c299fe0c3b6fcbde8ae1c76f7b94ddc5ad2a97908e",
+    "src/main/mcp/mutationService.js": "d49968371f1359dab717729c14878e129d56453d9a3ff9bd0d0610c787d28ca3",
+    "src/main/mcp/novelResources.js": "067489e4ecd9d63c68d836edecbfb04362e8d011d8a500e287215966d8c6e3df",
+    "src/main/ipc/codex.js": "5c5d9642a4564dc4a5d0f64ae361fabbe8be081c9f513a01ee39943967128999",
+    "src/App.jsx": "0c440813190e4db170a8bb660250cf219a17238861b9a964343fd05134c7417d"
+  }
+}

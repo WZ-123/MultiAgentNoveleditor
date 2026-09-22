@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 2,
+  "status": "passed",
+  "executionMode": "mcp-only",
+  "completedAt": "2026-07-19T02:39:19.941Z",
+  "mcpBackend": "stdio",
+  "route": {
+    "providerType": null,
+    "providerCalls": 0,
+    "mcpBackend": "stdio"
+  },
+  "closure": {
+    "providerCalls": 0,
+    "mcpCalls": 1,
+    "availableMcpToolCount": 72,
+    "exposedToolNames": [
+      "read_skill"
+    ],
+    "toolName": "read_skill",
+    "toolArguments": {},
+    "fixtureMarker": "MCP_MARKER_70ffed7ae2674111aa6e4620d1a262c7",
+    "actualToolResult": "{\n  \"source\": \"stdio-read-skill-mcp\",\n  \"marker\": \"MCP_MARKER_70ffed7ae2674111aa6e4620d1a262c7\",\n  \"requiredFinalText\": \"CODEX_MOCK_TOOLCHAIN_OK::MCP_MARKER_70ffed7ae2674111aa6e4620d1a262c7\"\n}\n",
+    "actualToolResultMarkerMatched": true
+  },
+  "eventKinds": [],
+  "cleanup": {
+    "mcpDisposed": true,
+    "mcpChildPidObserved": 92555,
+    "mcpChildExited": true,
+    "temporaryUserDataRemoved": true
+  }
+}

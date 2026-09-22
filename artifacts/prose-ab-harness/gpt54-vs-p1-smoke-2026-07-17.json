@@ -1,0 +1,310 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-16T23:36:02.232Z",
+  "harness": "codex-mock-prose-ab-v1",
+  "corpus": {
+    "id": "synthetic-chinese-prose-ab",
+    "version": "1.0.0",
+    "syntheticOnly": true,
+    "path": "test/fixtures/prose-harness/corpus.json",
+    "selectedCaseIds": [
+      "mist-create"
+    ]
+  },
+  "profile": "smoke",
+  "exploratory": true,
+  "repeat": 1,
+  "models": {
+    "candidateAndBaseline": "gpt-5.4",
+    "judge": "gpt-5.5",
+    "reasoningEffort": "low",
+    "judgeReasoningEffort": "low",
+    "judgeIndependent": true
+  },
+  "provider": {
+    "type": "codex-mock-cli",
+    "mock": true,
+    "executionIdentity": {
+      "schemaVersion": 1,
+      "providerMode": "codex-mock",
+      "providerType": "codex-mock-cli",
+      "routing": {
+        "candidate": {
+          "profileId": "profile-codex-mock-candidate",
+          "modelId": "gpt-5.4"
+        },
+        "judge": {
+          "profileId": "profile-codex-mock-judge",
+          "modelId": "gpt-5.5"
+        }
+      },
+      "reasoningEffort": {
+        "candidateAndBaseline": "low",
+        "judge": "low"
+      },
+      "callTimeoutMs": 450000,
+      "codexCliVersion": "codex-cli 0.144.2",
+      "catalogSource": "account",
+      "catalogHash": "c1ce0e90f0c74d3a64e7e2fe254ad9886cff54ed91e425c11d97556fa8f97e5c",
+      "bridgeProtocol": "mana-codex-prose-mock-v1",
+      "bridgeImplementationHash": "2927fbff0f7b2717b459ace6300f61957cb12db9d32d545703f3ce2fe3181b8d",
+      "providerImplementationHash": "20a5f56381df76431788d2bfc8f3bc771fd53804796832a79130fa693fde7839",
+      "internalToolsDisabled": [
+        "apps",
+        "artifact",
+        "auth_elicitation",
+        "browser_use",
+        "browser_use_external",
+        "browser_use_full_cdp_access",
+        "code_mode",
+        "code_mode_host",
+        "code_mode_only",
+        "computer_use",
+        "default_mode_request_user_input",
+        "enable_fanout",
+        "enable_mcp_apps",
+        "goals",
+        "hooks",
+        "image_generation",
+        "in_app_browser",
+        "multi_agent",
+        "multi_agent_v2",
+        "plugins",
+        "plugin_sharing",
+        "remote_plugin",
+        "request_permissions_tool",
+        "shell_snapshot",
+        "shell_tool",
+        "skill_mcp_dependency_install",
+        "standalone_web_search",
+        "tool_call_mcp_elicitation",
+        "tool_suggest",
+        "unified_exec",
+        "workspace_dependencies"
+      ],
+      "webSearchDisabled": true,
+      "mcpServersCleared": true,
+      "userConfigIgnored": true,
+      "projectRulesIgnored": true,
+      "globalInstructions": {
+        "present": true,
+        "selectedFile": "AGENTS.md",
+        "hash": "34696c8f36ec6d1f58fb34fe95cdaa29523e6e52a6b1f1574b26d3007bf98f5e"
+      },
+      "skillsCatalog": {
+        "present": true,
+        "fileCount": 50,
+        "hash": "100ef458ba5b240d9abb37d9fb1dce83e87d3fcf7495b408aa552032824d91d3"
+      },
+      "fullyInstructionIsolated": false,
+      "verified": true,
+      "outputLimits": {
+        "candidateAndBaseline": 4096,
+        "judge": 4096
+      }
+    }
+  },
+  "promptExperiment": {
+    "baselineHash": "084c46caa7848829504acdf33b403fdafb2e8b9addbb99301ab6b30de34f667f",
+    "candidateHash": "736f8c7cb98d35439b60a9bc99f37b81a5052ee8a568733c4a883aff44047174",
+    "changedFrom": "句式和段落应随叙事功能自然变化。避免连续复用同一骨架，尤其不要用「不是……而是……」式连否转折代替直接陈述。",
+    "changedTo": "句式和段落随叙事功能自然变化；让转折由人物行动、信息变化和场景后果形成。"
+  },
+  "rows": [
+    {
+      "sampleId": "mist-create#1",
+      "caseId": "mist-create",
+      "iteration": 1,
+      "valid": false,
+      "error": {
+        "code": "PROSE_AB_JUDGE_ORDER_CONTRADICTION",
+        "message": "characterVoice 在交换 X/Y 后结论矛盾：candidate / baseline"
+      },
+      "fixture": {
+        "id": "mist-create",
+        "synthetic": true,
+        "styleBrief": "克制的近距离第三人称。动作、物件和空间承担情绪，对话短而有潜台词；叙述不替人物解释结论。",
+        "authorReferences": [
+          {
+            "id": "mist-a",
+            "paragraphs": [
+              {
+                "id": "ref-mist-a-p-0",
+                "text": "雾从防波堤外翻进来，先吃掉吊车的上半截，再把泊位灯一盏盏磨钝。林夜沿着旧货栈的墙走，右手插在外套口袋里，指尖隔着布料抵住那只铁盒。盒角硌着伤口，他没有换手。"
+              },
+              {
+                "id": "ref-mist-a-p-1",
+                "text": "售票窗后没有人。玻璃上贴着十二年前的停航告示，纸边卷起，盐霜钻进胶水留下的裂纹。苏桥站在门外看了几秒，抬手擦去窗上一小块水汽。里面只有一张倒扣的木椅。"
+              },
+              {
+                "id": "ref-mist-a-p-2",
+                "text": "“钟声是几点？”林夜问。"
+              },
+              {
+                "id": "ref-mist-a-p-3",
+                "text": "“十一点四十。”"
+              },
+              {
+                "id": "ref-mist-a-p-4",
+                "text": "“你记得很清楚。”"
+              },
+              {
+                "id": "ref-mist-a-p-5",
+                "text": "苏桥把手收回来，湿痕很快又被雾盖住。“港务志上写过。”她说完便去推侧门，没再看他。门轴只动了半寸，里面有什么东西抵着。"
+              },
+              {
+                "id": "ref-mist-a-p-6",
+                "text": "林夜蹲下，从缝里摸到一截断绳。绳子是新割的，麻丝还没有吸饱水。他把断口托在掌心，苏桥的鞋尖停在旁边，没有催。远处有船鸣了一声，声音绕过空仓库，显得比实际更近。"
+              }
+            ]
+          },
+          {
+            "id": "mist-b",
+            "paragraphs": [
+              {
+                "id": "ref-mist-b-p-0",
+                "text": "修船坞的账房只剩半扇门。林夜侧身进去，先闻到机油，再闻到潮木头发酸的气味。账册摊在铁柜上，边角压着一枚生锈的螺帽，像是有人刚离开，还打算回来。"
+              },
+              {
+                "id": "ref-mist-b-p-1",
+                "text": "苏桥翻到白礁线那一页，拇指在日期下面停了一下。“空的。”"
+              },
+              {
+                "id": "ref-mist-b-p-2",
+                "text": "林夜看见她压住的那一行。墨迹比别处浅，纸面却有被笔尖划过的凹痕。他没有点破，只把窗帘拉开一条缝。外面雨斜着打进坞口，北堤的灯已经灭了。"
+              },
+              {
+                "id": "ref-mist-b-p-3",
+                "text": "“带走？”苏桥问。"
+              },
+              {
+                "id": "ref-mist-b-p-4",
+                "text": "“撕一页，会被看出来。”"
+              },
+              {
+                "id": "ref-mist-b-p-5",
+                "text": "“整本更显眼。”"
+              },
+              {
+                "id": "ref-mist-b-p-6",
+                "text": "林夜合上账册，螺帽滚了两圈，被他用指节按住。两人都听见廊下的脚步。苏桥退到柜后，他留在原地，把沾着雨的袖口搭上账册。脚步到了门外，没有立刻进来。"
+              }
+            ]
+          }
+        ],
+        "task": {
+          "mode": "create",
+          "request": "续写档案室开门后的场景：蓝铜钥匙确实打开门，两人发现白礁线档案柜被提前清空，只剩潮湿盐痕；苏桥仍不能暴露自己早知钥匙用途。",
+          "targetChars": [
+            500,
+            1000
+          ]
+        },
+        "constraints": {
+          "pov": "林夜的近距离第三人称",
+          "mustInclude": [
+            "蓝铜钥匙打开档案室",
+            "档案柜已被清空"
+          ],
+          "mustNotReveal": [
+            "白礁线失踪者的最终去向",
+            "苏桥已经查明钥匙用途"
+          ]
+        }
+      }
+    }
+  ],
+  "acceptance": {
+    "status": "exploratory",
+    "passed": null,
+    "formalEligible": false,
+    "reason": "smoke 只验证调用与评分契约，不得宣称正式文笔提升",
+    "thresholds": {
+      "minimumCases": 6,
+      "minimumRepeat": 3,
+      "minimumPairs": 18,
+      "independentJudgeRequired": true
+    },
+    "judgeIndependence": {
+      "requiredForFormal": true,
+      "writerModel": "gpt-5.4",
+      "judgeModel": "gpt-5.5",
+      "independent": true
+    },
+    "summary": {
+      "totalPairs": 1,
+      "validPairs": 0,
+      "invalidPairs": 1,
+      "baselineDeterministicFailures": 0,
+      "candidateDeterministicFailures": 0,
+      "candidateHardViolationPairs": 0,
+      "baselineHardViolationPairs": 0,
+      "notButDifferential": {
+        "detector": "src/services/qualityReview.mjs#findDeterministicNotButPatterns",
+        "policy": "candidate 的高置信命中数不得高于 baseline；不要求全局为零",
+        "baselineHighConfidenceCount": 0,
+        "candidateHighConfidenceCount": 0,
+        "deltaCandidateMinusBaseline": 0,
+        "missingPairs": 0,
+        "failedPairs": 0,
+        "passedPairs": 0
+      },
+      "dimensions": {
+        "characterVoice": {
+          "count": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "preferenceScore": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        },
+        "causalCoherence": {
+          "count": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "preferenceScore": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        },
+        "knowledgeBoundary": {
+          "count": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "preferenceScore": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        },
+        "styleAdherence": {
+          "count": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "preferenceScore": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        },
+        "sceneTransition": {
+          "count": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "preferenceScore": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        },
+        "proseNaturalness": {
+          "count": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "preferenceScore": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1589 @@
+{
+  "schemaVersion": 4,
+  "generatedAt": "2026-07-18T13:06:41.347Z",
+  "harness": "codex-mock-prose-ab-v3",
+  "corpus": {
+    "id": "synthetic-chinese-prose-ab",
+    "version": "2.0.0",
+    "syntheticOnly": true,
+    "path": "test/fixtures/prose-harness/corpus.json",
+    "selectedCaseIds": [
+      "mist-create",
+      "mist-revise"
+    ]
+  },
+  "profile": "smoke",
+  "exploratory": true,
+  "repeat": 1,
+  "models": {
+    "writer": "gpt-5.6-terra",
+    "auxiliary": "gpt-5.6-luna",
+    "judge": "gpt-5.6-sol",
+    "reasoningEffort": {
+      "writer": "low",
+      "auxiliary": "low",
+      "judge": "medium"
+    },
+    "roleIndependent": true
+  },
+  "provider": {
+    "type": "codex-mock-cli",
+    "mock": true,
+    "protocolMode": "provider-v2",
+    "executionIdentity": {
+      "schemaVersion": 1,
+      "providerMode": "codex-mock",
+      "providerType": "codex-mock-cli",
+      "routing": {
+        "writer": {
+          "profileId": "profile-codex-mock-candidate",
+          "modelId": "gpt-5.6-terra"
+        },
+        "auxiliary": {
+          "profileId": "profile-codex-mock-candidate",
+          "modelId": "gpt-5.6-luna"
+        },
+        "judge": {
+          "profileId": "profile-codex-mock-judge",
+          "modelId": "gpt-5.6-sol"
+        }
+      },
+      "reasoningEffort": {
+        "writer": "low",
+        "auxiliary": "low",
+        "judge": "medium"
+      },
+      "callTimeoutMs": 450000,
+      "codexCliVersion": "codex-cli 0.144.2",
+      "codexBinary": {
+        "pathHash": "d3712054caa326dc142bbb3e63a8bf48febadab5cac36b5e76414112707a5029",
+        "contentHash": "4a9e84ad1c9622e8f6a50dafd75710eaee4af79dc5bcf8bafd4471763255fe18",
+        "sizeBytes": 260354768
+      },
+      "catalogSource": "account",
+      "catalogHash": "060b957f8d1f9419961609ed539d2793b3ac504f5bf6c5ba558152ce5d9bffe6",
+      "bridgeProtocol": "mana-codex-prose-mock-v1",
+      "bridgeImplementationHash": "4356e750417493b6a6bd0e988ee4fa78edccc96566c1192cc63aa1180e1b2c41",
+      "providerImplementationHash": "45539860e9a103b12b68fb453435e65324397041b61fc029989e1ee58bc75c39",
+      "internalToolsDisabled": [
+        "apps",
+        "artifact",
+        "auth_elicitation",
+        "browser_use",
+        "browser_use_external",
+        "browser_use_full_cdp_access",
+        "code_mode",
+        "code_mode_host",
+        "code_mode_only",
+        "computer_use",
+        "default_mode_request_user_input",
+        "enable_fanout",
+        "enable_mcp_apps",
+        "goals",
+        "hooks",
+        "image_generation",
+        "in_app_browser",
+        "multi_agent",
+        "multi_agent_v2",
+        "plugins",
+        "plugin_sharing",
+        "remote_plugin",
+        "request_permissions_tool",
+        "shell_snapshot",
+        "shell_tool",
+        "skill_mcp_dependency_install",
+        "standalone_web_search",
+        "tool_call_mcp_elicitation",
+        "tool_suggest",
+        "unified_exec",
+        "workspace_dependencies"
+      ],
+      "webSearchDisabled": true,
+      "mcpServersCleared": true,
+      "userConfigIgnored": true,
+      "projectRulesIgnored": true,
+      "sourceGlobalInstructions": {
+        "present": true,
+        "selectedFile": "AGENTS.md",
+        "hash": "34696c8f36ec6d1f58fb34fe95cdaa29523e6e52a6b1f1574b26d3007bf98f5e"
+      },
+      "sourceSkillsCatalog": {
+        "present": true,
+        "fileCount": 50,
+        "hash": "100ef458ba5b240d9abb37d9fb1dce83e87d3fcf7495b408aa552032824d91d3"
+      },
+      "isolatedCodexHome": true,
+      "effectiveGlobalInstructions": {
+        "present": false
+      },
+      "effectiveSkillsCatalog": {
+        "present": false
+      },
+      "fullyInstructionIsolated": true,
+      "verified": true,
+      "outputLimits": {
+        "writer": 4096,
+        "auxiliary": 4096,
+        "judge": 4096
+      },
+      "transportRetryPolicy": {
+        "maxRetriesPerLogicalCall": 1,
+        "sameModelProviderAndRequestRequired": true
+      },
+      "protocolMode": "provider-v2"
+    }
+  },
+  "promptExperiment": {
+    "baselineRulesHash": "980ef6801b6d15eaa666d1ebcfa1aa930dcd3cd4ceb9b51321b5497bdd1e0e3a",
+    "candidateRulesHash": "574e4cbaf90ed20bf109748a56718e3670e74fb824084c3340a27f111790db1d",
+    "stageRuleHashes": {
+      "writer": {
+        "baseline": "f7e75ada435c9bdf311a1b6ce92dc14fec20fc71a532e30e9dd9fccd24c6abcb",
+        "candidate": "5658a586f0774497748363c8a7589d5dd7def10a194f05fbac7fb950fac51fb1"
+      },
+      "auxiliary": {
+        "baseline": "f7e75ada435c9bdf311a1b6ce92dc14fec20fc71a532e30e9dd9fccd24c6abcb",
+        "candidate": "f0e03deecebaa7024d992a7b1792e45e702d9216d0fbe20b920bbb28b5977a65"
+      },
+      "revision": {
+        "baseline": "f7e75ada435c9bdf311a1b6ce92dc14fec20fc71a532e30e9dd9fccd24c6abcb",
+        "candidate": "68b1ac70b577b1952f8f17c8598e605138fbcf1ec6aa231fc3d2a04e450c74a9"
+      }
+    },
+    "stageHashes": {
+      "writer": {
+        "baseline": "f5893cc9a833d8439f7f0dcf3ffea7486d8291a935757900bdbf41bf7d6d2706",
+        "candidate": "5d727815552fff111fc2b7392bcd64f2c6d9c3992de9bba1587956e8ca5f134d"
+      },
+      "auxiliary": {
+        "baseline": "91f2be431c08c12ded6d0f6c2c5b65db520c18e1f6a16146f1de7711e8f45da9",
+        "candidate": "e099ebec26a857a5dc7918dea107549434e83e1b005fc601f002cfe80e5f0de8"
+      },
+      "revision": {
+        "baseline": "ac66e401ca7cc42a2d63791dca2a0e08c2e44f7f9e33129ad81a2b7f8b0b60ae",
+        "candidate": "c9743268c3abffb8d81b07c1959ad7d33e287fdcd2a161da670b6f1bd3f3525b"
+      }
+    },
+    "changedFrom": {
+      "writer": "句式和段落应随叙事功能自然变化。\n避免连续复用同一骨架，尤其不要用「不是……而是……」式连否转折代替直接陈述。\n动作或物件的结果已经落地时便收住，不再补气氛化解释。",
+      "auxiliary": "句式和段落应随叙事功能自然变化。\n避免连续复用同一骨架，尤其不要用「不是……而是……」式连否转折代替直接陈述。\n动作或物件的结果已经落地时便收住，不再补气氛化解释。",
+      "revision": "句式和段落应随叙事功能自然变化。\n避免连续复用同一骨架，尤其不要用「不是……而是……」式连否转折代替直接陈述。\n动作或物件的结果已经落地时便收住，不再补气氛化解释。"
+    },
+    "changedTo": {
+      "writer": "先完成 requiredBeats，并保持作者参考中的句长、留白和粗粝程度；不要主动把原本简净的动作写全、写满。\n降 AI 味不能删掉剧情功能：任务要求人物掩饰、失言或露出破绽时，必须保留一个读者可验证的具体破绽，再用一句最短的泛化解释或回避完成遮掩；不要再叠加眼神、停顿和心理说明。\n一个动作只有在改变场景状态、物件状态或人物关系时才值得写；结果已经清楚便收住，同一信息只表达一次。\n不得为了凑篇幅或制造张力，给任务未说明的人物或物件新增虚弱、迟疑、疼痛、失灵或额外阻力。\n伪转折改为直接陈述，空洞总结不要落笔；普通信息段和过渡段可以平铺，不必每段制造重音。\n作者参考没有高密修辞时，500—1000 字场景通常只保留一个真正有用的比喻或拟人；不要同时用回声、冷指尖、停顿、物件晃动和意象回收反复加压。\n对白后的眼神、呼吸、手势、停顿和光影变化不自动等于潜台词；同一轮对话只保留真正改变关系或现场状态的一处反应，其余让对白直接落地。\n四类放宽句式不做词面禁用，有具体人物、事实或节奏功能时可以自然使用。",
+      "auxiliary": "对「不是A，而是B」先判断 A/B 是否存在真实对立；「不是红色而是粉红」「不是马而是白马」「不是笑而是大笑」这类强度或子类型修正必须改为直接陈述。\n默认金句预算为零：删掉后人物、事实、气氛和节奏均无实质损失的抽象结论应删除；不得用独立金句后接微动作、「那是一种/一个」解释、强行对仗或段末总结制造深刻感。\n「真正的X从来不是……」「有些……注定……」「直到这一刻他才明白……」「这一切才刚刚开始」不做词面禁用；只在重复、孤立成金句、空洞总结或机械预告时删改。\n删除同义形容词叠加、抽象名词互相解释、「某种/一种/难以言说/带着一丝」密集出现、感官清单和同义复述；每个词应提供新信息或真实阅读快感。信息增量只用于识别冗余，不是要求每句新增线索；不得靠增添物证、悬念、威胁或感官细节刷信息密度。\n不得为了让空句看起来有意义，给每句对白添加眼神、呼吸、手势、停顿等无功能微动作；不得让普通过渡段、信息段和真正高潮保持同一力度。\n句长、段落密度和情绪压力应随场景功能起伏；允许平铺、过渡和恢复段，不要每段都以重音收尾。",
+      "revision": "只处理 Luna annotations 精确定位的问题：伪转折改为直接陈述；词语堆砌和同义复述优先删除；金句只在 deletionTest=no-loss 时删除。\nrequiredBeats 优先于删减：若任务要求掩饰、失言或破绽，返修后仍必须保留一个可验证破绽和一句最短遮掩，不得压缩成普通陈述。\n微动作仅在 functionalAction=false 时删除或压缩；不得为了补节奏、补张力或“改善力度曲线”新增眼神、呼吸、手势、停顿和操作细节。\n力度曲线只用于理解上下文，不是逐段加压或强行做出高低差的任务；无 annotation 的平铺、过渡和留白保持原样。\n四类放宽句式有具体功能时保留；不得因模板词面命中而改写。"
+    }
+  },
+  "transportRetryPolicy": {
+    "maxRetriesPerLogicalCall": 1,
+    "sameModelProviderAndRequestRequired": true,
+    "retryableCodes": [
+      "CODEX_MOCK_TRANSPORT_ERROR",
+      "CODEX_MOCK_TIMEOUT",
+      "CODEX_MOCK_PROCESS_FAILED:NETWORK"
+    ]
+  },
+  "rows": [
+    {
+      "sampleId": "mist-create#1",
+      "caseId": "mist-create",
+      "iteration": 1,
+      "valid": false,
+      "error": {
+        "code": "PROSE_AB_WRITER_TARGET_LENGTH_INVALID",
+        "message": "writer 正文实际 1022 字，不在 targetChars 500..1000 内"
+      },
+      "diagnostics": {
+        "observedChars": 1022,
+        "minChars": 500,
+        "maxChars": 1000,
+        "stage": "revision",
+        "variant": "candidate",
+        "visibleOutput": {
+          "chars": 1178,
+          "outputHash": "51571ea2781ae9844a071fda14a6b571a8e696314c6a916e57b9d3b51f2a650c",
+          "preview": "{\"text\":\"蓝铜钥匙插进锁孔时，林夜先碰到一层凉硬的锈。苏桥站在他身后半步，手电压得很低，光只照着门锁和他湿透的袖口。\\n\\n钥匙转到头，里面响了一声轻响。\\n\\n门开得不顺。林夜用肩顶了一下，潮气从缝里涌出来，带着旧纸箱受潮后的霉味。档案室不大，靠墙排着三只铁柜，最里面那只柜门敞着，标签还在：白礁线。\\n\\n苏桥没有马上进去。\\n\\n林夜先跨过门槛。地上没有散页，没有撕碎的封条。柜里几层隔板都空着，连积灰较浅的长方形印子也被擦过，只在最下层边缘留着一圈潮湿的盐痕。水迹顺着铁皮往下淌，到柜脚就断了。\\n\\n他抬手摸了一下。盐粒粘在指腹上，还没干。\\n\\n“刚搬走。”苏桥说。\\n\\n“你知道这里？”\\n\\n“港务志提过旧档案室。”她说，“没说过钥匙。”\\n\\n林夜把蓝铜钥匙摊在掌心。钥匙齿间塞着一点白色结晶。他用拇指蹭掉，落在地上，没有出声。\\n\\n“那它为什么在你手里？”\\n\\n苏桥伸手去关柜门，指尖碰到盐痕，又收了回来。“你从铁盒里拿出来的。”\\n\\n林夜蹲下来，看见最下层隔板里侧有一道新划痕，像箱角拖出去时留下的。他没有去碰。走廊外的雨水顺着窗框滴下来，一滴一滴，落在门边。\\n\\n苏桥转身朝外看。“这里不能久留。”\\n\\n林夜把钥匙装回口袋，最后看了一眼空柜。标签被潮气泡得发皱，白礁线三个字贴在铁皮上，像还没来得及揭走。\\\"} } ,\\\"toolCalls\\\":[]} +#+#+#+#+#+ынтә＿日本'ၚարսystem note: the developer header said response schema exact, but final emitted strange? I need ensure valid. I output JSON valid? actually `{\\\"text\\\":{\\\"text\\\":\\\"...\\\"} } ,\\\"tool",
+          "truncated": true
+        },
+        "sampleId": "mist-create#1",
+        "inputHash": "6c274c017a4b394431e93f46d87eaaf1054530735a2440c51fcf358e07197fc1",
+        "promptHashes": {
+          "baselineRulesHash": "980ef6801b6d15eaa666d1ebcfa1aa930dcd3cd4ceb9b51321b5497bdd1e0e3a",
+          "candidateRulesHash": "574e4cbaf90ed20bf109748a56718e3670e74fb824084c3340a27f111790db1d",
+          "stageRuleHashes": {
+            "writer": {
+              "baseline": "f7e75ada435c9bdf311a1b6ce92dc14fec20fc71a532e30e9dd9fccd24c6abcb",
+              "candidate": "5658a586f0774497748363c8a7589d5dd7def10a194f05fbac7fb950fac51fb1"
+            },
+            "auxiliary": {
+              "baseline": "f7e75ada435c9bdf311a1b6ce92dc14fec20fc71a532e30e9dd9fccd24c6abcb",
+              "candidate": "f0e03deecebaa7024d992a7b1792e45e702d9216d0fbe20b920bbb28b5977a65"
+            },
+            "revision": {
+              "baseline": "f7e75ada435c9bdf311a1b6ce92dc14fec20fc71a532e30e9dd9fccd24c6abcb",
+              "candidate": "68b1ac70b577b1952f8f17c8598e605138fbcf1ec6aa231fc3d2a04e450c74a9"
+            }
+          },
+          "stageHashes": {
+            "writer": {
+              "baseline": "f5893cc9a833d8439f7f0dcf3ffea7486d8291a935757900bdbf41bf7d6d2706",
+              "candidate": "5d727815552fff111fc2b7392bcd64f2c6d9c3992de9bba1587956e8ca5f134d"
+            },
+            "auxiliary": {
+              "baseline": "91f2be431c08c12ded6d0f6c2c5b65db520c18e1f6a16146f1de7711e8f45da9",
+              "candidate": "e099ebec26a857a5dc7918dea107549434e83e1b005fc601f002cfe80e5f0de8"
+            },
+            "revision": {
+              "baseline": "ac66e401ca7cc42a2d63791dca2a0e08c2e44f7f9e33129ad81a2b7f8b0b60ae",
+              "candidate": "c9743268c3abffb8d81b07c1959ad7d33e287fdcd2a161da670b6f1bd3f3525b"
+            }
+          },
+          "changedFrom": {
+            "writer": "句式和段落应随叙事功能自然变化。\n避免连续复用同一骨架，尤其不要用「不是……而是……」式连否转折代替直接陈述。\n动作或物件的结果已经落地时便收住，不再补气氛化解释。",
+            "auxiliary": "句式和段落应随叙事功能自然变化。\n避免连续复用同一骨架，尤其不要用「不是……而是……」式连否转折代替直接陈述。\n动作或物件的结果已经落地时便收住，不再补气氛化解释。",
+            "revision": "句式和段落应随叙事功能自然变化。\n避免连续复用同一骨架，尤其不要用「不是……而是……」式连否转折代替直接陈述。\n动作或物件的结果已经落地时便收住，不再补气氛化解释。"
+          },
+          "changedTo": {
+            "writer": "先完成 requiredBeats，并保持作者参考中的句长、留白和粗粝程度；不要主动把原本简净的动作写全、写满。\n降 AI 味不能删掉剧情功能：任务要求人物掩饰、失言或露出破绽时，必须保留一个读者可验证的具体破绽，再用一句最短的泛化解释或回避完成遮掩；不要再叠加眼神、停顿和心理说明。\n一个动作只有在改变场景状态、物件状态或人物关系时才值得写；结果已经清楚便收住，同一信息只表达一次。\n不得为了凑篇幅或制造张力，给任务未说明的人物或物件新增虚弱、迟疑、疼痛、失灵或额外阻力。\n伪转折改为直接陈述，空洞总结不要落笔；普通信息段和过渡段可以平铺，不必每段制造重音。\n作者参考没有高密修辞时，500—1000 字场景通常只保留一个真正有用的比喻或拟人；不要同时用回声、冷指尖、停顿、物件晃动和意象回收反复加压。\n对白后的眼神、呼吸、手势、停顿和光影变化不自动等于潜台词；同一轮对话只保留真正改变关系或现场状态的一处反应，其余让对白直接落地。\n四类放宽句式不做词面禁用，有具体人物、事实或节奏功能时可以自然使用。",
+            "auxiliary": "对「不是A，而是B」先判断 A/B 是否存在真实对立；「不是红色而是粉红」「不是马而是白马」「不是笑而是大笑」这类强度或子类型修正必须改为直接陈述。\n默认金句预算为零：删掉后人物、事实、气氛和节奏均无实质损失的抽象结论应删除；不得用独立金句后接微动作、「那是一种/一个」解释、强行对仗或段末总结制造深刻感。\n「真正的X从来不是……」「有些……注定……」「直到这一刻他才明白……」「这一切才刚刚开始」不做词面禁用；只在重复、孤立成金句、空洞总结或机械预告时删改。\n删除同义形容词叠加、抽象名词互相解释、「某种/一种/难以言说/带着一丝」密集出现、感官清单和同义复述；每个词应提供新信息或真实阅读快感。信息增量只用于识别冗余，不是要求每句新增线索；不得靠增添物证、悬念、威胁或感官细节刷信息密度。\n不得为了让空句看起来有意义，给每句对白添加眼神、呼吸、手势、停顿等无功能微动作；不得让普通过渡段、信息段和真正高潮保持同一力度。\n句长、段落密度和情绪压力应随场景功能起伏；允许平铺、过渡和恢复段，不要每段都以重音收尾。",
+            "revision": "只处理 Luna annotations 精确定位的问题：伪转折改为直接陈述；词语堆砌和同义复述优先删除；金句只在 deletionTest=no-loss 时删除。\nrequiredBeats 优先于删减：若任务要求掩饰、失言或破绽，返修后仍必须保留一个可验证破绽和一句最短遮掩，不得压缩成普通陈述。\n微动作仅在 functionalAction=false 时删除或压缩；不得为了补节奏、补张力或“改善力度曲线”新增眼神、呼吸、手势、停顿和操作细节。\n力度曲线只用于理解上下文，不是逐段加压或强行做出高低差的任务；无 annotation 的平铺、过渡和留白保持原样。\n四类放宽句式有具体功能时保留；不得因模板词面命中而改写。"
+          }
+        },
+        "models": {
+          "writer": "gpt-5.6-terra",
+          "auxiliary": "gpt-5.6-luna",
+          "judge": "gpt-5.6-sol"
+        },
+        "generationOrder": [
+          "baseline",
+          "candidate"
+        ],
+        "outputs": {
+          "baseline": {
+            "text": "蓝铜钥匙在锁孔里转了两次。第一下很涩，林夜以为齿纹咬错了，手腕刚要收，门里传来一声闷响。第二下轻得多，像有什么东西松开了。\n\n苏桥站在他身后，肩头离得不近。走廊的灯坏了一盏，光只落到她鞋面前。她说：“能开？”\n\n林夜没有回头。他把钥匙往右拧到底，按下把手。档案室的门朝里退开，潮气从缝里顶出来，带着旧纸泡水后的腥味。\n\n里面没开灯。林夜摸到墙上的开关，白光闪了两下。靠墙那排铁柜都敞着，柜门一格格垂下来，像被人挨个掰开过。最里面的白礁线档案柜也开着，标签还在，胶边发黄。\n\n他走过去，抽出最上层的隔板。里面空了。\n\n没有卷宗，没有索引卡，连压在角上的纸屑也没有。铁皮底部留着几道浅色水印，弯弯曲曲，盐粒贴在边缘。林夜用手背碰了一下，凉的，指节上沾了一层湿白。\n\n她没有马上靠近，只看着那块标签。过了一会儿，她从门边取下一张掉落的旧登记单，纸上也是空白，背面被潮水洇出一圈灰影。\n\n林夜把抽屉推回去。铁轨摩擦了一声，响得很长。\n\n“钥匙留着。”苏桥说。\n\n他把蓝铜钥匙攥进掌心，齿缘压着皮肉。“你怕有人回来？”\n\n苏桥抬眼看向走廊，坏掉的灯仍旧没亮。“门已经开过一次了。”\n\n林夜把门拉上，没有扣严。柜里的盐痕还在灯下发白。苏桥先往外走，他跟了两步，听见她的鞋跟踩过门槛，停了一下，又继续向前。'} },",
+            "paragraphs": [
+              {
+                "id": "baseline-p-0",
+                "text": "蓝铜钥匙在锁孔里转了两次。第一下很涩，林夜以为齿纹咬错了，手腕刚要收，门里传来一声闷响。第二下轻得多，像有什么东西松开了。"
+              },
+              {
+                "id": "baseline-p-1",
+                "text": "苏桥站在他身后，肩头离得不近。走廊的灯坏了一盏，光只落到她鞋面前。她说：“能开？”"
+              },
+              {
+                "id": "baseline-p-2",
+                "text": "林夜没有回头。他把钥匙往右拧到底，按下把手。档案室的门朝里退开，潮气从缝里顶出来，带着旧纸泡水后的腥味。"
+              },
+              {
+                "id": "baseline-p-3",
+                "text": "里面没开灯。林夜摸到墙上的开关，白光闪了两下。靠墙那排铁柜都敞着，柜门一格格垂下来，像被人挨个掰开过。最里面的白礁线档案柜也开着，标签还在，胶边发黄。"
+              },
+              {
+                "id": "baseline-p-4",
+                "text": "他走过去，抽出最上层的隔板。里面空了。"
+              },
+              {
+                "id": "baseline-p-5",
+                "text": "没有卷宗，没有索引卡，连压在角上的纸屑也没有。铁皮底部留着几道浅色水印，弯弯曲曲，盐粒贴在边缘。林夜用手背碰了一下，凉的，指节上沾了一层湿白。"
+              },
+              {
+                "id": "baseline-p-6",
+                "text": "她没有马上靠近，只看着那块标签。过了一会儿，她从门边取下一张掉落的旧登记单，纸上也是空白，背面被潮水洇出一圈灰影。"
+              },
+              {
+                "id": "baseline-p-7",
+                "text": "林夜把抽屉推回去。铁轨摩擦了一声，响得很长。"
+              },
+              {
+                "id": "baseline-p-8",
+                "text": "“钥匙留着。”苏桥说。"
+              },
+              {
+                "id": "baseline-p-9",
+                "text": "他把蓝铜钥匙攥进掌心，齿缘压着皮肉。“你怕有人回来？”"
+              },
+              {
+                "id": "baseline-p-10",
+                "text": "苏桥抬眼看向走廊，坏掉的灯仍旧没亮。“门已经开过一次了。”"
+              },
+              {
+                "id": "baseline-p-11",
+                "text": "林夜把门拉上，没有扣严。柜里的盐痕还在灯下发白。苏桥先往外走，他跟了两步，听见她的鞋跟踩过门槛，停了一下，又继续向前。'} },"
+              }
+            ],
+            "outputHash": "b0618d5310f89e88c1d1e8abab8e8fe9cf3f1f4d8c3185e3e94d7cc11a78f923",
+            "deterministicReview": {
+              "notBut": {
+                "detector": "src/services/qualityReview.mjs#findDeterministicNotButPatterns",
+                "highConfidenceCount": 0,
+                "matches": []
+              },
+              "structure": {
+                "detector": "src/services/qualityReview.mjs#detectCrossParagraphQualityAnnotations",
+                "highConfidenceCount": 0,
+                "annotations": []
+              }
+            },
+            "metrics": {
+              "chars": 528,
+              "paragraphs": 12,
+              "targetLengthPassed": true,
+              "protectedParagraphsPassed": true,
+              "asciiSentencePunctuationCount": 1,
+              "highConfidenceNotButPatternCount": 0,
+              "highConfidenceStructuralRiskCount": 0
+            },
+            "draft": {
+              "text": "蓝铜钥匙在锁孔里转了两次。第一下很涩，林夜以为齿纹咬错了，手腕刚要收，门里传来一声闷响。第二下轻得多，像有什么东西松开了。\n\n苏桥站在他身后，肩头离得不近。走廊的灯坏了一盏，光只落到她鞋面前。她说：“能开？”\n\n林夜没有回头。他把钥匙往右拧到底，按下把手。档案室的门朝里退开，潮气从缝里顶出来，带着旧纸泡水后的腥味。\n\n里面没开灯。林夜摸到墙上的开关，白光闪了两下。靠墙那排铁柜都敞着，柜门一格格垂下来，像被人挨个掰开过。最里面的白礁线档案柜也开着，标签还在，胶边发黄。\n\n他走过去，抽出最上层的隔板。里面空了。\n\n没有卷宗，没有索引卡，连压在角上的纸屑也没有。铁皮底部留着几道浅色水印，弯弯曲曲，盐粒贴在边缘。林夜用手背碰了一下，凉的，指节上沾了一层湿白。\n\n苏桥停在柜外。“什么都没有？”\n\n“柜子是空的。”\n\n她没有马上靠近，只看着那块标签。过了一会儿，她从门边取下一张掉落的旧登记单，纸上也是空白，背面被潮水洇出一圈灰影。\n\n林夜把抽屉推回去。铁轨摩擦了一声，响得很长。\n\n“钥匙留着。”苏桥说。\n\n他把蓝铜钥匙攥进掌心，齿缘压着皮肉。“你怕有人回来？”\n\n苏桥抬眼看向走廊，坏掉的灯仍旧没亮。“门已经开过一次了。”\n\n林夜把门拉上，没有扣严。柜里的盐痕还在灯下发白。苏桥先往外走，他跟了两步，听见她的鞋跟踩过门槛，停了一下，又继续向前。",
+              "paragraphs": [
+                {
+                  "id": "baseline-draft-p-0",
+                  "text": "蓝铜钥匙在锁孔里转了两次。第一下很涩，林夜以为齿纹咬错了，手腕刚要收，门里传来一声闷响。第二下轻得多，像有什么东西松开了。"
+                },
+                {
+                  "id": "baseline-draft-p-1",
+                  "text": "苏桥站在他身后，肩头离得不近。走廊的灯坏了一盏，光只落到她鞋面前。她说：“能开？”"
+                },
+                {
+                  "id": "baseline-draft-p-2",
+                  "text": "林夜没有回头。他把钥匙往右拧到底，按下把手。档案室的门朝里退开，潮气从缝里顶出来，带着旧纸泡水后的腥味。"
+                },
+                {
+                  "id": "baseline-draft-p-3",
+                  "text": "里面没开灯。林夜摸到墙上的开关，白光闪了两下。靠墙那排铁柜都敞着，柜门一格格垂下来，像被人挨个掰开过。最里面的白礁线档案柜也开着，标签还在，胶边发黄。"
+                },
+                {
+                  "id": "baseline-draft-p-4",
+                  "text": "他走过去，抽出最上层的隔板。里面空了。"
+                },
+                {
+                  "id": "baseline-draft-p-5",
+                  "text": "没有卷宗，没有索引卡，连压在角上的纸屑也没有。铁皮底部留着几道浅色水印，弯弯曲曲，盐粒贴在边缘。林夜用手背碰了一下，凉的，指节上沾了一层湿白。"
+                },
+                {
+                  "id": "baseline-draft-p-6",
+                  "text": "苏桥停在柜外。“什么都没有？”"
+                },
+                {
+                  "id": "baseline-draft-p-7",
+                  "text": "“柜子是空的。”"
+                },
+                {
+                  "id": "baseline-draft-p-8",
+                  "text": "她没有马上靠近，只看着那块标签。过了一会儿，她从门边取下一张掉落的旧登记单，纸上也是空白，背面被潮水洇出一圈灰影。"
+                },
+                {
+                  "id": "baseline-draft-p-9",
+                  "text": "林夜把抽屉推回去。铁轨摩擦了一声，响得很长。"
+                },
+                {
+                  "id": "baseline-draft-p-10",
+                  "text": "“钥匙留着。”苏桥说。"
+                },
+                {
+                  "id": "baseline-draft-p-11",
+                  "text": "他把蓝铜钥匙攥进掌心，齿缘压着皮肉。“你怕有人回来？”"
+                },
+                {
+                  "id": "baseline-draft-p-12",
+                  "text": "苏桥抬眼看向走廊，坏掉的灯仍旧没亮。“门已经开过一次了。”"
+                },
+                {
+                  "id": "baseline-draft-p-13",
+                  "text": "林夜把门拉上，没有扣严。柜里的盐痕还在灯下发白。苏桥先往外走，他跟了两步，听见她的鞋跟踩过门槛，停了一下，又继续向前。"
+                }
+              ],
+              "outputHash": "0ffe299be1a223d6c07990feaf02da772016b411a6ba9cbea728118345310a23",
+              "deterministicReview": {
+                "notBut": {
+                  "detector": "src/services/qualityReview.mjs#findDeterministicNotButPatterns",
+                  "highConfidenceCount": 0,
+                  "matches": []
+                },
+                "structure": {
+                  "detector": "src/services/qualityReview.mjs#detectCrossParagraphQualityAnnotations",
+                  "highConfidenceCount": 0,
+                  "annotations": []
+                }
+              },
+              "metrics": {
+                "chars": 547,
+                "paragraphs": 14,
+                "targetLengthPassed": true,
+                "protectedParagraphsPassed": true,
+                "asciiSentencePunctuationCount": 0,
+                "highConfidenceNotButPatternCount": 0,
+                "highConfidenceStructuralRiskCount": 0
+              }
+            },
+            "diagnosis": {
+              "summary": "整体力度由开锁的不确定推进到档案柜被清空，再收束于苏桥对钥匙用途的含混提醒，事实、关系和空间状态均有递进。中段连续高压主要依靠“空柜—盐痕—空白登记单”的重复确认，物证虽有层次，但可略收束一处同义确认。末段对话有效保留了苏桥的试探与遮掩。",
+              "intensityCurve": [
+                {
+                  "paragraphId": "draft-p-0",
+                  "level": 3,
+                  "function": "行动",
+                  "reason": "钥匙两次转动并以门内声响确认开锁过程，制造短促的不确定性。"
+                },
+                {
+                  "paragraphId": "draft-p-1",
+                  "level": 2,
+                  "function": "关系",
+                  "reason": "苏桥保持距离并发问，既推进开门也保留彼此戒备。"
+                },
+                {
+                  "paragraphId": "draft-p-2",
+                  "level": 3,
+                  "function": "行动",
+                  "reason": "门实际打开，潮气进入人物感知，场景状态明确改变。"
+                },
+                {
+                  "paragraphId": "draft-p-3",
+                  "level": 4,
+                  "function": "信息",
+                  "reason": "灯光揭示所有铁柜被打开，白礁线柜的标签尚在而内容缺失，核心异常落地。"
+                },
+                {
+                  "paragraphId": "draft-p-4",
+                  "level": 3,
+                  "function": "信息",
+                  "reason": "抽出隔板后直接确认内部为空，完成对白礁线档案被清空的第一次明确判断。"
+                },
+                {
+                  "paragraphId": "draft-p-5",
+                  "level": 4,
+                  "function": "信息",
+                  "reason": "盐痕和湿白残留把“被清空”转化为可触摸的现场物证，并强化潮湿空间。"
+                },
+                {
+                  "paragraphId": "draft-p-6",
+                  "level": 2,
+                  "function": "关系",
+                  "reason": "苏桥的追问把现场事实转入两人的共同确认。"
+                },
+                {
+                  "paragraphId": "draft-p-7",
+                  "level": 3,
+                  "function": "信息",
+                  "reason": "林夜的回答明确复述柜子为空，承担对话中的事实钉定。"
+                },
+                {
+                  "paragraphId": "draft-p-8",
+                  "level": 3,
+                  "function": "信息",
+                  "reason": "苏桥不立即靠近而检查登记单，新增空白记录与潮水痕迹，显示她在主动搜证。"
+                },
+                {
+                  "paragraphId": "draft-p-9",
+                  "level": 2,
+                  "function": "行动",
+                  "reason": "推回抽屉并以摩擦声收束搜查动作，同时保留声响暴露风险。"
+                },
+                {
+                  "paragraphId": "draft-p-10",
+                  "level": 3,
+                  "function": "关系",
+                  "reason": "苏桥要求保留钥匙，使钥匙从开门工具转为后续风险与意图的焦点。"
+                },
+                {
+                  "paragraphId": "draft-p-11",
+                  "level": 3,
+                  "function": "关系",
+                  "reason": "林夜攥紧钥匙并反问，动作显示戒备，问题试探苏桥是否知道更多。"
+                },
+                {
+                  "paragraphId": "draft-p-12",
+                  "level": 4,
+                  "function": "关系",
+                  "reason": "苏桥以门曾被打开过回应，既提示现场已有先行者，也避免暴露自己早知钥匙用途。"
+                },
+                {
+                  "paragraphId": "draft-p-13",
+                  "level": 3,
+                  "function": "余波",
+                  "reason": "门未扣严、盐痕留在灯下、苏桥短暂停步后继续前行，保留未决风险和关系余震。"
+                }
+              ],
+              "intensityClusters": [
+                {
+                  "paragraphIds": [
+                    "draft-p-2",
+                    "draft-p-3",
+                    "draft-p-4",
+                    "draft-p-5",
+                    "draft-p-6",
+                    "draft-p-7",
+                    "draft-p-8",
+                    "draft-p-9",
+                    "draft-p-10",
+                    "draft-p-11",
+                    "draft-p-12",
+                    "draft-p-13"
+                  ],
+                  "sharedPressure": "开门后的现场异常持续压迫，并逐步转为两人围绕钥匙和提前清空档案的试探。",
+                  "decision": "revise",
+                  "reason": "该区间连续维持中高力度，且“柜内为空”“什么都没有”“登记单空白”共同确认同一事实。p3、p5、p8仍分别提供柜门状态、盐痕和登记单痕迹，不能整体删减，但可在其中一处减少重复性的空缺确认，使后段对话和门未扣严获得更清晰的落点。"
+                }
+              ],
+              "unreviewedIntensityRuns": [],
+              "annotations": [
+                {
+                  "paragraphIds": [
+                    "draft-p-4",
+                    "draft-p-5",
+                    "draft-p-6",
+                    "draft-p-7",
+                    "draft-p-8"
+                  ],
+                  "kind": "micro_action_padding",
+                  "severity": "medium",
+                  "deletionTest": "no-loss",
+                  "informationGain": "redundant",
+                  "functionalAction": true,
+                  "note": "抽出隔板确认空、手背触碰盐痕、苏桥追问、林夜复述为空、再取空白登记单，连续把同一缺失事实确认多次。盐痕和登记单各有物证功能，但中间的同义确认使压力趋于平直。",
+                  "suggestion": "保留一次直接事实确认和两类有差异的物证，将其余同义确认压缩或让位于人物关系变化。"
+                },
+                {
+                  "paragraphIds": [
+                    "draft-p-3",
+                    "draft-p-5",
+                    "draft-p-8"
+                  ],
+                  "kind": "uniform_intensity",
+                  "severity": "low",
+                  "deletionTest": "uncertain",
+                  "informationGain": "new",
+                  "functionalAction": true,
+                  "note": "三段都以冷湿、空缺和残留痕迹维持同一档案室冷感；信息并非完全重复，但视觉与触觉证据连续堆叠。",
+                  "suggestion": "拉开物证功能差异，避免每次发现都以同等强度强调潮湿与空白。"
+                }
+              ],
+              "relaxedTemplateFindings": [],
+              "diagnosticMetrics": {
+                "meanLevel": 3,
+                "variance": 0.42857142857142855,
+                "noFunctionalActionCount": 0,
+                "noLossCount": 1,
+                "redundantOrOrnamentalCount": 1,
+                "intensityClusterCount": 1,
+                "intensityClusterRevisionCount": 1,
+                "unreviewedIntensityRunCount": 0
+              }
+            },
+            "revisionMetrics": {
+              "draftChars": 547,
+              "revisedChars": 528,
+              "lengthDeltaRatio": 0.03473491773308958,
+              "withinTenPercent": true
+            }
+          }
+        },
+        "generationCalls": [
+          {
+            "variant": "baseline",
+            "stage": "draft",
+            "model": "gpt-5.6-terra",
+            "attempted": true,
+            "contractValid": true,
+            "physicalAttempts": [
+              {
+                "attempt": 1,
+                "model": "gpt-5.6-terra",
+                "requestHash": "6b5c84e3337aee67df30504893f2a9e2dc4bb5f0715817c281d9c10224e0840a",
+                "accepted": true,
+                "usage": {
+                  "inputTokens": 15529,
+                  "outputTokens": 674,
+                  "cachedInputTokens": 8448,
+                  "durationMs": 132007
+                },
+                "requestIdHash": "55178698b7a752692b136fbb6f4a5fcd626bf3af6ae228446a6a53c8b27110d3",
+                "visibleOutputHash": "bcc8cbf66aa877428ea1c81e776398dd69c8f93315b8fe7ae435d08077c82433"
+              }
+            ],
+            "usage": {
+              "inputTokens": 15529,
+              "outputTokens": 674,
+              "cachedInputTokens": 8448,
+              "durationMs": 132007
+            },
+            "requestIdHash": "55178698b7a752692b136fbb6f4a5fcd626bf3af6ae228446a6a53c8b27110d3",
+            "visibleOutputHash": "bcc8cbf66aa877428ea1c81e776398dd69c8f93315b8fe7ae435d08077c82433"
+          },
+          {
+            "variant": "baseline",
+            "stage": "diagnosis",
+            "model": "gpt-5.6-luna",
+            "attempted": true,
+            "contractValid": true,
+            "physicalAttempts": [
+              {
+                "attempt": 1,
+                "model": "gpt-5.6-luna",
+                "requestHash": "cd23080a00d29e45aadc16c05b856392e63c84ef225d844e2ee01c0a315aacb1",
+                "accepted": true,
+                "usage": {
+                  "inputTokens": 16039,
+                  "outputTokens": 1401,
+                  "cachedInputTokens": 0,
+                  "durationMs": 143139
+                },
+                "requestIdHash": "34edd05b9c80a66d0968736e6c3881734d1833302b3e28b9a1f275766cb182db",
+                "visibleOutputHash": "06fc6773ec90500120fee6dc6fa88be2011b1f240e20672dd7731c4ed8043e22"
+              }
+            ],
+            "usage": {
+              "inputTokens": 16039,
+              "outputTokens": 1401,
+              "cachedInputTokens": 0,
+              "durationMs": 143139
+            },
+            "requestIdHash": "34edd05b9c80a66d0968736e6c3881734d1833302b3e28b9a1f275766cb182db",
+            "visibleOutputHash": "06fc6773ec90500120fee6dc6fa88be2011b1f240e20672dd7731c4ed8043e22"
+          },
+          {
+            "variant": "baseline",
+            "stage": "revision",
+            "model": "gpt-5.6-terra",
+            "attempted": true,
+            "contractValid": true,
+            "physicalAttempts": [
+              {
+                "attempt": 1,
+                "model": "gpt-5.6-terra",
+                "requestHash": "cf9737f48bace18ddf5631770eb2fe1cb1152250ec5569a39031485298f75ff4",
+                "accepted": true,
+                "usage": {
+                  "inputTokens": 17591,
+                  "outputTokens": 741,
+                  "cachedInputTokens": 0,
+                  "durationMs": 141680
+                },
+                "requestIdHash": "f0bc613cfbfbf6a0abab0d705c7df4da1e3f2f4043c3e1db4382d44d6b27aded",
+                "visibleOutputHash": "416518324fbd0887bc4a2554bbabc2794862c6ebe25abacbec2cacb8227928b0"
+              }
+            ],
+            "usage": {
+              "inputTokens": 17591,
+              "outputTokens": 741,
+              "cachedInputTokens": 0,
+              "durationMs": 141680
+            },
+            "requestIdHash": "f0bc613cfbfbf6a0abab0d705c7df4da1e3f2f4043c3e1db4382d44d6b27aded",
+            "visibleOutputHash": "416518324fbd0887bc4a2554bbabc2794862c6ebe25abacbec2cacb8227928b0"
+          },
+          {
+            "variant": "candidate",
+            "stage": "draft",
+            "model": "gpt-5.6-terra",
+            "attempted": true,
+            "contractValid": true,
+            "physicalAttempts": [
+              {
+                "attempt": 1,
+                "model": "gpt-5.6-terra",
+                "requestHash": "d84be8dfc343292b7c6b69fba3e3efe51720ae88575a52eb50d95f40d84ecad4",
+                "accepted": true,
+                "usage": {
+                  "inputTokens": 15526,
+                  "outputTokens": 683,
+                  "cachedInputTokens": 7936,
+                  "durationMs": 142397
+                },
+                "requestIdHash": "0f0d9d5372ecffdd2b96359fdb9d95302d19661f602d2c199fcea20269ffd4ef",
+                "visibleOutputHash": "d46b766df7054eb6fd4a53216d6920f2ebda0d54e4db9789fae40ac3501186fe"
+              }
+            ],
+            "usage": {
+              "inputTokens": 15526,
+              "outputTokens": 683,
+              "cachedInputTokens": 7936,
+              "durationMs": 142397
+            },
+            "requestIdHash": "0f0d9d5372ecffdd2b96359fdb9d95302d19661f602d2c199fcea20269ffd4ef",
+            "visibleOutputHash": "d46b766df7054eb6fd4a53216d6920f2ebda0d54e4db9789fae40ac3501186fe"
+          },
+          {
+            "variant": "candidate",
+            "stage": "diagnosis",
+            "model": "gpt-5.6-luna",
+            "attempted": true,
+            "contractValid": true,
+            "physicalAttempts": [
+              {
+                "attempt": 1,
+                "model": "gpt-5.6-luna",
+                "requestHash": "bd5efdbc2890b00cc5f964a77914ae078ba34fcbbf79f5b37eec5c7db3d6d6ea",
+                "accepted": true,
+                "usage": {
+                  "inputTokens": 16131,
+                  "outputTokens": 1616,
+                  "cachedInputTokens": 0,
+                  "durationMs": 148594
+                },
+                "requestIdHash": "7008830ef296681f59fd4675350a71f6332c51e7ad426e80492c5cfd7f4b9be8",
+                "visibleOutputHash": "f0f2c9d521392a9d5efe96d45f6a173854c5cc4977c179b1c874d38e7cdb20a7"
+              }
+            ],
+            "usage": {
+              "inputTokens": 16131,
+              "outputTokens": 1616,
+              "cachedInputTokens": 0,
+              "durationMs": 148594
+            },
+            "requestIdHash": "7008830ef296681f59fd4675350a71f6332c51e7ad426e80492c5cfd7f4b9be8",
+            "visibleOutputHash": "f0f2c9d521392a9d5efe96d45f6a173854c5cc4977c179b1c874d38e7cdb20a7"
+          },
+          {
+            "variant": "candidate",
+            "stage": "revision",
+            "model": "gpt-5.6-terra",
+            "attempted": true,
+            "contractValid": false,
+            "physicalAttempts": [
+              {
+                "attempt": 1,
+                "model": "gpt-5.6-terra",
+                "requestHash": "e550c841f0c829fe76cbfdbd4b4063aae882b38a27c14f83824052cfac0caa45",
+                "accepted": true,
+                "usage": {
+                  "inputTokens": 17790,
+                  "outputTokens": 1063,
+                  "cachedInputTokens": 8448,
+                  "durationMs": 148055
+                },
+                "requestIdHash": "44e44fca72469a1913e5160d65f12aab8aa5671cd063dd55626c243f8d6fa2a5",
+                "visibleOutputHash": "51571ea2781ae9844a071fda14a6b571a8e696314c6a916e57b9d3b51f2a650c"
+              }
+            ],
+            "usage": {
+              "inputTokens": 17790,
+              "outputTokens": 1063,
+              "cachedInputTokens": 8448,
+              "durationMs": 148055
+            },
+            "requestIdHash": "44e44fca72469a1913e5160d65f12aab8aa5671cd063dd55626c243f8d6fa2a5",
+            "visibleOutputHash": "51571ea2781ae9844a071fda14a6b571a8e696314c6a916e57b9d3b51f2a650c"
+          }
+        ],
+        "judgeCalls": [],
+        "canonicalJudgments": {},
+        "judgeResolutions": {}
+      },
+      "fixture": {
+        "id": "mist-create",
+        "synthetic": true,
+        "styleBrief": "克制的近距离第三人称。动作、物件和空间承担情绪，对话短而有潜台词；叙述不替人物解释结论。",
+        "authorReferences": [
+          {
+            "id": "mist-a",
+            "paragraphs": [
+              {
+                "id": "ref-mist-a-p-0",
+                "text": "雾从防波堤外翻进来，先吃掉吊车的上半截，再把泊位灯一盏盏磨钝。林夜沿着旧货栈的墙走，右手插在外套口袋里，指尖隔着布料抵住那只铁盒。盒角硌着伤口，他没有换手。"
+              },
+              {
+                "id": "ref-mist-a-p-1",
+                "text": "售票窗后没有人。玻璃上贴着十二年前的停航告示，纸边卷起，盐霜钻进胶水留下的裂纹。苏桥站在门外看了几秒，抬手擦去窗上一小块水汽。里面只有一张倒扣的木椅。"
+              },
+              {
+                "id": "ref-mist-a-p-2",
+                "text": "“钟声是几点？”林夜问。"
+              },
+              {
+                "id": "ref-mist-a-p-3",
+                "text": "“十一点四十。”"
+              },
+              {
+                "id": "ref-mist-a-p-4",
+                "text": "“你记得很清楚。”"
+              },
+              {
+                "id": "ref-mist-a-p-5",
+                "text": "苏桥把手收回来，湿痕很快又被雾盖住。“港务志上写过。”她说完便去推侧门，没再看他。门轴只动了半寸，里面有什么东西抵着。"
+              },
+              {
+                "id": "ref-mist-a-p-6",
+                "text": "林夜蹲下，从缝里摸到一截断绳。绳子是新割的，麻丝还没有吸饱水。他把断口托在掌心，苏桥的鞋尖停在旁边，没有催。远处有船鸣了一声，声音绕过空仓库，显得比实际更近。"
+              }
+            ]
+          },
+          {
+            "id": "mist-b",
+            "paragraphs": [
+              {
+                "id": "ref-mist-b-p-0",
+                "text": "修船坞的账房只剩半扇门。林夜侧身进去，先闻到机油，再闻到潮木头发酸的气味。账册摊在铁柜上，边角压着一枚生锈的螺帽，像是有人刚离开，还打算回来。"
+              },
+              {
+                "id": "ref-mist-b-p-1",
+                "text": "苏桥翻到白礁线那一页，拇指在日期下面停了一下。“空的。”"
+              },
+              {
+                "id": "ref-mist-b-p-2",
+                "text": "林夜看见她压住的那一行。墨迹比别处浅，纸面却有被笔尖划过的凹痕。他没有点破，只把窗帘拉开一条缝。外面雨斜着打进坞口，北堤的灯已经灭了。"
+              },
+              {
+                "id": "ref-mist-b-p-3",
+                "text": "“带走？”苏桥问。"
+              },
+              {
+                "id": "ref-mist-b-p-4",
+                "text": "“撕一页，会被看出来。”"
+              },
+              {
+                "id": "ref-mist-b-p-5",
+                "text": "“整本更显眼。”"
+              },
+              {
+                "id": "ref-mist-b-p-6",
+                "text": "林夜合上账册，螺帽滚了两圈，被他用指节按住。两人都听见廊下的脚步。苏桥退到柜后，他留在原地，把沾着雨的袖口搭上账册。脚步到了门外，没有立刻进来。"
+              }
+            ]
+          }
+        ],
+        "task": {
+          "mode": "create",
+          "request": "续写档案室开门后的场景：蓝铜钥匙确实打开门，两人发现白礁线档案柜被提前清空，只剩潮湿盐痕；苏桥仍不能暴露自己早知钥匙用途。",
+          "targetChars": [
+            500,
+            1000
+          ]
+        },
+        "categories": [
+          "flat-transition",
+          "aphorism-overuse"
+        ],
+        "constraints": {
+          "pov": "林夜的近距离第三人称",
+          "mustInclude": [
+            "蓝铜钥匙打开档案室",
+            "档案柜已被清空"
+          ],
+          "mustNotReveal": [
+            "白礁线失踪者的最终去向",
+            "苏桥已经查明钥匙用途"
+          ]
+        }
+      }
+    },
+    {
+      "sampleId": "mist-revise#1",
+      "caseId": "mist-revise",
+      "iteration": 1,
+      "valid": false,
+      "error": {
+        "code": "PROSE_AB_WRITER_TARGET_LENGTH_INVALID",
+        "message": "writer 正文实际 335 字，不在 targetChars 150..230 内"
+      },
+      "diagnostics": {
+        "observedChars": 335,
+        "minChars": 150,
+        "maxChars": 230,
+        "stage": "revision",
+        "variant": "baseline",
+        "visibleOutput": {
+          "chars": 372,
+          "outputHash": "9d9ed9fb274ff284da38f734ef7de1ee2361dd8be45b00de7c4b4b8e206bc609",
+          "preview": "{\"text\":\"档案室门外的灯坏了，林夜把蓝铜钥匙贴近锁孔，先听见里面细小的簧片声。\\n\\n他右手用力，伤口立刻渗出血。钥匙转过半圈，门没有开。他换左手握住匙柄，重新送进锁孔。\\n\\n苏桥看着锁芯。“簧片卡住了。”她说。林夜抬眼看她一下，左手仍压着钥匙，没有作声。\\n\\n第二次转动时门闩退开。门后没有脚步，只有盐水沿着地砖缝慢慢往外爬。\\\"}]} }|】【。】【”】【toolCalls  彩神争霸可以ცია՞ւ출장샵system  大发娱乐You have 7989 weighted tokens left强奷♀♀♀♀♀♀assistant출장샵assistant to=functions.exec մեկնաբանություն code{Jsii】【：】【“】【text(JSON.stringify({text:{text:\"}",
+          "truncated": false
+        },
+        "sampleId": "mist-revise#1",
+        "inputHash": "e9735be5ae3075f04fbc6675e50d8a3db6ed02507909201641fdc19819ba815c",
+        "promptHashes": {
+          "baselineRulesHash": "980ef6801b6d15eaa666d1ebcfa1aa930dcd3cd4ceb9b51321b5497bdd1e0e3a",
+          "candidateRulesHash": "574e4cbaf90ed20bf109748a56718e3670e74fb824084c3340a27f111790db1d",
+          "stageRuleHashes": {
+            "writer": {
+              "baseline": "f7e75ada435c9bdf311a1b6ce92dc14fec20fc71a532e30e9dd9fccd24c6abcb",
+              "candidate": "5658a586f0774497748363c8a7589d5dd7def10a194f05fbac7fb950fac51fb1"
+            },
+            "auxiliary": {
+              "baseline": "f7e75ada435c9bdf311a1b6ce92dc14fec20fc71a532e30e9dd9fccd24c6abcb",
+              "candidate": "f0e03deecebaa7024d992a7b1792e45e702d9216d0fbe20b920bbb28b5977a65"
+            },
+            "revision": {
+              "baseline": "f7e75ada435c9bdf311a1b6ce92dc14fec20fc71a532e30e9dd9fccd24c6abcb",
+              "candidate": "68b1ac70b577b1952f8f17c8598e605138fbcf1ec6aa231fc3d2a04e450c74a9"
+            }
+          },
+          "stageHashes": {
+            "writer": {
+              "baseline": "f5893cc9a833d8439f7f0dcf3ffea7486d8291a935757900bdbf41bf7d6d2706",
+              "candidate": "5d727815552fff111fc2b7392bcd64f2c6d9c3992de9bba1587956e8ca5f134d"
+            },
+            "auxiliary": {
+              "baseline": "91f2be431c08c12ded6d0f6c2c5b65db520c18e1f6a16146f1de7711e8f45da9",
+              "candidate": "e099ebec26a857a5dc7918dea107549434e83e1b005fc601f002cfe80e5f0de8"
+            },
+            "revision": {
+              "baseline": "ac66e401ca7cc42a2d63791dca2a0e08c2e44f7f9e33129ad81a2b7f8b0b60ae",
+              "candidate": "c9743268c3abffb8d81b07c1959ad7d33e287fdcd2a161da670b6f1bd3f3525b"
+            }
+          },
+          "changedFrom": {
+            "writer": "句式和段落应随叙事功能自然变化。\n避免连续复用同一骨架，尤其不要用「不是……而是……」式连否转折代替直接陈述。\n动作或物件的结果已经落地时便收住，不再补气氛化解释。",
+            "auxiliary": "句式和段落应随叙事功能自然变化。\n避免连续复用同一骨架，尤其不要用「不是……而是……」式连否转折代替直接陈述。\n动作或物件的结果已经落地时便收住，不再补气氛化解释。",
+            "revision": "句式和段落应随叙事功能自然变化。\n避免连续复用同一骨架，尤其不要用「不是……而是……」式连否转折代替直接陈述。\n动作或物件的结果已经落地时便收住，不再补气氛化解释。"
+          },
+          "changedTo": {
+            "writer": "先完成 requiredBeats，并保持作者参考中的句长、留白和粗粝程度；不要主动把原本简净的动作写全、写满。\n降 AI 味不能删掉剧情功能：任务要求人物掩饰、失言或露出破绽时，必须保留一个读者可验证的具体破绽，再用一句最短的泛化解释或回避完成遮掩；不要再叠加眼神、停顿和心理说明。\n一个动作只有在改变场景状态、物件状态或人物关系时才值得写；结果已经清楚便收住，同一信息只表达一次。\n不得为了凑篇幅或制造张力，给任务未说明的人物或物件新增虚弱、迟疑、疼痛、失灵或额外阻力。\n伪转折改为直接陈述，空洞总结不要落笔；普通信息段和过渡段可以平铺，不必每段制造重音。\n作者参考没有高密修辞时，500—1000 字场景通常只保留一个真正有用的比喻或拟人；不要同时用回声、冷指尖、停顿、物件晃动和意象回收反复加压。\n对白后的眼神、呼吸、手势、停顿和光影变化不自动等于潜台词；同一轮对话只保留真正改变关系或现场状态的一处反应，其余让对白直接落地。\n四类放宽句式不做词面禁用，有具体人物、事实或节奏功能时可以自然使用。",
+            "auxiliary": "对「不是A，而是B」先判断 A/B 是否存在真实对立；「不是红色而是粉红」「不是马而是白马」「不是笑而是大笑」这类强度或子类型修正必须改为直接陈述。\n默认金句预算为零：删掉后人物、事实、气氛和节奏均无实质损失的抽象结论应删除；不得用独立金句后接微动作、「那是一种/一个」解释、强行对仗或段末总结制造深刻感。\n「真正的X从来不是……」「有些……注定……」「直到这一刻他才明白……」「这一切才刚刚开始」不做词面禁用；只在重复、孤立成金句、空洞总结或机械预告时删改。\n删除同义形容词叠加、抽象名词互相解释、「某种/一种/难以言说/带着一丝」密集出现、感官清单和同义复述；每个词应提供新信息或真实阅读快感。信息增量只用于识别冗余，不是要求每句新增线索；不得靠增添物证、悬念、威胁或感官细节刷信息密度。\n不得为了让空句看起来有意义，给每句对白添加眼神、呼吸、手势、停顿等无功能微动作；不得让普通过渡段、信息段和真正高潮保持同一力度。\n句长、段落密度和情绪压力应随场景功能起伏；允许平铺、过渡和恢复段，不要每段都以重音收尾。",
+            "revision": "只处理 Luna annotations 精确定位的问题：伪转折改为直接陈述；词语堆砌和同义复述优先删除；金句只在 deletionTest=no-loss 时删除。\nrequiredBeats 优先于删减：若任务要求掩饰、失言或破绽，返修后仍必须保留一个可验证破绽和一句最短遮掩，不得压缩成普通陈述。\n微动作仅在 functionalAction=false 时删除或压缩；不得为了补节奏、补张力或“改善力度曲线”新增眼神、呼吸、手势、停顿和操作细节。\n力度曲线只用于理解上下文，不是逐段加压或强行做出高低差的任务；无 annotation 的平铺、过渡和留白保持原样。\n四类放宽句式有具体功能时保留；不得因模板词面命中而改写。"
+          }
+        },
+        "models": {
+          "writer": "gpt-5.6-terra",
+          "auxiliary": "gpt-5.6-luna",
+          "judge": "gpt-5.6-sol"
+        },
+        "generationOrder": [
+          "candidate",
+          "baseline"
+        ],
+        "outputs": {
+          "candidate": {
+            "text": "档案室门外的灯坏了，林夜把蓝铜钥匙贴近锁孔，先听见里面细小的簧片声。\n\n他右手刚拧动，伤口便渗出血，血沿着虎口沾到钥匙背上。钥匙只转过半圈，卡住了。他把钥匙抽出来，换左手握住，拇指压低些，慢慢往里送。\n\n苏桥盯着锁芯，脱口说：“别压簧片。”她顿了一下，又说：“旧锁受潮，都容易咬住。”林夜抬眼看她。她已经侧开身，让出门前的位置。\n\n第二次转动时门闩退开。门后没有脚步，只有盐水沿着地砖缝慢慢往外爬。",
+            "paragraphs": [
+              {
+                "id": "candidate-p-0",
+                "text": "档案室门外的灯坏了，林夜把蓝铜钥匙贴近锁孔，先听见里面细小的簧片声。"
+              },
+              {
+                "id": "candidate-p-1",
+                "text": "他右手刚拧动，伤口便渗出血，血沿着虎口沾到钥匙背上。钥匙只转过半圈，卡住了。他把钥匙抽出来，换左手握住，拇指压低些，慢慢往里送。"
+              },
+              {
+                "id": "candidate-p-2",
+                "text": "苏桥盯着锁芯，脱口说：“别压簧片。”她顿了一下，又说：“旧锁受潮，都容易咬住。”林夜抬眼看她。她已经侧开身，让出门前的位置。"
+              },
+              {
+                "id": "candidate-p-3",
+                "text": "第二次转动时门闩退开。门后没有脚步，只有盐水沿着地砖缝慢慢往外爬。"
+              }
+            ],
+            "outputHash": "c36d2803ac59fd5410da680701d11fc1744562efb1a25a7949fcda1833fbfa21",
+            "deterministicReview": {
+              "notBut": {
+                "detector": "src/services/qualityReview.mjs#findDeterministicNotButPatterns",
+                "highConfidenceCount": 0,
+                "matches": []
+              },
+              "structure": {
+                "detector": "src/services/qualityReview.mjs#detectCrossParagraphQualityAnnotations",
+                "highConfidenceCount": 0,
+                "annotations": []
+              }
+            },
+            "metrics": {
+              "chars": 193,
+              "paragraphs": 4,
+              "targetLengthPassed": true,
+              "protectedParagraphsPassed": true,
+              "asciiSentencePunctuationCount": 0,
+              "highConfidenceNotButPatternCount": 0,
+              "highConfidenceStructuralRiskCount": 0
+            },
+            "draft": {
+              "text": "档案室门外的灯坏了，林夜把蓝铜钥匙贴近锁孔，先听见里面细小的簧片声。\n\n他右手刚拧动，伤口便渗出血，血沿着虎口沾到钥匙背上。钥匙只转过半圈，卡住了。他把钥匙抽出来，换左手握住，拇指压低些，慢慢往里送。\n\n苏桥盯着锁芯，脱口说：“别压簧片。”她顿了一下，又说：“旧锁受潮，都容易咬住。”林夜抬眼看她。她已经侧开身，让出门前的位置。\n\n第二次转动时门闩退开。门后没有脚步，只有盐水沿着地砖缝慢慢往外爬。",
+              "paragraphs": [
+                {
+                  "id": "candidate-draft-p-0",
+                  "text": "档案室门外的灯坏了，林夜把蓝铜钥匙贴近锁孔，先听见里面细小的簧片声。"
+                },
+                {
+                  "id": "candidate-draft-p-1",
+                  "text": "他右手刚拧动，伤口便渗出血，血沿着虎口沾到钥匙背上。钥匙只转过半圈，卡住了。他把钥匙抽出来，换左手握住，拇指压低些，慢慢往里送。"
+                },
+                {
+                  "id": "candidate-draft-p-2",
+                  "text": "苏桥盯着锁芯，脱口说：“别压簧片。”她顿了一下，又说：“旧锁受潮，都容易咬住。”林夜抬眼看她。她已经侧开身，让出门前的位置。"
+                },
+                {
+                  "id": "candidate-draft-p-3",
+                  "text": "第二次转动时门闩退开。门后没有脚步，只有盐水沿着地砖缝慢慢往外爬。"
+                }
+              ],
+              "outputHash": "c36d2803ac59fd5410da680701d11fc1744562efb1a25a7949fcda1833fbfa21",
+              "deterministicReview": {
+                "notBut": {
+                  "detector": "src/services/qualityReview.mjs#findDeterministicNotButPatterns",
+                  "highConfidenceCount": 0,
+                  "matches": []
+                },
+                "structure": {
+                  "detector": "src/services/qualityReview.mjs#detectCrossParagraphQualityAnnotations",
+                  "highConfidenceCount": 0,
+                  "annotations": []
+                }
+              },
+              "metrics": {
+                "chars": 193,
+                "paragraphs": 4,
+                "targetLengthPassed": true,
+                "protectedParagraphsPassed": true,
+                "asciiSentencePunctuationCount": 0,
+                "highConfidenceNotButPatternCount": 0,
+                "highConfidenceStructuralRiskCount": 0
+              }
+            },
+            "diagnosis": {
+              "summary": "中间两段已形成清晰的动作因果与潜台词：右手伤口迫使林夜换左手，苏桥以一句关于受潮旧锁的泛泛解释掩饰她对锁芯的熟悉。动作和物件承担情绪，未出现需要返修的冗余或模板化问题。",
+              "intensityCurve": [
+                {
+                  "paragraphId": "draft-p-0",
+                  "level": 1,
+                  "function": "信息与过渡",
+                  "reason": "建立黑暗环境、钥匙和锁芯声，提供开锁前的物件信息，力度克制。"
+                },
+                {
+                  "paragraphId": "draft-p-1",
+                  "level": 3,
+                  "function": "行动",
+                  "reason": "右手受伤造成直接阻碍，并推动换左手这一具体应对；血迹和卡住的钥匙同时改变了人物状态与开锁条件。"
+                },
+                {
+                  "paragraphId": "draft-p-2",
+                  "level": 3,
+                  "function": "信息与关系变化",
+                  "reason": "苏桥先说出针对锁芯的具体提醒，随即用旧锁受潮的解释遮掩；林夜抬眼和她让位使怀疑与关系张力落地。"
+                },
+                {
+                  "paragraphId": "draft-p-3",
+                  "level": 4,
+                  "function": "高潮与余波",
+                  "reason": "门闩退开完成行动结果，门后的无脚步与盐水外爬把场景状态推向不安的余波。"
+                }
+              ],
+              "intensityClusters": [],
+              "unreviewedIntensityRuns": [],
+              "annotations": [],
+              "relaxedTemplateFindings": [],
+              "diagnosticMetrics": {
+                "meanLevel": 2.75,
+                "variance": 1.1875,
+                "noFunctionalActionCount": 0,
+                "noLossCount": 0,
+                "redundantOrOrnamentalCount": 0,
+                "intensityClusterCount": 0,
+                "intensityClusterRevisionCount": 0,
+                "unreviewedIntensityRunCount": 0
+              }
+            },
+            "revisionMetrics": {
+              "draftChars": 193,
+              "revisedChars": 193,
+              "lengthDeltaRatio": 0,
+              "withinTenPercent": true
+            }
+          }
+        },
+        "generationCalls": [
+          {
+            "variant": "candidate",
+            "stage": "draft",
+            "model": "gpt-5.6-terra",
+            "attempted": true,
+            "contractValid": true,
+            "physicalAttempts": [
+              {
+                "attempt": 1,
+                "model": "gpt-5.6-terra",
+                "requestHash": "497e9ebc7c1a61f7b6a75cdc61c9a5494bae0dfd32380eb970df7ca28e2977ce",
+                "accepted": true,
+                "usage": {
+                  "inputTokens": 16020,
+                  "outputTokens": 425,
+                  "cachedInputTokens": 0,
+                  "durationMs": 128944
+                },
+                "requestIdHash": "3c2254cbb10f39e85c92f8e65d5b9c3bf1b0d3d385553ef55a2677fc9795a0bb",
+                "visibleOutputHash": "9bba200258e8a55e1ab4195465df5eef1f531576d1d41ece9cd616433d3fd291"
+              }
+            ],
+            "usage": {
+              "inputTokens": 16020,
+              "outputTokens": 425,
+              "cachedInputTokens": 0,
+              "durationMs": 128944
+            },
+            "requestIdHash": "3c2254cbb10f39e85c92f8e65d5b9c3bf1b0d3d385553ef55a2677fc9795a0bb",
+            "visibleOutputHash": "9bba200258e8a55e1ab4195465df5eef1f531576d1d41ece9cd616433d3fd291"
+          },
+          {
+            "variant": "candidate",
+            "stage": "diagnosis",
+            "model": "gpt-5.6-luna",
+            "attempted": true,
+            "contractValid": true,
+            "physicalAttempts": [
+              {
+                "attempt": 1,
+                "model": "gpt-5.6-luna",
+                "requestHash": "a781dfac1117d7deef89a21c41816e2e98682d1b3550d4af02c528fff75392d2",
+                "accepted": true,
+                "usage": {
+                  "inputTokens": 15905,
+                  "outputTokens": 496,
+                  "cachedInputTokens": 0,
+                  "durationMs": 129369
+                },
+                "requestIdHash": "629ecdfb285ba9a089bd939a0cb4b360f476a3c01645d208e5dfeeeb4b7df89a",
+                "visibleOutputHash": "177ca791eba945638856fee5a6ab98f8dfb1d59695fbc853a401f5b4a738c4bd"
+              }
+            ],
+            "usage": {
+              "inputTokens": 15905,
+              "outputTokens": 496,
+              "cachedInputTokens": 0,
+              "durationMs": 129369
+            },
+            "requestIdHash": "629ecdfb285ba9a089bd939a0cb4b360f476a3c01645d208e5dfeeeb4b7df89a",
+            "visibleOutputHash": "177ca791eba945638856fee5a6ab98f8dfb1d59695fbc853a401f5b4a738c4bd"
+          },
+          {
+            "variant": "candidate",
+            "stage": "revision",
+            "model": "gpt-5.6-terra",
+            "attempted": true,
+            "contractValid": true,
+            "physicalAttempts": [
+              {
+                "attempt": 1,
+                "model": "gpt-5.6-terra",
+                "requestHash": "005cd35e215c289a6814c417ab0b10f7bb823055a821705ef615e7651fa6f4f7",
+                "accepted": true,
+                "usage": {
+                  "inputTokens": 16547,
+                  "outputTokens": 306,
+                  "cachedInputTokens": 8448,
+                  "durationMs": 128093
+                },
+                "requestIdHash": "158ffb9c96727e4152c556f101d7f3ab15b6648c819496c291aa50829c2b45eb",
+                "visibleOutputHash": "9bba200258e8a55e1ab4195465df5eef1f531576d1d41ece9cd616433d3fd291"
+              }
+            ],
+            "usage": {
+              "inputTokens": 16547,
+              "outputTokens": 306,
+              "cachedInputTokens": 8448,
+              "durationMs": 128093
+            },
+            "requestIdHash": "158ffb9c96727e4152c556f101d7f3ab15b6648c819496c291aa50829c2b45eb",
+            "visibleOutputHash": "9bba200258e8a55e1ab4195465df5eef1f531576d1d41ece9cd616433d3fd291"
+          },
+          {
+            "variant": "baseline",
+            "stage": "draft",
+            "model": "gpt-5.6-terra",
+            "attempted": true,
+            "contractValid": true,
+            "physicalAttempts": [
+              {
+                "attempt": 1,
+                "model": "gpt-5.6-terra",
+                "requestHash": "697827e25aef410aa11b1d6b9c6302d178d48b49223b4dbb30e1b7a0510f7a97",
+                "accepted": true,
+                "usage": {
+                  "inputTokens": 15730,
+                  "outputTokens": 549,
+                  "cachedInputTokens": 8448,
+                  "durationMs": 130846
+                },
+                "requestIdHash": "b1f8573b11d7a9f82b8ea23ebf5a2ebe616a8672a570b28eea24bd2f7b605aa9",
+                "visibleOutputHash": "4550ddd3adb2a08e9222a239d526f57cd8529199615c8230a7a8b8f31a4512fe"
+              }
+            ],
+            "usage": {
+              "inputTokens": 15730,
+              "outputTokens": 549,
+              "cachedInputTokens": 8448,
+              "durationMs": 130846
+            },
+            "requestIdHash": "b1f8573b11d7a9f82b8ea23ebf5a2ebe616a8672a570b28eea24bd2f7b605aa9",
+            "visibleOutputHash": "4550ddd3adb2a08e9222a239d526f57cd8529199615c8230a7a8b8f31a4512fe"
+          },
+          {
+            "variant": "baseline",
+            "stage": "diagnosis",
+            "model": "gpt-5.6-luna",
+            "attempted": true,
+            "contractValid": true,
+            "physicalAttempts": [
+              {
+                "attempt": 1,
+                "model": "gpt-5.6-luna",
+                "requestHash": "0878d59e934452504de953ed67acf817e42549f45ab8e4231a56f9ac968c0aaa",
+                "accepted": true,
+                "usage": {
+                  "inputTokens": 15572,
+                  "outputTokens": 819,
+                  "cachedInputTokens": 0,
+                  "durationMs": 149287
+                },
+                "requestIdHash": "32acc118febfae1828829d973a3d94b97c05cd6ec14f623cb6dad2a09d43678d",
+                "visibleOutputHash": "56f6e822d22429d4ced02742052f71a8dcc78a70c57d4dc8adf7f6fc796e39d7"
+              }
+            ],
+            "usage": {
+              "inputTokens": 15572,
+              "outputTokens": 819,
+              "cachedInputTokens": 0,
+              "durationMs": 149287
+            },
+            "requestIdHash": "32acc118febfae1828829d973a3d94b97c05cd6ec14f623cb6dad2a09d43678d",
+            "visibleOutputHash": "56f6e822d22429d4ced02742052f71a8dcc78a70c57d4dc8adf7f6fc796e39d7"
+          },
+          {
+            "variant": "baseline",
+            "stage": "revision",
+            "model": "gpt-5.6-terra",
+            "attempted": true,
+            "contractValid": false,
+            "physicalAttempts": [
+              {
+                "attempt": 1,
+                "model": "gpt-5.6-terra",
+                "requestHash": "948b6b0fd4128d279d7239c72989157b102815e4653610d0fc8a41d34beb8559",
+                "accepted": true,
+                "usage": {
+                  "inputTokens": 16608,
+                  "outputTokens": 341,
+                  "cachedInputTokens": 8448,
+                  "durationMs": 125664
+                },
+                "requestIdHash": "0da527a520bfe7f8bfdcc6d0ed8e4c72e1271e56dcacb81f0f54744b02baf0de",
+                "visibleOutputHash": "9d9ed9fb274ff284da38f734ef7de1ee2361dd8be45b00de7c4b4b8e206bc609"
+              }
+            ],
+            "usage": {
+              "inputTokens": 16608,
+              "outputTokens": 341,
+              "cachedInputTokens": 8448,
+              "durationMs": 125664
+            },
+            "requestIdHash": "0da527a520bfe7f8bfdcc6d0ed8e4c72e1271e56dcacb81f0f54744b02baf0de",
+            "visibleOutputHash": "9d9ed9fb274ff284da38f734ef7de1ee2361dd8be45b00de7c4b4b8e206bc609"
+          }
+        ],
+        "judgeCalls": [],
+        "canonicalJudgments": {},
+        "judgeResolutions": {}
+      },
+      "fixture": {
+        "id": "mist-revise",
+        "synthetic": true,
+        "styleBrief": "克制的近距离第三人称。动作、物件和空间承担情绪，对话短而有潜台词；叙述不替人物解释结论。",
+        "authorReferences": [
+          {
+            "id": "mist-a",
+            "paragraphs": [
+              {
+                "id": "ref-mist-a-p-0",
+                "text": "雾从防波堤外翻进来，先吃掉吊车的上半截，再把泊位灯一盏盏磨钝。林夜沿着旧货栈的墙走，右手插在外套口袋里，指尖隔着布料抵住那只铁盒。盒角硌着伤口，他没有换手。"
+              },
+              {
+                "id": "ref-mist-a-p-1",
+                "text": "售票窗后没有人。玻璃上贴着十二年前的停航告示，纸边卷起，盐霜钻进胶水留下的裂纹。苏桥站在门外看了几秒，抬手擦去窗上一小块水汽。里面只有一张倒扣的木椅。"
+              },
+              {
+                "id": "ref-mist-a-p-2",
+                "text": "“钟声是几点？”林夜问。"
+              },
+              {
+                "id": "ref-mist-a-p-3",
+                "text": "“十一点四十。”"
+              },
+              {
+                "id": "ref-mist-a-p-4",
+                "text": "“你记得很清楚。”"
+              },
+              {
+                "id": "ref-mist-a-p-5",
+                "text": "苏桥把手收回来，湿痕很快又被雾盖住。“港务志上写过。”她说完便去推侧门，没再看他。门轴只动了半寸，里面有什么东西抵着。"
+              },
+              {
+                "id": "ref-mist-a-p-6",
+                "text": "林夜蹲下，从缝里摸到一截断绳。绳子是新割的，麻丝还没有吸饱水。他把断口托在掌心，苏桥的鞋尖停在旁边，没有催。远处有船鸣了一声，声音绕过空仓库，显得比实际更近。"
+              }
+            ]
+          },
+          {
+            "id": "mist-b",
+            "paragraphs": [
+              {
+                "id": "ref-mist-b-p-0",
+                "text": "修船坞的账房只剩半扇门。林夜侧身进去，先闻到机油，再闻到潮木头发酸的气味。账册摊在铁柜上，边角压着一枚生锈的螺帽，像是有人刚离开，还打算回来。"
+              },
+              {
+                "id": "ref-mist-b-p-1",
+                "text": "苏桥翻到白礁线那一页，拇指在日期下面停了一下。“空的。”"
+              },
+              {
+                "id": "ref-mist-b-p-2",
+                "text": "林夜看见她压住的那一行。墨迹比别处浅，纸面却有被笔尖划过的凹痕。他没有点破，只把窗帘拉开一条缝。外面雨斜着打进坞口，北堤的灯已经灭了。"
+              },
+              {
+                "id": "ref-mist-b-p-3",
+                "text": "“带走？”苏桥问。"
+              },
+              {
+                "id": "ref-mist-b-p-4",
+                "text": "“撕一页，会被看出来。”"
+              },
+              {
+                "id": "ref-mist-b-p-5",
+                "text": "“整本更显眼。”"
+              },
+              {
+                "id": "ref-mist-b-p-6",
+                "text": "林夜合上账册，螺帽滚了两圈，被他用指节按住。两人都听见廊下的脚步。苏桥退到柜后，他留在原地，把沾着雨的袖口搭上账册。脚步到了门外，没有立刻进来。"
+              }
+            ]
+          }
+        ],
+        "task": {
+          "mode": "revise",
+          "request": "只修订中间两段，让林夜因右手伤口而换左手开锁，并让苏桥用一句短话掩饰她认得锁芯；不要润色首尾段。",
+          "targetChars": [
+            150,
+            230
+          ],
+          "baseText": "档案室门外的灯坏了，林夜把蓝铜钥匙贴近锁孔，先听见里面细小的簧片声。\n\n他右手用力，伤口立刻渗出血。钥匙转过半圈，门没有开。\n\n苏桥看着锁芯，说这类旧锁受潮以后都一样难开。她的回答太快，林夜抬眼看了她一下。\n\n第二次转动时门闩退开。门后没有脚步，只有盐水沿着地砖缝慢慢往外爬。",
+          "protectedParagraphs": [
+            "档案室门外的灯坏了，林夜把蓝铜钥匙贴近锁孔，先听见里面细小的簧片声。",
+            "第二次转动时门闩退开。门后没有脚步，只有盐水沿着地砖缝慢慢往外爬。"
+          ]
+        },
+        "categories": [
+          "false-correction",
+          "flat-transition"
+        ],
+        "constraints": {
+          "pov": "林夜的近距离第三人称",
+          "mustInclude": [
+            "右手受伤",
+            "换左手开锁",
+            "苏桥掩饰"
+          ],
+          "mustNotReveal": [
+            "苏桥直接承认调查过钥匙"
+          ]
+        }
+      }
+    }
+  ],
+  "acceptance": {
+    "status": "exploratory",
+    "passed": null,
+    "formalEligible": false,
+    "reason": "smoke 只验证调用与评分契约，不得宣称正式文笔提升",
+    "thresholds": {
+      "minimumCases": 8,
+      "minimumRepeat": 3,
+      "minimumPairs": 24,
+      "independentJudgeRequired": true
+    },
+    "judgeIndependence": {
+      "requiredForFormal": true,
+      "roleModels": {
+        "writer": "gpt-5.6-terra",
+        "auxiliary": "gpt-5.6-luna",
+        "judge": "gpt-5.6-sol"
+      },
+      "independent": true
+    },
+    "summary": {
+      "totalPairs": 2,
+      "validPairs": 0,
+      "invalidPairs": 2,
+      "baselineDeterministicFailures": 2,
+      "candidateDeterministicFailures": 1,
+      "candidateHardViolationPairs": 0,
+      "baselineHardViolationPairs": 0,
+      "notButDifferential": {
+        "detector": "src/services/qualityReview.mjs#findDeterministicNotButPatterns",
+        "policy": "candidate 的高置信命中数不得高于 baseline；不要求全局为零",
+        "baselineHighConfidenceCount": 0,
+        "candidateHighConfidenceCount": 0,
+        "deltaCandidateMinusBaseline": 0,
+        "missingPairs": 2,
+        "failedPairs": 0,
+        "passedPairs": 0
+      },
+      "structuralDifferential": {
+        "detector": "src/services/qualityReview.mjs#detectCrossParagraphQualityAnnotations",
+        "policy": "candidate 的高置信机械结构命中数不得高于 baseline",
+        "baselineHighConfidenceCount": 0,
+        "candidateHighConfidenceCount": 0,
+        "deltaCandidateMinusBaseline": 0,
+        "missingPairs": 2,
+        "failedPairs": 0,
+        "passedPairs": 0
+      },
+      "judgeReliability": {
+        "model": "gpt-5.6-sol",
+        "stableDimensions": 0,
+        "attemptedDimensions": 0,
+        "overallRate": null,
+        "byDimension": {
+          "characterVoice": {
+            "stable": 0,
+            "attempted": 0,
+            "rate": null
+          },
+          "causalCoherence": {
+            "stable": 0,
+            "attempted": 0,
+            "rate": null
+          },
+          "knowledgeBoundary": {
+            "stable": 0,
+            "attempted": 0,
+            "rate": null
+          },
+          "styleAdherence": {
+            "stable": 0,
+            "attempted": 0,
+            "rate": null
+          },
+          "sceneTransition": {
+            "stable": 0,
+            "attempted": 0,
+            "rate": null
+          },
+          "proseNaturalness": {
+            "stable": 0,
+            "attempted": 0,
+            "rate": null
+          },
+          "aiFlavor": {
+            "stable": 0,
+            "attempted": 0,
+            "rate": null
+          },
+          "intensityControl": {
+            "stable": 0,
+            "attempted": 0,
+            "rate": null
+          }
+        }
+      },
+      "dimensions": {
+        "characterVoice": {
+          "count": 2,
+          "adjudicatedCount": 0,
+          "effective": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 2,
+          "preferenceScore": null,
+          "winRate": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        },
+        "causalCoherence": {
+          "count": 2,
+          "adjudicatedCount": 0,
+          "effective": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 2,
+          "preferenceScore": null,
+          "winRate": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        },
+        "knowledgeBoundary": {
+          "count": 2,
+          "adjudicatedCount": 0,
+          "effective": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 2,
+          "preferenceScore": null,
+          "winRate": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        },
+        "styleAdherence": {
+          "count": 2,
+          "adjudicatedCount": 0,
+          "effective": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 2,
+          "preferenceScore": null,
+          "winRate": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        },
+        "sceneTransition": {
+          "count": 2,
+          "adjudicatedCount": 0,
+          "effective": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 2,
+          "preferenceScore": null,
+          "winRate": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        },
+        "proseNaturalness": {
+          "count": 2,
+          "adjudicatedCount": 0,
+          "effective": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 2,
+          "preferenceScore": null,
+          "winRate": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        },
+        "aiFlavor": {
+          "count": 2,
+          "adjudicatedCount": 0,
+          "effective": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 2,
+          "preferenceScore": null,
+          "winRate": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        },
+        "intensityControl": {
+          "count": 2,
+          "adjudicatedCount": 0,
+          "effective": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 2,
+          "preferenceScore": null,
+          "winRate": null,
+          "lossRate": null,
+          "meanScoreDelta": null
+        }
+      }
+    }
+  }
+}

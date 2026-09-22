@@ -1,0 +1,35 @@
+{
+  "id": "thread-mthlwnp8-c1glfb",
+  "title": "只回复：DeepSeek V4 Flash 生产连接已可",
+  "novelId": null,
+  "createdAt": "2026-08-31T19:03:38.492Z",
+  "updatedAt": "2026-08-31T19:03:39.722Z",
+  "messages": [
+    {
+      "id": "msg-3792c24b-95d8-423b-a829-bbd8f4b8eca2",
+      "role": "user",
+      "text": "只回复：DeepSeek V4 Flash 生产连接已可用",
+      "timestamp": 1788203018510,
+      "edited": false
+    },
+    {
+      "id": "codex-01a05934-a9f7-72d0-93c3-d6de501ac701",
+      "parentId": "msg-3792c24b-95d8-423b-a829-bbd8f4b8eca2",
+      "role": "assistant",
+      "text": "DeepSeek V4 Flash 生产连接已可用",
+      "timestamp": 1788203019721,
+      "edited": false,
+      "toolCalls": [],
+      "codexTurnId": "01a05934-a9f7-72d0-93c3-d6de501ac701"
+    }
+  ],
+  "currentNodeId": "codex-01a05934-a9f7-72d0-93c3-d6de501ac701",
+  "codexBinding": {
+    "schemaVersion": 1,
+    "threadId": "01a05934-a924-7bb0-9e21-f03bfe886c40",
+    "providerFingerprint": "b57b3d233c29f02c71018adc27118d47d99fb86c07bdf4dc381435242b00fbe7",
+    "novelId": null,
+    "importedHistoryHash": "",
+    "importedBoundaryMessageId": ""
+  }
+}

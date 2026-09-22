@@ -1,0 +1,39 @@
+{
+  "reviewedAt": "2026-09-21T17:56:11.191095+00:00",
+  "node": "v25.8.0",
+  "scope": "read-only source audit and isolated production-method probes; no product repair or UI acceptance",
+  "sourceSha256": {
+    "AGENTS.md": "f1a7d2a338eaf5159fcef238807b281933b31147bed08fa71859aaa188176e83",
+    "knowledge-base/ux-dev-flow.md": "2a959fe5776976059e26e1a38eec52560dd91dfc0f362306db67150ebcf0963c",
+    "src/App.jsx": "dd5cd0ab3a5edfbf48ae5c1e9265c731d03e73dc94d116136d15ca457a239700",
+    "src/components/AiChatPanel.jsx": "3cb38320cfd8a0f85160cfce731c2e6e6b86c51fcd1515d82d9a98eac28f7396",
+    "src/components/writingTaskConstraints.mjs": "e8ce9f0f45134d87b56a0b7cde6c24497658a9f3c50a2ac4bc9c41d6779204f3",
+    "src/main/codex-runtime/codexSessionService.js": "239c7d11859b2c09a04407012e8bcca515488532c786e2e24b9759bafc8124d5",
+    "src/main/codex-runtime/nativeChangePolicy.js": "e65f51ac5353936f26a9b156deb14db4f903ce70557fd9e56d610b9eeaf7a506",
+    "src/main/codex-runtime/nativeNovelWorkspace.js": "9c32039f1f33d5fc23e45ba9f1636f777ab628eb4af375d20d286b280981f22e",
+    "src/main/codex-runtime/taskLedger.js": "61b0d906873868984cb625b3ffcf932aaa70e597488ebaaa89a6a2112aabd6ba",
+    "src/main/store/chatHistory.js": "a16b7de4e9faa23c2329508cb40ba1615ec2aec92184d68112e8fd8bbc7ad3c6",
+    "src/main/ipc/codex.js": "f39742c5bfb8fa4d55b111f49a84efcf23f2fe60ada9cbfa18cbe866ebb36268",
+    "src/main/ipc/chatHistory.js": "88e9b4e6851679372b6a7310daf9910806aa8a9f53bd8b02ab970462e9f30ab6",
+    "src/main/lan/remoteServer.js": "04070a2fa3dbabd84a212d2b5296fba5eb7c81ed0a4f501e6e5add74a11862ff",
+    "preload.js": "c58450866d34a0a5ac0b0cd0fe9ed0c58e5734adf488054b856935dd708a1b9e",
+    "src/components/DataTabContent.jsx": "d620d5f163dd46f06f879c8f7c6a1663c5f3012b75b4f87bf8c00fb0830f07c4",
+    "src/components/NovelDataBrowser.jsx": "ab32a7c22670e5b48d27727a2fc824959723b0314e3cb01198117e6feca92060",
+    "test/codex-native-ui-e2e.js": "39cda80c134c76a8c33d5b424c66301229664e5217ccf60afffd688d768949ab",
+    "artifacts/chat-chain-audit/probe.cjs": "be38efb745741dd7326e5775e2cd5fb9f09886d4bc0024ba570e639d2ba58b26"
+  },
+  "verification": {
+    "probe": "node artifacts/chat-chain-audit/probe.cjs; exit 0; counterexamples still hold",
+    "guardTests": [
+      "writing-authorization-policy: ok",
+      "native-novel-workspace: ok",
+      "native-patch-read-after-write: ok"
+    ],
+    "notRun": [
+      "real UI",
+      "real provider",
+      "full regression",
+      "release build"
+    ]
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 6,
+  "revision": 6,
+  "credentials": [
+    {
+      "id": "credential-57ef17cb-714f-4d17-a1b4-69b69b3dcb2c",
+      "name": "DeepSeek API Key",
+      "secretRef": "credential:credential-57ef17cb-714f-4d17-a1b4-69b69b3dcb2c:api-key",
+      "secretStatus": {
+        "present": true,
+        "readable": true,
+        "issue": null,
+        "revision": 1
+      },
+      "connectionCount": 1
+    }
+  ],
+  "connections": [
+    {
+      "id": "connection-f872aa7f-1d3b-4549-92d8-f29afe9bbdc0",
+      "name": "DeepSeek Responses",
+      "credentialId": "credential-57ef17cb-714f-4d17-a1b4-69b69b3dcb2c",
+      "baseUrl": "https://api.deepseek.com",
+      "queryParams": {},
+      "auth": {
+        "mode": "bearer"
+      },
+      "templateId": "deepseek",
+      "modelsUrl": "https://api.deepseek.com/models",
+      "discovery": {
+        "status": "ok",
+        "discoveredAt": "2026-09-04T20:44:36.805Z",
+        "errorCode": null
+      },
+      "models": [
+        {
+          "id": "deepseek-v4-flash",
+          "name": "deepseek-v4-flash",
+          "capabilities": {
+            "contextWindow": null,
+            "maxOutputTokens": null,
+            "inputModalities": [],
+            "supportsTools": null,
+            "supportsStructuredOutput": null,
+            "reasoningEfforts": [],
+            "verbosityLevels": []
+          },
+          "fieldSources": {},
+          "availability": "available",
+          "verification": {
+            "responses": "ok",
+            "tools": "ok",
+            "verifiedEfforts": [
+              "max"
+            ],
+            "verifiedAt": "2026-09-04T20:44:39.652Z",
+            "credentialRevision": 1,
+            "errorCode": null
+          },
+          "source": "provider"
+        },
+        {
+          "id": "deepseek-v4-pro",
+          "name": "deepseek-v4-pro",
+          "capabilities": {
+            "contextWindow": null,
+            "maxOutputTokens": null,
+            "inputModalities": [],
+            "supportsTools": null,
+            "supportsStructuredOutput": null,
+            "reasoningEfforts": [],
+            "verbosityLevels": []
+          },
+          "fieldSources": {},
+          "availability": "available",
+          "verification": {
+            "responses": "unknown",
+            "tools": "unknown",
+            "verifiedEfforts": [],
+            "verifiedAt": null,
+            "credentialRevision": null,
+            "errorCode": null
+          },
+          "source": "provider"
+        },
+        {
+          "id": "deepseek-v4-flash-vision-exp",
+          "name": "deepseek-v4-flash-vision-exp",
+          "capabilities": {
+            "contextWindow": null,
+            "maxOutputTokens": null,
+            "inputModalities": [],
+            "supportsTools": null,
+            "supportsStructuredOutput": null,
+            "reasoningEfforts": [],
+            "verbosityLevels": []
+          },
+          "fieldSources": {},
+          "availability": "available",
+          "verification": {
+            "responses": "unknown",
+            "tools": "unknown",
+            "verifiedEfforts": [],
+            "verifiedAt": null,
+            "credentialRevision": null,
+            "errorCode": null
+          },
+          "source": "provider"
+        }
+      ]
+    }
+  ],
+  "activeSelection": {
+    "connectionId": "connection-f872aa7f-1d3b-4549-92d8-f29afe9bbdc0",
+    "modelId": "deepseek-v4-flash",
+    "reasoningEffort": "max"
+  }
+}

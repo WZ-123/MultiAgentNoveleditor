@@ -1,0 +1,15 @@
+{
+  "mode": "codex-mock-real-login",
+  "model": "gpt-5.6-luna",
+  "effort": "medium",
+  "source": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/deepseek-max-100k-2026-09-05",
+  "initialBodyCjk": 35136,
+  "targetBodyCjk": 100000,
+  "deepseekPerformanceComparable": false,
+  "runtime": {
+    "firstAttempt": "project sidecar 0.149.0; missing code-mode-host",
+    "current": "desktop codex-cli 0.153.0 with matched code-mode-host"
+  },
+  "network": "Existing system HTTP proxy 127.0.0.1:1089; no new proxy service",
+  "credentialAuthorization": "User explicitly approved local Codex login and transmission of existing manuscript"
+}

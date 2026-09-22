@@ -1,0 +1,10 @@
+{
+  "checkedAt": "2026-09-22T03:10:20.720212+00:00",
+  "failureCode": "approved_content_mismatch",
+  "resourceType": "character",
+  "expectedAfterHash": "ca7b7d185b7219367eea5c5b8a46b538db570a0ec52325119d8de5478db9d92a",
+  "actualAfterHash": "0e9580a0db5bdbb5cac466cd43955531378b953418b3bb182faecb27cd1ca481",
+  "reconstruction": "应用失败记录中的完成 diff：预测正文的 SHA-256 等于 expected；仅追加一个 LF 后的 SHA-256 等于 actual。未保存人物正文。",
+  "isolatedBeforeFix": "native-existing-resource-update 在首个人物卡更新处失败，错误同截图",
+  "isolatedAfterFix": "人物卡两次更新及无末尾换行世界观更新通过"
+}

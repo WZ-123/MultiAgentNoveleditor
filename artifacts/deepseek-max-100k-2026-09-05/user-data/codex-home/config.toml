@@ -1,0 +1,163 @@
+approval_policy = "never"
+sandbox_mode = "read-only"
+web_search = "disabled"
+show_raw_agent_reasoning = false
+hide_agent_reasoning = true
+model_reasoning_summary = "none"
+include_apps_instructions = false
+include_environment_context = false
+include_permissions_instructions = false
+suppress_unstable_features_warning = true
+model_catalog_json = "/Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/deepseek-max-100k-2026-09-05/user-data/codex-home/models.json"
+
+[history]
+persistence = "save-all"
+
+[features]
+apply_patch_freeform = true
+apply_patch_streaming_events = true
+apps = false
+browser_use = false
+code_mode = false
+computer_use = false
+connectors = false
+goals = false
+image_generation = false
+in_app_browser = false
+js_repl = false
+memories = false
+memory_tool = false
+plugins = false
+recommended_plugins = false
+remote_plugin = false
+search_tool = false
+shell_tool = false
+skill_search = false
+standalone_web_search = false
+tool_call_mcp_elicitation = false
+view_image = false
+web_search = false
+web_search_cached = false
+web_search_request = false
+
+[tools.experimental_request_user_input]
+enabled = false
+
+[tools.update_plan]
+enabled = false
+
+[skills]
+include_instructions = false
+
+[skills.bundled]
+enabled = false
+
+[[skills.config]]
+name = "lark-approval"
+enabled = false
+
+[[skills.config]]
+name = "lark-apps"
+enabled = false
+
+[[skills.config]]
+name = "lark-attendance"
+enabled = false
+
+[[skills.config]]
+name = "lark-base"
+enabled = false
+
+[[skills.config]]
+name = "lark-calendar"
+enabled = false
+
+[[skills.config]]
+name = "lark-contact"
+enabled = false
+
+[[skills.config]]
+name = "lark-doc"
+enabled = false
+
+[[skills.config]]
+name = "lark-drive"
+enabled = false
+
+[[skills.config]]
+name = "lark-event"
+enabled = false
+
+[[skills.config]]
+name = "lark-im"
+enabled = false
+
+[[skills.config]]
+name = "lark-mail"
+enabled = false
+
+[[skills.config]]
+name = "lark-markdown"
+enabled = false
+
+[[skills.config]]
+name = "lark-minutes"
+enabled = false
+
+[[skills.config]]
+name = "lark-note"
+enabled = false
+
+[[skills.config]]
+name = "lark-okr"
+enabled = false
+
+[[skills.config]]
+name = "lark-openapi-explorer"
+enabled = false
+
+[[skills.config]]
+name = "lark-shared"
+enabled = false
+
+[[skills.config]]
+name = "lark-sheets"
+enabled = false
+
+[[skills.config]]
+name = "lark-skill-maker"
+enabled = false
+
+[[skills.config]]
+name = "lark-slides"
+enabled = false
+
+[[skills.config]]
+name = "lark-task"
+enabled = false
+
+[[skills.config]]
+name = "lark-vc"
+enabled = false
+
+[[skills.config]]
+name = "lark-vc-agent"
+enabled = false
+
+[[skills.config]]
+name = "lark-whiteboard"
+enabled = false
+
+[[skills.config]]
+name = "lark-wiki"
+enabled = false
+
+[[skills.config]]
+name = "lark-workflow-meeting-summary"
+enabled = false
+
+[[skills.config]]
+name = "lark-workflow-standup-report"
+enabled = false
+
+[plugins]

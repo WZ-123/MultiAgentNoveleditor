@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-20T09:18:21.899Z",
+  "configuration": {
+    "providerType": "codex-mock-cli",
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "xhigh",
+    "directApiCalls": 0
+  },
+  "status": "passed",
+  "physicalProviderCalls": 2,
+  "reportedTokens": {
+    "inputTokens": 19180,
+    "outputTokens": 337,
+    "totalTokens": 19517
+  },
+  "timing": {
+    "durationMs": 127374,
+    "providerCallDurationMs": [
+      117333,
+      6789
+    ]
+  },
+  "transport": {
+    "streamModes": [
+      "delta",
+      "delta"
+    ],
+    "requestIds": [
+      "01a01e74-f9b3-7801-9701-c16d79a2efdd",
+      "01a01e76-c414-7152-8f84-498d9a87a243"
+    ]
+  },
+  "assertions": {
+    "directApiCallsZero": true,
+    "exactModel": true,
+    "exactReasoning": true,
+    "deltaStreamingOnly": true,
+    "secondTurnReusedStablePrefix": true
+  },
+  "tokenWasteLedger": {
+    "providerReported": {
+      "inputTokens": 19180,
+      "outputTokens": 337,
+      "totalTokens": 19517,
+      "cacheHitTokens": 8960,
+      "cacheMissTokens": 10220,
+      "cacheReadTokens": 8960,
+      "cacheWriteTokens": 0,
+      "logicalInputTokens": 19180,
+      "logicalTotalTokens": 19517,
+      "cacheHitRate": 0.46715328467153283,
+      "cacheAccounting": "derived",
+      "estimated": false
+    },
+    "perCallWireBytes": [
+      {
+        "system": 818,
+        "history": 0,
+        "currentTurn": 161,
+        "toolSchemas": 42,
+        "evidence": 0,
+        "outputSchema": 0,
+        "bridgeEnvelope": 0,
+        "resentStablePrefix": 0
+      },
+      {
+        "system": 818,
+        "history": 353,
+        "currentTurn": 408,
+        "toolSchemas": 42,
+        "evidence": 0,
+        "outputSchema": 0,
+        "bridgeEnvelope": 0,
+        "resentStablePrefix": 0
+      }
+    ],
+    "perCallTools": [
+      [
+        {
+          "name": "read_skill",
+          "schemaBytes": 42,
+          "exposure": "eager"
+        }
+      ],
+      [
+        {
+          "name": "read_skill",
+          "schemaBytes": 42,
+          "exposure": "eager"
+        }
+      ]
+    ],
+    "phaseTimings": [
+      {
+        "queuedAt": 1787217377714,
+        "workerReadyAt": 1787217377714,
+        "turnStartedAt": 1787217377714,
+        "firstProtocolEventAt": 1787217377715,
+        "firstModelEventAt": 1787217494643,
+        "firstTextDeltaAt": 1787217494643,
+        "terminalItemAt": 1787217494980,
+        "providerCompletedAt": 1787217495047,
+        "streamMode": "delta",
+        "durationMs": 117333,
+        "livenessProbes": 0
+      },
+      {
+        "queuedAt": 1787217495059,
+        "workerReadyAt": 1787217495059,
+        "turnStartedAt": 1787217495059,
+        "firstProtocolEventAt": 1787217495060,
+        "firstModelEventAt": 1787217500984,
+        "firstTextDeltaAt": 1787217500984,
+        "terminalItemAt": 1787217501776,
+        "providerCompletedAt": 1787217501848,
+        "streamMode": "delta",
+        "durationMs": 6789,
+        "livenessProbes": 0
+      }
+    ],
+    "providerOverheadUnattributed": null
+  },
+  "note": "SLO failures are reported here; this runner never truncates a continuing generation to make latency pass."
+}

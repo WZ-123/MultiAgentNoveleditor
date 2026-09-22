@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-05T09:47:33.917Z",
+  "overallStatus": "failed",
+  "checks": {
+    "wordCount": {
+      "status": "failed",
+      "actual": 55040,
+      "minimum": 50000,
+      "maximum": 55000
+    },
+    "repetition": {
+      "status": "failed",
+      "actual": 0.9413654618473896,
+      "threshold": 0.45,
+      "evidence": {
+        "sentenceCount": 2490,
+        "uniqueSentenceCount": 223,
+        "repeatedOccurrences": 2344,
+        "repeatedOccurrenceRatio": 0.9413654618473896,
+        "topRepeated": [
+          {
+            "sentence": "沈砚明白，真相不是漂亮的结论，而是能够让后来者重新走到这里的路径",
+            "count": 186
+          },
+          {
+            "sentence": "许栀明白，真相不是漂亮的结论，而是能够让后来者重新走到这里的路径",
+            "count": 93
+          },
+          {
+            "sentence": "顾遥明白，真相不是漂亮的结论，而是能够让后来者重新走到这里的路径",
+            "count": 93
+          },
+          {
+            "sentence": "周肃明白，真相不是漂亮的结论，而是能够让后来者重新走到这里的路径",
+            "count": 62
+          },
+          {
+            "sentence": "旧错误没有被删除，新的解释也没有被禁止",
+            "count": 45
+          },
+          {
+            "sentence": "每当有人提出不同意见，档案馆便留出一页，让争论拥有准确的时间和说话的人",
+            "count": 45
+          },
+          {
+            "sentence": "城市因此不再把记忆交给一个声音，而是让所有仍愿意承担后果的人共同保管",
+            "count": 45
+          },
+          {
+            "sentence": "潮水涨到门槛，又安静退去",
+            "count": 45
+          },
+          {
+            "sentence": "灯塔的光越过桥面，落在陌生人的肩头",
+            "count": 45
+          },
+          {
+            "sentence": "沈砚合上最后一封信，却没有锁门，因为完整的结局不是结束一切，而是让后来者能够从这里继续走下去",
+            "count": 45
+          }
+        ]
+      }
+    },
+    "completeEnding": {
+      "status": "unverified",
+      "reason": "模型自述不是独立审查证据"
+    },
+    "interruptionRecovery": {
+      "status": "passed"
+    },
+    "commitIntegrity": {
+      "status": "passed",
+      "chapterCount": 18
+    },
+    "firstVisibleSave": {
+      "status": "failed",
+      "slowestFirstCommitMs": 626877,
+      "evaluationThresholdMs": 300000,
+      "note": "该阈值只用于性能判定，不会中断正常长推理"
+    },
+    "uiState": {
+      "status": "passed",
+      "checkedAt": "2026-09-05T09:43:03.029Z",
+      "chapterTreeMatchesDisk": true,
+      "expectedChapterCount": 18,
+      "renderedChapterCount": 18
+    },
+    "localRewrite": {
+      "status": "unverified"
+    },
+    "characterRoleplay": {
+      "status": "unverified"
+    },
+    "deAiEdit": {
+      "status": "unverified"
+    },
+    "consistencyReview": {
+      "status": "unverified"
+    }
+  },
+  "runtime": {
+    "taskCount": 3,
+    "modelDurationMs": 856504,
+    "firstCommitMs": 31393,
+    "slowestFirstCommitMs": 626877,
+    "usage": "unknown"
+  },
+  "manuscript": {
+    "chapterCount": 18,
+    "bodyChineseCharacterCount": 55040,
+    "resources": [
+      {
+        "name": "chapter-01.md",
+        "hash": "a0f243781f37f914e3816787dd75f4302df451ed2c4a998ae2fb6430ebe2bca2",
+        "bodyChineseCharacterCount": 1908
+      },
+      {
+        "name": "chapter-02.md",
+        "hash": "6a2230cc7a92e46ee21a7c6c284e5a4fe497d4c9be3687ac7fd86add06f2a8c4",
+        "bodyChineseCharacterCount": 2698
+      },
+      {
+        "name": "chapter-03.md",
+        "hash": "d6b4ad46362b8e2540f085c28106421d38bea7d7dfb381da70d23d4f9cf1ce64",
+        "bodyChineseCharacterCount": 2760
+      },
+      {
+        "name": "chapter-04.md",
+        "hash": "f72afc707d4eebc8498293f768d0bd844ffaf3249a6033c8ba0dd095a9dd1102",
+        "bodyChineseCharacterCount": 2729
+      },
+      {
+        "name": "chapter-05.md",
+        "hash": "38ec596870990f0ab3fefa20d1c764d88131e487ec63ef4e75a81bb2b6c7655f",
+        "bodyChineseCharacterCount": 2760
+      },
+      {
+        "name": "chapter-06.md",
+        "hash": "d278662e402491057bb5965c95346453390d439de22c971e844e342be489f7b4",
+        "bodyChineseCharacterCount": 2719
+      },
+      {
+        "name": "chapter-07.md",
+        "hash": "02c07b9af20c6413c4b34199aa635faef85650eaab70918eda664114502d1e4d",
+        "bodyChineseCharacterCount": 2688
+      },
+      {
+        "name": "chapter-08.md",
+        "hash": "b57254563d3cac5183254a8ccc4c9c6333eaa49ad00927a98047ad82132cf1a0",
+        "bodyChineseCharacterCount": 2719
+      },
+      {
+        "name": "chapter-09.md",
+        "hash": "a4a6948ea5240efa840c9cad62801f82d68d0a9416982e4f4f903544d8d3b367",
+        "bodyChineseCharacterCount": 2688
+      },
+      {
+        "name": "chapter-10.md",
+        "hash": "4b5a16c3df39697d1dd0a0e83d6ee75f1331fdb2f0473f819bc8089de0ef273e",
+        "bodyChineseCharacterCount": 2694
+      },
+      {
+        "name": "chapter-11.md",
+        "hash": "5b77d96fb8fc90a9f415fbada2405e38c8f17b2d5c8d8a44cfd12bf980a79c1c",
+        "bodyChineseCharacterCount": 2694
+      },
+      {
+        "name": "chapter-12.md",
+        "hash": "8053049fe23e7ca051f0e5aa08316bae3b439d6e11cb7fc6cc30c9cf7723db23",
+        "bodyChineseCharacterCount": 2694
+      },
+      {
+        "name": "chapter-13.md",
+        "hash": "4424fb120105d524e0da69e0b959f413f89e1d737e9c8c6238f2f14a93aa59b1",
+        "bodyChineseCharacterCount": 2787
+      },
+      {
+        "name": "chapter-14.md",
+        "hash": "67196d02cc2d42933b410d073c4d9a0a32a19a1a19d071a4d6275b8895b76e15",
+        "bodyChineseCharacterCount": 2694
+      },
+      {
+        "name": "chapter-15.md",
+        "hash": "cd3a1936287089a7be1703ddd364f38e637eedb1ce1729c290b84ca039a9213d",
+        "bodyChineseCharacterCount": 2787
+      },
+      {
+        "name": "chapter-16.md",
+        "hash": "002ac03cf24da15e4601ea22dfd07287df8ef081f5c01cfdf0ee7a0d89a7a526",
+        "bodyChineseCharacterCount": 2756
+      },
+      {
+        "name": "chapter-17.md",
+        "hash": "2c1abb109ab58ad7661e185c5502aa492856c0c10ae8458ed2e51c31fe2ada79",
+        "bodyChineseCharacterCount": 2880
+      },
+      {
+        "name": "chapter-18.md",
+        "hash": "3f016e8ddb6d0b2e866144a909de5fd3fa421a4fae07af6e1f0cc52a30e9ea08",
+        "bodyChineseCharacterCount": 9385
+      }
+    ]
+  }
+}

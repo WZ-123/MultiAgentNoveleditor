@@ -1,0 +1,31 @@
+chat-chain-contract: ok
+[lanRemote] listening on http://0.0.0.0:56531
+chat-chain-lan: ok
+model-metadata: ok (14 checks)
+model-config-v6: ok
+model-config-v8-setup: ok (30 checks)
+responses-verification-lifecycle: ok
+codex-native-cutover: ok
+deepseek-no-reasoning-bridge: ok
+deepseek-novella-consistency-cache: ok
+exact-duplicate-cleanup: ok
+narrative-pov-cleanup: ok
+native-novel-workspace: ok
+native-patch-read-after-write: ok
+native-existing-resource-update: ok
+task-ledger-resource-contract: ok
+writing-authorization-policy: ok
+codex-native-apply-patch: ok (deepseek-v4-flash)
+codex-native-apply-patch: ok (deepseek-flash)
+codex-native-apply-patch: ok (deepseek-v4-pro)
+codex-continuous-writing: ok
+codex-native-mutation-loop: ok
+novel-mcp-mutation: ok
+TEST_PASS DAIM1_minimal_rewrite_passes: a shorter direct rewrite is accepted
+TEST_PASS DAIM2_new_decorations_are_rejected: new dialogue, metaphor, atmosphere, and psychology are rejected
+TEST_PASS DAIM3_irregular_rhythm_is_preserved_unless_merge_is_explicit: paragraph flattening requires explicit paragraph-function guidance
+TEST_PASS DAIM4_not_but_target_must_be_removed: the candidate must remove the targeted skeleton across punctuation, whitespace, sentence and paragraph variants
+TEST_PASS DAIM5_not_but_target_cannot_be_introduced: a de-ai candidate cannot introduce a new not-but skeleton into clean source text
+TEST_SUMMARY 5/5 passed, 0 failed
+TEST_DONE
+unit suite: ok (21 files)

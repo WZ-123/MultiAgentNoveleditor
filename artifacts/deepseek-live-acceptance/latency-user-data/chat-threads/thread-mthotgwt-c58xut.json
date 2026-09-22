@@ -1,0 +1,224 @@
+{
+  "id": "thread-mthotgwt-c58xut",
+  "title": "新对话",
+  "novelId": "novel-mthng6zg-ppmxre",
+  "createdAt": "2026-08-31T20:25:08.573Z",
+  "updatedAt": "2026-08-31T20:27:14.828Z",
+  "messages": [
+    {
+      "id": "msg-a57ad07a-d8af-469c-acb8-69ce4d0d2653",
+      "role": "user",
+      "text": "创建或校准《雾港回声》的 world:lore，只读取该目标资源。定义回声层、记忆等价交换、黑潮、沉城、港务系统、二十年前事故、当前七小时倒计时及严格限制，约1200个中文汉字，条理清楚，不写正文。只修改 world/lore.md，原生 apply_patch 后等待确认。",
+      "timestamp": 1788207908886,
+      "edited": false
+    },
+    {
+      "id": "codex-01a0597f-4926-7fa1-ab8c-7d3c0b8b535c",
+      "parentId": "msg-a57ad07a-d8af-469c-acb8-69ce4d0d2653",
+      "role": "assistant",
+      "text": "已读取 `world:lore`（约3180字节）。现稿已覆盖回声层、等价交换、黑潮、沉城、港务系统及七条硬规则，但\"二十年前事故\"与\"当前七小时倒计时\"未设独立条目，且\"倒计时归零即判定\"的边界需校准。我将在此基础上补齐两节、保留既有事实，重写该文件（正文总字数约1200）。已完成 `world/lore.md` 的校准，等待宿主确认后提交。本次改动说明：\n\n**校准内容（在既有事实基础上增量修订）**\n\n1. **新增「二十年前事故」独立条目**——明确\"写沉\"的经过、九人留守的后果、官方档案与密室记录对执笔之人的分歧，为悬疑线留口。\n2. **新增「当前七小时倒计时」独立条目**——固定触发（本次退潮接线窗口开启即起算）、含义（归零即判定，成败由零时前写定的选择决定）、特征（不可逆、不可续期、涨潮闭合作废）。\n3. **既有条目仅做措辞收紧与事实对齐**——黑潮航向由\"第一次退潮旧航线\"明确为\"二十年前旧航线\"（与事故条目呼应）；回声层定义压缩为一句（去掉重复的否定式表述）；其余设定、七条硬规则、林雾不在官方名单等关键事实全部保留未动。\n\n**字数**：约1200个中文汉字，未写正文，仅设定条目。\n\n请确认是否提交；若需调整某一条目的表述或增删边界，我可以继续修订。",
+      "timestamp": 1788207946723,
+      "edited": false,
+      "toolCalls": [
+        {
+          "type": "mcpToolCall",
+          "id": "call_00_rHQ4gmLyfhcGtZ8Nhaw53224",
+          "server": "novel_tools",
+          "tool": "read_novel_resource",
+          "status": "inProgress",
+          "arguments": {
+            "resourceRef": "world:lore"
+          },
+          "appContext": null,
+          "pluginId": null,
+          "readOnlyHint": null,
+          "result": null,
+          "error": null,
+          "durationMs": null
+        },
+        {
+          "type": "mcpToolCall",
+          "id": "call_00_rHQ4gmLyfhcGtZ8Nhaw53224",
+          "server": "novel_tools",
+          "tool": "read_novel_resource",
+          "status": "completed",
+          "arguments": {
+            "resourceRef": "world:lore"
+          },
+          "appContext": null,
+          "pluginId": null,
+          "readOnlyHint": null,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"resourceRef\": \"world:lore\",\n  \"workspacePath\": \"world/lore.md\",\n  \"kind\": \"world\",\n  \"hash\": \"74b34615466459a96a127ca64ee311d79a3279a7235190040197eb2035dfd4df\",\n  \"totalBytes\": 3180,\n  \"offset\": 0,\n  \"nextCursor\": null,\n  \"content\": \"# 《雾港回声》世界观设定\\n\\n> 本设定为全书硬规则；正文与大纲均不得越过此边界。\\n\\n## 回声层 Echo Layer\\n- 定义：潮与记忆交叠处生成的一层\\\"回声\\\"——它记录并重放声音、记忆与事件的片段，是沉城与岸之间的第三层空间。它没有固定的物理实体，存在于潮汐与文字相遇的地方。\\n- 诞生：二十年前第一次退潮，由\\\"写沉\\\"原稿触发，随沉城没入潮下而成形。\\n- 特性：只响应潮汐周期与文字；可改写认知、借用身份、回放时间片段（钟倒走、来电回拨、时间循环）。\\n- 运作：需\\\"接线\\\"方可被校准或终止；接线窗口即七小时倒计时；归零即判定，判定预先由选择写定。\\n\\n## 记忆等价交换 Memory as Equivalent Exchange\\n- 法则：一切与回声层的接触都需以记忆为等价物——一问一答，一物一忆，不可赊欠。\\n- 形态：代价以物理痕迹显形——日记缺页、照片面孔模糊、潮水把岸上记忆\\\"冲走\\\"；物件可作抵押（物证），代价由持有者承担。\\n- 结算：个体代价可转入集体（名单）；最终结算在雾门之前完成——存者带走全部记忆，或被归还空白。\\n- 边界：不可交换自己没有的东西；不可用金钱赎回，只可用别的记忆置换；记忆一旦被\\\"朗读\\\"（广播/深井回声）即被占用。\\n\\n## 黑潮 Black Tide\\n- 定义：回声层越界时的实体形态——沿第一次退潮旧航线推进的黑色潮水。\\n- 行为：吞没人造系统（全港停电）；把岸上记忆物理化（所至之处，记忆化潮而走）。\\n- 边界：潮线即岸城边界；对\\\"名字是否写入官方历史\\\"作出回应——写入则潮退，拒写则潮进。\\n\\n## 沉城 Sunken City\\n- 定义：二十年前被\\\"写沉\\\"的城，沉于第一次退潮之下，仍然活着。\\n- 居民：九位留守者——名单上\\\"应当随城沉没\\\"的九人。\\n- 结构：城门与街道与岸上童年记忆互为镜像；核心为深井（回声层之心）与旧城防空洞（藏原稿处）。\\n- 状态：完成接线时浮现，与岸合为一体。\\n\\n## 港务系统 Harbor Authority\\n- 定义：管辖港口、潮汐与档案的官方体系。\\n- 职能：登记潮汐表、维护航海日志、归档事故（密室）、维护官方历史。\\n- 角色：不是敌人，而是回声层的制度镜像——官方历史与回声层历史并立；官方版名单上没有林雾。\\n- 局限：档案可以被同一只手改写（官方删改与\\\"写沉\\\"同源）；密室只保管真相，不判定真相。\\n\\n## 严格限制（硬规则）\\n1. 回声层只在退潮窗口显形与回应；涨潮即闭合。\\n2. 一次接线只能在同一场退潮内完成；七小时倒计时不可逆，归零即判定。\\n3. 记忆等价交换不可赊欠——等价物只有记忆本身。\\n4. 名字一旦写入（官方历史或第十格），不可撤销。\\n5. 复制体不能脱离范本记忆独立存在——范本与复制体只能归一，或存其一。\\n6. 雾门只开一次：推门即定局，门外没有撤回键。\\n7. 身份由记忆与名字共同锚定：二者缺一，人即无凭。\\n\"\n}"
+              }
+            ],
+            "structuredContent": {
+              "resourceRef": "world:lore",
+              "workspacePath": "world/lore.md",
+              "kind": "world",
+              "hash": "74b34615466459a96a127ca64ee311d79a3279a7235190040197eb2035dfd4df",
+              "totalBytes": 3180,
+              "offset": 0,
+              "nextCursor": null,
+              "content": "# 《雾港回声》世界观设定\n\n> 本设定为全书硬规则；正文与大纲均不得越过此边界。\n\n## 回声层 Echo Layer\n- 定义：潮与记忆交叠处生成的一层\"回声\"——它记录并重放声音、记忆与事件的片段，是沉城与岸之间的第三层空间。它没有固定的物理实体，存在于潮汐与文字相遇的地方。\n- 诞生：二十年前第一次退潮，由\"写沉\"原稿触发，随沉城没入潮下而成形。\n- 特性：只响应潮汐周期与文字；可改写认知、借用身份、回放时间片段（钟倒走、来电回拨、时间循环）。\n- 运作：需\"接线\"方可被校准或终止；接线窗口即七小时倒计时；归零即判定，判定预先由选择写定。\n\n## 记忆等价交换 Memory as Equivalent Exchange\n- 法则：一切与回声层的接触都需以记忆为等价物——一问一答，一物一忆，不可赊欠。\n- 形态：代价以物理痕迹显形——日记缺页、照片面孔模糊、潮水把岸上记忆\"冲走\"；物件可作抵押（物证），代价由持有者承担。\n- 结算：个体代价可转入集体（名单）；最终结算在雾门之前完成——存者带走全部记忆，或被归还空白。\n- 边界：不可交换自己没有的东西；不可用金钱赎回，只可用别的记忆置换；记忆一旦被\"朗读\"（广播/深井回声）即被占用。\n\n## 黑潮 Black Tide\n- 定义：回声层越界时的实体形态——沿第一次退潮旧航线推进的黑色潮水。\n- 行为：吞没人造系统（全港停电）；把岸上记忆物理化（所至之处，记忆化潮而走）。\n- 边界：潮线即岸城边界；对\"名字是否写入官方历史\"作出回应——写入则潮退，拒写则潮进。\n\n## 沉城 Sunken City\n- 定义：二十年前被\"写沉\"的城，沉于第一次退潮之下，仍然活着。\n- 居民：九位留守者——名单上\"应当随城沉没\"的九人。\n- 结构：城门与街道与岸上童年记忆互为镜像；核心为深井（回声层之心）与旧城防空洞（藏原稿处）。\n- 状态：完成接线时浮现，与岸合为一体。\n\n## 港务系统 Harbor Authority\n- 定义：管辖港口、潮汐与档案的官方体系。\n- 职能：登记潮汐表、维护航海日志、归档事故（密室）、维护官方历史。\n- 角色：不是敌人，而是回声层的制度镜像——官方历史与回声层历史并立；官方版名单上没有林雾。\n- 局限：档案可以被同一只手改写（官方删改与\"写沉\"同源）；密室只保管真相，不判定真相。\n\n## 严格限制（硬规则）\n1. 回声层只在退潮窗口显形与回应；涨潮即闭合。\n2. 一次接线只能在同一场退潮内完成；七小时倒计时不可逆，归零即判定。\n3. 记忆等价交换不可赊欠——等价物只有记忆本身。\n4. 名字一旦写入（官方历史或第十格），不可撤销。\n5. 复制体不能脱离范本记忆独立存在——范本与复制体只能归一，或存其一。\n6. 雾门只开一次：推门即定局，门外没有撤回键。\n7. 身份由记忆与名字共同锚定：二者缺一，人即无凭。\n"
+            },
+            "_meta": null
+          },
+          "error": null,
+          "durationMs": 6
+        }
+      ],
+      "codexTurnId": "01a0597f-4926-7fa1-ab8c-7d3c0b8b535c"
+    },
+    {
+      "id": "msg-144f5aed-e3d6-4f0b-9de9-3e6424d98cc3",
+      "role": "user",
+      "text": "创建或校准《雾港回声》的 style:memory，只读取该目标资源。固定第三人称限知林雾、动作和物件承载情绪、对白有潜台词、短中句交替；列出必须保持的叙事规则及禁止套话、滥用比喻、不是而是、总结式升华。控制在600个中文汉字内。只修改 style/memory.md，原生 apply_patch 后等待确认。",
+      "timestamp": 1788207946899,
+      "edited": false,
+      "parentId": "codex-01a0597f-4926-7fa1-ab8c-7d3c0b8b535c"
+    },
+    {
+      "id": "codex-01a0597f-dcbb-7ba0-9165-200e5fa16635",
+      "parentId": "msg-144f5aed-e3d6-4f0b-9de9-3e6424d98cc3",
+      "role": "assistant",
+      "text": "`style:memory` 已存在（1184字节）。现稿已覆盖视角、动作物件承载、对白潜台词及部分禁令，但缺少\"短中句交替\"与\"不是……而是\"禁令，\"滥用比喻\"也未单列。我将在此基础校准，控制在600字内，保留既有事实。已完成 `style/memory.md` 校准，等待宿主确认后提交。本次改动：\n\n**校准内容**\n\n1. **新增「节奏：短中句交替」**——明确短句为主、中句承接、段落不等长；独句成段仅限关键处，禁超长复句。\n2. **新增「叙事规则（必须保持）」**——把五条硬约束凝练为清单：视角不越界、情绪不外露、真相交给物件、潜台词留给对白、节奏服从短中交替；收束落在具体细节。\n3. **禁令补齐**——新增\"不是……而是……\"式转折（把结论说破，剥夺读者推断）；\"滥用比喻\"单列并限死喻体回落到物件与动作本身（潮汐、雾、水位、钟表）。\n4. **既有内容保留**——第三人称限知林雾、遗忘即缺省、动作物件承载情绪、物证驱动、对白潜台词等原样保留。\n\n**字数**：正文约520个中文汉字，控制在600字内。请确认是否提交。",
+      "timestamp": 1788207964073,
+      "edited": false,
+      "toolCalls": [
+        {
+          "type": "mcpToolCall",
+          "id": "call_00_3zXSshSZ9F4M0MYxuFPe7251",
+          "server": "novel_tools",
+          "tool": "read_novel_resource",
+          "status": "inProgress",
+          "arguments": {
+            "resourceRef": "style:memory"
+          },
+          "appContext": null,
+          "pluginId": null,
+          "readOnlyHint": null,
+          "result": null,
+          "error": null,
+          "durationMs": null
+        },
+        {
+          "type": "mcpToolCall",
+          "id": "call_00_3zXSshSZ9F4M0MYxuFPe7251",
+          "server": "novel_tools",
+          "tool": "read_novel_resource",
+          "status": "completed",
+          "arguments": {
+            "resourceRef": "style:memory"
+          },
+          "appContext": null,
+          "pluginId": null,
+          "readOnlyHint": null,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"resourceRef\": \"style:memory\",\n  \"workspacePath\": \"style/memory.md\",\n  \"kind\": \"style\",\n  \"hash\": \"125bbf1f2a9b0b3686f2783a312c278990eac16b6ba071b6aad534d7ff938563\",\n  \"totalBytes\": 1184,\n  \"offset\": 0,\n  \"nextCursor\": null,\n  \"content\": \"# 《雾港回声》文风记忆（style:memory）\\n\\n## 视角\\n- 第三人称限知林雾：始终贴住林雾的所见、所闻、所感，只写他知情与感知的范围；不写他不知道的事，不替他者作内心独白。\\n- 当林雾遗忘时，叙事随之缺省——他记不得的，读者也不得而知。\\n\\n## 情绪：动作与物件承载\\n- 不直写情绪词（悲伤、愤怒、恐惧），让动作与物件替人说话：擦一只杯子、把旧鞋放回门框、翻过缺页的日记。\\n- 每章至少由一个物证驱动（钟、名单、旧鞋、遗书、原稿），真相由物件逐件揭晓，不靠讲解。\\n\\n## 对白：潜台词\\n- 话里有话；回答常偏离问题；沉默、重复、答非所问都是台词。\\n- 关键信息宁可少说，不可说破；读者从\\\"没说出的那句\\\"里推断。\\n\\n## 禁令\\n- 禁止套话：命运、宿命、救赎之类直陈。\\n- 禁止总结式升华：不写\\\"这一刻，他懂了\\\"\\\"他明白了一切\\\"式的收束。\\n- 禁止结尾拔高与诗意总结；收束落在具体动作或物件的细节上。\\n- 避免成语堆砌与形容词过量；以潮汐、雾、水位、钟表为喻体，克制使用。\\n\"\n}"
+              }
+            ],
+            "structuredContent": {
+              "resourceRef": "style:memory",
+              "workspacePath": "style/memory.md",
+              "kind": "style",
+              "hash": "125bbf1f2a9b0b3686f2783a312c278990eac16b6ba071b6aad534d7ff938563",
+              "totalBytes": 1184,
+              "offset": 0,
+              "nextCursor": null,
+              "content": "# 《雾港回声》文风记忆（style:memory）\n\n## 视角\n- 第三人称限知林雾：始终贴住林雾的所见、所闻、所感，只写他知情与感知的范围；不写他不知道的事，不替他者作内心独白。\n- 当林雾遗忘时，叙事随之缺省——他记不得的，读者也不得而知。\n\n## 情绪：动作与物件承载\n- 不直写情绪词（悲伤、愤怒、恐惧），让动作与物件替人说话：擦一只杯子、把旧鞋放回门框、翻过缺页的日记。\n- 每章至少由一个物证驱动（钟、名单、旧鞋、遗书、原稿），真相由物件逐件揭晓，不靠讲解。\n\n## 对白：潜台词\n- 话里有话；回答常偏离问题；沉默、重复、答非所问都是台词。\n- 关键信息宁可少说，不可说破；读者从\"没说出的那句\"里推断。\n\n## 禁令\n- 禁止套话：命运、宿命、救赎之类直陈。\n- 禁止总结式升华：不写\"这一刻，他懂了\"\"他明白了一切\"式的收束。\n- 禁止结尾拔高与诗意总结；收束落在具体动作或物件的细节上。\n- 避免成语堆砌与形容词过量；以潮汐、雾、水位、钟表为喻体，克制使用。\n"
+            },
+            "_meta": null
+          },
+          "error": null,
+          "durationMs": 2
+        }
+      ],
+      "codexTurnId": "01a0597f-dcbb-7ba0-9165-200e5fa16635"
+    },
+    {
+      "id": "msg-dd9066d4-b037-42b0-8238-1a222b042e58",
+      "role": "user",
+      "text": "创建或校准《雾港回声》的 timeline:all，只读取该目标资源。输出合法 JSON 数组：包含二十年前沉城事故的5个关键事件、当前黑潮前夜、以及第1至27章各一个主事件；每项有唯一 id、when、description、chapterRef，时间单调且第22章起进入七小时倒计时。内容简洁。只修改 timeline/events.json，原生 apply_patch 后等待确认。",
+      "timestamp": 1788207964298,
+      "edited": false,
+      "parentId": "codex-01a0597f-dcbb-7ba0-9165-200e5fa16635"
+    },
+    {
+      "id": "codex-01a05980-20b2-7dc0-a2c2-c6b92362c7a9",
+      "parentId": "msg-dd9066d4-b037-42b0-8238-1a222b042e58",
+      "role": "assistant",
+      "text": "已读取 `timeline:all`（现有为占位数组，5个空条目）。我将按需求重建为合法 JSON 数组：5个二十年前事故关键事件 + 1个黑潮前夜 + 第1至27章各一主事件（共33项），时间单调，第22章起进入七小时倒计时。未读大纲与章节正文，章节主事件由世界观规则推导，若有具体大纲可再校准。已完成 `timeline/events.json` 重建，等待宿主确认后提交。结构说明：\n\n**数组构成（共33项，时间单调递增）**\n\n- **二十年前事故 5 个关键事件**：`accident-1`（原稿收笔）→ `accident-2`（初潮沉城成形）→ `accident-3`（九人留守）→ `accident-4`（官方删档、林雾不在名单）→ `accident-5`（潮线定型、密室存真相、二十年沉默）。\n- **黑潮前夜 1 个事件**：`black-tide-eve`（黑潮逼近、全港停电、回声层苏醒）。\n- **第1–27章各一主事件**：`ch1`–`ch27`，chapterRef 指向 `chapters/chapter-001.md` 至 `chapters/chapter-027.md`。\n- **倒计时切入**：`ch22`（接线窗口开启，倒计时7小时起算）→ `ch23`(6h) → `ch24`(4h) → `ch25`(2h) → `ch26`(1h) → `ch27`(0h，判定、雾门结算)，严格从第22章起进入七小时倒计时。\n\n**字段**：每项仅含 `id`（唯一）、`when`、`description`（一句为主）、`chapterRef`（背景事件为 `null`），合法 JSON 数组，内容简洁。\n\n**说明**：本次按要求只读取了 `timeline:all`，未读大纲与章节正文，章节主事件由 `world:lore` 规则推导（物证、沉城镜像、深井、等价交换、名单/第十格、雾门等均有对应）。若现有章纲与之冲突，可提供 `outline:master` 后再校准。请确认是否提交。",
+      "timestamp": 1788208034827,
+      "edited": false,
+      "toolCalls": [
+        {
+          "type": "mcpToolCall",
+          "id": "call_00_LS2FyrYqI3AqqJ8OGrYM2531",
+          "server": "novel_tools",
+          "tool": "read_novel_resource",
+          "status": "inProgress",
+          "arguments": {
+            "resourceRef": "timeline:all"
+          },
+          "appContext": null,
+          "pluginId": null,
+          "readOnlyHint": null,
+          "result": null,
+          "error": null,
+          "durationMs": null
+        },
+        {
+          "type": "mcpToolCall",
+          "id": "call_00_LS2FyrYqI3AqqJ8OGrYM2531",
+          "server": "novel_tools",
+          "tool": "read_novel_resource",
+          "status": "completed",
+          "arguments": {
+            "resourceRef": "timeline:all"
+          },
+          "appContext": null,
+          "pluginId": null,
+          "readOnlyHint": null,
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"resourceRef\": \"timeline:all\",\n  \"workspacePath\": \"timeline/events.json\",\n  \"kind\": \"timeline\",\n  \"hash\": \"3b0502953a1cd61d3937238fcb2bb2f1b41d5e8b0b3da8433e581ae6dc908713\",\n  \"totalBytes\": 1367,\n  \"offset\": 0,\n  \"nextCursor\": null,\n  \"content\": \"[\\n  {\\n    \\\"schemaVersion\\\": 1,\\n    \\\"id\\\": \\\"accident\\\",\\n    \\\"chapterRef\\\": null,\\n    \\\"when\\\": \\\"二十年前\\\",\\n    \\\"where\\\": null,\\n    \\\"participants\\\": [],\\n    \\\"description\\\": \\\"\\\",\\n    \\\"physical\\\": null,\\n    \\\"communication\\\": null,\\n    \\\"ts\\\": \\\"2026-08-31T20:20:17.709Z\\\"\\n  },\\n  {\\n    \\\"schemaVersion\\\": 1,\\n    \\\"id\\\": \\\"silent-years\\\",\\n    \\\"chapterRef\\\": null,\\n    \\\"when\\\": \\\"事故后二十年\\\",\\n    \\\"where\\\": null,\\n    \\\"participants\\\": [],\\n    \\\"description\\\": \\\"\\\",\\n    \\\"physical\\\": null,\\n    \\\"communication\\\": null,\\n    \\\"ts\\\": \\\"2026-08-31T20:20:17.709Z\\\"\\n  },\\n  {\\n    \\\"schemaVersion\\\": 1,\\n    \\\"id\\\": \\\"act-1\\\",\\n    \\\"chapterRef\\\": null,\\n    \\\"when\\\": \\\"当前 · 第一幕（数日）\\\",\\n    \\\"where\\\": null,\\n    \\\"participants\\\": [],\\n    \\\"description\\\": \\\"\\\",\\n    \\\"physical\\\": null,\\n    \\\"communication\\\": null,\\n    \\\"ts\\\": \\\"2026-08-31T20:20:17.709Z\\\"\\n  },\\n  {\\n    \\\"schemaVersion\\\": 1,\\n    \\\"id\\\": \\\"act-2\\\",\\n    \\\"chapterRef\\\": null,\\n    \\\"when\\\": \\\"当前 · 第二幕（数周）\\\",\\n    \\\"where\\\": null,\\n    \\\"participants\\\": [],\\n    \\\"description\\\": \\\"\\\",\\n    \\\"physical\\\": null,\\n    \\\"communication\\\": null,\\n    \\\"ts\\\": \\\"2026-08-31T20:20:17.709Z\\\"\\n  },\\n  {\\n    \\\"schemaVersion\\\": 1,\\n    \\\"id\\\": \\\"act-3\\\",\\n    \\\"chapterRef\\\": null,\\n    \\\"when\\\": \\\"当前 · 第三幕（七小时倒计时）\\\",\\n    \\\"where\\\": null,\\n    \\\"participants\\\": [],\\n    \\\"description\\\": \\\"\\\",\\n    \\\"physical\\\": null,\\n    \\\"communication\\\": null,\\n    \\\"ts\\\": \\\"2026-08-31T20:20:17.709Z\\\"\\n  }\\n]\"\n}"
+              }
+            ],
+            "structuredContent": {
+              "resourceRef": "timeline:all",
+              "workspacePath": "timeline/events.json",
+              "kind": "timeline",
+              "hash": "3b0502953a1cd61d3937238fcb2bb2f1b41d5e8b0b3da8433e581ae6dc908713",
+              "totalBytes": 1367,
+              "offset": 0,
+              "nextCursor": null,
+              "content": "[\n  {\n    \"schemaVersion\": 1,\n    \"id\": \"accident\",\n    \"chapterRef\": null,\n    \"when\": \"二十年前\",\n    \"where\": null,\n    \"participants\": [],\n    \"description\": \"\",\n    \"physical\": null,\n    \"communication\": null,\n    \"ts\": \"2026-08-31T20:20:17.709Z\"\n  },\n  {\n    \"schemaVersion\": 1,\n    \"id\": \"silent-years\",\n    \"chapterRef\": null,\n    \"when\": \"事故后二十年\",\n    \"where\": null,\n    \"participants\": [],\n    \"description\": \"\",\n    \"physical\": null,\n    \"communication\": null,\n    \"ts\": \"2026-08-31T20:20:17.709Z\"\n  },\n  {\n    \"schemaVersion\": 1,\n    \"id\": \"act-1\",\n    \"chapterRef\": null,\n    \"when\": \"当前 · 第一幕（数日）\",\n    \"where\": null,\n    \"participants\": [],\n    \"description\": \"\",\n    \"physical\": null,\n    \"communication\": null,\n    \"ts\": \"2026-08-31T20:20:17.709Z\"\n  },\n  {\n    \"schemaVersion\": 1,\n    \"id\": \"act-2\",\n    \"chapterRef\": null,\n    \"when\": \"当前 · 第二幕（数周）\",\n    \"where\": null,\n    \"participants\": [],\n    \"description\": \"\",\n    \"physical\": null,\n    \"communication\": null,\n    \"ts\": \"2026-08-31T20:20:17.709Z\"\n  },\n  {\n    \"schemaVersion\": 1,\n    \"id\": \"act-3\",\n    \"chapterRef\": null,\n    \"when\": \"当前 · 第三幕（七小时倒计时）\",\n    \"where\": null,\n    \"participants\": [],\n    \"description\": \"\",\n    \"physical\": null,\n    \"communication\": null,\n    \"ts\": \"2026-08-31T20:20:17.709Z\"\n  }\n]"
+            },
+            "_meta": null
+          },
+          "error": null,
+          "durationMs": 2
+        }
+      ],
+      "codexTurnId": "01a05980-20b2-7dc0-a2c2-c6b92362c7a9"
+    }
+  ],
+  "currentNodeId": "codex-01a05980-20b2-7dc0-a2c2-c6b92362c7a9",
+  "codexBinding": {
+    "schemaVersion": 1,
+    "threadId": "01a0597f-4849-7561-9486-83699b5da6d0",
+    "providerFingerprint": "b57b3d233c29f02c71018adc27118d47d99fb86c07bdf4dc381435242b00fbe7:tools",
+    "novelId": "novel-mthng6zg-ppmxre",
+    "importedHistoryHash": "",
+    "importedBoundaryMessageId": ""
+  }
+}

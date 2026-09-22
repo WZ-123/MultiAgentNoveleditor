@@ -1,0 +1,10 @@
+TEST_PASS IMPORT_UI1_file_to_durable_analyzing_snapshot
+TEST_SCREENSHOT /Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/qa/import-saga-analyzing.png
+[mcp/serverManager] setActiveNovel called: {
+  novelId: 'novel-mt7ddjrr-xq18n6',
+  novelDir: '/var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-import-saga-ui-zrIPG2/user-data/import-ui-fixture/projects/p0-import-ui'
+}
+TEST_PASS IMPORT_UI2_review_promote_and_open_reaches_completed
+TEST_SCREENSHOT /Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/qa/import-saga-completed.png
+TEST_PASS IMPORT_UI3_disk_manifest_and_registry_readback
+TEST_SUMMARY 3/3 passed, 0 failed

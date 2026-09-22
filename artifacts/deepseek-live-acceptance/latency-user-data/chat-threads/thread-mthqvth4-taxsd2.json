@@ -1,0 +1,25 @@
+{
+  "id": "thread-mthqvth4-taxsd2",
+  "title": "新对话",
+  "novelId": "novel-mthng6zg-ppmxre",
+  "createdAt": "2026-08-31T21:22:57.400Z",
+  "updatedAt": "2026-08-31T21:22:57.965Z",
+  "messages": [
+    {
+      "id": "msg-c8fa9f35-9c6a-40bf-a237-c1b6a7b108d4",
+      "role": "user",
+      "text": "开始写作并立即提交《雾港回声》第1章《雾中来电》，目标 chapter:chapter-001.md。落实角色卡中的欲望、拒绝与误判。只读取本章独立大纲 outline:chapter:1:1:1、character:lin-wu、character:shen-yan 与 style:memory；不要读取 outline:master 或其他资料。先写约1600个中文汉字的完整前半章，第三人称限知林雾，以具体行动和有效对白推进到本章中点，不提前收束、不写说明或字数报告。新建补丁路径只能是 chapters/chapter-001.md，绝不添加 novel/ 前缀；原生 apply_patch 后等待确认。",
+      "timestamp": 1788211377708,
+      "edited": false
+    }
+  ],
+  "currentNodeId": "msg-c8fa9f35-9c6a-40bf-a237-c1b6a7b108d4",
+  "codexBinding": {
+    "schemaVersion": 1,
+    "threadId": "01a059b4-365f-71e3-ae80-2759f3e9d654",
+    "providerFingerprint": "b57b3d233c29f02c71018adc27118d47d99fb86c07bdf4dc381435242b00fbe7:tools",
+    "novelId": "novel-mthng6zg-ppmxre",
+    "importedHistoryHash": "",
+    "importedBoundaryMessageId": ""
+  }
+}

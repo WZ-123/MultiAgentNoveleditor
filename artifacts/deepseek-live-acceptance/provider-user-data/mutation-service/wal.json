@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "blocked": false,
+  "transactions": [
+    {
+      "transactionId": "mutation-400477ae-d0af-4528-a91a-fab785d65cd2",
+      "novelId": "novel-mu06vhuz-jjoruy",
+      "novelDir": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/responses-verification-2026-09-14/novel",
+      "reason": "Codex 原生 apply_patch（宿主已批准 fileChange）",
+      "status": "committed",
+      "resources": [
+        {
+          "resourceRef": "chapter:chapter-001.md",
+          "before": "",
+          "beforeHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "afterHash": "e82331882b947726152dd896db370838f27638861d270519ad73b3ff2735f55c",
+          "existed": true
+        }
+      ],
+      "createdAt": "2026-09-13T19:13:21.194Z",
+      "committedAt": "2026-09-13T19:13:21.212Z"
+    },
+    {
+      "transactionId": "mutation-791c0dd1-ec97-4d0a-9f18-c6a5c298d257",
+      "novelId": "novel-mu07168t-d1k5t2",
+      "novelDir": "/Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/responses-verification-2026-09-14/missing-chapter-novel",
+      "reason": "Codex 原生 apply_patch（宿主已批准 fileChange）",
+      "status": "committed",
+      "resources": [
+        {
+          "resourceRef": "chapter:chapter-001.md",
+          "before": "",
+          "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "afterHash": "8c0c1b14a9b72d2930db66d4237bc51398e14859e1026bc169bc873e403d386a",
+          "existed": false
+        }
+      ],
+      "createdAt": "2026-09-13T19:15:06.069Z",
+      "committedAt": "2026-09-13T19:15:06.084Z"
+    }
+  ]
+}

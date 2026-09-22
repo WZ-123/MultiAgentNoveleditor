@@ -1,0 +1,8 @@
+TEST_PASS luna_50k_project_ready novelId=novel-mto68ufc-6mdazd
+TEST_SCREENSHOT /Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/luna-50k-acceptance/screenshots/01-project-ready.png
+TEST_SCREENSHOT /Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/luna-50k-acceptance/screenshots/turn-03-confirmation.png
+TEST_SCREENSHOT /Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/luna-50k-acceptance/screenshots/turn-03-finished-55040.png
+TEST_FAIL luna_50k_ui: Error: 净正文超出上限：55040
+    at Object.runLunaFiftyKUiE2E (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/luna-50k-ui-e2e.js:161:43)
+    at async createWindow (/Users/potablewater/Desktop/MultiAgentNovelAssistant/main.js:109:22)
+    at async /Users/potablewater/Desktop/MultiAgentNovelAssistant/main.js:159:3

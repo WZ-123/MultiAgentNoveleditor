@@ -1,0 +1,5 @@
+TEST_PASS luna_50k_project_ready novelId=novel-mto68ufc-6mdazd
+TEST_SCREENSHOT /Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/luna-50k-acceptance/screenshots/01-project-ready.png
+TEST_SCREENSHOT /Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/luna-50k-acceptance/screenshots/50k-complete.png
+TEST_PASS luna_50k_word_count_complete bodyCjk=54785 chapters=18 turns=0
+TEST_DONE

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 2,
+  "status": "failed",
+  "executionMode": "provider-tool-loop",
+  "completedAt": "2026-08-20T14:27:13.559Z",
+  "requestedModel": "gpt-5.6-luna",
+  "requestedReasoningEffort": "xhigh",
+  "route": {
+    "providerType": "codex-mock-cli",
+    "directApiCalls": 0
+  },
+  "error": {
+    "code": "CODEX_MOCK_TOOLCHAIN_LIVE_SMOKE_FAILED",
+    "message": "stream disconnected before completion: error sending request for url (https://chatgpt.com/backend-api/codex/responses)",
+    "diagnostic": null,
+    "transportDiagnostics": [],
+    "transportErrorCount": 0,
+    "exitCode": null
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "bodyCjk": 35136,
+  "chapters": 10,
+  "repeatedLongParagraphGroups": 0,
+  "recentTasks": [
+    {
+      "id": "chapter-002-completion-v2",
+      "phase": "remediated-v2",
+      "status": "completed",
+      "durationMs": 314540,
+      "error": "",
+      "cjkGrowth": 768,
+      "toolCount": 3,
+      "toolFailures": 0,
+      "patchVerificationFailures": 4,
+      "readCount": 3,
+      "repeatedReadCount": 2,
+      "nativeCompletedPatches": 7,
+      "emptyDiffConfirmations": 2,
+      "afterFirstPatchMs": 86135,
+      "tokens": 1169974
+    },
+    {
+      "id": "chapters-006-008-v2",
+      "phase": "remediated-v2",
+      "status": "completed",
+      "durationMs": 816078,
+      "error": "",
+      "cjkGrowth": 10909,
+      "toolCount": 11,
+      "toolFailures": 0,
+      "patchVerificationFailures": 1,
+      "readCount": 11,
+      "repeatedReadCount": 8,
+      "nativeCompletedPatches": 11,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 428000,
+      "tokens": 4039830
+    },
+    {
+      "id": "chapters-009-010-v2",
+      "phase": "remediated-v2",
+      "status": "failed",
+      "durationMs": 514239,
+      "error": "unexpected status 402 Payment Required: Insufficient Balance, url: http://127.0.0.1:50048/responses",
+      "cjkGrowth": 6145,
+      "toolCount": 5,
+      "toolFailures": 0,
+      "patchVerificationFailures": 1,
+      "readCount": 5,
+      "repeatedReadCount": 3,
+      "nativeCompletedPatches": 9,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 305711,
+      "tokens": 3866050
+    }
+  ]
+}

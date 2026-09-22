@@ -1,0 +1,12 @@
+{
+  "updatedAt": "2026-09-05T06:26:40.331Z",
+  "objective": "Finish 100k novel UX testing with real Codex-login gpt-5.6-luna medium; then evidence-based analysis",
+  "bodyCjk": 101918,
+  "hostSessionId": 9057,
+  "phase": "codex-luna-medium-efficient",
+  "pending": "Finish final batch; chapter8 POV whole rewrite; chapter14 local deAI; fresh-context one-pass full consistency review; targeted fixes only; final compilation and report; shutdown host removes isolated auth copy",
+  "sourceDeepseekBodyCjk": 35136,
+  "script": "scripts/summarize-codex-writing-study.cjs",
+  "queue": "commands.json",
+  "note": "Every novel generation now uses Luna medium. High verbosity enabled for chapter17 onward. Original DeepSeek artifacts remain unchanged."
+}

@@ -1,0 +1,85 @@
+{
+  "generatedAt": "2026-09-05T05:23:16.317Z",
+  "status": "incomplete-provider-insufficient-balance",
+  "artifact": "逆光档案-未完稿.md",
+  "targetBodyCjk": 100000,
+  "actualBodyCjk": 35136,
+  "countDefinition": "CJK U+3400–U+9FFF, excluding YAML frontmatter, Markdown headings and 时间/雨情 metadata lines",
+  "modelEfforts": [
+    "deepseek-v4-flash:max",
+    "deepseek-v4-flash:xhigh"
+  ],
+  "sources": [
+    {
+      "file": "chapter-001.md",
+      "title": "第1章｜归站",
+      "fullCjk": 3803,
+      "bodyCjk": 3787,
+      "sha256": "0f791aad331efce728bc46aa9cf3218018bcb2ffc615f4de8a0a9f645dd3b990"
+    },
+    {
+      "file": "chapter-002.md",
+      "title": "第2章｜借阅",
+      "fullCjk": 3646,
+      "bodyCjk": 3628,
+      "sha256": "3e97223d112843ba343600bd60493d6a2766089b3ce0d04e82bb018b8e0b13fe"
+    },
+    {
+      "file": "chapter-003.md",
+      "title": "第3章｜两份名单",
+      "fullCjk": 3736,
+      "bodyCjk": 3720,
+      "sha256": "63d529c2430ecb15cce7e5b9de94ff0f8615100d0def9c8f8da0840203f20b48"
+    },
+    {
+      "file": "chapter-004.md",
+      "title": "第4章｜雨前会",
+      "fullCjk": 3540,
+      "bodyCjk": 3526,
+      "sha256": "919c9109a3958783a958275aa72f9b7db12fb905535ad2b8b969cc2d46696e42"
+    },
+    {
+      "file": "chapter-005.md",
+      "title": "第5章｜备用机组",
+      "fullCjk": 3519,
+      "bodyCjk": 3503,
+      "sha256": "ff58c665aa2c1d71d1db7581f165569aaf6873dbb488401e6f29693171aa7e79"
+    },
+    {
+      "file": "chapter-006.md",
+      "title": "第6章｜喊话的人",
+      "fullCjk": 3726,
+      "bodyCjk": 3710,
+      "sha256": "b2b5f9f404b04a8b80a4c4753c05ef4fd1f254bf82767ed85cb7fe671ce5d5a2"
+    },
+    {
+      "file": "chapter-007.md",
+      "title": "第7章｜逆光照片",
+      "fullCjk": 3565,
+      "bodyCjk": 3549,
+      "sha256": "bb7bf85d3eda26913af128af0464a1e30104d7db471787a1abe2d0f3a565c25b"
+    },
+    {
+      "file": "chapter-008.md",
+      "title": "第8章｜旧曲线",
+      "fullCjk": 3618,
+      "bodyCjk": 3605,
+      "sha256": "6fbda862f6041cdd70e96c2522d7ed1df0936613d808e858d7cfbeef1afc631e"
+    },
+    {
+      "file": "chapter-009.md",
+      "title": "第9章｜老祝留的东西",
+      "fullCjk": 3531,
+      "bodyCjk": 3510,
+      "sha256": "61614e6a90d2c951d4cb6039a7495875dd46dc2fab7c11020a56f90b9daf1815"
+    },
+    {
+      "file": "chapter-010.md",
+      "title": "第10章｜暂缓",
+      "fullCjk": 2614,
+      "bodyCjk": 2598,
+      "sha256": "2d3c70f565505d6f18a454e9900a4fb828390e61ba3a7cbd73f4a138b0fa44d2"
+    }
+  ],
+  "sha256": "f549fc3dbd380e93ec2c30e59b1531c9e938e144b4a53b4083e3bb9ec8a8567e"
+}

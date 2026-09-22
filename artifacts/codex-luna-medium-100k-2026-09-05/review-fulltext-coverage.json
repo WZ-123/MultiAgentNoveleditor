@@ -1,0 +1,160 @@
+{
+  "generatedAt": "2026-09-05T06:41:54.599Z",
+  "commandIds": [
+    "luna-final-hard-consistency-review",
+    "luna-review-missing-coverage"
+  ],
+  "definition": "Exact complete chapter text is present in model-visible tool output, including decoded JSON wrappers. Stored-only and heading-only output do not qualify. This verifies evidence availability, not comprehension.",
+  "chapters": [
+    {
+      "file": "chapter-001.md",
+      "fullTextPresent": true,
+      "sha256": "0f791aad331efce728bc46aa9cf3218018bcb2ffc615f4de8a0a9f645dd3b990"
+    },
+    {
+      "file": "chapter-002.md",
+      "fullTextPresent": true,
+      "sha256": "3e97223d112843ba343600bd60493d6a2766089b3ce0d04e82bb018b8e0b13fe"
+    },
+    {
+      "file": "chapter-003.md",
+      "fullTextPresent": true,
+      "sha256": "63d529c2430ecb15cce7e5b9de94ff0f8615100d0def9c8f8da0840203f20b48"
+    },
+    {
+      "file": "chapter-004.md",
+      "fullTextPresent": true,
+      "sha256": "919c9109a3958783a958275aa72f9b7db12fb905535ad2b8b969cc2d46696e42"
+    },
+    {
+      "file": "chapter-005.md",
+      "fullTextPresent": true,
+      "sha256": "ff58c665aa2c1d71d1db7581f165569aaf6873dbb488401e6f29693171aa7e79"
+    },
+    {
+      "file": "chapter-006.md",
+      "fullTextPresent": true,
+      "sha256": "b2b5f9f404b04a8b80a4c4753c05ef4fd1f254bf82767ed85cb7fe671ce5d5a2"
+    },
+    {
+      "file": "chapter-007.md",
+      "fullTextPresent": true,
+      "sha256": "bb7bf85d3eda26913af128af0464a1e30104d7db471787a1abe2d0f3a565c25b"
+    },
+    {
+      "file": "chapter-008.md",
+      "fullTextPresent": true,
+      "sha256": "361b6410c5c7915ce93afa601bb4bcfdd66cac56e5ab13dfd1768f9938b030f1"
+    },
+    {
+      "file": "chapter-009.md",
+      "fullTextPresent": true,
+      "sha256": "61614e6a90d2c951d4cb6039a7495875dd46dc2fab7c11020a56f90b9daf1815"
+    },
+    {
+      "file": "chapter-010.md",
+      "fullTextPresent": true,
+      "sha256": "83b57dfb0a281cd3f51f395b21e4b85f57d0426e58444eb75cbe8f74358d5465"
+    },
+    {
+      "file": "chapter-011.md",
+      "fullTextPresent": true,
+      "sha256": "4a9bcc5f7a3dd8be5e1a17ed6b80da0a60cb100bb91928b5816f1d0e481f586b"
+    },
+    {
+      "file": "chapter-012.md",
+      "fullTextPresent": true,
+      "sha256": "59b367ecfadea68baf2b9c845ca9dee84aa786f76f02df2682b91c4ccdeeae93"
+    },
+    {
+      "file": "chapter-013.md",
+      "fullTextPresent": true,
+      "sha256": "8ad84493816e2f95ea1f2cf38cdbb2705e9aa939a680ed8c126ef0b91059d9e5"
+    },
+    {
+      "file": "chapter-014.md",
+      "fullTextPresent": true,
+      "sha256": "b8d4e8784dc5240aebdf85fcaa0939a01127f5550a27140c3672c1262dc6d0a5"
+    },
+    {
+      "file": "chapter-015.md",
+      "fullTextPresent": true,
+      "sha256": "136bf24abe43692a387c98a1bf587a8a1b093c762d3e1a4a3aded7f3c7e8d1fa"
+    },
+    {
+      "file": "chapter-016.md",
+      "fullTextPresent": true,
+      "sha256": "00a7963e5c8e8e734a3fb12293a0fb90ec905f01f97d83607299e10ace9958c1"
+    },
+    {
+      "file": "chapter-017.md",
+      "fullTextPresent": true,
+      "sha256": "2da88183964648e981492db6ce1db2adcfb9fcd0083ca5de28ae017e2abf2b1b"
+    },
+    {
+      "file": "chapter-018.md",
+      "fullTextPresent": true,
+      "sha256": "97819a4ce607399bc8dcd2acd7486dcbe4a86474768836a0669bb15f3f1611c2"
+    },
+    {
+      "file": "chapter-019.md",
+      "fullTextPresent": true,
+      "sha256": "56226376911419a07708fdc7be44d23a2df7ec1b004faac7c13b2ed90c54cfdc"
+    },
+    {
+      "file": "chapter-020.md",
+      "fullTextPresent": true,
+      "sha256": "c864a5fa822916a943114926fb1074564e974a81d410ec3a546b69c4f23faf1c"
+    },
+    {
+      "file": "chapter-021.md",
+      "fullTextPresent": true,
+      "sha256": "ab13a6b64743053e589b5a9b9f143cb1701b7aee9e9eb0a3c94d86f01d799bef"
+    },
+    {
+      "file": "chapter-022.md",
+      "fullTextPresent": true,
+      "sha256": "cba6feb0de1ec0738d41a91d40559a2cd519faac6c200f17993169cfa8665220"
+    },
+    {
+      "file": "chapter-023.md",
+      "fullTextPresent": true,
+      "sha256": "5ca5304aa7cdcd4663979d4d2fede2538328520e9e2676be64af743412198717"
+    },
+    {
+      "file": "chapter-024.md",
+      "fullTextPresent": true,
+      "sha256": "07ed1e665460fc95b000bb53e00786064fff00e615250bbb3ac7633dce644434"
+    },
+    {
+      "file": "chapter-025.md",
+      "fullTextPresent": true,
+      "sha256": "f385d33f4918502a3b833df14cb4e637e4747e521047e64cc51017e306bdfbcc"
+    },
+    {
+      "file": "chapter-026.md",
+      "fullTextPresent": true,
+      "sha256": "8696b2dff669f3cbc3b43544ef2f8cb661be5342dfe417ba7610280ea7a438d9"
+    },
+    {
+      "file": "chapter-027.md",
+      "fullTextPresent": true,
+      "sha256": "d414bcb32af2aa334e7c23e32016e5a78f8cb02441732f24b048343aa81c250d"
+    },
+    {
+      "file": "chapter-028.md",
+      "fullTextPresent": true,
+      "sha256": "4d7e5ba67305a50f27d28e67435ee7c32bcfd1d9db70896d1c2a98d8ffaba23c"
+    },
+    {
+      "file": "chapter-029.md",
+      "fullTextPresent": true,
+      "sha256": "7236b368d0d20d776783093dba8bc64ae922202756fdfa0f5fdfadef50ca2124"
+    },
+    {
+      "file": "chapter-030.md",
+      "fullTextPresent": true,
+      "sha256": "d8691a00245363186a65557f8db0f0c3c2d2803b5a474dcfd69d9bd95ea7c26a"
+    }
+  ]
+}

@@ -1,0 +1,2655 @@
+{
+  "schemaVersion": 4,
+  "generatedAt": "2026-07-17T20:54:58.346Z",
+  "harness": "codex-mock-prose-ab-v3",
+  "corpus": {
+    "id": "synthetic-chinese-prose-ab",
+    "version": "2.0.0",
+    "syntheticOnly": true,
+    "path": "test/fixtures/prose-harness/corpus.json",
+    "selectedCaseIds": [
+      "mist-create"
+    ]
+  },
+  "profile": "smoke",
+  "exploratory": true,
+  "repeat": 1,
+  "models": {
+    "writer": "gpt-5.6-terra",
+    "auxiliary": "gpt-5.6-luna",
+    "judge": "gpt-5.6-sol",
+    "reasoningEffort": {
+      "writer": "low",
+      "auxiliary": "low",
+      "judge": "low"
+    },
+    "roleIndependent": true
+  },
+  "provider": {
+    "type": "codex-mock-cli",
+    "mock": true,
+    "executionIdentity": {
+      "schemaVersion": 1,
+      "providerMode": "codex-mock",
+      "providerType": "codex-mock-cli",
+      "routing": {
+        "writer": {
+          "profileId": "profile-codex-mock-candidate",
+          "modelId": "gpt-5.6-terra"
+        },
+        "auxiliary": {
+          "profileId": "profile-codex-mock-candidate",
+          "modelId": "gpt-5.6-luna"
+        },
+        "judge": {
+          "profileId": "profile-codex-mock-judge",
+          "modelId": "gpt-5.6-sol"
+        }
+      },
+      "reasoningEffort": {
+        "writer": "low",
+        "auxiliary": "low",
+        "judge": "low"
+      },
+      "callTimeoutMs": 450000,
+      "codexCliVersion": "codex-cli 0.144.2",
+      "codexBinary": {
+        "pathHash": "d3712054caa326dc142bbb3e63a8bf48febadab5cac36b5e76414112707a5029",
+        "contentHash": "4a9e84ad1c9622e8f6a50dafd75710eaee4af79dc5bcf8bafd4471763255fe18",
+        "sizeBytes": 260354768
+      },
+      "catalogSource": "account",
+      "catalogHash": "c1ce0e90f0c74d3a64e7e2fe254ad9886cff54ed91e425c11d97556fa8f97e5c",
+      "bridgeProtocol": "mana-codex-prose-mock-v1",
+      "bridgeImplementationHash": "4356e750417493b6a6bd0e988ee4fa78edccc96566c1192cc63aa1180e1b2c41",
+      "providerImplementationHash": "0d01595611b75c1ed453ca7a75fd0878ae3a02ef4ca3affb39037b5b3aeb6faa",
+      "internalToolsDisabled": [
+        "apps",
+        "artifact",
+        "auth_elicitation",
+        "browser_use",
+        "browser_use_external",
+        "browser_use_full_cdp_access",
+        "code_mode",
+        "code_mode_host",
+        "code_mode_only",
+        "computer_use",
+        "default_mode_request_user_input",
+        "enable_fanout",
+        "enable_mcp_apps",
+        "goals",
+        "hooks",
+        "image_generation",
+        "in_app_browser",
+        "multi_agent",
+        "multi_agent_v2",
+        "plugins",
+        "plugin_sharing",
+        "remote_plugin",
+        "request_permissions_tool",
+        "shell_snapshot",
+        "shell_tool",
+        "skill_mcp_dependency_install",
+        "standalone_web_search",
+        "tool_call_mcp_elicitation",
+        "tool_suggest",
+        "unified_exec",
+        "workspace_dependencies"
+      ],
+      "webSearchDisabled": true,
+      "mcpServersCleared": true,
+      "userConfigIgnored": true,
+      "projectRulesIgnored": true,
+      "sourceGlobalInstructions": {
+        "present": true,
+        "selectedFile": "AGENTS.md",
+        "hash": "34696c8f36ec6d1f58fb34fe95cdaa29523e6e52a6b1f1574b26d3007bf98f5e"
+      },
+      "sourceSkillsCatalog": {
+        "present": true,
+        "fileCount": 50,
+        "hash": "100ef458ba5b240d9abb37d9fb1dce83e87d3fcf7495b408aa552032824d91d3"
+      },
+      "isolatedCodexHome": true,
+      "effectiveGlobalInstructions": {
+        "present": false
+      },
+      "effectiveSkillsCatalog": {
+        "present": false
+      },
+      "fullyInstructionIsolated": true,
+      "verified": true,
+      "outputLimits": {
+        "writer": 4096,
+        "auxiliary": 4096,
+        "judge": 4096
+      }
+    }
+  },
+  "promptExperiment": {
+    "baselineRulesHash": "f7e75ada435c9bdf311a1b6ce92dc14fec20fc71a532e30e9dd9fccd24c6abcb",
+    "candidateRulesHash": "3078dba77430e8c80eed389bc6e801a971a4cb7725a2e6fd3630c7f4c195a8a4",
+    "stageHashes": {
+      "writer": {
+        "baseline": "7b393cb7e9096c1be453429b1952d42ab7798ceacbfc6ba77f22b70b026b2758",
+        "candidate": "987c8d4edc227a8dbbca1bc6bc8c2ae0b73c4efcf8059db4d18763faa594cc50"
+      },
+      "auxiliary": {
+        "baseline": "581cb8950862ddc4e467409378dd1b4f887d3b27a1596910dc756cdc511bd0f4",
+        "candidate": "027e2f9c0c57d11f699f153a4e5ea21498997f20e6e7983c525dd2cc9bb55b65"
+      },
+      "revision": {
+        "baseline": "dbe049cb5119e672597e00e005f2debb8aeac1a76b3d45f84a1e36dccdce0a30",
+        "candidate": "54e802e238ac21037c99c47d0616a2ab425ef1e3715a76c8e96a153f7f112465"
+      }
+    },
+    "changedFrom": "句式和段落应随叙事功能自然变化。\n避免连续复用同一骨架，尤其不要用「不是……而是……」式连否转折代替直接陈述。\n动作或物件的结果已经落地时便收住，不再补气氛化解释。",
+    "changedTo": "对「不是A，而是B」先判断 A/B 是否存在真实对立；「不是红色而是粉红」「不是马而是白马」「不是笑而是大笑」这类强度或子类型修正必须改为直接陈述。\n默认金句预算为零：删掉后人物、事实、气氛和节奏均无实质损失的抽象结论应删除；不得用独立金句后接微动作、「那是一种/一个」解释、强行对仗或段末总结制造深刻感。\n「真正的X从来不是……」「有些……注定……」「直到这一刻他才明白……」「这一切才刚刚开始」不做词面禁用；只在重复、孤立成金句、空洞总结或机械预告时删改。\n删除同义形容词叠加、抽象名词互相解释、「某种/一种/难以言说/带着一丝」密集出现、感官清单和同义复述；每个词必须提供新信息或真实阅读快感。\n不得为了让空句看起来有意义，给每句对白添加眼神、呼吸、手势、停顿等无功能微动作；不得让普通过渡段、信息段和真正高潮保持同一力度。\n句长、段落密度和情绪压力应随场景功能起伏；允许平铺、过渡和恢复段，不要每段都以重音收尾。"
+  },
+  "rows": [
+    {
+      "sampleId": "mist-create#1",
+      "caseId": "mist-create",
+      "valid": true,
+      "inputHash": "6c274c017a4b394431e93f46d87eaaf1054530735a2440c51fcf358e07197fc1",
+      "promptHashes": {
+        "baselineRulesHash": "f7e75ada435c9bdf311a1b6ce92dc14fec20fc71a532e30e9dd9fccd24c6abcb",
+        "candidateRulesHash": "3078dba77430e8c80eed389bc6e801a971a4cb7725a2e6fd3630c7f4c195a8a4",
+        "stageHashes": {
+          "writer": {
+            "baseline": "7b393cb7e9096c1be453429b1952d42ab7798ceacbfc6ba77f22b70b026b2758",
+            "candidate": "987c8d4edc227a8dbbca1bc6bc8c2ae0b73c4efcf8059db4d18763faa594cc50"
+          },
+          "auxiliary": {
+            "baseline": "581cb8950862ddc4e467409378dd1b4f887d3b27a1596910dc756cdc511bd0f4",
+            "candidate": "027e2f9c0c57d11f699f153a4e5ea21498997f20e6e7983c525dd2cc9bb55b65"
+          },
+          "revision": {
+            "baseline": "dbe049cb5119e672597e00e005f2debb8aeac1a76b3d45f84a1e36dccdce0a30",
+            "candidate": "54e802e238ac21037c99c47d0616a2ab425ef1e3715a76c8e96a153f7f112465"
+          }
+        },
+        "changedFrom": "句式和段落应随叙事功能自然变化。\n避免连续复用同一骨架，尤其不要用「不是……而是……」式连否转折代替直接陈述。\n动作或物件的结果已经落地时便收住，不再补气氛化解释。",
+        "changedTo": "对「不是A，而是B」先判断 A/B 是否存在真实对立；「不是红色而是粉红」「不是马而是白马」「不是笑而是大笑」这类强度或子类型修正必须改为直接陈述。\n默认金句预算为零：删掉后人物、事实、气氛和节奏均无实质损失的抽象结论应删除；不得用独立金句后接微动作、「那是一种/一个」解释、强行对仗或段末总结制造深刻感。\n「真正的X从来不是……」「有些……注定……」「直到这一刻他才明白……」「这一切才刚刚开始」不做词面禁用；只在重复、孤立成金句、空洞总结或机械预告时删改。\n删除同义形容词叠加、抽象名词互相解释、「某种/一种/难以言说/带着一丝」密集出现、感官清单和同义复述；每个词必须提供新信息或真实阅读快感。\n不得为了让空句看起来有意义，给每句对白添加眼神、呼吸、手势、停顿等无功能微动作；不得让普通过渡段、信息段和真正高潮保持同一力度。\n句长、段落密度和情绪压力应随场景功能起伏；允许平铺、过渡和恢复段，不要每段都以重音收尾。"
+      },
+      "models": {
+        "writer": "gpt-5.6-terra",
+        "auxiliary": "gpt-5.6-luna",
+        "judge": "gpt-5.6-sol"
+      },
+      "generationOrder": [
+        "baseline",
+        "candidate"
+      ],
+      "outputs": {
+        "baseline": {
+          "text": "蓝铜钥匙插进锁孔时，林夜听见里面轻轻一响。\n\n苏桥站在他身后，把手电压低了些。“能开？”\n\n“试试。”\n\n钥匙转得很慢。林夜往里推了半寸，肩膀抵住门板，潮气从缝里涌出来。\n\n锁舌退开。\n\n档案室比走廊冷。两排铁柜贴墙摆着，柜门全开，抽屉拉到尽头。白礁线那一列只剩最底层一只空夹，夹口歪着，里面夹了一粒发白的盐。\n\n林夜走过去。柜内没有编号卡，没有封皮，也没有散下来的纸角。铁皮底部有几道水痕，一直拖到门边。\n\n“搬得挺干净。”他说。\n\n苏桥没有靠近柜子。她蹲在门槛旁，用两根手指碰了碰湿痕，指腹很快泛白。她把手收进大衣口袋。\n\n“海水？”\n\n“像。”\n\n林夜把空夹翻过来，背面沾着一小片深蓝色的蜡。他用拇指擦了一下，蜡没有掉。\n\n走廊尽头传来金属碰撞声。\n\n苏桥抬起头。“这里还有别的门？”\n\n林夜看向档案柜后那面发潮的墙。墙脚有一道窄缝，盐痕正往里面渗。",
+          "paragraphs": [
+            {
+              "id": "baseline-p-0",
+              "text": "蓝铜钥匙插进锁孔时，林夜听见里面轻轻一响。"
+            },
+            {
+              "id": "baseline-p-1",
+              "text": "苏桥站在他身后，把手电压低了些。“能开？”"
+            },
+            {
+              "id": "baseline-p-2",
+              "text": "“试试。”"
+            },
+            {
+              "id": "baseline-p-3",
+              "text": "钥匙转得很慢。林夜往里推了半寸，肩膀抵住门板，潮气从缝里涌出来。"
+            },
+            {
+              "id": "baseline-p-4",
+              "text": "锁舌退开。"
+            },
+            {
+              "id": "baseline-p-5",
+              "text": "档案室比走廊冷。两排铁柜贴墙摆着，柜门全开，抽屉拉到尽头。白礁线那一列只剩最底层一只空夹，夹口歪着，里面夹了一粒发白的盐。"
+            },
+            {
+              "id": "baseline-p-6",
+              "text": "林夜走过去。柜内没有编号卡，没有封皮，也没有散下来的纸角。铁皮底部有几道水痕，一直拖到门边。"
+            },
+            {
+              "id": "baseline-p-7",
+              "text": "“搬得挺干净。”他说。"
+            },
+            {
+              "id": "baseline-p-8",
+              "text": "苏桥没有靠近柜子。她蹲在门槛旁，用两根手指碰了碰湿痕，指腹很快泛白。她把手收进大衣口袋。"
+            },
+            {
+              "id": "baseline-p-9",
+              "text": "“海水？”"
+            },
+            {
+              "id": "baseline-p-10",
+              "text": "“像。”"
+            },
+            {
+              "id": "baseline-p-11",
+              "text": "林夜把空夹翻过来，背面沾着一小片深蓝色的蜡。他用拇指擦了一下，蜡没有掉。"
+            },
+            {
+              "id": "baseline-p-12",
+              "text": "走廊尽头传来金属碰撞声。"
+            },
+            {
+              "id": "baseline-p-13",
+              "text": "苏桥抬起头。“这里还有别的门？”"
+            },
+            {
+              "id": "baseline-p-14",
+              "text": "林夜看向档案柜后那面发潮的墙。墙脚有一道窄缝，盐痕正往里面渗。"
+            }
+          ],
+          "outputHash": "a5aa4e6b539f3bab6edd6e65dda856a67160e35763aea027164ae26a1d18c1d0",
+          "deterministicReview": {
+            "notBut": {
+              "detector": "src/services/qualityReview.mjs#findDeterministicNotButPatterns",
+              "highConfidenceCount": 0,
+              "matches": []
+            },
+            "structure": {
+              "detector": "src/services/qualityReview.mjs#detectCrossParagraphQualityAnnotations",
+              "highConfidenceCount": 0,
+              "annotations": []
+            }
+          },
+          "metrics": {
+            "chars": 378,
+            "paragraphs": 15,
+            "targetLengthPassed": false,
+            "protectedParagraphsPassed": true,
+            "asciiSentencePunctuationCount": 0,
+            "highConfidenceNotButPatternCount": 0,
+            "highConfidenceStructuralRiskCount": 0
+          },
+          "draft": {
+            "text": "蓝铜钥匙插进锁孔时，林夜先听见里面轻轻一响。\n\n苏桥站在他身后，灯光落在她手背上。她把手电压低了些。“能开？”\n\n“试试。”\n\n钥匙转得很慢，铜齿蹭过旧锁芯。门没有立刻松开。林夜又往里推了半寸，肩膀抵住门板，潮气从缝里涌出来，带着纸浆泡烂后的腥味。\n\n锁舌退开。\n\n档案室比走廊冷。两排铁柜贴墙摆着，柜门全开，抽屉拉到尽头。白礁线那一列只剩最底层一只空夹，夹口歪着，里面夹了一粒发白的盐。\n\n林夜走过去，手电扫过柜内。没有编号卡，没有封皮，也没有散下来的纸角。铁皮底部拖着几道新鲜的水痕，一直延到门边。\n\n“搬得挺干净。”他说。\n\n苏桥没有靠近柜子。她蹲在门槛旁，用两根手指碰了碰地上的湿痕，指腹很快泛白。她把手收进大衣口袋。\n\n“海水？”\n\n“像。”\n\n林夜把空夹翻过来，背面沾着一小片深蓝色的蜡。他用拇指擦了一下，蜡没有掉。\n\n走廊尽头传来金属碰撞声。\n\n苏桥抬起头。“这里还有别的门？”\n\n林夜看向档案柜后那面发潮的墙。墙脚有一道窄缝，盐痕正往里面渗。",
+            "paragraphs": [
+              {
+                "id": "baseline-draft-p-0",
+                "text": "蓝铜钥匙插进锁孔时，林夜先听见里面轻轻一响。"
+              },
+              {
+                "id": "baseline-draft-p-1",
+                "text": "苏桥站在他身后，灯光落在她手背上。她把手电压低了些。“能开？”"
+              },
+              {
+                "id": "baseline-draft-p-2",
+                "text": "“试试。”"
+              },
+              {
+                "id": "baseline-draft-p-3",
+                "text": "钥匙转得很慢，铜齿蹭过旧锁芯。门没有立刻松开。林夜又往里推了半寸，肩膀抵住门板，潮气从缝里涌出来，带着纸浆泡烂后的腥味。"
+              },
+              {
+                "id": "baseline-draft-p-4",
+                "text": "锁舌退开。"
+              },
+              {
+                "id": "baseline-draft-p-5",
+                "text": "档案室比走廊冷。两排铁柜贴墙摆着，柜门全开，抽屉拉到尽头。白礁线那一列只剩最底层一只空夹，夹口歪着，里面夹了一粒发白的盐。"
+              },
+              {
+                "id": "baseline-draft-p-6",
+                "text": "林夜走过去，手电扫过柜内。没有编号卡，没有封皮，也没有散下来的纸角。铁皮底部拖着几道新鲜的水痕，一直延到门边。"
+              },
+              {
+                "id": "baseline-draft-p-7",
+                "text": "“搬得挺干净。”他说。"
+              },
+              {
+                "id": "baseline-draft-p-8",
+                "text": "苏桥没有靠近柜子。她蹲在门槛旁，用两根手指碰了碰地上的湿痕，指腹很快泛白。她把手收进大衣口袋。"
+              },
+              {
+                "id": "baseline-draft-p-9",
+                "text": "“海水？”"
+              },
+              {
+                "id": "baseline-draft-p-10",
+                "text": "“像。”"
+              },
+              {
+                "id": "baseline-draft-p-11",
+                "text": "林夜把空夹翻过来，背面沾着一小片深蓝色的蜡。他用拇指擦了一下，蜡没有掉。"
+              },
+              {
+                "id": "baseline-draft-p-12",
+                "text": "走廊尽头传来金属碰撞声。"
+              },
+              {
+                "id": "baseline-draft-p-13",
+                "text": "苏桥抬起头。“这里还有别的门？”"
+              },
+              {
+                "id": "baseline-draft-p-14",
+                "text": "林夜看向档案柜后那面发潮的墙。墙脚有一道窄缝，盐痕正往里面渗。"
+              }
+            ],
+            "outputHash": "9e4240574fafe779e55e10d374aaab53e6fd3a72d2d0b98f49e3fdc40e07b2b7",
+            "deterministicReview": {
+              "notBut": {
+                "detector": "src/services/qualityReview.mjs#findDeterministicNotButPatterns",
+                "highConfidenceCount": 0,
+                "matches": []
+              },
+              "structure": {
+                "detector": "src/services/qualityReview.mjs#detectCrossParagraphQualityAnnotations",
+                "highConfidenceCount": 0,
+                "annotations": []
+              }
+            },
+            "metrics": {
+              "chars": 429,
+              "paragraphs": 15,
+              "targetLengthPassed": false,
+              "protectedParagraphsPassed": true,
+              "asciiSentencePunctuationCount": 0,
+              "highConfidenceNotButPatternCount": 0,
+              "highConfidenceStructuralRiskCount": 0
+            }
+          },
+          "diagnosis": {
+            "summary": "段落整体以物件和动作推进，开门、清空档案柜与潮湿盐痕均已明确落地。中段力度稳定，个别短段形成有效停顿；“像”与“搬得挺干净”保留了潜台词，没有构成直接解释。末段由声响和墙缝抬高悬念，但尚未暴露苏桥已知钥匙用途。",
+            "intensityCurve": [
+              {
+                "paragraphId": "draft-p-0",
+                "level": 1,
+                "function": "行动",
+                "reason": "钥匙进入锁孔并以声音确认锁内反应，承担开门前的起势。"
+              },
+              {
+                "paragraphId": "draft-p-1",
+                "level": 1,
+                "function": "行动",
+                "reason": "交代苏桥位置、手电变化和短对话，建立两人的现场关系。"
+              },
+              {
+                "paragraphId": "draft-p-2",
+                "level": 1,
+                "function": "对话",
+                "reason": "回应简短，保留不确定性，力度服务于试探。"
+              },
+              {
+                "paragraphId": "draft-p-3",
+                "level": 2,
+                "function": "行动",
+                "reason": "转钥匙、推门和潮气涌入连续推进开门动作，并补入纸浆气味。"
+              },
+              {
+                "paragraphId": "draft-p-4",
+                "level": 2,
+                "function": "行动",
+                "reason": "锁舌退开是明确结果，短句使开门瞬间获得停顿和确认。"
+              },
+              {
+                "paragraphId": "draft-p-5",
+                "level": 3,
+                "function": "信息",
+                "reason": "一次性呈现档案室状态、白礁线档案被清空及残留盐粒，核心信息密度高。"
+              },
+              {
+                "paragraphId": "draft-p-6",
+                "level": 2,
+                "function": "信息",
+                "reason": "通过手电扫视排除纸张和编号，并以新水痕把清空行为延伸到门边。"
+              },
+              {
+                "paragraphId": "draft-p-7",
+                "level": 2,
+                "function": "对话",
+                "reason": "表面是判断，实际带有对搬运者行为的冷讽和现场确认。"
+              },
+              {
+                "paragraphId": "draft-p-8",
+                "level": 2,
+                "function": "行动",
+                "reason": "苏桥触碰湿痕、收手入袋，动作呈现她的谨慎而不替她解释。"
+              },
+              {
+                "paragraphId": "draft-p-9",
+                "level": 1,
+                "function": "对话",
+                "reason": "短问句提出物证判断，维持克制的现场辨认。"
+              },
+              {
+                "paragraphId": "draft-p-10",
+                "level": 1,
+                "function": "对话",
+                "reason": "模糊回答不下结论，保留两人之间的试探空间。"
+              },
+              {
+                "paragraphId": "draft-p-11",
+                "level": 2,
+                "function": "信息",
+                "reason": "翻夹、发现深蓝蜡并确认其未脱落，新增可追踪的物证。"
+              },
+              {
+                "paragraphId": "draft-p-12",
+                "level": 3,
+                "function": "高潮",
+                "reason": "突发金属声改变现场风险，推动注意力从物证转向潜在来者。"
+              },
+              {
+                "paragraphId": "draft-p-13",
+                "level": 2,
+                "function": "对话",
+                "reason": "苏桥追问空间结构，扩大未知范围并保持即时反应。"
+              },
+              {
+                "paragraphId": "draft-p-14",
+                "level": 3,
+                "function": "余波",
+                "reason": "墙缝与向内渗的盐痕把前文线索导向新的隐藏入口，形成悬念收束。"
+              }
+            ],
+            "annotations": [
+              {
+                "paragraphIds": [
+                  "draft-p-3"
+                ],
+                "kind": "micro_action_padding",
+                "severity": "low",
+                "deletionTest": "uncertain",
+                "informationGain": "new",
+                "functionalAction": true,
+                "note": "转钥匙、推门、抵门和潮气涌入共同完成开门过程，动作链有效，但“门没有立刻松开”与后续阻力描写略有重复。",
+                "suggestion": "检查开门阻力动作是否需要压缩，保留最能体现现场质感的一组动作。"
+              },
+              {
+                "paragraphIds": [
+                  "draft-p-5",
+                  "draft-p-6"
+                ],
+                "kind": "redundant_explanation",
+                "severity": "low",
+                "deletionTest": "uncertain",
+                "informationGain": "new",
+                "functionalAction": true,
+                "note": "柜门、抽屉、空夹以及编号卡、封皮、纸角共同确认档案被清空，证据充分；两段之间存在少量同向叠加。",
+                "suggestion": "区分环境总览与近距离核查的功能，避免重复证明同一事实。"
+              },
+              {
+                "paragraphIds": [
+                  "draft-p-7"
+                ],
+                "kind": "other",
+                "severity": "low",
+                "deletionTest": "loss",
+                "informationGain": "new",
+                "functionalAction": false,
+                "note": "“搬得挺干净”不是结论解释，而是林夜对现场的冷处理，也给苏桥留下潜台词空间。",
+                "suggestion": "保留短促判断，注意不要在后文追加说明其情绪或推理。"
+              },
+              {
+                "paragraphIds": [
+                  "draft-p-8"
+                ],
+                "kind": "other",
+                "severity": "low",
+                "deletionTest": "loss",
+                "informationGain": "new",
+                "functionalAction": true,
+                "note": "触碰湿痕后指腹泛白、收手入袋具有观察和遮掩双重功能，支持苏桥不能暴露已知信息的限制。",
+                "suggestion": "维持动作含义的不确定性，不补写她已经认出盐痕或水痕。"
+              },
+              {
+                "paragraphIds": [
+                  "draft-p-9",
+                  "draft-p-10"
+                ],
+                "kind": "mechanical_rhythm",
+                "severity": "low",
+                "deletionTest": "loss",
+                "informationGain": "new",
+                "functionalAction": false,
+                "note": "问答极短，形成克制的辨认节奏；“像”避免过早定性，在当前上下文中有功能。",
+                "suggestion": "保留不完整判断，同时注意相邻短对话不要连续承担同一种节拍。"
+              },
+              {
+                "paragraphIds": [
+                  "draft-p-11"
+                ],
+                "kind": "other",
+                "severity": "low",
+                "deletionTest": "loss",
+                "informationGain": "new",
+                "functionalAction": true,
+                "note": "深蓝色蜡是新增物证，且“没有掉”让物件结果落地，动作在此收住。",
+                "suggestion": "后续若继续使用该物证，应让其承担具体线索功能，避免补充气氛化解释。"
+              },
+              {
+                "paragraphIds": [
+                  "draft-p-12",
+                  "draft-p-14"
+                ],
+                "kind": "uniform_intensity",
+                "severity": "low",
+                "deletionTest": "uncertain",
+                "informationGain": "new",
+                "functionalAction": true,
+                "note": "金属声先制造外部威胁，墙缝再导向内部异常，两个悬念点层次不同；需避免后续每段都以新异常抬高力度。",
+                "suggestion": "后续安排一个确认、停顿或选择动作，让悬念曲线产生变化。"
+              }
+            ],
+            "relaxedTemplateFindings": [
+              {
+                "paragraphId": "draft-p-10",
+                "template": "“像”式不确定判断",
+                "functional": true,
+                "reason": "林夜只能根据现场痕迹作暂时判断，模糊回答保留证据的不充分性。"
+              }
+            ],
+            "diagnosticMetrics": {
+              "meanLevel": 1.8666666666666667,
+              "variance": 0.5155555555555557,
+              "noFunctionalActionCount": 2,
+              "noLossCount": 0,
+              "redundantOrOrnamentalCount": 0
+            }
+          },
+          "revisionMetrics": {
+            "draftChars": 429,
+            "revisedChars": 378,
+            "lengthDeltaRatio": 0.11888111888111888,
+            "withinTenPercent": false
+          }
+        },
+        "candidate": {
+          "text": "蓝铜钥匙插进锁孔时，林夜先听见里面轻轻一响。\n\n苏桥站在他身后，手电压得很低。光落在门缝下，照出一线积水。钥匙齿上蒙着绿锈，他拧到一半，停了停。\n\n“能开？”她问。\n\n林夜继续用力。锁舌退回去，门往里弹了两寸，霉味和冷气一起涌出来。\n\n档案室没有窗。顶灯坏了两盏，剩下的白光贴着柜顶，照得一排排铁皮柜发青。最里面那列柜门全开着，抽屉拉在半空，标签纸上写着白礁线。\n\n林夜走过去，抽出最上层的档案盒。盒子很轻，里面没有卷宗和登记卡。底板留着几道灰印，文件被人按尺寸取走。第二只、第三只也是。抽屉角落有水，沿着铁皮接缝渗下来，在地上结成发暗的盐痕。\n\n苏桥蹲下，用指腹碰了碰。\n\n“刚留下的。”她说。\n\n林夜看着她的手。盐粒黏在她指节上，她把手收进衣袋。\n\n“你怎么知道？”\n\n“旧的会发黄。”\n\n他没再问，拉开最下一层抽屉。一张空白调档单压在里面，边缘湿透，印章的位置被水化开了。背后留着一道铅笔划痕。\n\n门外传来金属碰撞声。\n\n苏桥关掉手电。\n\n黑下来的一瞬，林夜把钥匙攥进掌心，听见走廊里有人拖着脚，停在了档案室门口。",
+          "paragraphs": [
+            {
+              "id": "candidate-p-0",
+              "text": "蓝铜钥匙插进锁孔时，林夜先听见里面轻轻一响。"
+            },
+            {
+              "id": "candidate-p-1",
+              "text": "苏桥站在他身后，手电压得很低。光落在门缝下，照出一线积水。钥匙齿上蒙着绿锈，他拧到一半，停了停。"
+            },
+            {
+              "id": "candidate-p-2",
+              "text": "“能开？”她问。"
+            },
+            {
+              "id": "candidate-p-3",
+              "text": "林夜继续用力。锁舌退回去，门往里弹了两寸，霉味和冷气一起涌出来。"
+            },
+            {
+              "id": "candidate-p-4",
+              "text": "档案室没有窗。顶灯坏了两盏，剩下的白光贴着柜顶，照得一排排铁皮柜发青。最里面那列柜门全开着，抽屉拉在半空，标签纸上写着白礁线。"
+            },
+            {
+              "id": "candidate-p-5",
+              "text": "林夜走过去，抽出最上层的档案盒。盒子很轻，里面没有卷宗和登记卡。底板留着几道灰印，文件被人按尺寸取走。第二只、第三只也是。抽屉角落有水，沿着铁皮接缝渗下来，在地上结成发暗的盐痕。"
+            },
+            {
+              "id": "candidate-p-6",
+              "text": "苏桥蹲下，用指腹碰了碰。"
+            },
+            {
+              "id": "candidate-p-7",
+              "text": "“刚留下的。”她说。"
+            },
+            {
+              "id": "candidate-p-8",
+              "text": "林夜看着她的手。盐粒黏在她指节上，她把手收进衣袋。"
+            },
+            {
+              "id": "candidate-p-9",
+              "text": "“你怎么知道？”"
+            },
+            {
+              "id": "candidate-p-10",
+              "text": "“旧的会发黄。”"
+            },
+            {
+              "id": "candidate-p-11",
+              "text": "他没再问，拉开最下一层抽屉。一张空白调档单压在里面，边缘湿透，印章的位置被水化开了。背后留着一道铅笔划痕。"
+            },
+            {
+              "id": "candidate-p-12",
+              "text": "门外传来金属碰撞声。"
+            },
+            {
+              "id": "candidate-p-13",
+              "text": "苏桥关掉手电。"
+            },
+            {
+              "id": "candidate-p-14",
+              "text": "黑下来的一瞬，林夜把钥匙攥进掌心，听见走廊里有人拖着脚，停在了档案室门口。"
+            }
+          ],
+          "outputHash": "89a583a73ed1124e1d11be6efa197e7b4213b90178d88ad5d98a1da4759d4fb7",
+          "deterministicReview": {
+            "notBut": {
+              "detector": "src/services/qualityReview.mjs#findDeterministicNotButPatterns",
+              "highConfidenceCount": 0,
+              "matches": []
+            },
+            "structure": {
+              "detector": "src/services/qualityReview.mjs#detectCrossParagraphQualityAnnotations",
+              "highConfidenceCount": 0,
+              "annotations": []
+            }
+          },
+          "metrics": {
+            "chars": 460,
+            "paragraphs": 15,
+            "targetLengthPassed": false,
+            "protectedParagraphsPassed": true,
+            "asciiSentencePunctuationCount": 0,
+            "highConfidenceNotButPatternCount": 0,
+            "highConfidenceStructuralRiskCount": 0
+          },
+          "draft": {
+            "text": "蓝铜钥匙插进锁孔时，林夜先听见里面轻轻一响。\n\n苏桥站在他身后，手电压得很低。光落在门缝下，照出一线积水。钥匙齿上蒙着绿锈，他拧到一半，停了停。\n\n“能开？”她问。\n\n林夜继续用力。锁舌退回去，门往里弹了两寸，霉味和冷气一起涌出来。\n\n档案室没有窗。顶灯坏了两盏，剩下的白光贴着柜顶，照得一排排铁皮柜发青。最里面那列柜门全开着，抽屉拉在半空，标签纸上写着白礁线。\n\n林夜走过去，抽出最上层的档案盒。\n\n盒子很轻。\n\n里面没有卷宗，没有照片，也没有登记卡。底板留着几道整齐的灰印，像文件被人按尺寸取走。第二只、第三只也是。抽屉角落有水，沿着铁皮接缝渗下来，在地上结成一层发暗的盐痕。\n\n苏桥蹲下，用指腹碰了碰。\n\n“刚留下的。”她说。\n\n林夜看着她的手。盐粒黏在她指节上，她很快把手收进衣袋。\n\n“你怎么知道？”\n\n“旧的会发黄。”\n\n他没再问，拉开最下一层抽屉。里面压着一张空白的调档单，边缘湿透，印章的位置被水化开了。单子背后有一道铅笔划痕，像有人写到一半，又把纸抽走。\n\n门外传来金属碰撞声。\n\n苏桥关掉手电。\n\n黑下来的一瞬，林夜把钥匙攥进掌心，听见走廊里有人拖着脚，停在了档案室门口。",
+            "paragraphs": [
+              {
+                "id": "candidate-draft-p-0",
+                "text": "蓝铜钥匙插进锁孔时，林夜先听见里面轻轻一响。"
+              },
+              {
+                "id": "candidate-draft-p-1",
+                "text": "苏桥站在他身后，手电压得很低。光落在门缝下，照出一线积水。钥匙齿上蒙着绿锈，他拧到一半，停了停。"
+              },
+              {
+                "id": "candidate-draft-p-2",
+                "text": "“能开？”她问。"
+              },
+              {
+                "id": "candidate-draft-p-3",
+                "text": "林夜继续用力。锁舌退回去，门往里弹了两寸，霉味和冷气一起涌出来。"
+              },
+              {
+                "id": "candidate-draft-p-4",
+                "text": "档案室没有窗。顶灯坏了两盏，剩下的白光贴着柜顶，照得一排排铁皮柜发青。最里面那列柜门全开着，抽屉拉在半空，标签纸上写着白礁线。"
+              },
+              {
+                "id": "candidate-draft-p-5",
+                "text": "林夜走过去，抽出最上层的档案盒。"
+              },
+              {
+                "id": "candidate-draft-p-6",
+                "text": "盒子很轻。"
+              },
+              {
+                "id": "candidate-draft-p-7",
+                "text": "里面没有卷宗，没有照片，也没有登记卡。底板留着几道整齐的灰印，像文件被人按尺寸取走。第二只、第三只也是。抽屉角落有水，沿着铁皮接缝渗下来，在地上结成一层发暗的盐痕。"
+              },
+              {
+                "id": "candidate-draft-p-8",
+                "text": "苏桥蹲下，用指腹碰了碰。"
+              },
+              {
+                "id": "candidate-draft-p-9",
+                "text": "“刚留下的。”她说。"
+              },
+              {
+                "id": "candidate-draft-p-10",
+                "text": "林夜看着她的手。盐粒黏在她指节上，她很快把手收进衣袋。"
+              },
+              {
+                "id": "candidate-draft-p-11",
+                "text": "“你怎么知道？”"
+              },
+              {
+                "id": "candidate-draft-p-12",
+                "text": "“旧的会发黄。”"
+              },
+              {
+                "id": "candidate-draft-p-13",
+                "text": "他没再问，拉开最下一层抽屉。里面压着一张空白的调档单，边缘湿透，印章的位置被水化开了。单子背后有一道铅笔划痕，像有人写到一半，又把纸抽走。"
+              },
+              {
+                "id": "candidate-draft-p-14",
+                "text": "门外传来金属碰撞声。"
+              },
+              {
+                "id": "candidate-draft-p-15",
+                "text": "苏桥关掉手电。"
+              },
+              {
+                "id": "candidate-draft-p-16",
+                "text": "黑下来的一瞬，林夜把钥匙攥进掌心，听见走廊里有人拖着脚，停在了档案室门口。"
+              }
+            ],
+            "outputHash": "d6714142265aab0de0862c6cbf54c988b804ffa12888618feedc9abebe992700",
+            "deterministicReview": {
+              "notBut": {
+                "detector": "src/services/qualityReview.mjs#findDeterministicNotButPatterns",
+                "highConfidenceCount": 0,
+                "matches": []
+              },
+              "structure": {
+                "detector": "src/services/qualityReview.mjs#detectCrossParagraphQualityAnnotations",
+                "highConfidenceCount": 0,
+                "annotations": []
+              }
+            },
+            "metrics": {
+              "chars": 496,
+              "paragraphs": 17,
+              "targetLengthPassed": false,
+              "protectedParagraphsPassed": true,
+              "asciiSentencePunctuationCount": 0,
+              "highConfidenceNotButPatternCount": 0,
+              "highConfidenceStructuralRiskCount": 0
+            }
+          },
+          "diagnosis": {
+            "summary": "信息推进清晰，开门、档案被清空、盐痕与调档单逐步增加线索，末段形成有效威胁。主要问题是“盒子很轻”单独成段的信息量偏低，以及个别比喻和微动作需要依赖上下文判断，整体力度曲线基本自然。",
+            "intensityCurve": [
+              {
+                "paragraphId": "draft-p-0",
+                "level": 1,
+                "function": "行动",
+                "reason": "钥匙插入并出现锁内反馈，完成开门前的物理确认，力度较低。"
+              },
+              {
+                "paragraphId": "draft-p-1",
+                "level": 1,
+                "function": "行动",
+                "reason": "交代两人位置、光线与钥匙状态，延缓开门并保留观察感。"
+              },
+              {
+                "paragraphId": "draft-p-2",
+                "level": 1,
+                "function": "信息",
+                "reason": "短对白确认当前行动目标，信息直接，压力有限。"
+              },
+              {
+                "paragraphId": "draft-p-3",
+                "level": 2,
+                "function": "行动",
+                "reason": "锁舌退回、门开启并释放气味，场景正式转入档案室。"
+              },
+              {
+                "paragraphId": "draft-p-4",
+                "level": 3,
+                "function": "信息",
+                "reason": "明确展示白礁线档案柜被打开、抽屉被拉出，核心发现落地。"
+              },
+              {
+                "paragraphId": "draft-p-5",
+                "level": 1,
+                "function": "行动",
+                "reason": "人物接近并取出档案盒，是验证发现的必要动作。"
+              },
+              {
+                "paragraphId": "draft-p-6",
+                "level": 1,
+                "function": "信息",
+                "reason": "通过重量异常预示档案盒为空，单段重音较轻。"
+              },
+              {
+                "paragraphId": "draft-p-7",
+                "level": 3,
+                "function": "信息",
+                "reason": "确认盒内无档案，并补充整齐取走的痕迹与潮湿盐痕，线索密度高。"
+              },
+              {
+                "paragraphId": "draft-p-8",
+                "level": 2,
+                "function": "行动",
+                "reason": "苏桥触碰盐痕，使现场证据进入人物判断。"
+              },
+              {
+                "paragraphId": "draft-p-9",
+                "level": 2,
+                "function": "信息",
+                "reason": "对白判断盐痕新鲜，推进时间线索。"
+              },
+              {
+                "paragraphId": "draft-p-10",
+                "level": 2,
+                "function": "行动",
+                "reason": "盐粒与收手动作表现证据接触及苏桥的克制，兼具潜台词功能。"
+              },
+              {
+                "paragraphId": "draft-p-11",
+                "level": 2,
+                "function": "信息",
+                "reason": "林夜追问判断依据，制造对苏桥知识来源的压力。"
+              },
+              {
+                "paragraphId": "draft-p-12",
+                "level": 2,
+                "function": "信息",
+                "reason": "苏桥给出表面合理解释，维持隐瞒并保留疑点。"
+              },
+              {
+                "paragraphId": "draft-p-13",
+                "level": 3,
+                "function": "信息",
+                "reason": "空白调档单、化开的印章和中断的铅笔痕进一步指向人为清空，线索升级。"
+              },
+              {
+                "paragraphId": "draft-p-14",
+                "level": 3,
+                "function": "信息",
+                "reason": "门外金属声改变场景安全状态，外部威胁出现。"
+              },
+              {
+                "paragraphId": "draft-p-15",
+                "level": 3,
+                "function": "行动",
+                "reason": "关灯是即时应对，推动两人进入隐蔽状态。"
+              },
+              {
+                "paragraphId": "draft-p-16",
+                "level": 4,
+                "function": "高潮",
+                "reason": "黑暗、钥匙与门口停下的脚步叠加，形成当前场景的最高压力点。"
+              }
+            ],
+            "annotations": [
+              {
+                "paragraphIds": [
+                  "draft-p-6"
+                ],
+                "kind": "other",
+                "severity": "low",
+                "deletionTest": "uncertain",
+                "informationGain": "new",
+                "functionalAction": false,
+                "note": "“盒子很轻”单独成段有重量落差功能，但真正信息要到下一段才兑现，重音略显孤立。",
+                "suggestion": "评估是否与取盒动作或开盒结果合并，保留重量异常作为线索。"
+              },
+              {
+                "paragraphIds": [
+                  "draft-p-7"
+                ],
+                "kind": "lexical_pile",
+                "severity": "low",
+                "deletionTest": "uncertain",
+                "informationGain": "new",
+                "functionalAction": false,
+                "note": "“没有卷宗，没有照片，也没有登记卡”属于同类列举，但共同承担档案被彻底清空的确认功能，并非纯重复。",
+                "suggestion": "保留能体现清空范围的项目，控制同义列举密度。"
+              },
+              {
+                "paragraphIds": [
+                  "draft-p-8",
+                  "draft-p-10"
+                ],
+                "kind": "micro_action_padding",
+                "severity": "low",
+                "deletionTest": "uncertain",
+                "informationGain": "new",
+                "functionalAction": true,
+                "note": "触碰盐痕和收手动作分别承担取证与隐瞒功能，不属于无意义对白装饰；若上下文已充分表现苏桥谨慎，后一个动作可复核。",
+                "suggestion": "只保留能改变林夜判断或强化苏桥遮掩的动作。"
+              },
+              {
+                "paragraphIds": [
+                  "draft-p-13"
+                ],
+                "kind": "mechanical_rhythm",
+                "severity": "low",
+                "deletionTest": "no-loss",
+                "informationGain": "new",
+                "functionalAction": true,
+                "note": "连续线索集中在同一段，信息有效但句内密度较高，可能使调档单与铅笔痕的注意力竞争。",
+                "suggestion": "按证据重要性调整排列和停顿，让核心线索获得更明确的阅读重心。"
+              },
+              {
+                "paragraphIds": [
+                  "draft-p-14",
+                  "draft-p-15",
+                  "draft-p-16"
+                ],
+                "kind": "uniform_intensity",
+                "severity": "low",
+                "deletionTest": "no-loss",
+                "informationGain": "new",
+                "functionalAction": true,
+                "note": "三段连续升压有效，但每段都承担明确的威胁推进，暂未构成机械重音；可注意末段不要再叠加解释性结论。",
+                "suggestion": "保持声音出现、应对动作和停留脚步的递进差异。"
+              }
+            ],
+            "relaxedTemplateFindings": [],
+            "diagnosticMetrics": {
+              "meanLevel": 2.1176470588235294,
+              "variance": 0.809688581314879,
+              "noFunctionalActionCount": 2,
+              "noLossCount": 2,
+              "redundantOrOrnamentalCount": 0
+            }
+          },
+          "revisionMetrics": {
+            "draftChars": 496,
+            "revisedChars": 460,
+            "lengthDeltaRatio": 0.07258064516129033,
+            "withinTenPercent": true
+          }
+        }
+      },
+      "generationCalls": [
+        {
+          "variant": "baseline",
+          "stage": "draft",
+          "model": "gpt-5.6-terra",
+          "usage": {
+            "inputTokens": 15150,
+            "outputTokens": 434,
+            "cachedInputTokens": 0,
+            "durationMs": 124349
+          },
+          "requestIdHash": "6a13b8c5ddb5bcde19b4be4be850d71fdf29a48cd7e0225748a9f9a0d87b15e5"
+        },
+        {
+          "variant": "baseline",
+          "stage": "diagnosis",
+          "model": "gpt-5.6-luna",
+          "usage": {
+            "inputTokens": 14447,
+            "outputTokens": 1550,
+            "cachedInputTokens": 6912,
+            "durationMs": 154844
+          },
+          "requestIdHash": "71a8469f4dc0afd1eb52c73ac9b0a8fac3aa31a501227ce1d014c8fd07a822de"
+        },
+        {
+          "variant": "baseline",
+          "stage": "revision",
+          "model": "gpt-5.6-terra",
+          "usage": {
+            "inputTokens": 17259,
+            "outputTokens": 381,
+            "cachedInputTokens": 8448,
+            "durationMs": 125316
+          },
+          "requestIdHash": "fdf1318b312fcbf6d915bc08a43644d328d9cf097f71f9fd20efc52e2bfa56ce"
+        },
+        {
+          "variant": "candidate",
+          "stage": "draft",
+          "model": "gpt-5.6-terra",
+          "usage": {
+            "inputTokens": 15412,
+            "outputTokens": 504,
+            "cachedInputTokens": 8448,
+            "durationMs": 143405
+          },
+          "requestIdHash": "44b2f394723ece9b2d86ab04cba0ed71500428845a1eb90450a448e204472fc7"
+        },
+        {
+          "variant": "candidate",
+          "stage": "diagnosis",
+          "model": "gpt-5.6-luna",
+          "usage": {
+            "inputTokens": 14789,
+            "outputTokens": 1367,
+            "cachedInputTokens": 6912,
+            "durationMs": 158958
+          },
+          "requestIdHash": "cbd0226b60d7f16bb8d6208b18b0feb5fe472e08956e2c8c07b7838fbac42ec3"
+        },
+        {
+          "variant": "candidate",
+          "stage": "revision",
+          "model": "gpt-5.6-terra",
+          "usage": {
+            "inputTokens": 17355,
+            "outputTokens": 454,
+            "cachedInputTokens": 0,
+            "durationMs": 142192
+          },
+          "requestIdHash": "f920a73f584a21307fc67fa886834b51912ab2a1364b318cb5e29c61859fba45"
+        }
+      ],
+      "judgeCalls": [
+        {
+          "judgeId": "sol",
+          "pass": 1,
+          "mapping": {
+            "X": "candidate",
+            "Y": "baseline"
+          },
+          "model": "gpt-5.6-sol",
+          "usage": {
+            "inputTokens": 16932,
+            "outputTokens": 1613,
+            "cachedInputTokens": 7936,
+            "durationMs": 152335
+          },
+          "requestIdHash": "0e58687aee5dbe06a1f31e5f1df175d8f2a4a359743e70591e3f477b9cde9a5b",
+          "judgment": {
+            "dimensions": {
+              "characterVoice": {
+                "winner": "Y",
+                "scoreX": 4,
+                "scoreY": 5,
+                "evidenceX": [
+                  "X-p-7",
+                  "X-p-9",
+                  "X-p-10"
+                ],
+                "evidenceY": [
+                  "Y-p-7",
+                  "Y-p-9",
+                  "Y-p-10"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-2",
+                  "ref-mist-a-p-4",
+                  "ref-mist-b-p-3",
+                  "ref-mist-b-p-4"
+                ],
+                "reason": "两版都保持短对话和潜台词。Y的“搬得挺干净”“海水？”更依赖现场物证传递判断，贴近参考中人物点到即止的说话方式；X让苏桥直接断言“刚留下的”，虽有物理依据，仍稍显主动解释。"
+              },
+              "causalCoherence": {
+                "winner": "X",
+                "scoreX": 5,
+                "scoreY": 4,
+                "evidenceX": [
+                  "X-p-3",
+                  "X-p-5",
+                  "X-p-11",
+                  "X-p-12"
+                ],
+                "evidenceY": [
+                  "Y-p-4",
+                  "Y-p-6",
+                  "Y-p-13",
+                  "Y-p-14"
+                ],
+                "referenceEvidence": [],
+                "reason": "X从开锁、检查连续空盒、发现残留调档单到门外异响，线索与行动衔接完整。Y前段清楚，但苏桥听到走廊金属声后突然询问“别的门”，林夜随即锁定柜后墙缝，推断之间略缺可见的触发环节。"
+              },
+              "knowledgeBoundary": {
+                "winner": "tie",
+                "scoreX": 4,
+                "scoreY": 4,
+                "evidenceX": [
+                  "X-p-6",
+                  "X-p-7",
+                  "X-p-10"
+                ],
+                "evidenceY": [
+                  "Y-p-8",
+                  "Y-p-9",
+                  "Y-p-13"
+                ],
+                "referenceEvidence": [],
+                "reason": "X中苏桥依据盐痕颜色判断新旧，略显熟练但仍可由现场观察得出，没有暴露她早知钥匙用途。Y让她停在门槛处试探性询问，也守住秘密；不过“这里还有别的门？”缺少明确观察依据，稍有超前感。两版均未触及失踪者最终去向。"
+              },
+              "styleAdherence": {
+                "winner": "Y",
+                "scoreX": 4,
+                "scoreY": 5,
+                "evidenceX": [
+                  "X-p-4",
+                  "X-p-5",
+                  "X-p-11"
+                ],
+                "evidenceY": [
+                  "Y-p-5",
+                  "Y-p-8",
+                  "Y-p-11"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-1",
+                  "ref-mist-a-p-5",
+                  "ref-mist-b-p-0",
+                  "ref-mist-b-p-6"
+                ],
+                "reason": "Y更稳定地让空夹、盐粒、湿痕和蓝蜡承担信息，叙述克制，接近参考以螺帽、账册、断绳等物件推进的方式。X同样符合基调，但“文件被人按尺寸取走”等句直接替读者归纳，且调档单、铅笔痕、门外来人连续加码，略显密集。"
+              },
+              "sceneTransition": {
+                "winner": "X",
+                "scoreX": 5,
+                "scoreY": 4,
+                "evidenceX": [
+                  "X-p-11",
+                  "X-p-12",
+                  "X-p-13",
+                  "X-p-14"
+                ],
+                "evidenceY": [
+                  "Y-p-11",
+                  "Y-p-12",
+                  "Y-p-13",
+                  "Y-p-14"
+                ],
+                "referenceEvidence": [],
+                "reason": "X由检查最下层抽屉自然转入门外声响，再以关灯和来人停在门口完成场景转折，空间关系明确。Y也用金属声切换注意力，但从走廊声响跳到柜后墙缝稍显突兀。"
+              },
+              "proseNaturalness": {
+                "winner": "Y",
+                "scoreX": 4,
+                "scoreY": 5,
+                "evidenceX": [
+                  "X-p-1",
+                  "X-p-5",
+                  "X-p-11"
+                ],
+                "evidenceY": [
+                  "Y-p-3",
+                  "Y-p-5",
+                  "Y-p-8"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-0",
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-2"
+                ],
+                "reason": "Y的句子短而有触感，“空夹”“一粒发白的盐”“指腹很快泛白”等细节自然嵌入动作，接近参考的简洁节奏。X整体顺畅，但“白光贴着柜顶，照得一排排铁皮柜发青”及对档案取走方式的说明稍满，局部有设计痕迹。"
+              },
+              "aiFlavor": {
+                "winner": "Y",
+                "scoreX": 4,
+                "scoreY": 5,
+                "evidenceX": [
+                  "X-p-5",
+                  "X-p-11",
+                  "X-p-14"
+                ],
+                "evidenceY": [
+                  "Y-p-5",
+                  "Y-p-6",
+                  "Y-p-11"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-1",
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-0"
+                ],
+                "reason": "两版都没有伪转折或空洞金句。Y主要呈示可触摸的残留物，不反复解释其意义，整体更像参考中的留白。X在短篇幅内依次放入灰印、盐痕、调档单、印章、铅笔痕和门外脚步，线索布置略显程序化，但尚未形成明显同义复述。"
+              },
+              "intensityControl": {
+                "winner": "X",
+                "scoreX": 5,
+                "scoreY": 4,
+                "evidenceX": [
+                  "X-p-3",
+                  "X-p-5",
+                  "X-p-12",
+                  "X-p-14"
+                ],
+                "evidenceY": [
+                  "Y-p-4",
+                  "Y-p-8",
+                  "Y-p-12",
+                  "Y-p-14"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-5",
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-6"
+                ],
+                "reason": "X先以缓慢开门和逐层检查压低节奏，再由金属声、熄灯和脚步停在门口形成真实的外部威胁，张弛清楚，类似参考中脚步逼近门外的收束。Y的墙缝发现保留悬念，但危险升级较弱，结尾力度更多来自新谜面而非场面压力。"
+              }
+            },
+            "hardViolations": {
+              "X": [],
+              "Y": []
+            }
+          }
+        },
+        {
+          "judgeId": "sol",
+          "pass": 2,
+          "mapping": {
+            "X": "baseline",
+            "Y": "candidate"
+          },
+          "model": "gpt-5.6-sol",
+          "usage": {
+            "inputTokens": 16946,
+            "outputTokens": 1521,
+            "cachedInputTokens": 0,
+            "durationMs": 150500
+          },
+          "requestIdHash": "11b79731f4cb9ccafe96fb2cbb9235fd29b75bbb7c6b53bdb9b91412e7fed997",
+          "judgment": {
+            "dimensions": {
+              "characterVoice": {
+                "winner": "X",
+                "scoreX": 5,
+                "scoreY": 4,
+                "evidenceX": [
+                  "X-p-7",
+                  "X-p-8",
+                  "X-p-13"
+                ],
+                "evidenceY": [
+                  "Y-p-7",
+                  "Y-p-9",
+                  "Y-p-10"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-4",
+                  "ref-mist-a-p-5",
+                  "ref-mist-b-p-1",
+                  "ref-mist-b-p-2"
+                ],
+                "reason": "X延续了林夜少言、以观察代替追问的方式，也让苏桥用停留在门槛和收手入袋掩饰异常，潜台词更稳。Y中林夜直接追问“你怎么知道”，苏桥又立即给出知识性解释，人物之间的试探略显直白，但仍未越过设定边界。"
+              },
+              "causalCoherence": {
+                "winner": "Y",
+                "scoreX": 4,
+                "scoreY": 5,
+                "evidenceX": [
+                  "X-p-11",
+                  "X-p-12",
+                  "X-p-13",
+                  "X-p-14"
+                ],
+                "evidenceY": [
+                  "Y-p-11",
+                  "Y-p-12",
+                  "Y-p-13",
+                  "Y-p-14"
+                ],
+                "referenceEvidence": [],
+                "reason": "Y从开锁、逐层确认卷宗被取走，到门外异响后熄灯戒备，动作因果连续。X由深蓝蜡跳到金属声，再由“别的门”转向柜后墙缝，苏桥为何立刻把异响理解为另一扇门缺少支点。"
+              },
+              "knowledgeBoundary": {
+                "winner": "X",
+                "scoreX": 5,
+                "scoreY": 4,
+                "evidenceX": [
+                  "X-p-1",
+                  "X-p-8",
+                  "X-p-9",
+                  "X-p-10"
+                ],
+                "evidenceY": [
+                  "Y-p-2",
+                  "Y-p-7",
+                  "Y-p-9",
+                  "Y-p-10"
+                ],
+                "referenceEvidence": [],
+                "reason": "X让苏桥先问钥匙能否开门，并以疑问确认海水，完整维持她未掌握用途和现场结论的表象。Y没有明示她早知钥匙用途，但“刚留下的”判断过快，随后补充“旧的会发黄”，使她显得对盐痕状态异常熟悉，边界压力更大。"
+              },
+              "styleAdherence": {
+                "winner": "X",
+                "scoreX": 5,
+                "scoreY": 4,
+                "evidenceX": [
+                  "X-p-3",
+                  "X-p-5",
+                  "X-p-8",
+                  "X-p-14"
+                ],
+                "evidenceY": [
+                  "Y-p-4",
+                  "Y-p-5",
+                  "Y-p-11",
+                  "Y-p-14"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-0",
+                  "ref-mist-a-p-1",
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-6"
+                ],
+                "reason": "X以门板、空夹、盐粒、湿痕和墙缝承担情绪，短句与留白接近参考的克制节奏。Y同样依靠物件和空间推进，但“文件被人按尺寸取走”属于叙述替人物归纳，且调档单、印章、铅笔痕连续追加线索，密度稍高于参考。"
+              },
+              "sceneTransition": {
+                "winner": "Y",
+                "scoreX": 4,
+                "scoreY": 5,
+                "evidenceX": [
+                  "X-p-3",
+                  "X-p-4",
+                  "X-p-5",
+                  "X-p-12"
+                ],
+                "evidenceY": [
+                  "Y-p-1",
+                  "Y-p-3",
+                  "Y-p-4",
+                  "Y-p-12",
+                  "Y-p-14"
+                ],
+                "referenceEvidence": [],
+                "reason": "Y用门缝积水、开门涌出的霉味冷气和室内灯光完成由走廊到档案室的空间转换，末尾又以熄灯和脚步停门口自然切入威胁。X入室过渡清楚，但末尾异响到墙缝的空间指向较含混。"
+              },
+              "proseNaturalness": {
+                "winner": "X",
+                "scoreX": 5,
+                "scoreY": 4,
+                "evidenceX": [
+                  "X-p-0",
+                  "X-p-5",
+                  "X-p-6",
+                  "X-p-8"
+                ],
+                "evidenceY": [
+                  "Y-p-1",
+                  "Y-p-4",
+                  "Y-p-5",
+                  "Y-p-11"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-1",
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-0",
+                  "ref-mist-b-p-2"
+                ],
+                "reason": "X句式干净，空夹夹住一粒盐、湿痕拖到门边等细节具体而不抢戏，整体接近参考的自然观察。Y多数段落顺畅，但“底板留着几道灰印，文件被人按尺寸取走”从痕迹直接落到结论略硬，“印章的位置被水化开”也稍显书面加工。"
+              },
+              "aiFlavor": {
+                "winner": "X",
+                "scoreX": 5,
+                "scoreY": 4,
+                "evidenceX": [
+                  "X-p-5",
+                  "X-p-7",
+                  "X-p-11"
+                ],
+                "evidenceY": [
+                  "Y-p-5",
+                  "Y-p-10",
+                  "Y-p-11"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-5",
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-2",
+                  "ref-mist-b-p-6"
+                ],
+                "reason": "X没有同义复述或总结性落点，线索多由物件状态自行显现，接近参考的留白。Y对“盒子很轻”“没有卷宗和登记卡”“文件被人按尺寸取走”连续解释同一缺失事实，又追加调档单、化开的印章和铅笔痕，略有线索堆叠与无信息确认。"
+              },
+              "intensityControl": {
+                "winner": "Y",
+                "scoreX": 4,
+                "scoreY": 5,
+                "evidenceX": [
+                  "X-p-5",
+                  "X-p-8",
+                  "X-p-12",
+                  "X-p-14"
+                ],
+                "evidenceY": [
+                  "Y-p-4",
+                  "Y-p-5",
+                  "Y-p-12",
+                  "Y-p-13",
+                  "Y-p-14"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-6"
+                ],
+                "reason": "Y先以逐层检查形成平缓段落，再用金属声、熄灯、攥钥匙和脚步停门口集中收紧，高潮明确且动作服务于现实威胁。X也有由发现空柜到异响的升压，但结尾转向墙缝，把外部威胁分散成新谜面，力度稍弱。"
+              }
+            },
+            "hardViolations": {
+              "X": [],
+              "Y": []
+            }
+          }
+        }
+      ],
+      "canonicalJudgments": {
+        "sol": [
+          {
+            "dimensions": {
+              "characterVoice": {
+                "winner": "baseline",
+                "scoreBaseline": 5,
+                "scoreCandidate": 4,
+                "evidenceBaseline": [
+                  "Y-p-7",
+                  "Y-p-9",
+                  "Y-p-10"
+                ],
+                "evidenceCandidate": [
+                  "X-p-7",
+                  "X-p-9",
+                  "X-p-10"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-2",
+                  "ref-mist-a-p-4",
+                  "ref-mist-b-p-3",
+                  "ref-mist-b-p-4"
+                ],
+                "reason": "两版都保持短对话和潜台词。Y的“搬得挺干净”“海水？”更依赖现场物证传递判断，贴近参考中人物点到即止的说话方式；X让苏桥直接断言“刚留下的”，虽有物理依据，仍稍显主动解释。"
+              },
+              "causalCoherence": {
+                "winner": "candidate",
+                "scoreBaseline": 4,
+                "scoreCandidate": 5,
+                "evidenceBaseline": [
+                  "Y-p-4",
+                  "Y-p-6",
+                  "Y-p-13",
+                  "Y-p-14"
+                ],
+                "evidenceCandidate": [
+                  "X-p-3",
+                  "X-p-5",
+                  "X-p-11",
+                  "X-p-12"
+                ],
+                "referenceEvidence": [],
+                "reason": "X从开锁、检查连续空盒、发现残留调档单到门外异响，线索与行动衔接完整。Y前段清楚，但苏桥听到走廊金属声后突然询问“别的门”，林夜随即锁定柜后墙缝，推断之间略缺可见的触发环节。"
+              },
+              "knowledgeBoundary": {
+                "winner": "tie",
+                "scoreBaseline": 4,
+                "scoreCandidate": 4,
+                "evidenceBaseline": [
+                  "Y-p-8",
+                  "Y-p-9",
+                  "Y-p-13"
+                ],
+                "evidenceCandidate": [
+                  "X-p-6",
+                  "X-p-7",
+                  "X-p-10"
+                ],
+                "referenceEvidence": [],
+                "reason": "X中苏桥依据盐痕颜色判断新旧，略显熟练但仍可由现场观察得出，没有暴露她早知钥匙用途。Y让她停在门槛处试探性询问，也守住秘密；不过“这里还有别的门？”缺少明确观察依据，稍有超前感。两版均未触及失踪者最终去向。"
+              },
+              "styleAdherence": {
+                "winner": "baseline",
+                "scoreBaseline": 5,
+                "scoreCandidate": 4,
+                "evidenceBaseline": [
+                  "Y-p-5",
+                  "Y-p-8",
+                  "Y-p-11"
+                ],
+                "evidenceCandidate": [
+                  "X-p-4",
+                  "X-p-5",
+                  "X-p-11"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-1",
+                  "ref-mist-a-p-5",
+                  "ref-mist-b-p-0",
+                  "ref-mist-b-p-6"
+                ],
+                "reason": "Y更稳定地让空夹、盐粒、湿痕和蓝蜡承担信息，叙述克制，接近参考以螺帽、账册、断绳等物件推进的方式。X同样符合基调，但“文件被人按尺寸取走”等句直接替读者归纳，且调档单、铅笔痕、门外来人连续加码，略显密集。"
+              },
+              "sceneTransition": {
+                "winner": "candidate",
+                "scoreBaseline": 4,
+                "scoreCandidate": 5,
+                "evidenceBaseline": [
+                  "Y-p-11",
+                  "Y-p-12",
+                  "Y-p-13",
+                  "Y-p-14"
+                ],
+                "evidenceCandidate": [
+                  "X-p-11",
+                  "X-p-12",
+                  "X-p-13",
+                  "X-p-14"
+                ],
+                "referenceEvidence": [],
+                "reason": "X由检查最下层抽屉自然转入门外声响，再以关灯和来人停在门口完成场景转折，空间关系明确。Y也用金属声切换注意力，但从走廊声响跳到柜后墙缝稍显突兀。"
+              },
+              "proseNaturalness": {
+                "winner": "baseline",
+                "scoreBaseline": 5,
+                "scoreCandidate": 4,
+                "evidenceBaseline": [
+                  "Y-p-3",
+                  "Y-p-5",
+                  "Y-p-8"
+                ],
+                "evidenceCandidate": [
+                  "X-p-1",
+                  "X-p-5",
+                  "X-p-11"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-0",
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-2"
+                ],
+                "reason": "Y的句子短而有触感，“空夹”“一粒发白的盐”“指腹很快泛白”等细节自然嵌入动作，接近参考的简洁节奏。X整体顺畅，但“白光贴着柜顶，照得一排排铁皮柜发青”及对档案取走方式的说明稍满，局部有设计痕迹。"
+              },
+              "aiFlavor": {
+                "winner": "baseline",
+                "scoreBaseline": 5,
+                "scoreCandidate": 4,
+                "evidenceBaseline": [
+                  "Y-p-5",
+                  "Y-p-6",
+                  "Y-p-11"
+                ],
+                "evidenceCandidate": [
+                  "X-p-5",
+                  "X-p-11",
+                  "X-p-14"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-1",
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-0"
+                ],
+                "reason": "两版都没有伪转折或空洞金句。Y主要呈示可触摸的残留物，不反复解释其意义，整体更像参考中的留白。X在短篇幅内依次放入灰印、盐痕、调档单、印章、铅笔痕和门外脚步，线索布置略显程序化，但尚未形成明显同义复述。"
+              },
+              "intensityControl": {
+                "winner": "candidate",
+                "scoreBaseline": 4,
+                "scoreCandidate": 5,
+                "evidenceBaseline": [
+                  "Y-p-4",
+                  "Y-p-8",
+                  "Y-p-12",
+                  "Y-p-14"
+                ],
+                "evidenceCandidate": [
+                  "X-p-3",
+                  "X-p-5",
+                  "X-p-12",
+                  "X-p-14"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-5",
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-6"
+                ],
+                "reason": "X先以缓慢开门和逐层检查压低节奏，再由金属声、熄灯和脚步停在门口形成真实的外部威胁，张弛清楚，类似参考中脚步逼近门外的收束。Y的墙缝发现保留悬念，但危险升级较弱，结尾力度更多来自新谜面而非场面压力。"
+              }
+            },
+            "hardViolations": {
+              "baseline": [],
+              "candidate": []
+            }
+          },
+          {
+            "dimensions": {
+              "characterVoice": {
+                "winner": "baseline",
+                "scoreBaseline": 5,
+                "scoreCandidate": 4,
+                "evidenceBaseline": [
+                  "X-p-7",
+                  "X-p-8",
+                  "X-p-13"
+                ],
+                "evidenceCandidate": [
+                  "Y-p-7",
+                  "Y-p-9",
+                  "Y-p-10"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-4",
+                  "ref-mist-a-p-5",
+                  "ref-mist-b-p-1",
+                  "ref-mist-b-p-2"
+                ],
+                "reason": "X延续了林夜少言、以观察代替追问的方式，也让苏桥用停留在门槛和收手入袋掩饰异常，潜台词更稳。Y中林夜直接追问“你怎么知道”，苏桥又立即给出知识性解释，人物之间的试探略显直白，但仍未越过设定边界。"
+              },
+              "causalCoherence": {
+                "winner": "candidate",
+                "scoreBaseline": 4,
+                "scoreCandidate": 5,
+                "evidenceBaseline": [
+                  "X-p-11",
+                  "X-p-12",
+                  "X-p-13",
+                  "X-p-14"
+                ],
+                "evidenceCandidate": [
+                  "Y-p-11",
+                  "Y-p-12",
+                  "Y-p-13",
+                  "Y-p-14"
+                ],
+                "referenceEvidence": [],
+                "reason": "Y从开锁、逐层确认卷宗被取走，到门外异响后熄灯戒备，动作因果连续。X由深蓝蜡跳到金属声，再由“别的门”转向柜后墙缝，苏桥为何立刻把异响理解为另一扇门缺少支点。"
+              },
+              "knowledgeBoundary": {
+                "winner": "baseline",
+                "scoreBaseline": 5,
+                "scoreCandidate": 4,
+                "evidenceBaseline": [
+                  "X-p-1",
+                  "X-p-8",
+                  "X-p-9",
+                  "X-p-10"
+                ],
+                "evidenceCandidate": [
+                  "Y-p-2",
+                  "Y-p-7",
+                  "Y-p-9",
+                  "Y-p-10"
+                ],
+                "referenceEvidence": [],
+                "reason": "X让苏桥先问钥匙能否开门，并以疑问确认海水，完整维持她未掌握用途和现场结论的表象。Y没有明示她早知钥匙用途，但“刚留下的”判断过快，随后补充“旧的会发黄”，使她显得对盐痕状态异常熟悉，边界压力更大。"
+              },
+              "styleAdherence": {
+                "winner": "baseline",
+                "scoreBaseline": 5,
+                "scoreCandidate": 4,
+                "evidenceBaseline": [
+                  "X-p-3",
+                  "X-p-5",
+                  "X-p-8",
+                  "X-p-14"
+                ],
+                "evidenceCandidate": [
+                  "Y-p-4",
+                  "Y-p-5",
+                  "Y-p-11",
+                  "Y-p-14"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-0",
+                  "ref-mist-a-p-1",
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-6"
+                ],
+                "reason": "X以门板、空夹、盐粒、湿痕和墙缝承担情绪，短句与留白接近参考的克制节奏。Y同样依靠物件和空间推进，但“文件被人按尺寸取走”属于叙述替人物归纳，且调档单、印章、铅笔痕连续追加线索，密度稍高于参考。"
+              },
+              "sceneTransition": {
+                "winner": "candidate",
+                "scoreBaseline": 4,
+                "scoreCandidate": 5,
+                "evidenceBaseline": [
+                  "X-p-3",
+                  "X-p-4",
+                  "X-p-5",
+                  "X-p-12"
+                ],
+                "evidenceCandidate": [
+                  "Y-p-1",
+                  "Y-p-3",
+                  "Y-p-4",
+                  "Y-p-12",
+                  "Y-p-14"
+                ],
+                "referenceEvidence": [],
+                "reason": "Y用门缝积水、开门涌出的霉味冷气和室内灯光完成由走廊到档案室的空间转换，末尾又以熄灯和脚步停门口自然切入威胁。X入室过渡清楚，但末尾异响到墙缝的空间指向较含混。"
+              },
+              "proseNaturalness": {
+                "winner": "baseline",
+                "scoreBaseline": 5,
+                "scoreCandidate": 4,
+                "evidenceBaseline": [
+                  "X-p-0",
+                  "X-p-5",
+                  "X-p-6",
+                  "X-p-8"
+                ],
+                "evidenceCandidate": [
+                  "Y-p-1",
+                  "Y-p-4",
+                  "Y-p-5",
+                  "Y-p-11"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-1",
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-0",
+                  "ref-mist-b-p-2"
+                ],
+                "reason": "X句式干净，空夹夹住一粒盐、湿痕拖到门边等细节具体而不抢戏，整体接近参考的自然观察。Y多数段落顺畅，但“底板留着几道灰印，文件被人按尺寸取走”从痕迹直接落到结论略硬，“印章的位置被水化开”也稍显书面加工。"
+              },
+              "aiFlavor": {
+                "winner": "baseline",
+                "scoreBaseline": 5,
+                "scoreCandidate": 4,
+                "evidenceBaseline": [
+                  "X-p-5",
+                  "X-p-7",
+                  "X-p-11"
+                ],
+                "evidenceCandidate": [
+                  "Y-p-5",
+                  "Y-p-10",
+                  "Y-p-11"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-5",
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-2",
+                  "ref-mist-b-p-6"
+                ],
+                "reason": "X没有同义复述或总结性落点，线索多由物件状态自行显现，接近参考的留白。Y对“盒子很轻”“没有卷宗和登记卡”“文件被人按尺寸取走”连续解释同一缺失事实，又追加调档单、化开的印章和铅笔痕，略有线索堆叠与无信息确认。"
+              },
+              "intensityControl": {
+                "winner": "candidate",
+                "scoreBaseline": 4,
+                "scoreCandidate": 5,
+                "evidenceBaseline": [
+                  "X-p-5",
+                  "X-p-8",
+                  "X-p-12",
+                  "X-p-14"
+                ],
+                "evidenceCandidate": [
+                  "Y-p-4",
+                  "Y-p-5",
+                  "Y-p-12",
+                  "Y-p-13",
+                  "Y-p-14"
+                ],
+                "referenceEvidence": [
+                  "ref-mist-a-p-6",
+                  "ref-mist-b-p-6"
+                ],
+                "reason": "Y先以逐层检查形成平缓段落，再用金属声、熄灯、攥钥匙和脚步停门口集中收紧，高潮明确且动作服务于现实威胁。X也有由发现空柜到异响的升压，但结尾转向墙缝，把外部威胁分散成新谜面，力度稍弱。"
+              }
+            },
+            "hardViolations": {
+              "baseline": [],
+              "candidate": []
+            }
+          }
+        ]
+      },
+      "judgeResolutions": {
+        "sol": {
+          "model": "gpt-5.6-sol",
+          "dimensions": {
+            "characterVoice": {
+              "stable": true,
+              "winner": "baseline",
+              "orderConflict": null,
+              "scoreBaseline": 5,
+              "scoreCandidate": 4,
+              "scoreDelta": -1,
+              "passes": [
+                {
+                  "winner": "baseline",
+                  "scoreBaseline": 5,
+                  "scoreCandidate": 4,
+                  "evidenceBaseline": [
+                    "Y-p-7",
+                    "Y-p-9",
+                    "Y-p-10"
+                  ],
+                  "evidenceCandidate": [
+                    "X-p-7",
+                    "X-p-9",
+                    "X-p-10"
+                  ],
+                  "referenceEvidence": [
+                    "ref-mist-a-p-2",
+                    "ref-mist-a-p-4",
+                    "ref-mist-b-p-3",
+                    "ref-mist-b-p-4"
+                  ],
+                  "reason": "两版都保持短对话和潜台词。Y的“搬得挺干净”“海水？”更依赖现场物证传递判断，贴近参考中人物点到即止的说话方式；X让苏桥直接断言“刚留下的”，虽有物理依据，仍稍显主动解释。"
+                },
+                {
+                  "winner": "baseline",
+                  "scoreBaseline": 5,
+                  "scoreCandidate": 4,
+                  "evidenceBaseline": [
+                    "X-p-7",
+                    "X-p-8",
+                    "X-p-13"
+                  ],
+                  "evidenceCandidate": [
+                    "Y-p-7",
+                    "Y-p-9",
+                    "Y-p-10"
+                  ],
+                  "referenceEvidence": [
+                    "ref-mist-a-p-4",
+                    "ref-mist-a-p-5",
+                    "ref-mist-b-p-1",
+                    "ref-mist-b-p-2"
+                  ],
+                  "reason": "X延续了林夜少言、以观察代替追问的方式，也让苏桥用停留在门槛和收手入袋掩饰异常，潜台词更稳。Y中林夜直接追问“你怎么知道”，苏桥又立即给出知识性解释，人物之间的试探略显直白，但仍未越过设定边界。"
+                }
+              ]
+            },
+            "causalCoherence": {
+              "stable": true,
+              "winner": "candidate",
+              "orderConflict": null,
+              "scoreBaseline": 4,
+              "scoreCandidate": 5,
+              "scoreDelta": 1,
+              "passes": [
+                {
+                  "winner": "candidate",
+                  "scoreBaseline": 4,
+                  "scoreCandidate": 5,
+                  "evidenceBaseline": [
+                    "Y-p-4",
+                    "Y-p-6",
+                    "Y-p-13",
+                    "Y-p-14"
+                  ],
+                  "evidenceCandidate": [
+                    "X-p-3",
+                    "X-p-5",
+                    "X-p-11",
+                    "X-p-12"
+                  ],
+                  "referenceEvidence": [],
+                  "reason": "X从开锁、检查连续空盒、发现残留调档单到门外异响，线索与行动衔接完整。Y前段清楚，但苏桥听到走廊金属声后突然询问“别的门”，林夜随即锁定柜后墙缝，推断之间略缺可见的触发环节。"
+                },
+                {
+                  "winner": "candidate",
+                  "scoreBaseline": 4,
+                  "scoreCandidate": 5,
+                  "evidenceBaseline": [
+                    "X-p-11",
+                    "X-p-12",
+                    "X-p-13",
+                    "X-p-14"
+                  ],
+                  "evidenceCandidate": [
+                    "Y-p-11",
+                    "Y-p-12",
+                    "Y-p-13",
+                    "Y-p-14"
+                  ],
+                  "referenceEvidence": [],
+                  "reason": "Y从开锁、逐层确认卷宗被取走，到门外异响后熄灯戒备，动作因果连续。X由深蓝蜡跳到金属声，再由“别的门”转向柜后墙缝，苏桥为何立刻把异响理解为另一扇门缺少支点。"
+                }
+              ]
+            },
+            "knowledgeBoundary": {
+              "stable": false,
+              "winner": "abstain",
+              "orderConflict": {
+                "first": "tie",
+                "second": "baseline"
+              },
+              "scoreBaseline": 4.5,
+              "scoreCandidate": 4,
+              "scoreDelta": -0.5,
+              "passes": [
+                {
+                  "winner": "tie",
+                  "scoreBaseline": 4,
+                  "scoreCandidate": 4,
+                  "evidenceBaseline": [
+                    "Y-p-8",
+                    "Y-p-9",
+                    "Y-p-13"
+                  ],
+                  "evidenceCandidate": [
+                    "X-p-6",
+                    "X-p-7",
+                    "X-p-10"
+                  ],
+                  "referenceEvidence": [],
+                  "reason": "X中苏桥依据盐痕颜色判断新旧，略显熟练但仍可由现场观察得出，没有暴露她早知钥匙用途。Y让她停在门槛处试探性询问，也守住秘密；不过“这里还有别的门？”缺少明确观察依据，稍有超前感。两版均未触及失踪者最终去向。"
+                },
+                {
+                  "winner": "baseline",
+                  "scoreBaseline": 5,
+                  "scoreCandidate": 4,
+                  "evidenceBaseline": [
+                    "X-p-1",
+                    "X-p-8",
+                    "X-p-9",
+                    "X-p-10"
+                  ],
+                  "evidenceCandidate": [
+                    "Y-p-2",
+                    "Y-p-7",
+                    "Y-p-9",
+                    "Y-p-10"
+                  ],
+                  "referenceEvidence": [],
+                  "reason": "X让苏桥先问钥匙能否开门，并以疑问确认海水，完整维持她未掌握用途和现场结论的表象。Y没有明示她早知钥匙用途，但“刚留下的”判断过快，随后补充“旧的会发黄”，使她显得对盐痕状态异常熟悉，边界压力更大。"
+                }
+              ]
+            },
+            "styleAdherence": {
+              "stable": true,
+              "winner": "baseline",
+              "orderConflict": null,
+              "scoreBaseline": 5,
+              "scoreCandidate": 4,
+              "scoreDelta": -1,
+              "passes": [
+                {
+                  "winner": "baseline",
+                  "scoreBaseline": 5,
+                  "scoreCandidate": 4,
+                  "evidenceBaseline": [
+                    "Y-p-5",
+                    "Y-p-8",
+                    "Y-p-11"
+                  ],
+                  "evidenceCandidate": [
+                    "X-p-4",
+                    "X-p-5",
+                    "X-p-11"
+                  ],
+                  "referenceEvidence": [
+                    "ref-mist-a-p-1",
+                    "ref-mist-a-p-5",
+                    "ref-mist-b-p-0",
+                    "ref-mist-b-p-6"
+                  ],
+                  "reason": "Y更稳定地让空夹、盐粒、湿痕和蓝蜡承担信息，叙述克制，接近参考以螺帽、账册、断绳等物件推进的方式。X同样符合基调，但“文件被人按尺寸取走”等句直接替读者归纳，且调档单、铅笔痕、门外来人连续加码，略显密集。"
+                },
+                {
+                  "winner": "baseline",
+                  "scoreBaseline": 5,
+                  "scoreCandidate": 4,
+                  "evidenceBaseline": [
+                    "X-p-3",
+                    "X-p-5",
+                    "X-p-8",
+                    "X-p-14"
+                  ],
+                  "evidenceCandidate": [
+                    "Y-p-4",
+                    "Y-p-5",
+                    "Y-p-11",
+                    "Y-p-14"
+                  ],
+                  "referenceEvidence": [
+                    "ref-mist-a-p-0",
+                    "ref-mist-a-p-1",
+                    "ref-mist-a-p-6",
+                    "ref-mist-b-p-6"
+                  ],
+                  "reason": "X以门板、空夹、盐粒、湿痕和墙缝承担情绪，短句与留白接近参考的克制节奏。Y同样依靠物件和空间推进，但“文件被人按尺寸取走”属于叙述替人物归纳，且调档单、印章、铅笔痕连续追加线索，密度稍高于参考。"
+                }
+              ]
+            },
+            "sceneTransition": {
+              "stable": true,
+              "winner": "candidate",
+              "orderConflict": null,
+              "scoreBaseline": 4,
+              "scoreCandidate": 5,
+              "scoreDelta": 1,
+              "passes": [
+                {
+                  "winner": "candidate",
+                  "scoreBaseline": 4,
+                  "scoreCandidate": 5,
+                  "evidenceBaseline": [
+                    "Y-p-11",
+                    "Y-p-12",
+                    "Y-p-13",
+                    "Y-p-14"
+                  ],
+                  "evidenceCandidate": [
+                    "X-p-11",
+                    "X-p-12",
+                    "X-p-13",
+                    "X-p-14"
+                  ],
+                  "referenceEvidence": [],
+                  "reason": "X由检查最下层抽屉自然转入门外声响，再以关灯和来人停在门口完成场景转折，空间关系明确。Y也用金属声切换注意力，但从走廊声响跳到柜后墙缝稍显突兀。"
+                },
+                {
+                  "winner": "candidate",
+                  "scoreBaseline": 4,
+                  "scoreCandidate": 5,
+                  "evidenceBaseline": [
+                    "X-p-3",
+                    "X-p-4",
+                    "X-p-5",
+                    "X-p-12"
+                  ],
+                  "evidenceCandidate": [
+                    "Y-p-1",
+                    "Y-p-3",
+                    "Y-p-4",
+                    "Y-p-12",
+                    "Y-p-14"
+                  ],
+                  "referenceEvidence": [],
+                  "reason": "Y用门缝积水、开门涌出的霉味冷气和室内灯光完成由走廊到档案室的空间转换，末尾又以熄灯和脚步停门口自然切入威胁。X入室过渡清楚，但末尾异响到墙缝的空间指向较含混。"
+                }
+              ]
+            },
+            "proseNaturalness": {
+              "stable": true,
+              "winner": "baseline",
+              "orderConflict": null,
+              "scoreBaseline": 5,
+              "scoreCandidate": 4,
+              "scoreDelta": -1,
+              "passes": [
+                {
+                  "winner": "baseline",
+                  "scoreBaseline": 5,
+                  "scoreCandidate": 4,
+                  "evidenceBaseline": [
+                    "Y-p-3",
+                    "Y-p-5",
+                    "Y-p-8"
+                  ],
+                  "evidenceCandidate": [
+                    "X-p-1",
+                    "X-p-5",
+                    "X-p-11"
+                  ],
+                  "referenceEvidence": [
+                    "ref-mist-a-p-0",
+                    "ref-mist-a-p-6",
+                    "ref-mist-b-p-2"
+                  ],
+                  "reason": "Y的句子短而有触感，“空夹”“一粒发白的盐”“指腹很快泛白”等细节自然嵌入动作，接近参考的简洁节奏。X整体顺畅，但“白光贴着柜顶，照得一排排铁皮柜发青”及对档案取走方式的说明稍满，局部有设计痕迹。"
+                },
+                {
+                  "winner": "baseline",
+                  "scoreBaseline": 5,
+                  "scoreCandidate": 4,
+                  "evidenceBaseline": [
+                    "X-p-0",
+                    "X-p-5",
+                    "X-p-6",
+                    "X-p-8"
+                  ],
+                  "evidenceCandidate": [
+                    "Y-p-1",
+                    "Y-p-4",
+                    "Y-p-5",
+                    "Y-p-11"
+                  ],
+                  "referenceEvidence": [
+                    "ref-mist-a-p-1",
+                    "ref-mist-a-p-6",
+                    "ref-mist-b-p-0",
+                    "ref-mist-b-p-2"
+                  ],
+                  "reason": "X句式干净，空夹夹住一粒盐、湿痕拖到门边等细节具体而不抢戏，整体接近参考的自然观察。Y多数段落顺畅，但“底板留着几道灰印，文件被人按尺寸取走”从痕迹直接落到结论略硬，“印章的位置被水化开”也稍显书面加工。"
+                }
+              ]
+            },
+            "aiFlavor": {
+              "stable": true,
+              "winner": "baseline",
+              "orderConflict": null,
+              "scoreBaseline": 5,
+              "scoreCandidate": 4,
+              "scoreDelta": -1,
+              "passes": [
+                {
+                  "winner": "baseline",
+                  "scoreBaseline": 5,
+                  "scoreCandidate": 4,
+                  "evidenceBaseline": [
+                    "Y-p-5",
+                    "Y-p-6",
+                    "Y-p-11"
+                  ],
+                  "evidenceCandidate": [
+                    "X-p-5",
+                    "X-p-11",
+                    "X-p-14"
+                  ],
+                  "referenceEvidence": [
+                    "ref-mist-a-p-1",
+                    "ref-mist-a-p-6",
+                    "ref-mist-b-p-0"
+                  ],
+                  "reason": "两版都没有伪转折或空洞金句。Y主要呈示可触摸的残留物，不反复解释其意义，整体更像参考中的留白。X在短篇幅内依次放入灰印、盐痕、调档单、印章、铅笔痕和门外脚步，线索布置略显程序化，但尚未形成明显同义复述。"
+                },
+                {
+                  "winner": "baseline",
+                  "scoreBaseline": 5,
+                  "scoreCandidate": 4,
+                  "evidenceBaseline": [
+                    "X-p-5",
+                    "X-p-7",
+                    "X-p-11"
+                  ],
+                  "evidenceCandidate": [
+                    "Y-p-5",
+                    "Y-p-10",
+                    "Y-p-11"
+                  ],
+                  "referenceEvidence": [
+                    "ref-mist-a-p-5",
+                    "ref-mist-a-p-6",
+                    "ref-mist-b-p-2",
+                    "ref-mist-b-p-6"
+                  ],
+                  "reason": "X没有同义复述或总结性落点，线索多由物件状态自行显现，接近参考的留白。Y对“盒子很轻”“没有卷宗和登记卡”“文件被人按尺寸取走”连续解释同一缺失事实，又追加调档单、化开的印章和铅笔痕，略有线索堆叠与无信息确认。"
+                }
+              ]
+            },
+            "intensityControl": {
+              "stable": true,
+              "winner": "candidate",
+              "orderConflict": null,
+              "scoreBaseline": 4,
+              "scoreCandidate": 5,
+              "scoreDelta": 1,
+              "passes": [
+                {
+                  "winner": "candidate",
+                  "scoreBaseline": 4,
+                  "scoreCandidate": 5,
+                  "evidenceBaseline": [
+                    "Y-p-4",
+                    "Y-p-8",
+                    "Y-p-12",
+                    "Y-p-14"
+                  ],
+                  "evidenceCandidate": [
+                    "X-p-3",
+                    "X-p-5",
+                    "X-p-12",
+                    "X-p-14"
+                  ],
+                  "referenceEvidence": [
+                    "ref-mist-a-p-5",
+                    "ref-mist-a-p-6",
+                    "ref-mist-b-p-6"
+                  ],
+                  "reason": "X先以缓慢开门和逐层检查压低节奏，再由金属声、熄灯和脚步停在门口形成真实的外部威胁，张弛清楚，类似参考中脚步逼近门外的收束。Y的墙缝发现保留悬念，但危险升级较弱，结尾力度更多来自新谜面而非场面压力。"
+                },
+                {
+                  "winner": "candidate",
+                  "scoreBaseline": 4,
+                  "scoreCandidate": 5,
+                  "evidenceBaseline": [
+                    "X-p-5",
+                    "X-p-8",
+                    "X-p-12",
+                    "X-p-14"
+                  ],
+                  "evidenceCandidate": [
+                    "Y-p-4",
+                    "Y-p-5",
+                    "Y-p-12",
+                    "Y-p-13",
+                    "Y-p-14"
+                  ],
+                  "referenceEvidence": [
+                    "ref-mist-a-p-6",
+                    "ref-mist-b-p-6"
+                  ],
+                  "reason": "Y先以逐层检查形成平缓段落，再用金属声、熄灯、攥钥匙和脚步停门口集中收紧，高潮明确且动作服务于现实威胁。X也有由发现空柜到异响的升压，但结尾转向墙缝，把外部威胁分散成新谜面，力度稍弱。"
+                }
+              ]
+            }
+          },
+          "orderStability": {
+            "stableDimensions": 7,
+            "totalDimensions": 8,
+            "rate": 0.875
+          },
+          "hardViolations": {
+            "baseline": [],
+            "candidate": []
+          },
+          "hardViolationOrderAgreement": {
+            "baseline": true,
+            "candidate": true
+          }
+        }
+      },
+      "notButDifferential": {
+        "detector": "src/services/qualityReview.mjs#findDeterministicNotButPatterns",
+        "policy": "candidate 的高置信命中数不得高于 baseline；不要求全局为零",
+        "baselineHighConfidenceCount": 0,
+        "candidateHighConfidenceCount": 0,
+        "deltaCandidateMinusBaseline": 0,
+        "candidateExcessCount": 0,
+        "passed": true
+      },
+      "structuralDifferential": {
+        "detector": "src/services/qualityReview.mjs#detectCrossParagraphQualityAnnotations",
+        "policy": "candidate 的高置信机械结构命中数不得高于 baseline",
+        "baselineHighConfidenceCount": 0,
+        "candidateHighConfidenceCount": 0,
+        "deltaCandidateMinusBaseline": 0,
+        "passed": true
+      },
+      "resolved": {
+        "dimensions": {
+          "characterVoice": {
+            "result": "baseline",
+            "winner": "baseline",
+            "candidateConsensus": false,
+            "credibleBaselineVotes": [
+              "sol"
+            ],
+            "votes": {
+              "sol": {
+                "model": "gpt-5.6-sol",
+                "stable": true,
+                "winner": "baseline",
+                "scoreDelta": -1
+              }
+            },
+            "scoreDelta": -1
+          },
+          "causalCoherence": {
+            "result": "candidate",
+            "winner": "candidate",
+            "candidateConsensus": true,
+            "credibleBaselineVotes": [],
+            "votes": {
+              "sol": {
+                "model": "gpt-5.6-sol",
+                "stable": true,
+                "winner": "candidate",
+                "scoreDelta": 1
+              }
+            },
+            "scoreDelta": 1
+          },
+          "knowledgeBoundary": {
+            "result": "abstain",
+            "winner": "inconclusive",
+            "candidateConsensus": false,
+            "credibleBaselineVotes": [],
+            "votes": {
+              "sol": {
+                "model": "gpt-5.6-sol",
+                "stable": false,
+                "winner": "abstain",
+                "scoreDelta": -0.5
+              }
+            },
+            "scoreDelta": -0.5
+          },
+          "styleAdherence": {
+            "result": "baseline",
+            "winner": "baseline",
+            "candidateConsensus": false,
+            "credibleBaselineVotes": [
+              "sol"
+            ],
+            "votes": {
+              "sol": {
+                "model": "gpt-5.6-sol",
+                "stable": true,
+                "winner": "baseline",
+                "scoreDelta": -1
+              }
+            },
+            "scoreDelta": -1
+          },
+          "sceneTransition": {
+            "result": "candidate",
+            "winner": "candidate",
+            "candidateConsensus": true,
+            "credibleBaselineVotes": [],
+            "votes": {
+              "sol": {
+                "model": "gpt-5.6-sol",
+                "stable": true,
+                "winner": "candidate",
+                "scoreDelta": 1
+              }
+            },
+            "scoreDelta": 1
+          },
+          "proseNaturalness": {
+            "result": "baseline",
+            "winner": "baseline",
+            "candidateConsensus": false,
+            "credibleBaselineVotes": [
+              "sol"
+            ],
+            "votes": {
+              "sol": {
+                "model": "gpt-5.6-sol",
+                "stable": true,
+                "winner": "baseline",
+                "scoreDelta": -1
+              }
+            },
+            "scoreDelta": -1
+          },
+          "aiFlavor": {
+            "result": "baseline",
+            "winner": "baseline",
+            "candidateConsensus": false,
+            "credibleBaselineVotes": [
+              "sol"
+            ],
+            "votes": {
+              "sol": {
+                "model": "gpt-5.6-sol",
+                "stable": true,
+                "winner": "baseline",
+                "scoreDelta": -1
+              }
+            },
+            "scoreDelta": -1
+          },
+          "intensityControl": {
+            "result": "candidate",
+            "winner": "candidate",
+            "candidateConsensus": true,
+            "credibleBaselineVotes": [],
+            "votes": {
+              "sol": {
+                "model": "gpt-5.6-sol",
+                "stable": true,
+                "winner": "candidate",
+                "scoreDelta": 1
+              }
+            },
+            "scoreDelta": 1
+          }
+        },
+        "hardViolations": {
+          "baseline": [],
+          "candidate": []
+        }
+      },
+      "iteration": 1,
+      "fixture": {
+        "id": "mist-create",
+        "synthetic": true,
+        "styleBrief": "克制的近距离第三人称。动作、物件和空间承担情绪，对话短而有潜台词；叙述不替人物解释结论。",
+        "authorReferences": [
+          {
+            "id": "mist-a",
+            "paragraphs": [
+              {
+                "id": "ref-mist-a-p-0",
+                "text": "雾从防波堤外翻进来，先吃掉吊车的上半截，再把泊位灯一盏盏磨钝。林夜沿着旧货栈的墙走，右手插在外套口袋里，指尖隔着布料抵住那只铁盒。盒角硌着伤口，他没有换手。"
+              },
+              {
+                "id": "ref-mist-a-p-1",
+                "text": "售票窗后没有人。玻璃上贴着十二年前的停航告示，纸边卷起，盐霜钻进胶水留下的裂纹。苏桥站在门外看了几秒，抬手擦去窗上一小块水汽。里面只有一张倒扣的木椅。"
+              },
+              {
+                "id": "ref-mist-a-p-2",
+                "text": "“钟声是几点？”林夜问。"
+              },
+              {
+                "id": "ref-mist-a-p-3",
+                "text": "“十一点四十。”"
+              },
+              {
+                "id": "ref-mist-a-p-4",
+                "text": "“你记得很清楚。”"
+              },
+              {
+                "id": "ref-mist-a-p-5",
+                "text": "苏桥把手收回来，湿痕很快又被雾盖住。“港务志上写过。”她说完便去推侧门，没再看他。门轴只动了半寸，里面有什么东西抵着。"
+              },
+              {
+                "id": "ref-mist-a-p-6",
+                "text": "林夜蹲下，从缝里摸到一截断绳。绳子是新割的，麻丝还没有吸饱水。他把断口托在掌心，苏桥的鞋尖停在旁边，没有催。远处有船鸣了一声，声音绕过空仓库，显得比实际更近。"
+              }
+            ]
+          },
+          {
+            "id": "mist-b",
+            "paragraphs": [
+              {
+                "id": "ref-mist-b-p-0",
+                "text": "修船坞的账房只剩半扇门。林夜侧身进去，先闻到机油，再闻到潮木头发酸的气味。账册摊在铁柜上，边角压着一枚生锈的螺帽，像是有人刚离开，还打算回来。"
+              },
+              {
+                "id": "ref-mist-b-p-1",
+                "text": "苏桥翻到白礁线那一页，拇指在日期下面停了一下。“空的。”"
+              },
+              {
+                "id": "ref-mist-b-p-2",
+                "text": "林夜看见她压住的那一行。墨迹比别处浅，纸面却有被笔尖划过的凹痕。他没有点破，只把窗帘拉开一条缝。外面雨斜着打进坞口，北堤的灯已经灭了。"
+              },
+              {
+                "id": "ref-mist-b-p-3",
+                "text": "“带走？”苏桥问。"
+              },
+              {
+                "id": "ref-mist-b-p-4",
+                "text": "“撕一页，会被看出来。”"
+              },
+              {
+                "id": "ref-mist-b-p-5",
+                "text": "“整本更显眼。”"
+              },
+              {
+                "id": "ref-mist-b-p-6",
+                "text": "林夜合上账册，螺帽滚了两圈，被他用指节按住。两人都听见廊下的脚步。苏桥退到柜后，他留在原地，把沾着雨的袖口搭上账册。脚步到了门外，没有立刻进来。"
+              }
+            ]
+          }
+        ],
+        "task": {
+          "mode": "create",
+          "request": "续写档案室开门后的场景：蓝铜钥匙确实打开门，两人发现白礁线档案柜被提前清空，只剩潮湿盐痕；苏桥仍不能暴露自己早知钥匙用途。",
+          "targetChars": [
+            500,
+            1000
+          ]
+        },
+        "categories": [
+          "flat-transition",
+          "aphorism-overuse"
+        ],
+        "constraints": {
+          "pov": "林夜的近距离第三人称",
+          "mustInclude": [
+            "蓝铜钥匙打开档案室",
+            "档案柜已被清空"
+          ],
+          "mustNotReveal": [
+            "白礁线失踪者的最终去向",
+            "苏桥已经查明钥匙用途"
+          ]
+        }
+      }
+    }
+  ],
+  "acceptance": {
+    "status": "exploratory",
+    "passed": null,
+    "formalEligible": false,
+    "reason": "smoke 只验证调用与评分契约，不得宣称正式文笔提升",
+    "thresholds": {
+      "minimumCases": 8,
+      "minimumRepeat": 3,
+      "minimumPairs": 24,
+      "independentJudgeRequired": true
+    },
+    "judgeIndependence": {
+      "requiredForFormal": true,
+      "roleModels": {
+        "writer": "gpt-5.6-terra",
+        "auxiliary": "gpt-5.6-luna",
+        "judge": "gpt-5.6-sol"
+      },
+      "independent": true
+    },
+    "summary": {
+      "totalPairs": 1,
+      "validPairs": 1,
+      "invalidPairs": 0,
+      "baselineDeterministicFailures": 1,
+      "candidateDeterministicFailures": 1,
+      "candidateHardViolationPairs": 0,
+      "baselineHardViolationPairs": 0,
+      "notButDifferential": {
+        "detector": "src/services/qualityReview.mjs#findDeterministicNotButPatterns",
+        "policy": "candidate 的高置信命中数不得高于 baseline；不要求全局为零",
+        "baselineHighConfidenceCount": 0,
+        "candidateHighConfidenceCount": 0,
+        "deltaCandidateMinusBaseline": 0,
+        "missingPairs": 0,
+        "failedPairs": 0,
+        "passedPairs": 1
+      },
+      "structuralDifferential": {
+        "detector": "src/services/qualityReview.mjs#detectCrossParagraphQualityAnnotations",
+        "policy": "candidate 的高置信机械结构命中数不得高于 baseline",
+        "baselineHighConfidenceCount": 0,
+        "candidateHighConfidenceCount": 0,
+        "deltaCandidateMinusBaseline": 0,
+        "missingPairs": 0,
+        "failedPairs": 0,
+        "passedPairs": 1
+      },
+      "judgeReliability": {
+        "model": "gpt-5.6-sol",
+        "stableDimensions": 7,
+        "attemptedDimensions": 8,
+        "overallRate": 0.875,
+        "byDimension": {
+          "characterVoice": {
+            "stable": 1,
+            "attempted": 1,
+            "rate": 1
+          },
+          "causalCoherence": {
+            "stable": 1,
+            "attempted": 1,
+            "rate": 1
+          },
+          "knowledgeBoundary": {
+            "stable": 0,
+            "attempted": 1,
+            "rate": 0
+          },
+          "styleAdherence": {
+            "stable": 1,
+            "attempted": 1,
+            "rate": 1
+          },
+          "sceneTransition": {
+            "stable": 1,
+            "attempted": 1,
+            "rate": 1
+          },
+          "proseNaturalness": {
+            "stable": 1,
+            "attempted": 1,
+            "rate": 1
+          },
+          "aiFlavor": {
+            "stable": 1,
+            "attempted": 1,
+            "rate": 1
+          },
+          "intensityControl": {
+            "stable": 1,
+            "attempted": 1,
+            "rate": 1
+          }
+        }
+      },
+      "dimensions": {
+        "characterVoice": {
+          "count": 1,
+          "adjudicatedCount": 1,
+          "effective": 1,
+          "wins": 0,
+          "losses": 1,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 0,
+          "preferenceScore": 0,
+          "winRate": 0,
+          "lossRate": 1,
+          "meanScoreDelta": -1
+        },
+        "causalCoherence": {
+          "count": 1,
+          "adjudicatedCount": 1,
+          "effective": 1,
+          "wins": 1,
+          "losses": 0,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 0,
+          "preferenceScore": 1,
+          "winRate": 1,
+          "lossRate": 0,
+          "meanScoreDelta": 1
+        },
+        "knowledgeBoundary": {
+          "count": 1,
+          "adjudicatedCount": 1,
+          "effective": 0,
+          "wins": 0,
+          "losses": 0,
+          "ties": 0,
+          "abstentions": 1,
+          "inconclusive": 1,
+          "preferenceScore": null,
+          "winRate": null,
+          "lossRate": null,
+          "meanScoreDelta": -0.5
+        },
+        "styleAdherence": {
+          "count": 1,
+          "adjudicatedCount": 1,
+          "effective": 1,
+          "wins": 0,
+          "losses": 1,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 0,
+          "preferenceScore": 0,
+          "winRate": 0,
+          "lossRate": 1,
+          "meanScoreDelta": -1
+        },
+        "sceneTransition": {
+          "count": 1,
+          "adjudicatedCount": 1,
+          "effective": 1,
+          "wins": 1,
+          "losses": 0,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 0,
+          "preferenceScore": 1,
+          "winRate": 1,
+          "lossRate": 0,
+          "meanScoreDelta": 1
+        },
+        "proseNaturalness": {
+          "count": 1,
+          "adjudicatedCount": 1,
+          "effective": 1,
+          "wins": 0,
+          "losses": 1,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 0,
+          "preferenceScore": 0,
+          "winRate": 0,
+          "lossRate": 1,
+          "meanScoreDelta": -1
+        },
+        "aiFlavor": {
+          "count": 1,
+          "adjudicatedCount": 1,
+          "effective": 1,
+          "wins": 0,
+          "losses": 1,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 0,
+          "preferenceScore": 0,
+          "winRate": 0,
+          "lossRate": 1,
+          "meanScoreDelta": -1
+        },
+        "intensityControl": {
+          "count": 1,
+          "adjudicatedCount": 1,
+          "effective": 1,
+          "wins": 1,
+          "losses": 0,
+          "ties": 0,
+          "abstentions": 0,
+          "inconclusive": 0,
+          "preferenceScore": 1,
+          "winRate": 1,
+          "lossRate": 0,
+          "meanScoreDelta": 1
+        }
+      }
+    }
+  }
+}

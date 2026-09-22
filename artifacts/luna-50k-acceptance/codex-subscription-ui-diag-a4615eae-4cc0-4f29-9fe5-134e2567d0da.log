@@ -1,0 +1,6 @@
+TEST_PASS codex_subscription_ui_open checks=2
+TEST_FAIL codex_subscription_ui: Error: gpt-5.6-luna medium was not selected and activated
+    at assert (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/codex-subscription-ui-e2e.js:12:58)
+    at Object.runCodexSubscriptionUiE2E (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/codex-subscription-ui-e2e.js:28:3)
+    at async createWindow (/Users/potablewater/Desktop/MultiAgentNovelAssistant/main.js:99:22)
+    at async /Users/potablewater/Desktop/MultiAgentNovelAssistant/main.js:149:3

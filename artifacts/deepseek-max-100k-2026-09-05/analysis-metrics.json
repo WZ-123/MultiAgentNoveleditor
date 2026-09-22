@@ -1,0 +1,696 @@
+{
+  "generatedAt": "2026-09-05T05:18:06.482Z",
+  "modelEfforts": [
+    "deepseek-v4-flash:max",
+    "deepseek-v4-flash:xhigh"
+  ],
+  "phases": [
+    {
+      "phase": "baseline",
+      "requests": 59,
+      "usage": {
+        "input": 2367884,
+        "cached": 2141824,
+        "output": 333038,
+        "reasoning": 270166,
+        "total": 2700922,
+        "requestsWithoutUsage": 20
+      },
+      "tasks": 10
+    },
+    {
+      "phase": "remediated",
+      "requests": 42,
+      "usage": {
+        "input": 7181649,
+        "cached": 7022848,
+        "output": 203928,
+        "reasoning": 170066,
+        "total": 7385577,
+        "requestsWithoutUsage": 0
+      },
+      "tasks": 4
+    },
+    {
+      "phase": "remediated-v2",
+      "requests": 59,
+      "usage": {
+        "input": 8959670,
+        "cached": 8760832,
+        "output": 187971,
+        "reasoning": 150883,
+        "total": 9147641,
+        "requestsWithoutUsage": 2
+      },
+      "tasks": 4
+    }
+  ],
+  "chapters": [
+    {
+      "file": "chapter-001.md",
+      "title": "第1章｜归站",
+      "fullCjk": 3803,
+      "bodyCjk": 3787,
+      "sha256": "0f791aad331efce728bc46aa9cf3218018bcb2ffc615f4de8a0a9f645dd3b990"
+    },
+    {
+      "file": "chapter-002.md",
+      "title": "第2章｜借阅",
+      "fullCjk": 3646,
+      "bodyCjk": 3628,
+      "sha256": "3e97223d112843ba343600bd60493d6a2766089b3ce0d04e82bb018b8e0b13fe"
+    },
+    {
+      "file": "chapter-003.md",
+      "title": "第3章｜两份名单",
+      "fullCjk": 3736,
+      "bodyCjk": 3720,
+      "sha256": "63d529c2430ecb15cce7e5b9de94ff0f8615100d0def9c8f8da0840203f20b48"
+    },
+    {
+      "file": "chapter-004.md",
+      "title": "第4章｜雨前会",
+      "fullCjk": 3540,
+      "bodyCjk": 3526,
+      "sha256": "919c9109a3958783a958275aa72f9b7db12fb905535ad2b8b969cc2d46696e42"
+    },
+    {
+      "file": "chapter-005.md",
+      "title": "第5章｜备用机组",
+      "fullCjk": 3519,
+      "bodyCjk": 3503,
+      "sha256": "ff58c665aa2c1d71d1db7581f165569aaf6873dbb488401e6f29693171aa7e79"
+    },
+    {
+      "file": "chapter-006.md",
+      "title": "第6章｜喊话的人",
+      "fullCjk": 3726,
+      "bodyCjk": 3710,
+      "sha256": "b2b5f9f404b04a8b80a4c4753c05ef4fd1f254bf82767ed85cb7fe671ce5d5a2"
+    },
+    {
+      "file": "chapter-007.md",
+      "title": "第7章｜逆光照片",
+      "fullCjk": 3565,
+      "bodyCjk": 3549,
+      "sha256": "bb7bf85d3eda26913af128af0464a1e30104d7db471787a1abe2d0f3a565c25b"
+    },
+    {
+      "file": "chapter-008.md",
+      "title": "第8章｜旧曲线",
+      "fullCjk": 3618,
+      "bodyCjk": 3605,
+      "sha256": "6fbda862f6041cdd70e96c2522d7ed1df0936613d808e858d7cfbeef1afc631e"
+    },
+    {
+      "file": "chapter-009.md",
+      "title": "第9章｜老祝留的东西",
+      "fullCjk": 3531,
+      "bodyCjk": 3510,
+      "sha256": "61614e6a90d2c951d4cb6039a7495875dd46dc2fab7c11020a56f90b9daf1815"
+    },
+    {
+      "file": "chapter-010.md",
+      "title": "第10章｜暂缓",
+      "fullCjk": 2614,
+      "bodyCjk": 2598,
+      "sha256": "2d3c70f565505d6f18a454e9900a4fb828390e61ba3a7cbd73f4a138b0fa44d2"
+    }
+  ],
+  "fullCjk": 35298,
+  "bodyCjk": 35136,
+  "repeatedLongParagraphs": [],
+  "patchFailures": [
+    {
+      "at": "2026-09-05T03:46:41.943Z",
+      "commandId": "characters-json-retry-02",
+      "error": "apply_patch verification failed: Failed to find expected lines in /var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-codex-runtime/86788c60e2a8edc9/novel-workspaces/10a2b7ccfd5a439b04cd/chapters/chapter-001.md:\n“对。”\n\n他沉默两秒，拎起帆布工具包往肩上一甩，先她一步下了车。车门在他身后咣地合拢，她隔着玻璃看见他在站台上站定，回头望了一眼，才沿着老街道往镇里走。深蓝工装，步子很大，像要把什么东西甩在身后。"
+    },
+    {
+      "at": "2026-09-05T03:48:09.283Z",
+      "commandId": "characters-json-retry-02",
+      "error": "apply_patch verification failed: Failed to find expected lines in /var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-codex-runtime/86788c60e2a8edc9/novel-workspaces/10a2b7ccfd5a439b04cd/chapters/chapter-001.md:\n他沉默两秒，拎起帆布工具包往肩上一甩，先她一步下了车。车门在他身后咣地合拢，她隔着玻璃看见他在站台上站定，回头望了一眼，才沿着老街道往镇里走。深蓝工装，步子很大，像要把什么东西甩在身后。"
+    },
+    {
+      "at": "2026-09-05T04:27:24.732Z",
+      "commandId": "chapter-002-remediated",
+      "error": "apply_patch verification failed: Failed to find expected lines in /var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-codex-runtime/86788c60e2a8edc9/novel-workspaces/10a2b7ccfd5a439b04cd/chapters/chapter-002.md:\n房间不大，靠墙立着一排铁皮档案柜，漆成深绿色，有几处碰掉了漆，露出下面锈成褐色的底子。窗下是一张老式办公桌，桌面上摊着登记簿，压着一支钢笔。桌后坐着个女人，四十多岁，白衬衫外套着深蓝袖套，头发用夹子别着，露出鬓角几根白发。她正低头写字，没有抬头。"
+    },
+    {
+      "at": "2026-09-05T04:33:52.012Z",
+      "commandId": "chapters-003-005-batch",
+      "error": "apply_patch verification failed: Failed to find expected lines in /var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-codex-runtime/86788c60e2a8edc9/novel-workspaces/10a2b7ccfd5a439b04cd/chapters/chapter-003.md:\n她只是把这两行字留着，没有划掉。"
+    },
+    {
+      "at": "2026-09-05T04:36:09.206Z",
+      "commandId": "chapters-003-005-batch",
+      "error": "apply_patch verification failed: Failed to find expected lines in /var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-codex-runtime/86788c60e2a8edc9/novel-workspaces/10a2b7ccfd5a439b04cd/chapters/chapter-004.md:\n江照站在原地，看着他消失在楼梯口，忽然觉得后背有点发凉。那句话没有什么不对，每一个字都挑不出毛病。可她就是觉得冷。"
+    },
+    {
+      "at": "2026-09-05T04:48:37.325Z",
+      "commandId": "chapter-002-completion-v2",
+      "error": "apply_patch verification failed: Failed to find expected lines in /var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-codex-runtime/86788c60e2a8edc9/novel-workspaces/10a2b7ccfd5a439b04cd/chapters/chapter-002.md:\n目录下面，压着厚厚一叠材料。\n\n“可以复印吗？”她问。"
+    },
+    {
+      "at": "2026-09-05T04:48:50.779Z",
+      "commandId": "chapter-002-completion-v2",
+      "error": "apply_patch verification failed: Failed to find expected lines in /var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-codex-runtime/86788c60e2a8edc9/novel-workspaces/10a2b7ccfd5a439b04cd/chapters/chapter-002.md:\n目录下面，压着厚厚一叠材料。"
+    },
+    {
+      "at": "2026-09-05T04:49:07.893Z",
+      "commandId": "chapter-002-completion-v2",
+      "error": "apply_patch verification failed: Failed to find expected lines in /var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-codex-runtime/86788c60e2a8edc9/novel-workspaces/10a2b7ccfd5a439b04cd/chapters/chapter-002.md:\n她把它拉到面前，翻开盒盖。最上面是一页“卷内文件目录”，钢笔字，一行一行列着卷宗内容：调度日志（誊本）、闸门启闭记录、库水位观测记录、泄洪流量表。目录下面，压着厚厚一叠材料。"
+    },
+    {
+      "at": "2026-09-05T04:49:55.382Z",
+      "commandId": "chapter-002-completion-v2",
+      "error": "apply_patch verification failed: Failed to find expected lines in /var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-codex-runtime/86788c60e2a8edc9/novel-workspaces/10a2b7ccfd5a439b04cd/chapters/chapter-002.md:\n她把它拉到面前，翻开盒盖。最上面是一页“卷内文件目录”，钢笔字，一行一行列着卷宗内容：调度日志（誊本）、闸门启闭记录、库水位观测记录、泄洪流量表。目录下面，压着厚厚一叠材料。"
+    },
+    {
+      "at": "2026-09-05T05:03:20.130Z",
+      "commandId": "chapters-006-008-v2",
+      "error": "apply_patch verification failed: Failed to find expected lines in /var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-codex-runtime/86788c60e2a8edc9/novel-workspaces/10a2b7ccfd5a439b04cd/chapters/chapter-008.md:\n江照捏着验收单，知道这个人把话撂在了她面前：电瓶是换过了，可这条镇子的“保命键”，还悬在一根违规的线上。"
+    },
+    {
+      "at": "2026-09-05T05:12:58.964Z",
+      "commandId": "chapters-009-010-v2",
+      "error": "apply_patch verification failed: Failed to find expected lines in /var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-codex-runtime/86788c60e2a8edc9/novel-workspaces/10a2b7ccfd5a439b04cd/chapters/chapter-010.md:\n县防指的电令很清楚：按当前入流，预泄今日必须启动，具体时刻由县里按水情倒排，另行下达。秦镇长把电令念了一遍，放下纸，看向屋里的人：“都听见了。说说，怎么放。”"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "setup-master-world-style",
+      "phase": "baseline",
+      "status": "completed",
+      "durationMs": 700983,
+      "error": "",
+      "cjkGrowth": 0,
+      "usage": {
+        "input": 185222,
+        "cached": 150784,
+        "output": 77279,
+        "reasoning": 63889,
+        "total": 262501,
+        "requestsWithoutUsage": 0
+      },
+      "toolCount": 4,
+      "toolFailures": 0,
+      "patchVerificationFailures": 0,
+      "readCount": 3,
+      "uniqueReads": [
+        "outline:master",
+        "world:lore",
+        "style:memory"
+      ],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 1,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 8944
+    },
+    {
+      "id": "setup-nine-characters",
+      "phase": "baseline",
+      "status": "completed",
+      "durationMs": 213880,
+      "error": "",
+      "cjkGrowth": 0,
+      "usage": {
+        "input": 275537,
+        "cached": 270592,
+        "output": 21481,
+        "reasoning": 10264,
+        "total": 297018,
+        "requestsWithoutUsage": 0
+      },
+      "toolCount": 1,
+      "toolFailures": 0,
+      "patchVerificationFailures": 0,
+      "readCount": 0,
+      "uniqueReads": [],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 0,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 4305
+    },
+    {
+      "id": "characters-json-recovery",
+      "phase": "baseline",
+      "status": "failed",
+      "durationMs": 299237,
+      "error": "unexpected status 502 Bad Gateway: fetch failed, url: http://127.0.0.1:63692/responses",
+      "cjkGrowth": 0,
+      "usage": {
+        "input": 14224,
+        "cached": 7936,
+        "output": 3240,
+        "reasoning": 2656,
+        "total": 17464,
+        "requestsWithoutUsage": 3
+      },
+      "toolCount": 10,
+      "toolFailures": 1,
+      "patchVerificationFailures": 0,
+      "readCount": 8,
+      "uniqueReads": [
+        "novel:meta",
+        "outline:hierarchy",
+        "outline:nodes",
+        "world:places",
+        "timeline:all",
+        "outline:master",
+        "world:lore",
+        "style:memory"
+      ],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 0,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": null
+    },
+    {
+      "id": "act-1-roleplay",
+      "phase": "baseline",
+      "status": "failed",
+      "durationMs": 1113,
+      "error": "unexpected status 502 Bad Gateway: fetch failed, url: http://127.0.0.1:63692/responses",
+      "cjkGrowth": 0,
+      "usage": {
+        "input": 0,
+        "cached": 0,
+        "output": 0,
+        "reasoning": 0,
+        "total": 0,
+        "requestsWithoutUsage": 4
+      },
+      "toolCount": 0,
+      "toolFailures": 0,
+      "patchVerificationFailures": 0,
+      "readCount": 0,
+      "uniqueReads": [],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 0,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": null
+    },
+    {
+      "id": "chapter-001-initial",
+      "phase": "baseline",
+      "status": "failed",
+      "durationMs": 1115,
+      "error": "unexpected status 502 Bad Gateway: fetch failed, url: http://127.0.0.1:63692/responses",
+      "cjkGrowth": 0,
+      "usage": {
+        "input": 0,
+        "cached": 0,
+        "output": 0,
+        "reasoning": 0,
+        "total": 0,
+        "requestsWithoutUsage": 4
+      },
+      "toolCount": 0,
+      "toolFailures": 0,
+      "patchVerificationFailures": 0,
+      "readCount": 0,
+      "uniqueReads": [],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 0,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": null
+    },
+    {
+      "id": "chapter-002-initial",
+      "phase": "baseline",
+      "status": "failed",
+      "durationMs": 1114,
+      "error": "unexpected status 502 Bad Gateway: fetch failed, url: http://127.0.0.1:63692/responses",
+      "cjkGrowth": 0,
+      "usage": {
+        "input": 0,
+        "cached": 0,
+        "output": 0,
+        "reasoning": 0,
+        "total": 0,
+        "requestsWithoutUsage": 4
+      },
+      "toolCount": 0,
+      "toolFailures": 0,
+      "patchVerificationFailures": 0,
+      "readCount": 0,
+      "uniqueReads": [],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 0,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": null
+    },
+    {
+      "id": "chapter-003-initial",
+      "phase": "baseline",
+      "status": "failed",
+      "durationMs": 1115,
+      "error": "unexpected status 502 Bad Gateway: fetch failed, url: http://127.0.0.1:63692/responses",
+      "cjkGrowth": 0,
+      "usage": {
+        "input": 0,
+        "cached": 0,
+        "output": 0,
+        "reasoning": 0,
+        "total": 0,
+        "requestsWithoutUsage": 4
+      },
+      "toolCount": 0,
+      "toolFailures": 0,
+      "patchVerificationFailures": 0,
+      "readCount": 0,
+      "uniqueReads": [],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 0,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": null
+    },
+    {
+      "id": "characters-json-retry-02",
+      "phase": "baseline",
+      "status": "interrupted-at-observation-limit",
+      "durationMs": 900378,
+      "error": "",
+      "cjkGrowth": 0,
+      "usage": {
+        "input": 982126,
+        "cached": 924160,
+        "output": 98064,
+        "reasoning": 75987,
+        "total": 1080190,
+        "requestsWithoutUsage": 0
+      },
+      "toolCount": 5,
+      "toolFailures": 3,
+      "patchVerificationFailures": 2,
+      "readCount": 3,
+      "uniqueReads": [
+        "chapter:chapter-001",
+        "chapter:chapter-002",
+        "chapter:chapter-003"
+      ],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 5,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 457282
+    },
+    {
+      "id": "characters-fresh-03",
+      "phase": "baseline",
+      "status": "failed",
+      "durationMs": 89388,
+      "error": "character:chengmo 的 character.id 必须与 resourceRef 一致",
+      "cjkGrowth": 0,
+      "usage": {
+        "input": 56118,
+        "cached": 28416,
+        "output": 11790,
+        "reasoning": 7726,
+        "total": 67908,
+        "requestsWithoutUsage": 0
+      },
+      "toolCount": 5,
+      "toolFailures": 0,
+      "patchVerificationFailures": 0,
+      "readCount": 3,
+      "uniqueReads": [
+        "outline:master",
+        "world:lore",
+        "outline:hierarchy"
+      ],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 1,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 9368
+    },
+    {
+      "id": "chapter-001-fresh-03",
+      "phase": "baseline",
+      "status": "failed",
+      "durationMs": 1011147,
+      "error": "Codex App Server exited (code=null, signal=SIGINT)",
+      "cjkGrowth": 0,
+      "usage": {
+        "input": 843327,
+        "cached": 755712,
+        "output": 121026,
+        "reasoning": 109559,
+        "total": 964353,
+        "requestsWithoutUsage": 1
+      },
+      "toolCount": 5,
+      "toolFailures": 1,
+      "patchVerificationFailures": 0,
+      "readCount": 2,
+      "uniqueReads": [
+        "style:memory",
+        "chapter:chapter-001"
+      ],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 8,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 956420
+    },
+    {
+      "id": "characters-schema-recovery-04",
+      "phase": "remediated",
+      "status": "completed",
+      "durationMs": 340658,
+      "error": "",
+      "cjkGrowth": 0,
+      "usage": {
+        "input": 100970,
+        "cached": 29440,
+        "output": 54751,
+        "reasoning": 49889,
+        "total": 155721,
+        "requestsWithoutUsage": 0
+      },
+      "toolCount": 5,
+      "toolFailures": 1,
+      "patchVerificationFailures": 0,
+      "readCount": 4,
+      "uniqueReads": [
+        "outline:master",
+        "world:lore",
+        "outline:nodes",
+        "world:places"
+      ],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 1,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 4955
+    },
+    {
+      "id": "chapter-001-remediated-04",
+      "phase": "remediated",
+      "status": "completed",
+      "durationMs": 189507,
+      "error": "",
+      "cjkGrowth": 3803,
+      "usage": {
+        "input": 338772,
+        "cached": 313856,
+        "output": 19951,
+        "reasoning": 16205,
+        "total": 358723,
+        "requestsWithoutUsage": 0
+      },
+      "toolCount": 3,
+      "toolFailures": 0,
+      "patchVerificationFailures": 0,
+      "readCount": 2,
+      "uniqueReads": [
+        "style:memory",
+        "chapter:chapter-001.md"
+      ],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 1,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 4108
+    },
+    {
+      "id": "chapter-002-remediated",
+      "phase": "remediated",
+      "status": "failed",
+      "durationMs": 456002,
+      "error": "deleting an existing chapter requires explicit confirmation",
+      "cjkGrowth": 2878,
+      "usage": {
+        "input": 656986,
+        "cached": 626304,
+        "output": 56259,
+        "reasoning": 46906,
+        "total": 713245,
+        "requestsWithoutUsage": 0
+      },
+      "toolCount": 1,
+      "toolFailures": 0,
+      "patchVerificationFailures": 1,
+      "readCount": 1,
+      "uniqueReads": [
+        "chapter:chapter-002.md"
+      ],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 1,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 186823
+    },
+    {
+      "id": "chapters-003-005-batch",
+      "phase": "remediated",
+      "status": "completed",
+      "durationMs": 676807,
+      "error": "",
+      "cjkGrowth": 10795,
+      "usage": {
+        "input": 6084921,
+        "cached": 6053248,
+        "output": 72967,
+        "reasoning": 57066,
+        "total": 6157888,
+        "requestsWithoutUsage": 0
+      },
+      "toolCount": 17,
+      "toolFailures": 0,
+      "patchVerificationFailures": 2,
+      "readCount": 16,
+      "uniqueReads": [
+        "chapter:chapter-001.md",
+        "chapter:chapter-002.md",
+        "chapter:chapter-003.md",
+        "chapter:chapter-004.md",
+        "chapter:chapter-005.md"
+      ],
+      "repeatedReadCount": 11,
+      "nativeCompletedPatches": 11,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 385303
+    },
+    {
+      "id": "first-act-roleplay-v2",
+      "phase": "remediated-v2",
+      "status": "completed",
+      "durationMs": 98601,
+      "error": "",
+      "cjkGrowth": 0,
+      "usage": {
+        "input": 61928,
+        "cached": 31744,
+        "output": 9859,
+        "reasoning": 7664,
+        "total": 71787,
+        "requestsWithoutUsage": 0
+      },
+      "toolCount": 15,
+      "toolFailures": 0,
+      "patchVerificationFailures": 0,
+      "readCount": 14,
+      "uniqueReads": [
+        "novel:meta",
+        "character:jiangzhao",
+        "character:luchi",
+        "character:xucheng",
+        "character-memory:jiangzhao",
+        "character-memory:luchi",
+        "character-memory:xucheng",
+        "chapter:chapter-005.md",
+        "chapter:chapter-004.md",
+        "chapter:chapter-001.md",
+        "chapter:chapter-002.md",
+        "chapter:chapter-003.md",
+        "timeline:all",
+        "outline:master"
+      ],
+      "repeatedReadCount": 0,
+      "nativeCompletedPatches": 0,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": null
+    },
+    {
+      "id": "chapter-002-completion-v2",
+      "phase": "remediated-v2",
+      "status": "completed",
+      "durationMs": 314540,
+      "error": "",
+      "cjkGrowth": 768,
+      "usage": {
+        "input": 1132176,
+        "cached": 1106176,
+        "output": 37798,
+        "reasoning": 31723,
+        "total": 1169974,
+        "requestsWithoutUsage": 0
+      },
+      "toolCount": 3,
+      "toolFailures": 0,
+      "patchVerificationFailures": 4,
+      "readCount": 3,
+      "uniqueReads": [
+        "chapter:chapter-002.md"
+      ],
+      "repeatedReadCount": 2,
+      "nativeCompletedPatches": 7,
+      "emptyDiffConfirmations": 2,
+      "afterFirstPatchMs": 86135
+    },
+    {
+      "id": "chapters-006-008-v2",
+      "phase": "remediated-v2",
+      "status": "completed",
+      "durationMs": 816078,
+      "error": "",
+      "cjkGrowth": 10909,
+      "usage": {
+        "input": 3952942,
+        "cached": 3859712,
+        "output": 86888,
+        "reasoning": 69973,
+        "total": 4039830,
+        "requestsWithoutUsage": 0
+      },
+      "toolCount": 11,
+      "toolFailures": 0,
+      "patchVerificationFailures": 1,
+      "readCount": 11,
+      "uniqueReads": [
+        "chapter:chapter-006.md",
+        "chapter:chapter-007.md",
+        "chapter:chapter-008.md"
+      ],
+      "repeatedReadCount": 8,
+      "nativeCompletedPatches": 11,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 428000
+    },
+    {
+      "id": "chapters-009-010-v2",
+      "phase": "remediated-v2",
+      "status": "failed",
+      "durationMs": 514239,
+      "error": "unexpected status 402 Payment Required: Insufficient Balance, url: http://127.0.0.1:50048/responses",
+      "cjkGrowth": 6145,
+      "usage": {
+        "input": 3812624,
+        "cached": 3763200,
+        "output": 53426,
+        "reasoning": 41523,
+        "total": 3866050,
+        "requestsWithoutUsage": 2
+      },
+      "toolCount": 5,
+      "toolFailures": 0,
+      "patchVerificationFailures": 1,
+      "readCount": 5,
+      "uniqueReads": [
+        "chapter:chapter-009.md",
+        "chapter:chapter-010.md"
+      ],
+      "repeatedReadCount": 3,
+      "nativeCompletedPatches": 9,
+      "emptyDiffConfirmations": 0,
+      "afterFirstPatchMs": 305711
+    }
+  ]
+}

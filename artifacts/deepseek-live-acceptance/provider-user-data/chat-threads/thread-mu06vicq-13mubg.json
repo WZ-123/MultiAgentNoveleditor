@@ -1,0 +1,43 @@
+{
+  "id": "thread-mu06vicq-13mubg",
+  "title": "新对话",
+  "novelId": "novel-mu06vhuz-jjoruy",
+  "createdAt": "2026-09-13T19:10:28.010Z",
+  "updatedAt": "2026-09-13T19:10:34.651Z",
+  "messages": [
+    {
+      "id": "msg-35c99072-ffc9-4aa6-a680-adab047fbdaf",
+      "role": "user",
+      "text": "写一段约500个汉字的完整中文小说正文，只输出正文。场景：沿海邮局停电后，代理局长在柜台下找到一封受潮的旧信。要有动作、对白和明确变化；不需要计算、报告或复核字数，场景完成即止。",
+      "timestamp": 1789326628214,
+      "edited": false
+    },
+    {
+      "id": "codex-01a09c2d-95cc-74e2-b252-8cdc3c1cf2c1",
+      "parentId": "msg-35c99072-ffc9-4aa6-a680-adab047fbdaf",
+      "role": "assistant",
+      "text": "台风过后的第三天，镇上的电还没来。海雾从窗缝里钻进来，把营业厅泡得发白。林秀把手电夹在腋下，蹲在柜台后面清点积压的挂号信。\n\n“秀姐，三号柜台底下有股霉味。”小周在黑暗里喊。\n\n“先把窗关上。”\n\n她跪下去，用手电扫过踢脚线。木板翘起一道缝，缝里塞着东西，是信封的一角，湿得发软，像一片泡过的海带。她用指甲抠了两下，纸页连着木屑一同剥落下来。信封正面写着“陈海生收”，字迹被水洇成一片灰云，邮戳模糊，只能看清一个“八十”。\n\n“陈海生？”小周凑过来，“北岙村那个陈海生？”\n\n“你认识？”\n\n“我爷爷提过，说是八十年代跑船失踪的。他娘等到死，天天来邮局问有没有信。”\n\n林秀把信举到灯下。手电光穿过纸背，能看见里面薄薄一页，钢笔字已经晕开，只剩“我”“回”“船”“三”几个能辨的轮廓。封口没粘严，一撕就开。\n\n“能拆吗？”小周问。\n\n“这是寄给他的。”林秀说，“可他收不到。”\n\n她把信纸摊在柜台玻璃上，用指腹一点点压平。海雾贴着玻璃走，像一层没干的水。风铃忽然响了，一个老人拄着伞站在门槛上，浑身滴水。\n\n“同志，”他说，“我来问封信。”\n\n“什么信？”\n\n“四十年前寄的。”老人说，“我叫陈海生。”\n\n小周手里的手电压了一下，光全暗了。林秀低头看看玻璃上那张润湿的纸，又抬头看看门口的人，慢慢把信推向他那一侧。\n\n“你来得正好。”她说。",
+      "timestamp": 1789326634254,
+      "edited": false,
+      "toolCalls": [],
+      "codexTurnId": "01a09c2d-95cc-74e2-b252-8cdc3c1cf2c1"
+    },
+    {
+      "id": "msg-e1818988-8ee1-4df9-bd10-59e45afbda86",
+      "role": "user",
+      "text": "为延迟验收写一段约500个汉字的小说正文，立即提交到 chapter:chapter-001.md。不要计算、报告或复核字数，场景完成即止；不要读取无关资料，不要提问。资源不存在用 create，若为空占位可用 replace。完成后调用 Codex 原生 apply_patch 并等待确认。",
+      "timestamp": 1789326634461,
+      "edited": false,
+      "parentId": "codex-01a09c2d-95cc-74e2-b252-8cdc3c1cf2c1"
+    }
+  ],
+  "currentNodeId": "msg-e1818988-8ee1-4df9-bd10-59e45afbda86",
+  "codexBinding": {
+    "schemaVersion": 1,
+    "threadId": "01a09c2d-adf7-7df0-b03c-a65a5c288258",
+    "providerFingerprint": "c30f7c256d380d6ddcb850496e257d60bd0516338c0ccf22ebc069b6334abaef:native-functions-v1:tools",
+    "novelId": "novel-mu06vhuz-jjoruy",
+    "importedHistoryHash": "1d654a8c64a476dad7e35d06b48da9b8c71d3bea253afb3cab5ff419801f451d",
+    "importedBoundaryMessageId": "codex-01a09c2d-95cc-74e2-b252-8cdc3c1cf2c1"
+  }
+}

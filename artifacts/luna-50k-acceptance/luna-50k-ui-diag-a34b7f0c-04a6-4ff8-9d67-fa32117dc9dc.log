@@ -1,0 +1,7 @@
+TEST_PASS luna_50k_project_ready novelId=novel-mto68ufc-6mdazd
+TEST_SCREENSHOT /Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/luna-50k-acceptance/screenshots/01-project-ready.png
+TEST_SCREENSHOT /Users/potablewater/Desktop/MultiAgentNovelAssistant/artifacts/luna-50k-acceptance/screenshots/50k-complete.png
+TEST_FAIL luna_50k_ui: Error: 最终页面的章节树没有显示已提交章节
+    at Object.runLunaFiftyKUiE2E (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/luna-50k-ui-e2e.js:157:40)
+    at async createWindow (/Users/potablewater/Desktop/MultiAgentNovelAssistant/main.js:109:22)
+    at async /Users/potablewater/Desktop/MultiAgentNovelAssistant/main.js:159:3

@@ -1,0 +1,25 @@
+{
+  "id": "thread-mthpdzz7-p2y04r",
+  "title": "新对话",
+  "novelId": "novel-mthng6zg-ppmxre",
+  "createdAt": "2026-08-31T20:41:06.403Z",
+  "updatedAt": "2026-08-31T20:41:06.971Z",
+  "messages": [
+    {
+      "id": "msg-18a3386e-aa90-4899-a75e-077ff8da73ef",
+      "role": "user",
+      "text": "创建或校准以下独立时间线事件：timeline:event:history-01、timeline:event:history-02、timeline:event:history-03、timeline:event:history-04、timeline:event:history-05。只直接并行读取这些目标，不读取 timeline:all 或其他资料。每个文件是合法 JSON 对象，id 必须与 resourceRef 一致，并有 when、description、chapterRef；history-01 至 05 描述二十年前沉城事故，black-tide-eve 是当前前夜，chapter-NN 对应第NN章主事件。时间单调，第22章起进入七小时倒计时。内容简洁，一次原生 apply_patch 提交；受控路径使用 timeline/event-<id>.json。",
+      "timestamp": 1788208866717,
+      "edited": false
+    }
+  ],
+  "currentNodeId": "msg-18a3386e-aa90-4899-a75e-077ff8da73ef",
+  "codexBinding": {
+    "schemaVersion": 1,
+    "threadId": "01a0598d-e5d2-75b0-89c5-2aba7f19e62a",
+    "providerFingerprint": "b57b3d233c29f02c71018adc27118d47d99fb86c07bdf4dc381435242b00fbe7:tools",
+    "novelId": "novel-mthng6zg-ppmxre",
+    "importedHistoryHash": "",
+    "importedBoundaryMessageId": ""
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "caseId": "CHAT-S13",
+  "provider": "deepseek",
+  "wire": "anthropic-messages",
+  "model": "deepseek-v4-flash",
+  "runCount": 3,
+  "paidCalls": 20,
+  "results": [
+    {
+      "run": 1,
+      "state": "completed",
+      "readReceipts": 9,
+      "projectedTools": 12,
+      "recoveryAttempts": 1,
+      "freshThread": true,
+      "projectResourceCount": 512,
+      "checkpointBytes": 122411,
+      "uniqueEvidenceCalls": 9,
+      "effectiveRequestPolicy": {
+        "maxOutputTokens": 8192,
+        "effort": "none",
+        "thinking": "disabled",
+        "temperature": 0.1
+      }
+    },
+    {
+      "run": 2,
+      "state": "completed",
+      "readReceipts": 9,
+      "projectedTools": 13,
+      "recoveryAttempts": 1,
+      "freshThread": true,
+      "projectResourceCount": 512,
+      "checkpointBytes": 107255,
+      "uniqueEvidenceCalls": 9,
+      "effectiveRequestPolicy": {
+        "maxOutputTokens": 8192,
+        "effort": "none",
+        "thinking": "disabled",
+        "temperature": 0.1
+      }
+    },
+    {
+      "run": 3,
+      "state": "completed",
+      "readReceipts": 9,
+      "projectedTools": 13,
+      "recoveryAttempts": 1,
+      "freshThread": true,
+      "projectResourceCount": 512,
+      "checkpointBytes": 107159,
+      "uniqueEvidenceCalls": 9,
+      "effectiveRequestPolicy": {
+        "maxOutputTokens": 8192,
+        "effort": "none",
+        "thinking": "disabled",
+        "temperature": 0.1
+      }
+    }
+  ],
+  "provider4xx": {
+    "state": "failed",
+    "errorCode": "provider_request_rejected",
+    "providerStatus": 400,
+    "reasonKind": "model_rejected",
+    "retryable": false,
+    "diagnosticIdPresent": true,
+    "allowedCommands": [
+      "switch_model",
+      "restart",
+      "cancel"
+    ],
+    "readReceipts": 2
+  },
+  "passedAt": "2026-08-25T06:51:32.187Z"
+}

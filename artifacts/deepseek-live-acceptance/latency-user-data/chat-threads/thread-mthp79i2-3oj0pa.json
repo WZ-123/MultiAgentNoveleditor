@@ -1,0 +1,25 @@
+{
+  "id": "thread-mthp79i2-3oj0pa",
+  "title": "新对话",
+  "novelId": "novel-mthng6zg-ppmxre",
+  "createdAt": "2026-08-31T20:35:52.154Z",
+  "updatedAt": "2026-08-31T20:35:52.724Z",
+  "messages": [
+    {
+      "id": "msg-7e10de51-0c2f-40ff-92c4-072b05d18901",
+      "role": "user",
+      "text": "重建《雾港回声》的时间线前先将 timeline:all 重置为合法空 JSON 数组 []。只读取并修改 timeline/events.json，不读取其他资料；原生 apply_patch 后等待确认。",
+      "timestamp": 1788208552468,
+      "edited": false
+    }
+  ],
+  "currentNodeId": "msg-7e10de51-0c2f-40ff-92c4-072b05d18901",
+  "codexBinding": {
+    "schemaVersion": 1,
+    "threadId": "01a05989-1a46-71b0-86eb-3fed817d80b7",
+    "providerFingerprint": "b57b3d233c29f02c71018adc27118d47d99fb86c07bdf4dc381435242b00fbe7:tools",
+    "novelId": "novel-mthng6zg-ppmxre",
+    "importedHistoryHash": "",
+    "importedBoundaryMessageId": ""
+  }
+}

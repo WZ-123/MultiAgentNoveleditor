@@ -1,0 +1,25 @@
+{
+  "id": "thread-mtho5obv-1dh5l5",
+  "title": "新对话",
+  "novelId": "novel-mthng6zg-ppmxre",
+  "createdAt": "2026-08-31T20:06:38.443Z",
+  "updatedAt": "2026-08-31T20:06:39.000Z",
+  "messages": [
+    {
+      "id": "msg-f47a78da-87b8-47c7-aaf0-1b752c5504f1",
+      "role": "user",
+      "text": "创建或校准独立章大纲 outline:chapter:1:1:1，对应正文 chapter-001.md《雾中来电》，属于第一幕，本幕目标是“发现回声层、聚合最初证据并以第一次退潮收束”。只读取目标资源，已知 resourceRef 直接并行读取；不要读取 master、hierarchy、nodes、正文或其他资料。写成简洁 Markdown，包含目标、冲突、关键线索、人物选择、记忆代价、转折、章末承接七项，并与上一章衔接。只修改 outlines/volume-001/section-001/chapter-001.md，绝不添加 novel/ 前缀；原生 apply_patch 后等待确认。",
+      "timestamp": 1788206798755,
+      "edited": false
+    }
+  ],
+  "currentNodeId": "msg-f47a78da-87b8-47c7-aaf0-1b752c5504f1",
+  "codexBinding": {
+    "schemaVersion": 1,
+    "threadId": "01a0596e-57c9-7112-bb7f-eca7c0bad32e",
+    "providerFingerprint": "b57b3d233c29f02c71018adc27118d47d99fb86c07bdf4dc381435242b00fbe7:tools",
+    "novelId": "novel-mthng6zg-ppmxre",
+    "importedHistoryHash": "",
+    "importedBoundaryMessageId": ""
+  }
+}

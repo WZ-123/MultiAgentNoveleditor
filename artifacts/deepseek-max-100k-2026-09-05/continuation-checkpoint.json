@@ -1,0 +1,40 @@
+{
+  "at": "2026-09-05T05:01:52.010Z",
+  "objective": "Finish real DeepSeek v4 Flash xhigh/max novel of at least 100000 body CJK, then detailed causality report. Do not stop with partial book.",
+  "hostSession": 48816,
+  "phase": "remediated-v2",
+  "current": {
+    "id": "chapters-006-008-v2",
+    "action": "turn",
+    "elapsedMs": 648880,
+    "confirmations": 5,
+    "events": 56
+  },
+  "completed": "Nine valid JSON cards; roleplay Jiangzhao/Luchi/Xucheng; chapters1-6>=3500, chapter7 in progress. Prior failed attempts preserved.",
+  "remaining": [
+    "Complete chapters1–30 and body count>=100000 (exclude frontmatter/headings/time labels). All prose via real app model UI.",
+    "After chapter10: graceful restart host to load newly added openChapter action; inspect real editor. New conversation for act2. Include outline/character-memory revision and roleplay LinYue/ZhouWen/ChengMo before act2; continue batch3 chapter tasks using single3500–4000 CJK acceptance interval.",
+    "Act3 new conversation and roleplay ShenLan/TangQiao/GuYan. Finish30 chapter plot.",
+    "Exercise local edit, full-chapter rewrite, deAI with actual model; one final whole-book hard consistency review and only targeted necessary fixes.",
+    "Analyze baseline vs remediated phases, raw patch failures/no-op approvals, repeated reads, reasoning/cache usage and UI status. Compile novel MD and clear Chinese analysis report; final real UI screenshot opened via view_image.",
+    "Latest12 unit suite passed before small commit-notification metadata/UI bridge changes; new regression and production build passed after those. Run required final checks after final changes."
+  ],
+  "critical": "Do not use CUA (one getApp hung6h). Use host commands.json and append-only logs. No agents. No fake generated novel text. Secrets must not be printed. Host guard only allows official DeepSeek flash max/xhigh. Source changes not committed; existing huge user changes must remain.",
+  "artifacts": [
+    "baseline-evidence.json",
+    "analysis-metrics.json",
+    "wire.jsonl",
+    "commands-results.jsonl",
+    "ui-events.jsonl",
+    "baseline-source/",
+    "remediation-manifest.json",
+    "remediation-v2-manifest.json"
+  ],
+  "analysisNotes": [
+    "Old referenced task global manuscript-hash invalidation and9batch repeat review are in test/deepseek-live-novella-ui-e2e.js (external acceptance orchestration), not current production novel MCP. Old audit report has source links.",
+    "Current phase proves no read-after-write gap after approvedpatchcommit; firstchapter190s3803CJK. Rolecards341s success. chapter2 failedafter456s preserved2878; repair315s+768CJK with4patchverification failures,7confirmations,2emptydiff confirmations.",
+    "Three-chapter batch003–005677s11confirmations completed. Misleading double target>=3500and~4000 prompted extra amendments after3527. Later prompts single3500–4000 interval.",
+    "Actual native current source/context still can overthink; need report remaining limits honestly. 15m and1011s baselines were externally interrupted, do not call natural complete or pure networkhang.",
+    "No-op/failed UI reply can show priorassistant; rely on nativeevents and actualfiles. FirstTextMs is firstplainagenttext, not necessarily novelbody. Snapshot artifact mayhave stale compositor; only screenshots personally opened canbe accepted."
+  ]
+}

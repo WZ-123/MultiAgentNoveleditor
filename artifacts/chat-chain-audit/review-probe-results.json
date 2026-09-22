@@ -1,0 +1,76 @@
+{
+  "scope": "production methods + isolated stores + stub transport + hook harness; no real model/UI",
+  "results": [
+    {
+      "check": "project ordinary request has no tools/workspace",
+      "includeMcp": false,
+      "workspace": false
+    },
+    {
+      "check": "collapsed cursor restricts whole chapter rewrite",
+      "range": {
+        "start": 0,
+        "end": 0
+      },
+      "selectionError": "补丁修改了当前选区之后的正文"
+    },
+    {
+      "check": "ordinary edit not tracked as writing",
+      "operation": "unspecified",
+      "progress": null
+    },
+    {
+      "check": "backend accepts A conversation with B project",
+      "accepted": true
+    },
+    {
+      "check": "terminal persistence: completed",
+      "assistantStored": true,
+      "fileChangeEvidenceStored": 0,
+      "taskResultStored": false
+    },
+    {
+      "check": "terminal persistence: interrupted",
+      "assistantStored": false,
+      "fileChangeEvidenceStored": 0,
+      "taskResultStored": false
+    },
+    {
+      "check": "terminal persistence: failed",
+      "assistantStored": false,
+      "fileChangeEvidenceStored": 0,
+      "taskResultStored": false
+    },
+    {
+      "check": "two concurrent starts accepted for one conversation",
+      "accepted": 2,
+      "activeRuns": 2
+    },
+    {
+      "check": "project switch retains old chat and sends mismatched context",
+      "requests": [
+        {
+          "id": "thread-A",
+          "text": "继续修改"
+        },
+        {
+          "conversationId": "thread-A",
+          "novelId": "B"
+        }
+      ]
+    },
+    {
+      "check": "chat switch retains prior run and approval",
+      "run": {
+        "runId": "old-run"
+      },
+      "confirmation": {
+        "confirmationId": "old-confirmation"
+      }
+    },
+    {
+      "check": "save failure escapes send handler",
+      "errorState": ""
+    }
+  ]
+}

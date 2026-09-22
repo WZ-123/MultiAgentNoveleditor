@@ -1,0 +1,164 @@
+[
+  {
+    "id": "provider-max",
+    "action": "configure"
+  },
+  {
+    "id": "create-novel",
+    "action": "create"
+  },
+  {
+    "id": "post-create-ui",
+    "action": "screenshot"
+  },
+  {
+    "id": "setup-master-world-style",
+    "action": "turn",
+    "skillName": "mana-outline",
+    "text": "我要创作一部约十万字的原创现实悬疑小说《逆光档案》，分30章、三幕，每幕10章，每章约3500—4000个中文汉字。故事发生在虚构山城白汀：暴雨将在72小时内迫使水库泄洪，年轻水文工程师江照返乡，发现二十年前一次停电事故的值班名单与救援记录不符。她必须在泄洪前查清父亲被指控擅离职守的旧案；真相同时威胁当下九个人的利益。不要超自然、时间循环和失忆设定。九名主要人物固定为江照（女水文工程师）、陆迟（前消防员）、林越（调查记者）、许澄（档案管理员）、周闻（镇医生）、沈岚（副镇长）、唐峤（水库调度员）、程墨（退休测绘员）、顾言（年轻电工）。结局解决事故责任与当下救援选择，允许人物付出真实代价。先为这个空项目创建完整总纲、世界观和文风设定并保存：总纲逐章写出30章标题、核心冲突、线索、人物选择和结尾推进；文风采用第三人称限知江照，以动作、对白和具体物件推进，克制抒情。此次先完成设定，不写正文。"
+  },
+  {
+    "id": "setup-nine-characters",
+    "action": "turn",
+    "skillName": "mana-character-roleplay",
+    "text": "依据刚建立的《逆光档案》总纲，为九名主要人物各建立并保存一张独立角色卡。每张应包括公开身份、欲望、恐惧、秘密、与旧案的真实关系、彼此关系、说话方式和角色知道/不知道什么；人物秘密应能支撑30章推进，不能让每个人都知道完整真相。角色固定为江照、陆迟、林越、许澄、周闻、沈岚、唐峤、程墨、顾言。不要开始正文。"
+  },
+  {
+    "id": "switch-xhigh",
+    "action": "setEffort",
+    "effort": "xhigh"
+  },
+  {
+    "id": "characters-json-recovery",
+    "action": "turn",
+    "skillName": "mana-character-roleplay",
+    "text": "刚才不是我拒绝内容，是应用没有接受角色卡文件格式。请继续完成九张角色卡，使用应用支持的 JSON 角色卡格式保存，每人独立一张；此次不要顺带修改世界观。九个人及人物设计沿用已有总纲。"
+  },
+  {
+    "id": "act-1-roleplay",
+    "action": "turn",
+    "skillName": "mana-character-roleplay",
+    "text": "进入第一幕写作前，做一次江照、陆迟、许澄三人的角色驱动推演：返乡后的江照去旧值班室查原始记录，陆迟挡在门口，许澄担心档案失窃。按各人已知信息、隐瞒的事与当前利益，给出他们实际会说什么、采取什么动作，以及导演判断的场景走向。不要让角色共享秘密，不要写入正文。"
+  },
+  {
+    "id": "chapter-001-initial",
+    "action": "turn",
+    "skillName": "mana-fiction-writing",
+    "text": "依据《逆光档案》的总纲、人物设定和第一幕推演，完整撰写并保存第1章，正文目标3500—4000个中文汉字，保存为 chapter:chapter-001.md。完成本章的冲突、线索和人物选择，落到总纲安排的章末推进。保持江照第三人称限知，用场景和对白写成完整小说正文。"
+  },
+  {
+    "id": "chapter-002-initial",
+    "action": "turn",
+    "skillName": "mana-fiction-writing",
+    "text": "依据《逆光档案》的总纲、人物设定和第一幕推演，完整撰写并保存第2章，正文目标3500—4000个中文汉字，保存为 chapter:chapter-002.md。承接上一章已经发生的事实，完成本章的冲突、线索和人物选择，落到总纲安排的章末推进。保持江照第三人称限知，用场景和对白写成完整小说正文。"
+  },
+  {
+    "id": "chapter-003-initial",
+    "action": "turn",
+    "skillName": "mana-fiction-writing",
+    "text": "依据《逆光档案》的总纲、人物设定和第一幕推演，完整撰写并保存第3章，正文目标3500—4000个中文汉字，保存为 chapter:chapter-003.md。承接上一章已经发生的事实，完成本章的冲突、线索和人物选择，落到总纲安排的章末推进。保持江照第三人称限知，用场景和对白写成完整小说正文。"
+  },
+  {
+    "id": "characters-json-retry-02",
+    "action": "turn",
+    "skillName": "mana-character-roleplay",
+    "text": "刚才不是我拒绝内容，是应用没有接受角色卡文件格式。请继续完成九张角色卡，使用应用支持的 JSON 角色卡格式保存，每人独立一张；此次不要顺带修改世界观。九个人及人物设计沿用已有总纲。"
+  },
+  {
+    "id": "act-1-new-chat",
+    "action": "newConversation"
+  },
+  {
+    "id": "characters-fresh-03",
+    "action": "turn",
+    "skillName": "mana-character-roleplay",
+    "text": "请读取已有《逆光档案》总纲和世界观，为江照、陆迟、林越、许澄、周闻、沈岚、唐峤、程墨、顾言建立九张简洁角色卡。每张包含姓名、身份、外貌特点、欲望、恐惧、隐瞒事实、已知信息、关系和说话方式，使用 characters/<拼音>.json，每人一个合法JSON对象，name 字段必须存在。每张300—450个汉字即可。本轮只完成九张角色卡，不处理历史任务、不推演、不写章节；补丁获批后结束本轮。"
+  },
+  {
+    "id": "chapter-001-fresh-03",
+    "action": "turn",
+    "timeoutMs": 1800000,
+    "skillName": "mana-fiction-writing",
+    "text": "请依据《逆光档案》已有总纲、世界观、角色卡和文风，完整撰写第1章《归站》，保存到 chapter:chapter-001.md。正文约4000个中文汉字，至少3500个汉字，用完整场景、人物动作和对白展开，达到总纲中本章的情节落点。保持江照第三人称限知，不提前揭示后章真相。本轮只完成第1章；正文保存在章节中，聊天只简短说明结果，完成后结束本轮。"
+  },
+  {
+    "id": "remediated-new-chat",
+    "action": "newConversation"
+  },
+  {
+    "id": "characters-schema-recovery-04",
+    "action": "turn",
+    "timeoutMs": 1800000,
+    "skillName": "mana-character-roleplay",
+    "text": "根据《逆光档案》已有总纲和世界观，创建江照、陆迟、林越、许澄、周闻、沈岚、唐峤、程墨、顾言九张角色卡，每张300—450汉字，包含身份、欲望、恐惧、隐瞒事实、已知信息、关系和说话方式。按照角色卡 Skill 规定的 JSON 文件格式保存，id 与文件名一致。本轮只完成这九张卡，不写正文；获批保存后结束。"
+  },
+  {
+    "id": "chapter-001-remediated-04",
+    "action": "turn",
+    "timeoutMs": 1800000,
+    "skillName": "mana-fiction-writing",
+    "text": "依据《逆光档案》总纲、世界观、角色卡和文风，完整撰写第1章《归站》，保存到 chapter:chapter-001.md。正文约4000个中文汉字，至少3500个汉字，用完整场景、人物动作和对白展开，达到总纲中本章的情节落点。保持江照第三人称限知，不提前揭示后章真相。本轮只完成第1章；正文保存在章节中，聊天只简短说明结果，完成后结束本轮。"
+  },
+  {
+    "id": "chapter-002-remediated",
+    "action": "turn",
+    "timeoutMs": 1800000,
+    "skillName": "mana-fiction-writing",
+    "text": "请承接上一章已经发生的事实，依据《逆光档案》总纲中第2章的安排，完整撰写并保存第2章，资源为 chapter:chapter-002.md。正文约4000个中文汉字，至少3500个汉字。以完整场景、人物动作和对白推进本章冲突、线索与人物选择，完成总纲安排的章末落点。保持江照第三人称限知及既有文风，不提前揭示后章真相。本轮只完成本章，正文保存在章节中；聊天简短说明结果，完成后结束。"
+  },
+  {
+    "id": "chapters-003-005-batch",
+    "action": "turn",
+    "timeoutMs": 1800000,
+    "skillName": "mana-fiction-writing",
+    "text": "继续完成《逆光档案》第一幕的第3、4、5章，按总纲顺序承接已完成正文，分别保存到 chapter:chapter-003.md、chapter:chapter-004.md、chapter:chapter-005.md。每章都是完整小说正文，约4000汉字且至少3500汉字；保持江照第三人称限知、既有文风和人物信息边界，完成各章冲突、线索、人物选择和总纲落点，不提前揭示后章真相。依次写好并保存这三章，三章完成后结束本轮；聊天只简短报告结果。"
+  },
+  {
+    "id": "chapters-1-5-ui",
+    "action": "screenshot"
+  },
+  {
+    "id": "first-act-v2-new-chat",
+    "action": "newConversation"
+  },
+  {
+    "id": "first-act-roleplay-v2",
+    "action": "turn",
+    "timeoutMs": 1800000,
+    "skillName": "mana-character-roleplay",
+    "text": "为《逆光档案》接下来的调查戏做一次角色驱动推演：江照提出查看旧值班室的原始记录，陆迟以汛期管理为由挡住她，许澄担心原件丢失而赶来。根据已保存的人物卡和当前故事进度，分别给出三人的真实动机、只属于自己的信息、实际会说的一段话和会采取的动作，再由导演判断场景如何推进。角色不能共享隐瞒的事实。这是创作参考，不写入正文，也不改设定；简短完成即可。"
+  },
+  {
+    "id": "chapter-002-completion-v2",
+    "action": "turn",
+    "timeoutMs": 1800000,
+    "skillName": "mana-fiction-writing",
+    "text": "第2章 chapter:chapter-002.md 已保存，但上次扩写未完成，实际为2878汉字。请读回本章，补充档案室借阅、复印与核对材料的具体行动和江照、许澄的对白，使本章达到3500—4000汉字。此区间就是验收标准，达到后即可结束；保持本章原有情节、视角、章末落点及与第3章的衔接。本轮只完善第2章，用更新补丁保存，不删除整章。"
+  },
+  {
+    "id": "chapters-006-008-v2",
+    "action": "turn",
+    "timeoutMs": 1800000,
+    "skillName": "mana-fiction-writing",
+    "text": "依据《逆光档案》的总纲和已有正文，顺序完成第6至第8章，分别保存为 chapter:chapter-006.md、chapter:chapter-007.md、chapter:chapter-008.md。每章3500—4000汉字，进入这个区间就满足篇幅要求，不必追求区间内某个精确数字。写成完整小说场景，以人物行动与对白推动冲突、线索和选择；达到各章总纲落点，保持江照第三人称限知、人物信息边界和既有文风。承接已经发生的事实，完成这些章节后结束本轮，聊天简短报告结果。"
+  },
+  {
+    "id": "chapters-6-8-ui",
+    "action": "screenshot"
+  },
+  {
+    "id": "chapters-009-010-v2",
+    "action": "turn",
+    "timeoutMs": 1800000,
+    "skillName": "mana-fiction-writing",
+    "text": "依据《逆光档案》的总纲和已有正文，顺序完成第9至第10章，分别保存为 chapter:chapter-009.md、chapter:chapter-010.md。每章3500—4000汉字，进入这个区间就满足篇幅要求，不必追求区间内某个精确数字。写成完整小说场景，以人物行动与对白推动冲突、线索和选择；达到各章总纲落点，保持江照第三人称限知、人物信息边界和既有文风。承接已经发生的事实，完成这些章节后结束本轮，聊天简短报告结果。"
+  },
+  {
+    "id": "first-act-complete-ui",
+    "action": "screenshot"
+  },
+  {
+    "id": "act2-host-restart",
+    "action": "shutdown"
+  }
+]

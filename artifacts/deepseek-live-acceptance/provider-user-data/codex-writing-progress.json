@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "entries": {
+    "novel-mtegot39-su3c6b:thread-mu06phbr-47k3ns": {
+      "schemaVersion": 1,
+      "novelId": "novel-mtegot39-su3c6b",
+      "conversationId": "thread-mu06phbr-47k3ns",
+      "runId": "run-1e059b37-5702-4577-b866-1cba4f263e40",
+      "phase": "goal-incomplete",
+      "currentResourceRef": "chapter:chapter-001.md",
+      "totalSavedBodyCjk": 30095,
+      "initialTotalBodyCjk": 30095,
+      "runNetBodyCjk": 0,
+      "lastSavedAt": null,
+      "startedAtMs": 1789326354846,
+      "elapsedMs": 27303,
+      "target": {
+        "minimum": 500,
+        "maximum": null
+      },
+      "goalStatus": "incomplete",
+      "updatedAt": "2026-09-13T19:06:22.149Z"
+    },
+    "novel-mu06vhuz-jjoruy:thread-mu06vicq-13mubg": {
+      "schemaVersion": 1,
+      "novelId": "novel-mu06vhuz-jjoruy",
+      "conversationId": "thread-mu06vicq-13mubg",
+      "runId": "run-09fd74b1-ea9f-4d86-b573-b7bb403043f0",
+      "phase": "failed",
+      "currentResourceRef": null,
+      "totalSavedBodyCjk": 0,
+      "initialTotalBodyCjk": 0,
+      "runNetBodyCjk": 0,
+      "lastSavedAt": null,
+      "startedAtMs": 1789326634660,
+      "elapsedMs": 8889,
+      "target": {
+        "minimum": 500,
+        "maximum": null
+      },
+      "goalStatus": "failed",
+      "updatedAt": "2026-09-13T19:10:43.549Z"
+    },
+    "novel-mu06vhuz-jjoruy:thread-mu06yqy0-jbnfx5": {
+      "schemaVersion": 1,
+      "novelId": "novel-mu06vhuz-jjoruy",
+      "conversationId": "thread-mu06yqy0-jbnfx5",
+      "runId": "run-89d9bf64-1b8c-40f4-acc8-7cdd2f1f5388",
+      "phase": "completed",
+      "currentResourceRef": "chapter:chapter-001.md",
+      "totalSavedBodyCjk": 531,
+      "initialTotalBodyCjk": 0,
+      "runNetBodyCjk": 531,
+      "lastSavedAt": "2026-09-13T19:13:21.222Z",
+      "startedAtMs": 1789326786362,
+      "elapsedMs": 16723,
+      "target": {
+        "minimum": 500,
+        "maximum": null
+      },
+      "goalStatus": "completed",
+      "updatedAt": "2026-09-13T19:13:23.085Z"
+    },
+    "novel-mu07168t-d1k5t2:thread-mu0716op-c9xct2": {
+      "schemaVersion": 1,
+      "novelId": "novel-mu07168t-d1k5t2",
+      "conversationId": "thread-mu0716op-c9xct2",
+      "runId": "run-58e1c057-7e83-49c7-8fb2-33b3f2939432",
+      "phase": "completed",
+      "currentResourceRef": "chapter:chapter-001.md",
+      "totalSavedBodyCjk": 486,
+      "initialTotalBodyCjk": 0,
+      "runNetBodyCjk": 486,
+      "lastSavedAt": "2026-09-13T19:15:06.094Z",
+      "startedAtMs": 1789326899269,
+      "elapsedMs": 8288,
+      "target": {
+        "minimum": 500,
+        "maximum": null
+      },
+      "goalStatus": "completed",
+      "updatedAt": "2026-09-13T19:15:07.557Z"
+    }
+  }
+}
