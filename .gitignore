@@ -14,6 +14,8 @@ tmp-*/
 .claude/settings*.json
 relay-worker/.wrangler/
 artifacts/harness-benchmark/
+artifacts/**/user-data/
+tmp-test-chat-feedback-ui-userdata/
 .cache/codex-runtime/
 .cache/release-public-config.json
 .cache/release-verification/
