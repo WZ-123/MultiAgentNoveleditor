@@ -1,21 +1,7 @@
+import { committedSections } from './chatRunState.mjs';
 import React, { useCallback, useEffect, useState } from 'react';
 import { User, Globe, Book, Pen, Calendar, ChevronRight, ChevronDown, Package } from 'lucide-react';
 
-const TOOL_REFRESH_SECTIONS = {
-  create_character: ['characters'],
-  update_character: ['characters'],
-  delete_character: ['characters'],
-  grant_asset: ['assets'],
-  revoke_asset: ['assets'],
-  apply_asset_patch: ['assets'],
-  update_world: ['world'],
-  append_timeline: ['timeline'],
-  update_timeline: ['timeline'],
-  sync_chapter_timeline: ['timeline'],
-  dedupe_timeline: ['timeline'],
-  write_outline_nodes: ['outline'],
-  append_style_memory: ['style'],
-};
 
 /**
  * Browses the active novel's characters, world, timeline, outline, and style.
@@ -101,10 +87,10 @@ export function NovelDataBrowser({ onOpenTab }) {
   }, [mana, activeNovel, openSection, sectionData, loadSectionData]);
 
   useEffect(() => {
-    if (!mana?.chatAgent?.onEvent) return undefined;
-    const off = mana.chatAgent.onEvent((payload) => {
-      if (!payload || payload.kind !== 'tool_result' || payload.data?.isError) return;
-      const sectionsToRefresh = TOOL_REFRESH_SECTIONS[payload.data?.name] || [];
+    if (!mana?.codex?.onEvent) return undefined;
+    const off = mana.codex.onEvent((payload) => {
+      if (payload?.novelId !== activeNovel?.id) return;
+      const sectionsToRefresh = committedSections(payload.committedResources);
       if (!sectionsToRefresh.length) return;
       setSectionData((prev) => {
         const next = { ...prev };
@@ -116,7 +102,7 @@ export function NovelDataBrowser({ onOpenTab }) {
       }
     });
     return () => { try { off(); } catch { /* ignore */ } };
-  }, [mana, openSection, loadSectionData]);
+  }, [mana, activeNovel?.id, openSection, loadSectionData]);
 
   if (!activeNovel?.id) {
     return (

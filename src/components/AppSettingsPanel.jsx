@@ -1,15 +1,9 @@
 import { useI18n } from '@/i18n/LanguageContext.jsx';
 import {
   Globe,
-  Cpu,
-  Bot,
-  GitBranch,
-  Wand2,
-  KeyRound,
   HardDrive,
   Search,
   Book,
-  PenLine,
   Wifi,
 } from 'lucide-react';
 
@@ -22,46 +16,6 @@ function buildCategories(t) {
       title: t('settings.languageTitle'),
       desc: t('settings.languageDesc'),
       Icon: Globe,
-    },
-    // NOTE: 以下设置项功能尚未完成，暂时隐藏
-    // {
-    //   sid: 'runtime',
-    //   title: t('runtime.title'),
-    //   desc: t('runtime.description'),
-    //   Icon: Cpu,
-    // },
-    {
-      sid: 'subagent',
-      title: t('subagent.title'),
-      desc: t('subagent.desc'),
-      Icon: Bot,
-    },
-    // NOTE: Pipeline(DAG) 功能尚未完成，暂时隐藏
-    // {
-    //   sid: 'dag',
-    //   title: t('dag.title'),
-    //   desc: t('dag.desc'),
-    //   Icon: GitBranch,
-    // },
-    // NOTE: 配置助手功能尚未完成，暂时隐藏
-    // {
-    //   sid: 'config-helper',
-    //   title: '配置助手',
-    //   desc: '通过自然语言对话生成 / 修改 Subagent 与 DAG 配置。',
-    //   Icon: Wand2,
-    // },
-    // NOTE: 大语言模型配置已移至 ActivityBar 独立入口，此处隐藏避免重复
-    // {
-    //   sid: 'models',
-    //   title: t('settings.llmTitle'),
-    //   desc: t('settings.llmDesc') || 'API Key、Provider、各 Agent 的模型与 Tier 绑定。',
-    //   Icon: KeyRound,
-    // },
-    {
-      sid: 'writing',
-      title: '写作设置',
-      desc: '默认写作模式与角色驱动写作交互强度。',
-      Icon: PenLine,
     },
     {
       sid: 'lan-remote',
@@ -84,7 +38,7 @@ function buildCategories(t) {
     {
       sid: 'skill',
       title: 'Skill',
-      desc: '创建和管理技能文档，关联到 Subagent，导入导出。',
+      desc: '直接创建、启用、禁用、导入和导出 Codex Skills。',
       Icon: Book,
     },
   ];

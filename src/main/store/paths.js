@@ -48,6 +48,8 @@ function paths() {
     skillsIndex: path.join(root, 'skills', 'index.json'),
     logs: path.join(root, 'logs', 'runs'),
     novelsRegistry: path.join(root, 'novels.json'),
+    codexWritingAuthorizations: path.join(root, 'codex-writing-authorizations.json'),
+    codexWritingProgress: path.join(root, 'codex-writing-progress.json'),
   };
 }
 
@@ -86,8 +88,6 @@ function novelPaths(novelDir) {
     charactersIndex: path.join(novelDir, '.mana', 'characters-index.json'),
     revisions: path.join(novelDir, '.mana', 'revisions'),
     chapterRevisions: path.join(novelDir, '.mana', 'revisions', 'chapters'),
-    harnessState: path.join(novelDir, '.mana', 'harness-state'),
-    harnessChapterStates: path.join(novelDir, '.mana', 'harness-state', 'chapters'),
   };
 }
 
@@ -95,11 +95,6 @@ function ensureLayout() {
   const p = paths();
   ensureDirSync(p.root);
   ensureDirSync(p.feedbackOutbox);
-  ensureDirSync(p.subagentsBuiltin);
-  ensureDirSync(p.subagentsUser);
-  ensureDirSync(p.pipelinesBuiltin);
-  ensureDirSync(p.pipelinesUser);
-  ensureDirSync(p.skills);
   ensureDirSync(p.logs);
   return p;
 }

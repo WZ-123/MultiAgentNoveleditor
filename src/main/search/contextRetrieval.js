@@ -11,7 +11,7 @@
 
 const novelData = require('../store/novelData');
 const { buildNormalizedTextIndex, findNormalizedRanges } = require('../../domain/textMatch.cjs');
-const { fitTextForModel, safeString } = require('../runtime/contextAssembler');
+const { fitTextForModel, safeString } = require('./textTransport');
 
 const DEFAULT_CATEGORIES = ['characters', 'world', 'timeline', 'outlines'];
 const DEFAULT_MAX_ITEMS = 12;
@@ -300,7 +300,10 @@ async function retrieveNovelContext(novelDir, options = {}) {
   const categories = Array.isArray(options.categories) && options.categories.length
     ? options.categories.filter((category) => DEFAULT_CATEGORIES.includes(category))
     : DEFAULT_CATEGORIES;
-  const maxItems = Math.max(1, Math.min(Number(options.maxItems) || DEFAULT_MAX_ITEMS, 50));
+  const preserveCompleteItems = options.preserveCompleteItems === true;
+  const maxItems = preserveCompleteItems
+    ? 50
+    : Math.max(1, Math.min(Number(options.maxItems) || DEFAULT_MAX_ITEMS, 50));
   const maxChars = Math.max(1000, Math.min(Number(options.maxChars) || DEFAULT_MAX_CHARS, 50000));
   const query = cleanText(options.query || options.focus || options.chapterName || '');
   const terms = buildTerms({ ...options, query });
@@ -316,7 +319,17 @@ async function retrieveNovelContext(novelDir, options = {}) {
 
   const items = dedupeAndSort((await Promise.all(groups)).flat(), maxItems);
   const rawContextText = renderContextText(items);
-  const fitted = fitTextForModel(rawContextText, {
+  const fitted = preserveCompleteItems ? {
+    text: rawContextText,
+    wasTrimmed: false,
+    originalLength: rawContextText.length,
+    modelLength: rawContextText.length,
+    omittedLength: 0,
+    manifestItem: {
+      kind: 'rag_context', sourceRef: `rag:${query || 'context'}`, label: 'retrieved_novel_context',
+      originalLength: rawContextText.length, modelLength: rawContextText.length, reason: 'required_items_preserved',
+    },
+  } : fitTextForModel(rawContextText, {
     maxChars,
     sourceRef: `rag:${query || 'context'}`,
     label: 'retrieved_novel_context',

@@ -3,6 +3,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const fsp = fs.promises;
+const { atomicWriteFile } = require('./resourceIdentity');
 
 async function readJson(file, fallback = null) {
   try {
@@ -15,21 +16,8 @@ async function readJson(file, fallback = null) {
 }
 
 async function writeJson(file, data, options = {}) {
-  await fsp.mkdir(path.dirname(file), { recursive: true });
-  const tmp = `${file}.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const mode = options.mode == null ? undefined : options.mode;
-  await fsp.writeFile(tmp, JSON.stringify(data, null, 2), { encoding: 'utf8', ...(mode == null ? {} : { mode }) });
-  try {
-    // POSIX rename atomically replaces the destination. Modern Windows often
-    // supports it too, so try the atomic path first.
-    await fsp.rename(tmp, file);
-  } catch (err) {
-    if (process.platform !== 'win32' || !['EEXIST', 'EPERM', 'EACCES'].includes(err.code)) throw err;
-    // Windows fallback: the model config store holds an inter-process lock, so
-    // the short unlink/rename window cannot race another application writer.
-    try { await fsp.unlink(file); } catch (unlinkErr) { if (unlinkErr.code !== 'ENOENT') throw unlinkErr; }
-    await fsp.rename(tmp, file);
-  }
+  await atomicWriteFile(file, JSON.stringify(data, null, 2), { ...(mode == null ? {} : { mode }) });
   if (mode != null) {
     try { await fsp.chmod(file, mode); } catch { /* POSIX mode unavailable */ }
   }

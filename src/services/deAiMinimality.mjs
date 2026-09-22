@@ -1,3 +1,5 @@
+import { findDeterministicNotButPatterns } from './qualityReview.mjs';
+
 function compactText(value) {
   return String(value || '').normalize('NFKC').replace(/\s+/gu, ' ').trim();
 }
@@ -44,9 +46,25 @@ export function assessDeAiMinimality(sourceText, revisedText, options = {}) {
   const allowParagraphMerge = options.allowParagraphMerge === true
     || /合并|重分段|机械拆段|一句一段|段落功能/gu.test(guidance);
   const violations = [];
+  const sourceNotButPatterns = findDeterministicNotButPatterns(sourceText);
+  const revisedNotButPatterns = findDeterministicNotButPatterns(revisedText);
 
   if (!revised) {
     violations.push({ id: 'empty_rewrite', label: '候选改写为空' });
+  }
+
+  if (revisedNotButPatterns.length > 0) {
+    violations.push(sourceNotButPatterns.length > 0
+      ? {
+          id: 'not_but_pattern_persists',
+          label: '候选仍保留「不是……而是/是/却是/只是……」对照骨架',
+          evidence: revisedNotButPatterns[0].excerpt,
+        }
+      : {
+          id: 'introduced_not_but_pattern',
+          label: '候选新引入「不是……而是/是/却是/只是……」对照骨架',
+          evidence: revisedNotButPatterns[0].excerpt,
+        });
   }
 
   const sourceLength = source.length;
@@ -91,6 +109,8 @@ export function assessDeAiMinimality(sourceText, revisedText, options = {}) {
       sourceSentences,
       revisedSentences,
       allowParagraphMerge,
+      sourceNotButPatternCount: sourceNotButPatterns.length,
+      revisedNotButPatternCount: revisedNotButPatterns.length,
     },
   };
 }

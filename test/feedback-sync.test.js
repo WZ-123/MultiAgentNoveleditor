@@ -145,11 +145,13 @@ test('FS5_computeNextRetryAt_exponential_backoff', () => {
 test('FS6_classifyError_network_errors', () => {
   const network = classifyError(new Error('ECONNREFUSED'));
   assert.equal(network.type, 'retryable');
-  assert.equal(network.code, 'network_error');
+  assert.equal(network.code, 'relay_unreachable');
+  assert.equal(network.userAction, 'retry');
 
   const dns = classifyError(new Error('ENOTFOUND open.feishu.cn'));
   assert.equal(dns.type, 'retryable');
-  assert.equal(dns.code, 'network_error');
+  assert.equal(dns.code, 'relay_unreachable');
+  assert.equal(dns.reasonKind, 'dns');
 });
 
 test('FS7_classifyError_feishu_errors', () => {

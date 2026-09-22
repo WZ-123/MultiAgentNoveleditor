@@ -95,6 +95,7 @@ async function runDeAiPromptRegressionTest() {
     assert.ok(upgraded?.content.includes('感官清单式枚举'));
     assert.ok(upgraded?.content.includes('避免机械的一句一段'));
     assert.ok(upgraded?.content.includes('按段落功能组织自然段'));
+    assert.deepEqual(upgraded?.assignedSubagentIds, ['sa-de-ai-ifier']);
     pass('DAI1_existing_de_ai_skill_is_upgraded', 'legacy seeded content picked up the new anti-cliche guidance');
   } catch (err) {
     fail('DAI1_existing_de_ai_skill_is_upgraded', err?.message || String(err));
@@ -117,14 +118,8 @@ async function runDeAiPromptRegressionTest() {
     assert.ok(proseQuality?.systemPrompt.includes('那是一个……'));
     assert.ok(proseQuality?.systemPrompt.includes('如果一个 AI 套句被拆到了相邻两段之间'));
     assert.ok(proseQuality?.systemPrompt.includes('paragraphIds'));
-    assert.ok(writer?.systemPrompt.includes('不是……，也不是……，而是……'));
-    assert.ok(writer?.systemPrompt.includes('不是……，不是……，是'));
-    assert.ok(writer?.systemPrompt.includes('然后她笑了。'));
-    assert.ok(writer?.systemPrompt.includes('那是一个……'));
-    assert.ok(writer?.systemPrompt.includes('标点必须使用全角中文标点'));
     assert.ok(proseQuality?.systemPrompt.includes('连续否定铺排'));
     assert.ok(proseQuality?.systemPrompt.includes('不是A、不是B、不是C'));
-    assert.ok(writer?.systemPrompt.includes('连续否定铺排'));
     assert.ok(proseQuality?.systemPrompt.includes('比喻堆叠'));
     assert.ok(proseQuality?.systemPrompt.includes('出场说明书'));
     assert.ok(proseQuality?.systemPrompt.includes('全知作者跳出'));
@@ -151,22 +146,13 @@ async function runDeAiPromptRegressionTest() {
     assert.ok(deAiRewriter?.systemPrompt.includes('自然不等于圆润'));
     assert.ok(deAiRewriter?.systemPrompt.includes('不要把短句批量接成长句'));
     assert.ok(deAiRewriter?.systemPrompt.includes('不追求“更优美”'));
-    assert.ok(writer?.systemPrompt.includes('比喻堆叠'));
-    assert.ok(writer?.systemPrompt.includes('出场说明书'));
-    assert.ok(writer?.systemPrompt.includes('全知作者跳出'));
-    assert.ok(writer?.systemPrompt.includes('不是被强迫的服从式的笑，而是一种——满足'));
-    assert.ok(writer?.systemPrompt.includes('不是敌意。更像是一种——确认'));
-    assert.ok(writer?.systemPrompt.includes('没有A，没有B，只是C'));
-    assert.ok(writer?.systemPrompt.includes('一丝难以察觉的微笑'));
-    assert.ok(writer?.systemPrompt.includes('AI 式章末三段式收尾'));
-    assert.ok(writer?.systemPrompt.includes('过密使用「……」做转场分隔线'));
-    assert.ok(writer?.systemPrompt.includes('不要过度依赖破折号「——」制造节奏'));
-    assert.ok(writer?.systemPrompt.includes('跨章重复意象和顺手比喻库存'));
-    assert.ok(writer?.systemPrompt.includes('她的声音中带着一丝'));
-    assert.ok(writer?.systemPrompt.includes('感官清单式枚举'));
-    assert.ok(writer?.systemPrompt.includes('段落以叙事功能为单位'));
-    assert.ok(writer?.systemPrompt.includes('连续单句自然段不得超过2段'));
-    pass('DAI2_builtin_subagent_prompts_cover_new_patterns', 'writer and prose-quality prompts both mention the new anti-cliche rule');
+    assert.ok(writer?.systemPrompt.includes('项目的文风记忆、用户本轮指令和既有正文声线优先'));
+    assert.ok(writer?.systemPrompt.includes('完整的去 AI 味规则由独立审校阶段处理'));
+    assert.ok(writer?.systemPrompt.includes('简体中文正文使用全角中文标点'));
+    assert.equal(writer?.systemPrompt.includes('不是被强迫的服从式的笑，而是一种——满足'), false);
+    assert.equal(writer?.systemPrompt.includes('嘴角微微上扬'), false);
+    assert.ok(writer.systemPrompt.length < proseQuality.systemPrompt.length);
+    pass('DAI2_review_keeps_full_rules_while_writer_uses_short_positive_principles', 'first-draft writer no longer receives the duplicated anti-cliche checklist');
   } catch (err) {
     fail('DAI2_builtin_subagent_prompts_cover_new_patterns', err?.message || String(err));
   }
@@ -212,6 +198,7 @@ async function runDeAiPromptRegressionTest() {
   console.log('');
   console.log(`TEST_SUMMARY ${results.passed}/${results.total} passed, ${results.failed} failed`);
   console.log('TEST_DONE');
+  if (results.failed > 0) process.exitCode = 1;
   return results;
 }
 

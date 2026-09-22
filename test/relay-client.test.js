@@ -1,169 +1,119 @@
 'use strict';
 
-const assert = require('node:assert');
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
 const http = require('node:http');
+const os = require('node:os');
+const path = require('node:path');
 const { RelayClient } = require('../src/main/sync/relayClient');
 
-let server = null;
-let serverPort = 0;
-
-function startMockServer(handler) {
+function startServer(handler) {
   return new Promise((resolve) => {
-    const s = http.createServer((req, res) => {
+    const server = http.createServer((req, res) => {
       const chunks = [];
-      req.on('data', (c) => chunks.push(c));
-      req.on('end', () => {
-        const body = Buffer.concat(chunks);
-        handler(req, res, body);
-      });
+      req.on('data', (chunk) => chunks.push(chunk));
+      req.on('end', () => handler(req, res, Buffer.concat(chunks)));
     });
-    s.listen(0, () => {
-      serverPort = s.address().port;
-      resolve(s);
+    server.listen(0, '127.0.0.1', () => resolve(server));
+  });
+}
+
+function close(server) { return new Promise((resolve) => server.close(resolve)); }
+function reply(res, status, data) { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(data)); }
+
+async function testBearerUploadAndIdempotency() {
+  let observed = null;
+  const server = await startServer((req, res, body) => {
+    observed = { headers: req.headers, path: req.url, body };
+    reply(res, 200, { fileToken: 'file-1', fileName: 'shot.png' });
+  });
+  const file = path.join(os.tmpdir(), `mana-relay-${process.pid}.png`);
+  await fs.writeFile(file, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+  try {
+    const client = new RelayClient({ relayUrl: `http://127.0.0.1:${server.address().port}`, getAccessToken: async () => 'device-token' });
+    const result = await client.uploadAttachment(file, 'fb-123');
+    assert.equal(result.fileToken, 'file-1');
+    assert.equal(observed.path, '/api/v2/feedback/upload');
+    assert.equal(observed.headers.authorization, 'Bearer device-token');
+    assert.equal(observed.headers['x-feedback-id'], 'fb-123');
+    assert.match(observed.headers['x-attachment-sha256'], /^[a-f0-9]{64}$/);
+    assert.equal(observed.headers['idempotency-key'], `fb-123:${observed.headers['x-attachment-sha256']}`);
+    assert.equal(observed.headers['x-relay-api-key'], undefined);
+  } finally {
+    await fs.rm(file, { force: true });
+    await close(server);
+  }
+}
+
+async function testSingleRefreshOn401() {
+  let requests = 0;
+  const tokens = [];
+  const server = await startServer((req, res) => {
+    requests += 1;
+    tokens.push(req.headers.authorization);
+    if (requests === 1) reply(res, 401, { code: 'token_expired', diagnosticId: 'diag-1' });
+    else reply(res, 200, { recordId: 'record-1', status: 'created' });
+  });
+  try {
+    const calls = [];
+    const client = new RelayClient({
+      relayUrl: `http://127.0.0.1:${server.address().port}`,
+      getAccessToken: async (_scope, options) => { calls.push(options.forceRefresh); return options.forceRefresh ? 'fresh-token' : 'old-token'; },
     });
-  });
-}
-
-async function stopMockServer() {
-  return new Promise((resolve) => {
-    if (server) server.close(() => resolve());
-    else resolve();
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
-async function test1_relayClient_auth_header() {
-  server = await startMockServer((req, res, body) => {
-    assert.strictEqual(req.headers['x-relay-api-key'], 'test-key-123');
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ fileToken: 'ft-abc' }));
-  });
-
-  const client = new RelayClient({ relayUrl: `http://localhost:${serverPort}`, relayApiKey: 'test-key-123' });
-  const fs = require('node:fs');
-  const path = require('node:path');
-  const os = require('node:os');
-  const tmpFile = path.join(os.tmpdir(), 'relay-test.png');
-  fs.writeFileSync(tmpFile, Buffer.from([0x89, 0x50, 0x4e, 0x47])); // PNG header
-
-  try {
-    const result = await client.uploadAttachment(tmpFile);
-    assert.strictEqual(result.fileToken, 'ft-abc');
+    const result = await client.createRecord('fb-refresh', { title: 'x' }, []);
+    assert.equal(result.recordId, 'record-1');
+    assert.deepEqual(calls, [false, true]);
+    assert.deepEqual(tokens, ['Bearer old-token', 'Bearer fresh-token']);
   } finally {
-    fs.unlinkSync(tmpFile);
-    await stopMockServer();
+    await close(server);
   }
 }
 
-async function test2_relayClient_error_classification() {
-  server = await startMockServer((req, res, body) => {
-    res.writeHead(401, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Invalid API key' }));
-  });
-
-  const client = new RelayClient({ relayUrl: `http://localhost:${serverPort}`, relayApiKey: 'wrong-key' });
-  const fs = require('node:fs');
-  const path = require('node:path');
-  const os = require('node:os');
-  const tmpFile = path.join(os.tmpdir(), 'relay-test2.png');
-  fs.writeFileSync(tmpFile, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
-
+async function testStableErrorRedaction() {
+  const server = await startServer((_req, res) => reply(res, 502, { code: 'server_error', error: 'private Feishu stack and credential details' }));
   try {
-    await client.uploadAttachment(tmpFile);
-    assert.fail('Expected error');
-  } catch (err) {
-    assert.strictEqual(err.feishuError?.type, 'terminal');
-    assert.strictEqual(err.feishuError?.code, 'auth_failed');
+    const client = new RelayClient({ relayUrl: `http://127.0.0.1:${server.address().port}`, getAccessToken: async () => 'token' });
+    await assert.rejects(
+      () => client.createRecord('fb-error', { title: 'x' }, []),
+      (error) => error.code === 'relay_unavailable'
+        && error.retryable === true
+        && error.userAction === 'retry'
+        && error.message === '反馈服务暂时不可用，请稍后重试。'
+        && !error.message.includes('Feishu')
+    );
   } finally {
-    fs.unlinkSync(tmpFile);
-    await stopMockServer();
+    await close(server);
   }
 }
 
-async function test3_relayClient_createRecord_success() {
-  server = await startMockServer((req, res, body) => {
-    const data = JSON.parse(body.toString());
-    assert.strictEqual(data.feedbackId, 'fb-123');
-    assert.strictEqual(data.fields.issueTitle, 'Test');
-    assert.deepStrictEqual(data.fileTokens, ['ft-1']);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ recordId: 'rec-456', status: 'created' }));
+async function testSubmitAndUpdateContract() {
+  const bodies = [];
+  const server = await startServer((req, res, body) => {
+    bodies.push({ headers: req.headers, data: JSON.parse(body.toString('utf8')) });
+    reply(res, 200, { recordId: bodies.length === 1 ? 'record-create' : 'record-update', status: bodies.length === 1 ? 'created' : 'updated' });
   });
-
-  const client = new RelayClient({ relayUrl: `http://localhost:${serverPort}`, relayApiKey: 'key' });
-  const result = await client.createRecord('fb-123', { issueTitle: 'Test' }, ['ft-1']);
-  assert.strictEqual(result.recordId, 'rec-456');
-  assert.strictEqual(result.status, 'created');
-  await stopMockServer();
-}
-
-async function test4_relayClient_createRecord_failure_with_feishu_error() {
-  server = await startMockServer((req, res, body) => {
-    res.writeHead(502, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({
-      error: 'Feishu table not found',
-      feishuError: { type: 'terminal', code: 'table_not_found', message: 'Table not found', feishuCode: 1254045 },
-    }));
-  });
-
-  const client = new RelayClient({ relayUrl: `http://localhost:${serverPort}`, relayApiKey: 'key' });
   try {
-    await client.createRecord('fb-123', { issueTitle: 'Test' }, []);
-    assert.fail('Expected error');
-  } catch (err) {
-    assert.strictEqual(err.feishuError?.type, 'terminal');
-    assert.strictEqual(err.feishuError?.code, 'table_not_found');
-    assert.strictEqual(err.feishuError?.feishuCode, 1254045);
+    const client = new RelayClient({ relayUrl: `http://127.0.0.1:${server.address().port}`, getAccessToken: async () => 'token' });
+    await client.createRecord('fb-contract', { title: 'create' }, ['file-1']);
+    await client.updateRecord('fb-contract', 'record-create', { title: 'update' }, ['file-1']);
+    assert.equal(bodies[0].headers['idempotency-key'], 'fb-contract');
+    assert.equal(bodies[0].data.remoteRecordId, undefined);
+    assert.equal(bodies[1].data.remoteRecordId, 'record-create');
+    assert.equal(bodies[0].headers['x-relay-api-key'], undefined);
   } finally {
-    await stopMockServer();
+    await close(server);
   }
 }
 
-async function test5_relayClient_updateRecord_success() {
-  server = await startMockServer((req, res, body) => {
-    const data = JSON.parse(body.toString());
-    assert.strictEqual(data.remoteRecordId, 'rec-789');
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ recordId: 'rec-789', status: 'updated' }));
-  });
-
-  const client = new RelayClient({ relayUrl: `http://localhost:${serverPort}`, relayApiKey: 'key' });
-  const result = await client.updateRecord('fb-123', 'rec-789', { issueTitle: 'Updated' }, ['ft-2']);
-  assert.strictEqual(result.recordId, 'rec-789');
-  assert.strictEqual(result.status, 'updated');
-  await stopMockServer();
+async function run() {
+  const tests = [testBearerUploadAndIdempotency, testSingleRefreshOn401, testStableErrorRedaction, testSubmitAndUpdateContract];
+  for (const test of tests) { await test(); console.log(`PASS ${test.name}`); }
+  console.log(`TEST_PASS relay-client ${tests.length}/${tests.length}`);
 }
 
-// ---------------------------------------------------------------------------
-// Runner
-// ---------------------------------------------------------------------------
+if (require.main === module) run().catch((error) => {
+  console.error(`TEST_FAIL relay-client: ${error.stack || error}`);
+  process.exitCode = 1;
+});
 
-const tests = [
-  test1_relayClient_auth_header,
-  test2_relayClient_error_classification,
-  test3_relayClient_createRecord_success,
-  test4_relayClient_createRecord_failure_with_feishu_error,
-  test5_relayClient_updateRecord_success,
-];
-
-(async () => {
-  let passed = 0;
-  let failed = 0;
-  for (const test of tests) {
-    try {
-      await test();
-      console.log(`PASS ${test.name}`);
-      passed++;
-    } catch (err) {
-      console.error(`FAIL ${test.name}:`, err.message);
-      failed++;
-    } finally {
-      server = null;
-    }
-  }
-  console.log(`\n${passed}/${tests.length} passed, ${failed}/${tests.length} failed`);
-  process.exit(failed > 0 ? 1 : 0);
-})();
+module.exports = { run };

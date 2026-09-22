@@ -71,6 +71,7 @@ async function runChapterWriteSanitizationRegressionTest() {
   console.log('');
   console.log(`TEST_SUMMARY ${results.passed}/${results.total} passed, ${results.failed} failed`);
   console.log('TEST_DONE');
+  if (results.failed > 0) process.exitCode = 1;
   return results;
 }
 

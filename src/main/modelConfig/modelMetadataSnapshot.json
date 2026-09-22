@@ -1,0 +1,788 @@
+{
+  "source": "https://models.dev/api.json",
+  "retrievedAt": "2026-09-21",
+  "providers": {
+    "openai": {
+      "gpt-5-nano": {
+        "contextWindow": 400000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-4.1-nano": {
+        "contextWindow": 1047576,
+        "maxOutputTokens": 32768,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-4o-2024-05-13": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 4096,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-5-pro": {
+        "contextWindow": 400000,
+        "maxOutputTokens": 272000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "chatgpt-image-latest": {
+        "contextWindow": 0,
+        "maxOutputTokens": 0,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": false,
+        "supportsStructuredOutput": null
+      },
+      "gpt-5.6-sol": {
+        "contextWindow": 1050000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-4o-2024-08-06": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 16384,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-6-astra": {
+        "contextWindow": 1050000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-5.2-pro": {
+        "contextWindow": 400000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": false
+      },
+      "gpt-5.3-codex-spark": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 32000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-4.1-mini": {
+        "contextWindow": 1047576,
+        "maxOutputTokens": 32768,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-5.4": {
+        "contextWindow": 1050000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-4-turbo": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 4096,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": false
+      },
+      "gpt-5.1": {
+        "contextWindow": 400000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "o1": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 100000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-4o": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 16384,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-5.6-luna": {
+        "contextWindow": 1050000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-5.3-codex": {
+        "contextWindow": 400000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-4o-mini": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 16384,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-image-1.5": {
+        "contextWindow": 0,
+        "maxOutputTokens": 0,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": false,
+        "supportsStructuredOutput": null
+      },
+      "o1-pro": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 100000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-4.1": {
+        "contextWindow": 1047576,
+        "maxOutputTokens": 32768,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "text-embedding-ada-002": {
+        "contextWindow": 8192,
+        "maxOutputTokens": 1536,
+        "inputModalities": [
+          "text"
+        ],
+        "supportsTools": false,
+        "supportsStructuredOutput": null
+      },
+      "gpt-image-1": {
+        "contextWindow": 0,
+        "maxOutputTokens": 0,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": false,
+        "supportsStructuredOutput": null
+      },
+      "gpt-5.4-nano": {
+        "contextWindow": 400000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-5.5-pro": {
+        "contextWindow": 1050000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-image-1-mini": {
+        "contextWindow": 0,
+        "maxOutputTokens": 0,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": false,
+        "supportsStructuredOutput": null
+      },
+      "gpt-5.4-mini": {
+        "contextWindow": 400000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-image-2": {
+        "contextWindow": 0,
+        "maxOutputTokens": 0,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": false,
+        "supportsStructuredOutput": null
+      },
+      "gpt-3.5-turbo": {
+        "contextWindow": 16385,
+        "maxOutputTokens": 4096,
+        "inputModalities": [
+          "text"
+        ],
+        "supportsTools": false,
+        "supportsStructuredOutput": false
+      },
+      "gpt-5.6": {
+        "contextWindow": 1050000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "text-embedding-3-small": {
+        "contextWindow": 8191,
+        "maxOutputTokens": 1536,
+        "inputModalities": [
+          "text"
+        ],
+        "supportsTools": false,
+        "supportsStructuredOutput": null
+      },
+      "gpt-5-mini": {
+        "contextWindow": 400000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-5.4-pro": {
+        "contextWindow": 1050000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": false
+      },
+      "text-embedding-3-large": {
+        "contextWindow": 8191,
+        "maxOutputTokens": 3072,
+        "inputModalities": [
+          "text"
+        ],
+        "supportsTools": false,
+        "supportsStructuredOutput": null
+      },
+      "gpt-5.6-terra": {
+        "contextWindow": 1050000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-4": {
+        "contextWindow": 8192,
+        "maxOutputTokens": 8192,
+        "inputModalities": [
+          "text"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": false
+      },
+      "gpt-5.2": {
+        "contextWindow": 400000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-5": {
+        "contextWindow": 400000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-5.2-chat-latest": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 16384,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "o4-mini": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 100000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-realtime-2.1": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 32000,
+        "inputModalities": [
+          "text",
+          "audio",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": false
+      },
+      "o3-mini": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 100000,
+        "inputModalities": [
+          "text"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "o3": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 100000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "o3-pro": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 100000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-5.3-chat-latest": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 16384,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-5.5": {
+        "contextWindow": 1050000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "gpt-4o-2024-11-20": {
+        "contextWindow": 128000,
+        "maxOutputTokens": 16384,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      }
+    },
+    "deepseek": {
+      "deepseek-v4-flash-vision-exp": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 384000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "deepseek-v4-flash": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 384000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "deepseek-v4-pro": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 384000,
+        "inputModalities": [
+          "text"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "deepseek-flash": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 384000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      }
+    },
+    "moonshotai": {
+      "kimi-k2.7-code-highspeed": {
+        "contextWindow": 262144,
+        "maxOutputTokens": 262144,
+        "inputModalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "kimi-k2.6": {
+        "contextWindow": 262144,
+        "maxOutputTokens": 262144,
+        "inputModalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "kimi-k2.7-code": {
+        "contextWindow": 262144,
+        "maxOutputTokens": 262144,
+        "inputModalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "kimi-k3": {
+        "contextWindow": 1048576,
+        "maxOutputTokens": 131072,
+        "inputModalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      }
+    },
+    "moonshotai-cn": {
+      "kimi-k3": {
+        "contextWindow": 1048576,
+        "maxOutputTokens": 131072,
+        "inputModalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "kimi-k2.7-code": {
+        "contextWindow": 262144,
+        "maxOutputTokens": 262144,
+        "inputModalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "kimi-k2.6": {
+        "contextWindow": 262144,
+        "maxOutputTokens": 262144,
+        "inputModalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "kimi-k2.7-code-highspeed": {
+        "contextWindow": 262144,
+        "maxOutputTokens": 262144,
+        "inputModalities": [
+          "text",
+          "image",
+          "video"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      }
+    },
+    "anthropic": {
+      "claude-sonnet-4-6": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-opus-5": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-opus-4-5": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 64000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-fable-5-1": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-opus-4-6": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-sonnet-4-5-20250929": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-opus-4-7": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-haiku-4-5-20251001": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 64000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-fable-5": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-haiku-4-5": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 64000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-sonnet-4-5": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 64000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-opus-4-8": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-sonnet-5": {
+        "contextWindow": 1000000,
+        "maxOutputTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      },
+      "claude-opus-4-5-20251101": {
+        "contextWindow": 200000,
+        "maxOutputTokens": 64000,
+        "inputModalities": [
+          "text",
+          "image",
+          "pdf"
+        ],
+        "supportsTools": true,
+        "supportsStructuredOutput": true
+      }
+    }
+  }
+}

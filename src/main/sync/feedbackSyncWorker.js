@@ -4,6 +4,8 @@ const feedbackOutbox = require('../store/feedbackOutbox');
 const syncLock = require('./syncLock');
 const fieldMapper = require('../feishu/fieldMapper');
 const { RelayClient } = require('./relayClient');
+const { getSessionManager } = require('../license/sessionManager');
+const { normalizeAppError } = require('../appError');
 
 const MAX_RETRIES = 10;
 const BASE_DELAY_MS = 30_000;
@@ -16,21 +18,14 @@ function computeNextRetryAt(retryCount) {
 }
 
 function classifyError(err) {
-  const feishuErr = err?.feishuError;
-  if (!feishuErr) {
-    // Network / timeout errors without feishuError wrapper
-    const msg = err?.message || String(err);
-    if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|ENETUNREACH/.test(msg)) {
-      return { type: 'retryable', code: 'network_error', message: msg };
-    }
-    return { type: 'retryable', code: 'unknown', message: msg };
-  }
-  return feishuErr;
+  const normalized = err?.appError || err?.relayError || err?.feishuError || normalizeAppError(err, { domain: 'relay', phase: 'feedback_sync' });
+  return { ...normalized, type: normalized.retryable === false ? 'terminal' : 'retryable' };
 }
 
 class FeedbackSyncWorker {
-  constructor() {
+  constructor(options = {}) {
     this._config = null;
+    this._sessionManager = options.sessionManager || getSessionManager();
     this._running = false;
     this._timer = null;
     this._scanning = false;
@@ -92,8 +87,7 @@ class FeedbackSyncWorker {
   }
 
   _hasValidConfig() {
-    const c = this._config;
-    return !!(c?.relayUrl && c?.relayApiKey);
+    return this._config?.enabled !== false;
   }
 
   async _scan() {
@@ -121,12 +115,12 @@ class FeedbackSyncWorker {
     const feedbackId = record.feedbackId;
     if (!syncLock.acquire(feedbackId)) return;
 
-    const relayClient = new RelayClient({
-      relayUrl: this._config.relayUrl,
-      relayApiKey: this._config.relayApiKey,
-    });
-
     try {
+      const relayUrl = await this._sessionManager.getRelayBaseUrl();
+      const relayClient = new RelayClient({
+        relayUrl,
+        getAccessToken: (scope, options) => this._sessionManager.getAccessToken(scope, options),
+      });
       // Re-read record to ensure we have the latest state
       const fresh = await feedbackOutbox.getRecord(feedbackId);
       if (!fresh || fresh.syncStatus === 'sent' || fresh.syncStatus === 'syncing') {
@@ -159,7 +153,7 @@ class FeedbackSyncWorker {
 
       if (screenshotAttachment && attachmentTokens.length === 0) {
         try {
-          const uploadResult = await relayClient.uploadAttachment(screenshotAttachment.localPath);
+          const uploadResult = await relayClient.uploadAttachment(screenshotAttachment.localPath, feedbackId);
           attachmentTokens.push(uploadResult.fileToken);
           // Save tokens immediately so we don't re-upload on retry
           await feedbackOutbox.updateSyncMeta(feedbackId, {
@@ -171,7 +165,7 @@ class FeedbackSyncWorker {
             syncStatus: classified.type === 'retryable' ? 'retryable_failed' : 'failed_terminal',
             retryCount: retryCount + 1,
             nextRetryAt: computeNextRetryAt(retryCount),
-            lastError: err.message,
+            lastError: classified.message,
             lastErrorCode: classified.code,
           });
           return;
@@ -193,7 +187,7 @@ class FeedbackSyncWorker {
             syncStatus: classified.type === 'retryable' ? 'retryable_failed' : 'failed_terminal',
             retryCount: retryCount + 1,
             nextRetryAt: computeNextRetryAt(retryCount),
-            lastError: err.message,
+            lastError: classified.message,
             lastErrorCode: classified.code,
           });
           return;
@@ -208,7 +202,7 @@ class FeedbackSyncWorker {
             syncStatus: classified.type === 'retryable' ? 'retryable_failed' : 'failed_terminal',
             retryCount: retryCount + 1,
             nextRetryAt: computeNextRetryAt(retryCount),
-            lastError: err.message,
+            lastError: classified.message,
             lastErrorCode: classified.code,
           });
           return;
@@ -237,7 +231,7 @@ class FeedbackSyncWorker {
         syncStatus: classified.type === 'retryable' ? 'retryable_failed' : 'failed_terminal',
         retryCount: retryCount + 1,
         nextRetryAt: computeNextRetryAt(retryCount),
-        lastError: err.message,
+        lastError: classified.message,
         lastErrorCode: classified.code,
       });
     } finally {

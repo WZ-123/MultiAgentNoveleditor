@@ -1,106 +1,79 @@
-# Cloudflare Worker 反馈中继部署指南
+# Relay V2 deployment
 
-## 前置条件
+Relay V2 has one routing and authorization implementation:
+`src/relay-core.cjs`. `src/index.js` is the Cloudflare adapter and
+`src/scf-entry.cjs` is the Tencent SCF adapter. Do not paste or fork either
+adapter into another hand-maintained server.
 
-1. 安装 Node.js 18+
-2. 注册 [Cloudflare](https://dash.cloudflare.com) 账号
-3. 安装 Wrangler CLI：
-   ```bash
-   npm install -g wrangler
-   ```
-4. 登录 Cloudflare：
-   ```bash
-   wrangler login
-   ```
+## Security model
 
-## 第一步：配置环境变量
+- The desktop package contains only the HTTPS Relay URL and public ES256 JWKS.
+- Access tokens live for 15 minutes and remain in desktop memory only.
+- Offline leases live for at most seven days and are encrypted with Electron
+  `safeStorage`.
+- `/api/v1/auth/verify` and the two V1 feedback routes always return HTTP 426
+  `upgrade_required`; there is no shared-key compatibility path.
+- Relay private keys, Feishu credentials and the auth-code pepper live only in
+  the platform secret store.
 
-创建 `.dev.vars` 用于本地开发：
+## Required secrets
 
-```bash
-cd relay-worker
-cat > .dev.vars << 'EOF'
-FEISHU_APP_ID=cli_xxx
-FEISHU_APP_SECRET=xxx
-FEISHU_APP_TOKEN=xxx
-FEISHU_TABLE_ID=xxx
-FEISHU_AUTH_TABLE_ID=xxx
-RELAY_API_KEY=your-relay-api-key
-EOF
+Configure these values independently on Cloudflare and Tencent SCF:
+
+```text
+FEISHU_APP_ID
+FEISHU_APP_SECRET
+FEISHU_APP_TOKEN
+FEISHU_AUTH_TABLE_ID
+FEISHU_TABLE_ID
+RELAY_SIGNING_KID
+RELAY_SIGNING_PRIVATE_JWK
+RELAY_PUBLIC_JWKS
+RELAY_ISSUER
+RELAY_AUTH_CODE_PEPPER
+RELAY_REDIS_URL
 ```
 
-**`.dev.vars` 只在本地开发使用，不会上传到 Cloudflare。**
+`RELAY_ISSUER` must equal the release `relayBaseUrl`. Keep active and next
+public keys in `RELAY_PUBLIC_JWKS`; retain a previous verification key for at
+least one seven-day Offline Lease period after rotation.
 
-## 第二步：部署并设置生产环境变量
+For local development, copy `.dev.vars.example` to the ignored `.dev.vars` and
+run `node ../scripts/start-real-feishu-relay.js`. Never commit `.dev.vars`.
 
-```bash
-cd relay-worker
+## Cloudflare
 
-# 1. 安装依赖
-npm install
+Use Node 24.19.0, install with `npm ci`, run `npm test` and
+`npm run deploy:dry-run`, then add each secret with `wrangler secret put`.
+Production deployment is performed only by the protected
+`.github/workflows/deploy-relay.yml` environment.
 
-# 2. 部署 Worker（首次部署会自动创建）
-npm run deploy
+Bind a D1 database as `RELAY_DB` and apply `migrations/` before traffic is
+enabled. Missing D1 state fails closed; in-memory rate limits are never used in
+production.
 
-# 3. 设置生产环境 Secrets（每个变量单独设置，加密存储）
-wrangler secret put FEISHU_APP_ID
-wrangler secret put FEISHU_APP_SECRET
-wrangler secret put FEISHU_APP_TOKEN
-wrangler secret put FEISHU_TABLE_ID
-wrangler secret put FEISHU_AUTH_TABLE_ID
-wrangler secret put RELAY_API_KEY
+## Tencent SCF
+
+Package exactly these files:
+
+```text
+src/relay-core.cjs
+src/scf-entry.cjs
 ```
 
-每次输入后按提示填入值即可。
+Set the function handler to `src/scf-entry.main_handler`, configure the same
+secret set plus a TLS `RELAY_REDIS_URL`, and use API Gateway binary-safe request forwarding. Do not deploy
+the local HTTP adapter under `scripts/`.
 
-## 第三步：验证部署
+## Verification
 
-```bash
-# 查看 Worker 日志
-wrangler tail
-
-# 在另一个终端测试
-npm test
-```
-
-## 第四步：配置客户端
-
-拿到 Workers 分配的域名（如 `https://feedback-relay.your-account.workers.dev`），配置到客户端：
+Run the shared contract test for both platform adapters, then set
+`RELAY_TEST_BASE_URL` and a protected `RELAY_TEST_AUTH_CODE` and run:
 
 ```bash
-node scripts/feishu-debug.js --action=configure \
-  --relayUrl=https://feedback-relay.your-account.workers.dev \
-  --relayApiKey=your-relay-api-key \
-  --enabled=true
+npm run test:deployed
 ```
 
-## GitHub Actions 自动部署（可选）
-
-项目根目录已有 `.github/workflows/deploy-relay.yml`。只需在 GitHub 仓库设置两个 Secrets：
-
-| Secret | 获取方式 |
-|--------|---------|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare Dashboard → My Profile → API Tokens → Create Token → "Edit Cloudflare Workers" 模板 |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare Dashboard 右侧栏可见 |
-
-配置完成后，每次 `git push` 到 `main` 分支且修改了 `relay-worker/` 目录时，自动触发部署。
-
-## 费用说明
-
-Cloudflare Workers 免费额度：
-- **每天 10 万次请求** —— 内测场景完全够用
-- **每次请求最多 10ms CPU 时间** —— I/O 等待不计入，实际够用
-- **KV / Durable Objects** —— 本方案未使用，不需要
-
-超出免费额度后：$0.50 / 百万请求。
-
-## 与自建 relay-server 的对比
-
-| 维度 | Cloudflare Workers | 自建 VPS |
-|------|-------------------|---------|
-| 部署复杂度 | `npm run deploy` | 需配置服务器、域名、SSL |
-| 运维成本 | 零 | 需维护、监控、更新 |
-| 全球延迟 | 边缘节点，低 | 取决于 VPS 位置 |
-| 费用 | 免费额度内零成本 | 最低 ~99元/年 |
-| 附件大小限制 | 100MB/请求 | 无实质限制 |
-| 内网穿透 | 不需要 | 如 VPS 在国内需备案 |
+The smoke verifies V2 health, the V1 tombstone and session exchange. Logs must
+contain only stable error codes and diagnostic IDs, never bodies, tokens,
+credentials or Feishu response text.

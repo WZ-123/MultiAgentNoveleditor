@@ -21,6 +21,9 @@ const path = require('node:path');
 const fs = require('node:fs').promises;
 const { readJson, writeJson, listJsonFiles } = require('../store/jsonStore');
 const { novelPaths } = require('../store/paths');
+const { hash } = require('../codex-runtime/contracts');
+const { readResource } = require('../mcp/novelResources');
+const { applyPrepared, prepareChanges } = require('../mcp/mutationService');
 
 // In-memory sessions (keyed by sessionId)
 const _sessions = new Map();
@@ -61,7 +64,13 @@ async function _loadStagingCharacters(stagingDir) {
 async function _loadNovelCharacters(novelDir) {
   const np = novelPaths(novelDir);
   try {
-    return await listJsonFiles(np.characters);
+    const files = await listJsonFiles(np.characters);
+    const characters = [];
+    for (const file of files) {
+      const character = await readJson(file, null);
+      if (character && typeof character === 'object') characters.push(character);
+    }
+    return characters;
   } catch { return []; }
 }
 
@@ -351,46 +360,44 @@ async function finalizeMerge(sessionId) {
   const session = _sessions.get(sessionId);
   if (!session) throw new Error(`Merge session not found: ${sessionId}`);
 
-  const novelDir = session.novelDir;
-  const np = novelPaths(novelDir);
-
-  for (const item of session.items) {
-    if (item.status !== 'resolved' || !item.resolvedContent) continue;
-
-    if (item.type === 'character') {
-      // Write character JSON
-      try {
-        const parsed = JSON.parse(item.resolvedContent);
-        await fs.mkdir(np.characters, { recursive: true });
-        await fs.writeFile(
-          path.join(np.characters, `${parsed.name || parsed.id || item.label}.json`),
-          item.resolvedContent, 'utf8'
-        );
-      } catch (err) {
-        console.error('[merge] write character failed:', err.message);
-      }
-    } else if (item.type === 'world') {
-      if (item.id === 'world-lore') {
-        await fs.mkdir(np.world, { recursive: true });
-        await fs.writeFile(path.join(np.world, 'lore.md'), item.resolvedContent, 'utf8');
-      }
-    } else if (item.type === 'outline') {
-      await fs.mkdir(np.outlines, { recursive: true });
-      await fs.writeFile(path.join(np.outlines, 'main.md'), item.resolvedContent, 'utf8');
-    } else if (item.type === 'style') {
-      await fs.mkdir(np.style, { recursive: true });
-      await fs.writeFile(path.join(np.style, 'memory.md'), item.resolvedContent, 'utf8');
-    }
+  const summary = getMergeSummary(sessionId);
+  if (summary.pending > 0 || summary.disputed > 0) {
+    const error = new Error(`merge has ${summary.pending} pending and ${summary.disputed} disputed conflicts`);
+    error.code = 'unresolved_conflicts';
+    throw error;
   }
-
-  // Mark staging as merged
-  try {
-    const stagingProject = require('./stagingProject');
-    await stagingProject.updateStagingStatus(session.stagingId, 'merged');
-  } catch { /* ignore */ }
+  const novelDir = session.novelDir;
+  const changes = [];
+  const safeStem = (value) => {
+    const stem = String(value || '').normalize('NFKC').replace(/[^\p{L}\p{N}._-]/gu, '-').replace(/^-+|-+$/gu, '');
+    if (!stem || stem.includes('..')) throw new Error('resolved character has an unsafe identity');
+    return stem.slice(0, 120);
+  };
+  for (const item of session.items) {
+    let resourceRef = null;
+    let content = String(item.resolvedContent ?? '');
+    if (item.type === 'character') {
+      const parsed = JSON.parse(item.resolvedContent);
+      resourceRef = `character:${safeStem(parsed.id || parsed.name || item.label)}`;
+      content = JSON.stringify(parsed, null, 2);
+    } else if (item.id === 'world-lore') resourceRef = 'world:lore';
+    else if (item.type === 'outline') resourceRef = 'outline:master';
+    else if (item.type === 'style') resourceRef = 'style:memory';
+    else continue;
+    let existing = null;
+    try { existing = await readResource({ id: session.novelId, dir: novelDir }, resourceRef); }
+    catch (error) { if (error?.code !== 'context_incomplete' && error?.code !== 'ENOENT') throw error; }
+    changes.push({ resourceRef, baseHash: existing?.sourceHash || hash(null), mode: existing ? 'replace' : 'create', content });
+  }
+  if (changes.length) {
+    const entry = { id: session.novelId, dir: novelDir };
+    await applyPrepared(entry, await prepareChanges(entry, { reason: `完成导入合并 ${sessionId}`, changes }));
+  }
+  const stagingProject = require('./stagingProject');
+  await stagingProject.updateStagingStatus(session.stagingId, 'merged');
 
   _sessions.delete(sessionId);
-  return { written: session.items.filter((i) => i.status === 'resolved').length };
+  return { written: changes.length };
 }
 
 module.exports = {

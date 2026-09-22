@@ -19,7 +19,7 @@ async function seedNovel(ROOT) {
   await fs.mkdir(dir, { recursive: true });
 
   const entry = await novelsStore.createNovel({ title: '标签溢出回归小说', dir });
-  for (let index = 1; index <= 10; index += 1) {
+  for (let index = 1; index <= 32; index += 1) {
     const fileName = `chapter-${String(index).padStart(3, '0')}.md`;
     const title = `第${index}章：很长很长的章节标题用于挤压标签栏`;
     await novelData.writeChapterWithMeta(
@@ -81,18 +81,18 @@ async function runEditorTabsOverflowUiRegressionTest(mainWindow) {
 
         await window.mana.novel.open(${JSON.stringify(seeded.entry.id)});
         await waitFor(() => (document.body.innerText || '').includes('标签溢出回归小说'), 'novel title not visible');
-        await waitFor(() => (document.body.innerText || '').includes('第10章'), 'chapter list not visible');
+        await waitFor(() => (document.body.innerText || '').includes('第32章'), 'chapter list not visible');
 
         const chapterButtons = Array.from(document.querySelectorAll('button')).filter((button) => {
           const text = (button.textContent || '').trim();
           const rect = button.getBoundingClientRect();
           return /^第\\d+章/.test(text) && rect.left < 360 && rect.width > 60;
         });
-        if (chapterButtons.length < 10) {
+        if (chapterButtons.length < 30) {
           return { ok: false, step: 'find_chapter_buttons', count: chapterButtons.length, body: (document.body.innerText || '').slice(0, 800) };
         }
 
-        for (const button of chapterButtons.slice(0, 10)) {
+        for (const button of chapterButtons.slice(0, 32)) {
           button.click();
           await sleep(35);
         }
@@ -114,7 +114,7 @@ async function runEditorTabsOverflowUiRegressionTest(mainWindow) {
             stripScrollWidth: strip.scrollWidth,
             viewportWidth: window.innerWidth,
             fixedText: text,
-            tabCount: document.querySelectorAll('[data-testid="editor-tab-strip"] > div').length,
+            tabCount: document.querySelectorAll('[data-testid="editor-tab-strip"] > [role="tab"]').length,
             fixedVisible: fixedRect.left >= 0 && fixedRect.right <= window.innerWidth + 1 && fixedRect.width > 80,
             stripOverflowed: strip.scrollWidth > strip.clientWidth + 20,
             includesNovelButton: text.includes('小说'),
@@ -126,7 +126,7 @@ async function runEditorTabsOverflowUiRegressionTest(mainWindow) {
     `);
 
     const layout = result?.layout || {};
-    if (result?.ok && layout.fixedVisible && layout.stripOverflowed && layout.includesNovelButton) {
+    if (result?.ok && layout.fixedVisible && layout.stripOverflowed && layout.includesNovelButton && layout.tabCount >= 30) {
       pass('ETO2_fixed_actions_survive_many_tabs', JSON.stringify(layout));
     } else {
       fail('ETO2_fixed_actions_survive_many_tabs', JSON.stringify(result));

@@ -6,7 +6,7 @@
  *
  * ╔═══════════════════════════════════════════════════════════════╗
  * ║  搜索路由策略的单一真相源：knowledge-base/search-routing.md   ║
- * ║  Claude Code Skill 版本：.claude/skills/search-routing/      ║
+ * ║  搜索路由参考：项目内 search-routing skill                 ║
  * ║  搜索引擎实现：searchEngine.js                                 ║
  * ║  修改本文件中的搜索逻辑时须同步更新上述文件，反之亦然。          ║
  * ╚═══════════════════════════════════════════════════════════════╝
@@ -29,11 +29,11 @@ const {
   pageHasMultipleSkins,
   mergeSkinArrays,
 } = require('./wikiContentParser');
-const { createProfileProvider } = require('../runtime/profileProvider');
+const { createNativeCodexProvider } = require('../codex-runtime/nativeProvider');
 const appConfig = require('../store/appConfig');
 
 async function _resolveProvider() {
-  return createProfileProvider({ systemTask: 'character-enrichment', legacyTier: 'haiku' }, { extra: { maxTokens: 4096 } });
+  return createNativeCodexProvider({}, { skillName: 'mana-import-enrichment' });
 }
 
 function _parseJson(raw) {
@@ -367,18 +367,6 @@ ${pageText.slice(0, 24000)}`;
 
 // ── LLM-driven smart search (Phase 2) ────────────────────────────
 
-const webSearchTool = {
-  name: 'web_search',
-  description: '在网络上搜索角色或作品的百科/维基信息。查询必须包含作品名和角色名以避免同名混淆（如"碧蓝航线 爱宕"）。',
-  input_schema: {
-    type: 'object',
-    properties: {
-      query: { type: 'string', description: '搜索查询，建议格式："作品名 角色名" 或 "作品名:角色名"' }
-    },
-    required: ['query']
-  }
-};
-
 function _parseSkins(raw) {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
@@ -434,171 +422,6 @@ function _mergeWebInfo(ch, webInfo, sourceTag, charName, onProgress, fanworkName
   merged._enrichmentStatus = 'success';
   onProgress?.({ charName, status: 'success', message: `补全成功 appearance=${!!webInfo.appearance} personality=${!!webInfo.personality} hair=${!!webInfo.hairColor} eyes=${!!webInfo.eyeColor} skins=${webSkins.length}` });
   return merged;
-}
-
-async function _enrichOneCharacterWithLLM(ch, { fanworkName, userLang, onProgress }) {
-  const charName = ch.name || '';
-  if (!charName) {
-    onProgress?.({ charName: ch.id || '?', status: 'skipped', message: '无角色名' });
-    return { ch, merged: null, status: 'no-name' };
-  }
-
-  onProgress?.({ charName, status: 'searching', message: `LLM智能搜索: ${charName} @《${fanworkName}》` });
-
-  let provider, tier;
-  try {
-    const resolved = await _resolveProvider();
-    provider = resolved.provider;
-    tier = resolved.tier;
-  } catch (err) {
-    onProgress?.({ charName, status: 'failed', message: `无法获取AI服务商: ${err.message}` });
-    return { ch, merged: null, status: 'llm-no-provider' };
-  }
-
-  const systemPrompt = `你是一个ACGN角色信息检索专家。用户会提供角色名和作品名。
-
-任务：
-1. 调用一次 web_search 搜索该角色（查询必须包含作品名）
-2. 页面内容会自动抓取并提取为结构化数据
-3. 搜索完成后，直接输出"搜索完成"，不需要额外内容
-
-注意事项：
-- 搜索查询不能是纯作品名或纯角色名，必须包含两者
-- 只搜索一次`;
-
-  const messages = [{
-    role: 'user',
-    content: [{ type: 'text', text: `作品：《${fanworkName}》\n角色：${charName}\n请搜索该角色的详细信息。` }]
-  }];
-
-  const maxTurns = 2;
-  for (let turn = 0; turn < maxTurns; turn++) {
-    try {
-      const result = await provider.sendMessage({ system: systemPrompt, messages, tools: [webSearchTool], tier });
-      messages.push({ role: 'assistant', content: result.content || [] });
-
-      const toolUses = (result.content || []).filter((b) => b.type === 'tool_use');
-      if (!toolUses.length) {
-        onProgress?.({ charName, status: 'failed', message: 'LLM未执行联网搜索，已拒绝无证据补全' });
-        return { ch, merged: null, status: 'llm-tool-required' };
-      }
-
-      // Process all tool calls — auto-extract page content after search
-      let pageText = '';
-      let lastSearchResults = [];
-      for (const use of toolUses) {
-        if (use.name === 'web_search') {
-          const query = use.input?.query || '';
-          onProgress?.({ charName, status: 'searching', message: `LLM搜索: ${query}` });
-          const searchRes = await searchCharacter({
-            charName: query,
-            fanworkName: '',
-            userLang,
-            fanworkSphere: 'global',
-            preferredEngine: 'all'
-          });
-          lastSearchResults = searchRes.results || [];
-          const pagePayload = lastSearchResults.length > 0
-            ? await fetchBestPage(lastSearchResults, userLang, { charName, fanworkName })
-            : { text: '' };
-          pageText = pagePayload?.text || '';
-          const resultContent = pageText
-            ? `页面内容（来源: ${lastSearchResults[0]?.source || '?'} | 标题: ${lastSearchResults[0]?.title || '?'}）:\n${pageText.slice(0, 8000)}`
-            : `未找到相关页面。`;
-          messages.push({
-            role: 'user',
-            content: [{ type: 'tool_result', tool_use_id: use.id, content: [{ type: 'text', text: resultContent }] }]
-          });
-        }
-      }
-
-      // Auto-extract: use _extractFromPage on the fetched page content
-      // instead of relying on the LLM to produce JSON (which it often fails to do).
-      if (pageText) {
-        onProgress?.({ charName, status: 'extracting', message: 'AI提取角色信息' });
-        const webInfo = await _extractFromPage(charName, pageText, userLang);
-        if (webInfo) {
-          const sourceTag = `llm-sphere=global sources=${lastSearchResults.map(r => r.source).filter((v,i,a)=>a.indexOf(v)===i).join(',')}`;
-          const merged = _mergeWebInfo(ch, webInfo, sourceTag, charName, onProgress, fanworkName);
-          const mergeStatus = merged._enrichmentStatus === 'extract-empty' ? 'extract-empty' : 'success';
-          return { ch: merged, merged, status: mergeStatus };
-        }
-      }
-    } catch (err) {
-      console.error('[enricher] LLM search failed for', charName, ':', err.message);
-      onProgress?.({ charName, status: 'failed', message: `LLM搜索错误: ${err.message}` });
-      return { ch, merged: null, status: 'llm-error' };
-    }
-  }
-
-  onProgress?.({ charName, status: 'failed', message: 'LLM搜索轮次超限' });
-  return { ch, merged: null, status: 'llm-timeout' };
-}
-
-/**
- * Get fanwork name from world analysis output.
- */
-function _getFanworkName(worldOutput) {
-  if (!worldOutput) return null;
-  try {
-    const clean = worldOutput.replace(/```json\s*/gi, '').replace(/```\s*$/g, '').trim();
-    const b = clean.indexOf('{'), e = clean.lastIndexOf('}');
-    if (b >= 0 && e > b) {
-      const p = JSON.parse(clean.slice(b, e + 1));
-      if (p.possibleFanworkOf && p.possibleFanworkOf !== 'null' && p.possibleFanworkOf !== '原创作品') {
-        return typeof p.possibleFanworkOf === 'string' ? p.possibleFanworkOf : String(p.possibleFanworkOf);
-      }
-    }
-  } catch { /* ignore */ }
-  return null;
-}
-
-/**
- * Run async tasks with a concurrency limit.
- * @param {Array<()=>Promise<any>>} tasks
- * @param {number} limit
- */
-/**
- * Retry an async function with exponential backoff.
- * @param {()=>Promise<any>} fn
- * @param {number} maxRetries
- * @param {string} label - for logging
- */
-async function _retry(fn, maxRetries = 2, label = '') {
-  let lastError;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastError = err;
-      if (attempt < maxRetries) {
-        const delay = 1000 * Math.pow(2, attempt);
-        console.error(`[enricher] ${label || 'retry'} failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms:`, err.message);
-        await new Promise((r) => setTimeout(r, delay));
-      }
-    }
-  }
-  throw lastError;
-}
-
-async function _runWithConcurrency(tasks, limit) {
-  if (limit <= 0) limit = 1;
-  const results = [];
-  const executing = [];
-  for (let i = 0; i < tasks.length; i++) {
-    const task = tasks[i];
-    const p = Promise.resolve().then(() => task());
-    results.push(p);
-    const e = p.then(() => {
-      const idx = executing.indexOf(e);
-      if (idx >= 0) executing.splice(idx, 1);
-    });
-    executing.push(e);
-    if (executing.length >= limit) {
-      await Promise.race(executing);
-    }
-  }
-  return Promise.all(results);
 }
 
 /**
@@ -848,30 +671,26 @@ async function enrichCharacters(characters, worldOutput, userLang = 'zh-CN', opt
   console.error(`[enricher] fanwork="${fanworkName}" sphere="${sphere}" (${label}, ${source})`);
   onProgress?.({ charName: '_all', status: 'searching', message: `检测文化圈: ${sphere} (${label})` });
 
-  // 2. Get user search engine preference and enrichment mode
+  // 2. Get user search engine preference. Search is deterministic; Codex is
+  // used only for extraction through the mana-import-enrichment Skill.
   let preferredEngine = 'auto';
   let concurrency = 10;
-  let enrichmentMode = 'traditional';
   try {
     const cfg = await appConfig.load();
     preferredEngine = cfg?.searchEngine || 'auto';
     concurrency = cfg?.enrichmentConcurrency ?? 3;
-    enrichmentMode = cfg?.enrichmentMode || 'traditional';
   } catch { /* use default */ }
 
   // 3. Determine search language for this sphere+user combination
   const srchLang = searchLanguage(userLang, sphere);
 
-  console.error(`[enricher] mode=${enrichmentMode} processing ${characters.length} characters with concurrency=${concurrency}`);
-  onProgress?.({ charName: '_all', status: 'searching', message: `使用${enrichmentMode === 'llm' ? 'LLM智能' : '传统'}搜索模式` });
+  console.error(`[enricher] processing ${characters.length} characters with concurrency=${concurrency}`);
 
   // 4. In-memory search cache for this batch (avoids duplicate searches within the same enrichment run)
   const searchCache = new Map();
 
   // 5. Skip original characters and process the rest concurrently
-  const enrichFn = enrichmentMode === 'llm'
-    ? (ch) => _enrichOneCharacterWithLLM(ch, { fanworkName, userLang, onProgress })
-    : (ch) => _enrichOneCharacter(ch, { fanworkName, sphere, srchLang, preferredEngine, userLang, onProgress, searchCache });
+  const enrichFn = (ch) => _enrichOneCharacter(ch, { fanworkName, sphere, srchLang, preferredEngine, userLang, onProgress, searchCache });
   const tasks = characters.map((ch) => () => {
     if (ch.isOriginal === true) {
       onProgress?.({ charName: ch.name || ch.id || '?', status: 'skipped', message: '原创角色，跳过补全' });

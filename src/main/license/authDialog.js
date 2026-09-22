@@ -2,106 +2,16 @@
 
 const { BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
-const { verifyLicense } = require('./authVerifier');
-const appConfig = require('../store/appConfig');
+const { getSessionManager } = require('./sessionManager');
+const { normalizeAppError } = require('../appError');
 
-const DIALOG_HTML = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>授权验证</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #1e1e1e; color: #cccccc;
-  display: flex; align-items: center; justify-content: center;
-  height: 100vh; overflow: hidden;
-}
-.container { width: 340px; padding: 24px; }
-h2 { font-size: 16px; margin-bottom: 8px; color: #ffffff; }
-.sub { font-size: 12px; color: #888; margin-bottom: 16px; line-height: 1.5; }
-input {
-  width: 100%; padding: 8px 12px; background: #252526; border: 1px solid #3c3c3c;
-  color: #cccccc; border-radius: 4px; font-size: 14px; outline: none; margin-bottom: 12px;
-}
-input:focus { border-color: #007acc; }
-.error {
-  font-size: 12px; color: #f48771; margin-bottom: 12px; min-height: 18px;
-}
-.btn-row { display: flex; gap: 8px; justify-content: flex-end; }
-button {
-  padding: 6px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px;
-}
-.primary { background: #007acc; color: white; }
-.primary:disabled { background: #3c3c3c; color: #888; cursor: not-allowed; }
-.secondary { background: #3c3c3c; color: #cccccc; }
-.spinner {
-  display: inline-block; width: 12px; height: 12px;
-  border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
-  border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 6px; vertical-align: middle;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-</style>
-</head>
-<body>
-<div class="container">
-  <h2>授权验证</h2>
-  <div class="sub">首次使用请输入授权码。<br>验证通过后会自动保存，后续登录会在后台自动校验。</div>
-  <input id="code" type="text" placeholder="授权码" autofocus>
-  <div id="error" class="error"></div>
-  <div class="btn-row">
-    <button class="secondary" onclick="quit()">退出</button>
-    <button class="primary" id="btn" onclick="submit()">验证</button>
-  </div>
-</div>
-<script>
-const { ipcRenderer } = require('electron');
-const input = document.getElementById('code');
-const btn = document.getElementById('btn');
-const errorEl = document.getElementById('error');
-
-function setError(msg) {
-  errorEl.textContent = msg || '';
-}
-function setLoading(v) {
-  btn.disabled = v;
-  btn.innerHTML = v ? '<span class="spinner"></span>验证中...' : '验证';
-}
-
-async function submit() {
-  const code = input.value.trim();
-  if (!code) { setError('请输入授权码'); return; }
-  setError(''); setLoading(true);
-  try {
-    const result = await ipcRenderer.invoke('auth:verify', code);
-    if (result.valid) {
-      setLoading(false);
-      // success — main process will close the window
-    } else {
-      setLoading(false);
-      setError(result.message || '验证失败，请检查授权码');
-    }
-  } catch (err) {
-    setLoading(false);
-    setError('网络错误：' + (err.message || '请稍后重试'));
-  }
-}
-function quit() {
-  ipcRenderer.send('auth:quit');
-}
-input.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') submit();
-});
-input.focus();
-</script>
-</body>
-</html>`;
+const VERIFY_CHANNEL = 'mana:auth:verify';
+const QUIT_CHANNEL = 'mana:auth:quit';
 
 function createAuthDialog() {
   const win = new BrowserWindow({
     width: 400,
-    height: 260,
+    height: 280,
     resizable: false,
     minimizable: false,
     maximizable: false,
@@ -110,71 +20,66 @@ function createAuthDialog() {
     center: true,
     title: '授权验证',
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      sandbox: false,
+      preload: path.join(__dirname, 'authDialogPreload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
     },
   });
-  win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(DIALOG_HTML));
   win.setMenuBarVisibility(false);
+  win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.webContents.on('will-navigate', (event, target) => {
+    if (target !== win.webContents.getURL()) event.preventDefault();
+  });
+  void win.loadFile(path.join(__dirname, 'auth-dialog.html'));
   return win;
 }
 
 function showAuthDialog() {
   return new Promise((resolve, reject) => {
-    // Clean up any stale handlers
-    try { ipcMain.removeHandler('auth:verify'); } catch {}
-    try { ipcMain.removeAllListeners('auth:quit'); } catch {}
-
+    try { ipcMain.removeHandler(VERIFY_CHANNEL); } catch {}
+    try { ipcMain.removeAllListeners(QUIT_CHANNEL); } catch {}
     const win = createAuthDialog();
+    let settled = false;
 
-    async function submitAuthCode(code) {
-      // Save the auth code first
-      try {
-        const cfg = await appConfig.load();
-        await appConfig.save({
-          license: { ...cfg.license, authCode: code },
-        });
-      } catch (err) {
-        console.error('[authDialog] save authCode failed:', err);
-      }
-
-      // Run verification
-      const result = await verifyLicense({ silent: true });
-      if (result.valid) {
-        if (!win.isDestroyed()) win.close();
-        resolve(result);
-      }
-      return result;
+    function isTrusted(event) {
+      return !win.isDestroyed()
+        && event.sender.id === win.webContents.id
+        && event.senderFrame === win.webContents.mainFrame;
     }
 
-    ipcMain.handle('auth:verify', async (_event, code) => {
-      return submitAuthCode(code);
-    });
+    function finish(callback, value) {
+      if (settled) return;
+      settled = true;
+      try { ipcMain.removeHandler(VERIFY_CHANNEL); } catch {}
+      try { ipcMain.removeAllListeners(QUIT_CHANNEL); } catch {}
+      callback(value);
+    }
 
-    ipcMain.once('auth:quit', () => {
-      if (!win.isDestroyed()) win.close();
-      reject(new Error('user_quit'));
-    });
-
-    win.once('closed', () => {
-      // If neither verify nor quit fired, treat as user closed window = quit
-      reject(new Error('user_closed'));
-    });
-
-    const showTimeout = setTimeout(() => {
-      if (!win.isDestroyed() && !win.isVisible()) {
-        win.show();
-        win.focus();
+    ipcMain.handle(VERIFY_CHANNEL, async (event, payload = {}) => {
+      if (!isTrusted(event)) return { valid: false, reason: 'tool_scope_denied', message: '授权窗口来源无效。' };
+      const authCode = String(payload.authCode || '').trim();
+      if (!authCode || authCode.length > 256) return { valid: false, reason: 'invalid_request', message: '请输入有效授权码。' };
+      const result = await getSessionManager().exchange({ authCode }).catch((error) => {
+        const normalized = normalizeAppError(error, { domain: 'auth', phase: 'auth_dialog' });
+        return { valid: false, reason: normalized.code, message: normalized.message, error: normalized };
+      });
+      if (result.valid) {
+        finish(resolve, result);
+        if (!win.isDestroyed()) win.close();
       }
-    }, 500);
-
-    win.once('ready-to-show', () => {
-      clearTimeout(showTimeout);
-      win.show();
-      win.focus();
+      return result;
     });
+
+    ipcMain.on(QUIT_CHANNEL, (event) => {
+      if (!isTrusted(event)) return;
+      finish(reject, Object.assign(new Error('user_quit'), { code: 'user_quit' }));
+      if (!win.isDestroyed()) win.close();
+    });
+
+    win.once('closed', () => finish(reject, Object.assign(new Error('user_closed'), { code: 'user_closed' })));
+    win.once('ready-to-show', () => { win.show(); win.focus(); });
   });
 }
 
-module.exports = { showAuthDialog };
+module.exports = { createAuthDialog, showAuthDialog };

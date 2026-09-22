@@ -1,0 +1,118 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
+const os = require('node:os');
+const path = require('node:path');
+const { ModelSetupService } = require('../src/main/modelConfig/setupService');
+const config = require('../src/main/modelConfig');
+const { discoveryPreview } = require('../src/main/modelConfig/providerTemplates');
+const { discoverConnection } = require('../src/main/modelConfig/connectionDiscovery');
+async function main() {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'mana-setup-v8-'));
+  process.env.MANA_USER_DATA_ROOT = root;
+  let checks = 0;
+  const ok = (value, message) => { assert.ok(value, message); checks++; };
+  const updates = []; const calls = [];
+  let discoverFailure = true; let toolFailure = true; let blocked = false;
+  let hold = false;
+  const session = {
+    async verifyModel(input) {
+      calls.push(`${input.modelId}:${input.reasoningEffort || 'default'}:${input.mode}`);
+      if (blocked) throw Object.assign(new Error('writing busy'), { code: 'codex_turn_active' });
+      if (hold) await new Promise((resolve, reject) => input.signal.addEventListener('abort', () => reject(Object.assign(new Error('cancelled'), { code: 'setup_cancelled' })), { once: true }));
+      if (input.mode === 'tools' && toolFailure) throw new Error('tool probe failed');
+    }, async prepareModelSwitch() {},
+  };
+  const discover = async (input) => {
+    if (discoverFailure) throw Object.assign(new Error('list unavailable'), { code: 'discovery_http_error' });
+    const target = discoveryPreview(input).candidates[0];
+    return { ...target, template: { id: 'generic' }, queryParams: {}, auth: { mode: 'bearer' }, models: [{ id: 'z-model' }, { id: 'a-model' }] };
+  };
+  const service = new ModelSetupService({ session: () => session, notify: (value) => updates.push(value), discover });
+  const settle = async (id) => { while (service.running.has(id)) await service.running.get(id).promise; return service.query(id); };
+  const start = async (id, extra = {}) => {
+    const state = await config.load();
+    return service.start({ id, inputUrl: 'https://api.invalid/v1', templateId: 'generic', authMode: 'bearer', apiKey: 'secret-only-in-secret-store', expectedRevision: state.revision, approvedCandidateUrls: ['https://api.invalid/v1/models'], ...extra });
+  };
+  try {
+    await Promise.all([start('first'), start('first')]);
+    let op = await settle('first');
+    ok(op.status === 'failed' && op.stage === 'discover', 'failed discovery remains resumable');
+    ok((await config.load()).credentials.length === 1, 'duplicate start creates one credential');
+    ok(!JSON.stringify(await service.query()).includes('secret-only-in-secret-store'), 'no secret in operation snapshot');
+    discoverFailure = false;
+    await service.retry('first'); op = await settle('first');
+    ok(op.modelId === 'a-model' && !op.recommended, 'deterministic sorted selection');
+    await service.retry('first', { modelId: 'z-model', reasoningEffort: 'high' }); op = await settle('first');
+    ok(op.status === 'awaiting_chat', 'tool failure offers explicit chat-only decision');
+    ok((await config.load()).activeSelection === null, 'partial verification never activates');
+    const before = calls.length;
+    await service.retry('first', { chatOnly: true }); op = await settle('first');
+    ok(op.status === 'complete' && calls.length === before, 'chat-only commits without repeating successful text');
+    ok((await config.activeRoute()).model.verification.tools === 'failed', 'route enforces exact effort tools state');
+    await assert.rejects(config.setActive({ connectionId: op.connectionId, modelId: 'z-model', reasoningEffort: 'low' }), /验证/); checks++;
+    const baseline = await config.load();
+    const original = baseline.connections[0];
+    await config.saveCodexSubscription([{ id: 'gpt-5.6-luna', capabilities: { reasoningEfforts: ['medium'] } }]);
+    ok(JSON.stringify((await config.load()).activeSelection) === JSON.stringify(baseline.activeSelection), 'subscription refresh preserves API choice');
+    await start('edit', { connectionId: original.id, credentialId: original.credentialId, apiKey: '', inputUrl: 'https://new.invalid/v1', approvedCandidateUrls: ['https://new.invalid/v1/models'] });
+    await settle('edit');
+    ok((await config.load()).connections.find((item) => item.id === original.id).baseUrl === original.baseUrl, 'candidate URL does not overwrite active connection');
+    toolFailure = false;
+    await service.retry('edit', { modelId: 'a-model' }); op = await settle('edit');
+    ok(op.status === 'complete' && (await config.load()).connections.find((item) => item.id === original.id).baseUrl === 'https://new.invalid/v1', 'verified edit commits actual new URL');
+    ok(config.verificationFor((await config.load()).connections.find((item) => item.id === original.id).models.find((model) => model.id === 'z-model'), 'high').responses === 'unknown', 'route change invalidates old verification');
+    discoverFailure = true;
+    await start('manual'); await settle('manual');
+    await service.retry('manual', { manualModelId: 'known-id' }); op = await settle('manual');
+    ok(op.candidate.discovery.status === 'manual' && op.candidate.models[0].source === 'manual', 'manual model survives failed discovery');
+    await service.retry('manual', { modelId: 'known-id' }); op = await settle('manual');
+    ok(op.status === 'complete', 'manual model is actually verified and activated');
+    discoverFailure = false;
+    await start('cancel'); await settle('cancel');
+    hold = true;
+    await service.retry('cancel');
+    while (!(await service.query('cancel')).candidate || (await service.query('cancel')).stage !== 'responses') await new Promise((resolve) => setTimeout(resolve, 2));
+    // Wait until the mock probe has installed its abort listener.
+    while (!calls.at(-1).startsWith('a-model:default:responses')) await new Promise((resolve) => setTimeout(resolve, 2));
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await service.cancel('cancel'); op = await settle('cancel'); hold = false;
+    ok(op.status === 'cancelled' && config.verificationFor(op.candidate.models[0], '').responses === 'unknown', 'cancellation does not mark model failed');
+    blocked = true; await service.retry('cancel'); op = await settle('cancel'); blocked = false;
+    ok(op.status === 'paused' && op.errorCode === 'codex_turn_active', 'busy writer pauses setup');
+    const restarted = new ModelSetupService({ session: () => session, discover });
+    await config.mutateState((state) => { state.setupOperations.find((item) => item.id === 'cancel').status = 'running'; });
+    const priorCalls = calls.length;
+    ok((await restarted.query('cancel')).status === 'paused' && calls.length === priorCalls, 'restart never sends requests');
+    await config.saveCredential({ id: op.credentialId, apiKey: 'rotated' });
+    await service.retry('cancel'); op = await settle('cancel');
+    ok(op.errorCode === 'model_config_stale', 'key rotation invalidates pending candidate');
+    await start('conflict'); await settle('conflict');
+    await config.setActive({ connectionId: 'codex-subscription', modelId: 'gpt-5.6-luna', reasoningEffort: 'medium' });
+    await service.retry('conflict'); op = await settle('conflict');
+    ok(op.errorCode === 'model_config_stale' && (await config.load()).activeSelection.connectionId === 'codex-subscription', 'other window choice is not overwritten');
+    await config.saveCodexSubscription([{ id: 'replacement' }]);
+    ok((await config.load()).activeSelection === null && (await config.load()).selectionNotice, 'removed subscription model requires explicit selection');
+    const preview = discoveryPreview({ inputUrl: 'https://proxy.invalid/v1', templateId: 'openai' });
+    const requests = [];
+    await assert.rejects(discoverConnection({ inputUrl: 'https://proxy.invalid/v1', templateId: 'openai', apiKey: 'fake', approvedCandidateUrls: [preview.candidates[0].modelsUrl] }, { fetchImpl: async (url) => { requests.push(url); return new Response('', { status: 404 }); } }));
+    ok(requests.length === 1 && requests[0].startsWith('https://proxy.invalid/'), 'cross-origin fallback requires separate confirmation');
+    const saved = JSON.parse(await fs.readFile(path.join(root, 'model-config.json'), 'utf8'));
+    ok(saved.schemaVersion === 8 && !JSON.stringify(saved).includes('secret-only-in-secret-store'), 'v8 persisted operations contain no key');
+    ok(!JSON.stringify(updates).includes('secret-only-in-secret-store'), 'progress events contain no key');
+    const detectionInput = { inputUrl: 'https://api.invalid/v1', apiKey: 'fake', authMode: 'bearer', approvedCandidateUrls: ['https://api.invalid/v1/models'] };
+    await assert.rejects(discoverConnection(detectionInput, { fetchImpl: async () => new Response('', { status: 401 }) }), { code: 'discovery_unauthorized' }); checks++;
+    await assert.rejects(discoverConnection(detectionInput, { fetchImpl: async () => new Response('', { status: 429 }) }), { code: 'discovery_rate_limited' }); checks++;
+    await assert.rejects(discoverConnection({ ...detectionInput, timeoutMs: 3 }, { fetchImpl: async (_url, input) => new Promise((resolve, reject) => input.signal.addEventListener('abort', () => reject(Object.assign(new Error('timeout'), { name: 'AbortError' })), { once: true })) }), { code: 'discovery_timeout' }); checks++;
+    const migrationRoot = path.join(root, 'v7-active-migration');
+    await fs.mkdir(migrationRoot);
+    process.env.MANA_USER_DATA_ROOT = migrationRoot;
+    await fs.writeFile(path.join(migrationRoot, 'model-config.json'), JSON.stringify({ schemaVersion: 7, revision: 4, credentials: [{ id: 'key' }], connections: [{ id: 'old', kind: 'api', credentialId: 'key', baseUrl: 'https://api.invalid/v1', models: [{ id: 'old-model', verification: { responses: 'ok', tools: 'ok', verifiedEfforts: ['low', 'high'] } }] }], activeSelection: { connectionId: 'old', modelId: 'old-model', reasoningEffort: 'high' } }));
+    const migrated = await config.load();
+    ok(migrated.activeSelection.reasoningEffort === 'high' && config.verificationFor(migrated.connections[0].models[0], 'high').tools === 'ok', 'v7 active effort is preserved');
+    await assert.rejects(config.setActive({ connectionId: 'old', modelId: 'old-model', reasoningEffort: 'low' }), /验证/); checks++;
+    await fs.access(path.join(migrationRoot, 'migration-backups', 'responses-connections-v1', 'model-config-pre-v8.json')); checks++;
+    console.log(`model-config-v8-setup: ok (${checks} checks)`);
+  } finally { await fs.rm(root, { recursive: true, force: true }); }
+}
+main().catch((error) => { console.error(error); process.exitCode = 1; });

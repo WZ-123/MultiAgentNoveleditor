@@ -1,97 +1,75 @@
 'use strict';
 
 const http = require('node:http');
+const { createMemoryRelayState, createRelayCore } = require('../relay-worker/src/relay-core.cjs');
 
 const PORT = Number(process.env.MANA_DEV_AUTH_RELAY_PORT || 8789);
-const API_KEY = process.env.MANA_DEV_AUTH_API_KEY || 'mana-dev-relay-key';
 const AUTH_CODE = process.env.MANA_DEV_AUTH_CODE || '114514';
 const MAX_DEVICES = Number(process.env.MANA_DEV_AUTH_MAX_DEVICES || 5);
 const EXPIRES_DAYS = Number(process.env.MANA_DEV_AUTH_EXPIRES_DAYS || 7);
 
-function json(res, statusCode, body) {
-  const payload = JSON.stringify(body);
-  res.writeHead(statusCode, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Relay-Api-Key',
-  });
-  res.end(payload);
-}
-
-function readBody(req) {
-  return new Promise((resolve) => {
+function readBody(req, limit = 11 * 1024 * 1024) {
+  return new Promise((resolve, reject) => {
     const chunks = [];
-    req.on('data', (chunk) => chunks.push(chunk));
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    let size = 0;
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > limit) {
+        reject(Object.assign(new Error('request_too_large'), { code: 'request_too_large' }));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
   });
 }
 
-function requireApiKey(req, res) {
-  const apiKey = req.headers['x-relay-api-key'] || '';
-  if (apiKey !== API_KEY) {
-    json(res, 401, { error: 'Unauthorized' });
-    return false;
-  }
-  return true;
+function env() {
+  return {
+    RELAY_SIGNING_KID: process.env.RELAY_SIGNING_KID || '',
+    RELAY_SIGNING_PRIVATE_JWK: process.env.RELAY_SIGNING_PRIVATE_JWK || '',
+    RELAY_PUBLIC_JWKS: process.env.RELAY_PUBLIC_JWKS || '',
+    RELAY_ISSUER: process.env.RELAY_ISSUER || `http://127.0.0.1:${PORT}`,
+    RELAY_AUTH_CODE_PEPPER: process.env.RELAY_AUTH_CODE_PEPPER || 'local-development-pepper-only',
+    RELAY_STATE_STORE: createMemoryRelayState(),
+  };
 }
+
+const core = createRelayCore({
+  env: env(),
+  handlers: {
+    exchangeLicense: async ({ authCode }) => authCode === AUTH_CODE
+      ? { valid: true, deviceCount: 1, maxDevices: MAX_DEVICES, expiresAt: new Date(Date.now() + EXPIRES_DAYS * 86400000).toISOString() }
+      : { valid: false, reason: 'invalid_code' },
+    uploadFeedback: async ({ idempotencyKey }) => ({ fileToken: `dev-file-${idempotencyKey}`, fileName: 'dev-attachment' }),
+    submitFeedback: async ({ data }) => ({ recordId: `dev-record-${data.feedbackId}`, status: 'created' }),
+  },
+});
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
-
-  if (req.method === 'OPTIONS') {
-    json(res, 204, {});
-    return;
-  }
-
-  if (url.pathname !== '/api/v1/health' && !requireApiKey(req, res)) {
-    return;
-  }
-
-  if (req.method === 'GET' && url.pathname === '/api/v1/health') {
-    json(res, 200, { ok: true, mode: 'dev-auth-relay' });
-    return;
-  }
-
-  if (req.method === 'POST' && url.pathname === '/api/v1/auth/verify') {
-    const raw = await readBody(req);
-    let body;
-    try {
-      body = raw ? JSON.parse(raw) : {};
-    } catch {
-      json(res, 400, { error: 'Invalid JSON body' });
-      return;
-    }
-
-    const { code, deviceId } = body || {};
-    if (!code || !deviceId) {
-      json(res, 400, { error: 'Missing code or deviceId' });
-      return;
-    }
-
-    if (String(code).trim() !== AUTH_CODE) {
-      json(res, 403, { valid: false, reason: 'invalid_code' });
-      return;
-    }
-
-    const expiresAt = new Date(Date.now() + EXPIRES_DAYS * 24 * 60 * 60 * 1000).toISOString();
-    json(res, 200, {
-      valid: true,
-      deviceCount: 1,
-      maxDevices: MAX_DEVICES,
-      expiresAt,
-      deviceRegistered: true,
-      authMode: 'local-dev',
+  try {
+    const body = await readBody(req);
+    const url = new URL(req.url || '/', `http://${req.headers.host || `127.0.0.1:${PORT}`}`);
+    const result = await core({
+      method: req.method,
+      path: url.pathname,
+      headers: req.headers,
+      body,
+      contentType: req.headers['content-type'] || '',
+      remoteAddress: req.socket.remoteAddress || 'unknown',
     });
-    return;
+    res.writeHead(result.status, result.headers);
+    res.end(result.status === 204 ? '' : result.body);
+  } catch {
+    res.writeHead(500, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify({ ok: false, code: 'internal_error' }));
   }
-
-  json(res, 404, { error: 'Not found' });
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[dev-auth-relay] listening on http://127.0.0.1:${PORT}`);
-  console.log(`[dev-auth-relay] expected auth code: ${AUTH_CODE}`);
+  console.log(`[dev-auth-relay] V2 listening on http://127.0.0.1:${PORT}`);
 });
 
 process.on('SIGINT', () => server.close(() => process.exit(0)));

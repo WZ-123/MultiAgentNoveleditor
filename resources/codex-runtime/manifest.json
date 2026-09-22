@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "runtimeVersion": "0.153.0",
+  "tag": "rust-v0.153.0",
+  "commit": "rust-v0.153.0",
+  "releaseBaseUrl": "https://registry.npmjs.org/@openai/codex/-",
+  "licenseUrl": "https://raw.githubusercontent.com/openai/codex/rust-v0.153.0/LICENSE",
+  "licenseSha256": "d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc",
+  "targets": {
+    "darwin-arm64": { "platform": "darwin", "arch": "arm64", "targetTriple": "aarch64-apple-darwin", "archive": "codex-0.153.0-darwin-arm64.tgz", "archiveFormat": "tar.gz", "archiveIntegrity": "sha512-C9F3HVEYekVJC3WhiGSztcxItWBwd7Y6hTWoDqa9Z9aLWsYywzqChABB59n7G5F5jCil9wxW3+u2L6uiVUydmw==", "executable": "codex", "appServerArgs": ["app-server"], "companions": ["codex-code-mode-host"] },
+    "darwin-x64": { "platform": "darwin", "arch": "x64", "targetTriple": "x86_64-apple-darwin", "archive": "codex-0.153.0-darwin-x64.tgz", "archiveFormat": "tar.gz", "archiveIntegrity": "sha512-DO5u+X/eL8pObrV0WDErOjS9DeuDvVuOL5oHR5y5Yklp0NGoGj3oOHsmaSXjGesiIiu3IX8l4pzS6dbeQXJAvQ==", "executable": "codex", "appServerArgs": ["app-server"], "companions": ["codex-code-mode-host"] },
+    "win32-x64": { "platform": "win32", "arch": "x64", "targetTriple": "x86_64-pc-windows-msvc", "archive": "codex-0.153.0-win32-x64.tgz", "archiveFormat": "tar.gz", "archiveIntegrity": "sha512-eXvmitT1Hmr6d8n9r5HVjTuSgdHtxFSyXh0c3rRnaTcJA0ef8JnI5LY0TJci/QHYLNJGaEMBZ5R4dEdB2d87Lw==", "executable": "codex.exe", "appServerArgs": ["app-server"], "companions": ["codex-code-mode-host.exe"] },
+    "win32-arm64": { "platform": "win32", "arch": "arm64", "targetTriple": "aarch64-pc-windows-msvc", "archive": "codex-0.153.0-win32-arm64.tgz", "archiveFormat": "tar.gz", "archiveIntegrity": "sha512-Ro+/2oAQnOObxuw3hpr+anv+j9hFmql/2iDxd7v0m46ctZy8x6ygW/Ud4f9CB1UXlRRsDhW+Tu9UAd5X9vTL1g==", "executable": "codex.exe", "appServerArgs": ["app-server"], "companions": ["codex-code-mode-host.exe"] },
+    "linux-x64": { "platform": "linux", "arch": "x64", "targetTriple": "x86_64-unknown-linux-musl", "archive": "codex-0.153.0-linux-x64.tgz", "archiveFormat": "tar.gz", "archiveIntegrity": "sha512-sFF+g7p1o6sZVL6PHd9JTYrP2j3xao3Qeu5AngcrD5brWrCc+w9ifBJCJuRSM728WfgjXML9PQPdHPaZSeHAEA==", "executable": "codex", "appServerArgs": ["app-server"], "companions": ["codex-code-mode-host"] },
+    "linux-arm64": { "platform": "linux", "arch": "arm64", "targetTriple": "aarch64-unknown-linux-musl", "archive": "codex-0.153.0-linux-arm64.tgz", "archiveFormat": "tar.gz", "archiveIntegrity": "sha512-N2zLgmuslhMoC2RFC2aDkcCWk3iapZmBlSiESpjXFF+UMNxIpNxWJ5qQtQrCp5Md7kYbF4/EFy8RqJ8tL8UTeA==", "executable": "codex", "appServerArgs": ["app-server"], "companions": ["codex-code-mode-host"] }
+  }
+}

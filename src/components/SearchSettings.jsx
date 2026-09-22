@@ -12,7 +12,6 @@ const ENGINES = [
 export function SearchSettings() {
   const mana = typeof window !== 'undefined' ? window.mana : null;
   const [engine, setEngine] = useState('auto');
-  const [mode, setMode] = useState('traditional');
   const [concurrency, setConcurrency] = useState(10);
   const [saved, setSaved] = useState(false);
 
@@ -20,7 +19,6 @@ export function SearchSettings() {
     if (!mana?.config?.getApp) return;
     mana.config.getApp().then((cfg) => {
       if (cfg?.searchEngine) setEngine(cfg.searchEngine);
-      if (cfg?.enrichmentMode) setMode(cfg.enrichmentMode);
       if (cfg?.enrichmentConcurrency != null) setConcurrency(cfg.enrichmentConcurrency);
     }).catch(() => {});
   }, [mana]);
@@ -28,11 +26,11 @@ export function SearchSettings() {
   const onSave = useCallback(async () => {
     if (!mana?.config?.setApp) return;
     try {
-      await mana.config.setApp({ searchEngine: engine, enrichmentMode: mode, enrichmentConcurrency: concurrency });
+      await mana.config.setApp({ searchEngine: engine, enrichmentConcurrency: concurrency });
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);
     } catch { /* ignore */ }
-  }, [mana, engine, mode, concurrency]);
+  }, [mana, engine, concurrency]);
 
   return (
     <div className="text-xs space-y-3 max-w-xl">
@@ -66,40 +64,6 @@ export function SearchSettings() {
               </div>
             </label>
           ))}
-        </div>
-      </div>
-
-      <div>
-        <label className="text-gray-500 text-[11px] block mb-1">补全搜索模式</label>
-        <div className="space-y-1">
-          <label className="flex items-start gap-2 py-1 cursor-pointer hover:bg-vscode-active-item/30 rounded px-1">
-            <input
-              type="radio"
-              name="enrichmentMode"
-              value="traditional"
-              checked={mode === 'traditional'}
-              onChange={() => setMode('traditional')}
-              className="mt-0.5"
-            />
-            <div>
-              <div className="text-gray-300 text-[11px]">传统搜索</div>
-              <div className="text-gray-500 text-[10px]">使用萌娘百科、Wikipedia、Bing 等源直接搜索，速度快、成本低</div>
-            </div>
-          </label>
-          <label className="flex items-start gap-2 py-1 cursor-pointer hover:bg-vscode-active-item/30 rounded px-1">
-            <input
-              type="radio"
-              name="enrichmentMode"
-              value="llm"
-              checked={mode === 'llm'}
-              onChange={() => setMode('llm')}
-              className="mt-0.5"
-            />
-            <div>
-              <div className="text-gray-300 text-[11px]">LLM 智能搜索</div>
-              <div className="text-gray-500 text-[10px]">由 AI 自主决定搜索策略和关键词，更智能但消耗更多 Token</div>
-            </div>
-          </label>
         </div>
       </div>
 

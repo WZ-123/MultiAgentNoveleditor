@@ -10,7 +10,6 @@ const fs = require('fs');
 
 const ROOT = path.resolve(__dirname, '..');
 const asarPath = path.join(ROOT, 'dist', 'win-unpacked', 'resources', 'app.asar');
-const unpackedRoot = path.join(ROOT, 'dist', 'win-unpacked', 'resources', 'app.asar.unpacked');
 
 let failed = 0;
 
@@ -24,34 +23,21 @@ console.log('=== Packaged App Verification ===');
 // 1. ASAR file exists
 check('app.asar exists', fs.existsSync(asarPath));
 
-// 2. app.asar.unpacked exists
-check('app.asar.unpacked exists', fs.existsSync(unpackedRoot));
-
-// 3. mcp-server-entry.js is unpacked
-check('mcp-server-entry.js unpacked', fs.existsSync(path.join(unpackedRoot, 'mcp-server-entry.js')));
-
-// 4. ASAR path resolution fix for serverManager.js
-const root1 = path.resolve(asarPath + '/src/main/mcp', '..', '..', '..');
-let entry1 = path.join(root1, 'mcp-server-entry.js');
-const fixed1 = entry1.replace(/\.asar([\\/])/, '.asar.unpacked$1');
-check('serverManager path fix resolves to unpacked', fs.existsSync(fixed1));
-
-// 5. ASAR path resolution fix for mcpConfigGen.js
-const root2 = path.resolve(asarPath + '/src/main/runtime/drivers/shared', '..', '..', '..', '..', '..');
-let entry2 = path.join(root2, 'mcp-server-entry.js');
-const fixed2 = entry2.replace(/\.asar([\\/])/, '.asar.unpacked$1');
-check('mcpConfigGen path fix resolves to unpacked', fs.existsSync(fixed2));
-
-// 6. exe exists
+// 2. exe exists
 check('MultiAgentNovelAssistant.exe exists', fs.existsSync(path.join(ROOT, 'dist', 'win-unpacked', 'MultiAgentNovelAssistant.exe')));
 
-// 7. Verify ASAR does NOT contain dist/win-unpacked (recursive inclusion)
+// 3. Verify the runtime entry and thin host are inside ASAR.
 try {
   const asar = require('@electron/asar');
   const files = asar.listPackage(asarPath);
   const hasWinUnpacked = files.some(f => f.includes('win-unpacked'));
   check('ASAR does NOT contain dist/win-unpacked', !hasWinUnpacked);
   check('ASAR contains dist/index.html', files.some(f => f.endsWith('index.html')));
+  check('ASAR contains mcp-server-entry.js', files.includes('/mcp-server-entry.js'));
+  const forbiddenArchitectures = ['src/main/runtime/', 'src/main/harness-v3/', 'src/main/responses-gateway/', 'src/main/domain-runtime/'];
+  for (const forbidden of forbiddenArchitectures) {
+    check(`ASAR excludes removed architecture ${forbidden}`, !files.some((file) => file.includes(forbidden)));
+  }
 } catch (e) {
   console.log('  SKIP  @electron/asar check:', e.message);
 }

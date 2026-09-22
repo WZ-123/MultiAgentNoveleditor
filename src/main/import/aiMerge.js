@@ -5,7 +5,7 @@
  * of two conflicting content versions.
  */
 
-const { runSubagent } = require('../runtime/runSubagent');
+const { getCodexSessionService } = require('../codex-runtime');
 
 /**
  * @param {string} leftContent  - imported version
@@ -36,12 +36,12 @@ async function aiMerge(leftContent, rightContent, conflictType, userNote) {
     },
   ];
 
-  const result = await runSubagent({
-    subagentId: 'sa-import-merge',
-    input,
+  const result = await getCodexSessionService().runOneShot({
+    text: input[0].content[0].text,
+    skillName: 'mana-import-enrichment',
   });
 
-  return result?.output || leftContent || rightContent || '';
+  return result?.text || leftContent || rightContent || '';
 }
 
 module.exports = { aiMerge };

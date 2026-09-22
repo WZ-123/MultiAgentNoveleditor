@@ -3,276 +3,92 @@
 const { paths } = require('./paths');
 const { readJson, writeJson } = require('./jsonStore');
 
-const SCHEMA_VERSION = 2;
-
-const DEFAULT_WRITING_CONFIG = {
-  mode: 'command_driven',
-  harnessMode: 'adaptive',
-  contextDepth: 'auto',
-  sceneGeneration: 'auto',
-  verificationLevel: 'auto',
-  roleplayInteractionLevel: 'director_mediated',
-  roleplayMaxInteractionRounds: 3,
-  roleplayProfileGate: 'block_and_ask',
-  roleplayAutofillScope: 'fill_missing_and_weak',
-  roleplayAutofillAlignment: 'current_scene',
-  roleplayChatVisibility: 'compact',
-  roleplayPauseOnRisk: true,
-  characterMemoryUpdate: 'after_confirmed_write',
-};
-
-const DEFAULT_LAN_REMOTE_CONFIG = {
-  enabled: false,
-  port: 8788,
-};
-
-const DEFAULT_DRIVERS = {
-  'claude-code-vscode': {
-    kind: 'claude-code-vscode',
-    binPath: '',
-    autoDetectedPath: '',
-    env: {},
-    cwd: '',
-    extra: { permissionMode: 'default', allowedToolPrefixes: ['mcp__novel-tools__'] },
-  },
-  'claude-code-cli': {
-    kind: 'claude-code-cli',
-    binPath: '',
-    env: {},
-    cwd: '',
-    extra: {},
-  },
-  codex: {
-    kind: 'codex',
-    binPath: '',
-    env: {},
-    cwd: '',
-    extra: {},
-  },
-  'direct-api': {
-    kind: 'direct-api',
-  },
-};
-
+const SCHEMA_VERSION = 7;
+const DEFAULT_LAN_REMOTE_CONFIG = { enabled: false, port: 8788 };
 const DEFAULT_APP_CONFIG = {
   schemaVersion: SCHEMA_VERSION,
   language: 'system',
   recents: [],
   lastNovelId: null,
   lastNovelDir: null,
-  activeDriverId: 'direct-api',
-  drivers: DEFAULT_DRIVERS,
-  storageQuota: {
-    chatHistoryMaxMB: 200,
-    offlineLogMaxMB: 100,
-  },
+  storageQuota: { chatHistoryMaxMB: 200, offlineLogMaxMB: 100 },
   searchEngine: 'auto',
   enrichmentConcurrency: 10,
-  enrichmentMode: 'traditional',
-  modelRuntime: {
-    offlineMockEnabled: false,
-  },
-  writing: DEFAULT_WRITING_CONFIG,
-  feishuSync: {
-    enabled: true,
-    endpointProfile: 'dev',
-    // The packaged client is relay-only for feedback sync and auth verification.
-    relayUrl: '',
-    relayApiKey: '',
-  },
-  license: {
-    authCode: '',
-    verifiedUntil: '',
-    deviceId: '',
-  },
-  updater: {
-    skipVersion: '',
-    autoDownload: false,
-    lastCheckAt: '',
-  },
+  feishuSync: { enabled: true, endpointProfile: 'release-public-config' },
+  license: { secretMigrationVersion: 2, lastAuthStatus: '' },
+  updater: { skipVersion: '', autoDownload: false, lastCheckAt: '' },
   lanRemote: DEFAULT_LAN_REMOTE_CONFIG,
 };
 
-function normalizeFeishuSync(savedFeishu) {
-  const feishuSync = { ...DEFAULT_APP_CONFIG.feishuSync };
-  for (const key of Object.keys(DEFAULT_APP_CONFIG.feishuSync)) {
-    const saved = savedFeishu?.[key];
-    const hasSavedValue = saved !== undefined && saved !== null && saved !== '';
-    if (hasSavedValue) {
-      feishuSync[key] = saved;
-    }
-  }
-  return feishuSync;
+function normalizeLanRemote(value) {
+  const source = value && typeof value === 'object' ? value : {};
+  const rawPort = Number(source.port);
+  return { enabled: source.enabled === true, port: Number.isFinite(rawPort) ? Math.min(65535, Math.max(1024, Math.trunc(rawPort))) : 8788 };
 }
-
-function mergeDrivers(saved) {
-  // Deep-merge each driver's config so newly-added drivers (e.g. when we add a
-  // 5th driver in a future release) inherit defaults, while user-edited fields
-  // on existing drivers (binPath, env, etc.) are preserved.
-  const out = {};
-  for (const id of Object.keys(DEFAULT_DRIVERS)) {
-    out[id] = { ...DEFAULT_DRIVERS[id], ...(saved && saved[id]) };
-  }
-  // Preserve any user-added drivers that aren't in defaults (forward compat).
-  if (saved && typeof saved === 'object') {
-    for (const id of Object.keys(saved)) {
-      if (!out[id]) out[id] = saved[id];
-    }
-  }
-  return out;
-}
-
-function normalizeDrivers(saved) {
-  const merged = mergeDrivers(saved);
-  let changed = false;
-
-  for (const id of Object.keys(merged)) {
-    const next = { ...merged[id] };
-    if (next.kind !== id) {
-      next.kind = id;
-      changed = true;
-    }
-    if (!saved || !saved[id]) {
-      changed = true;
-    }
-    merged[id] = next;
-  }
-
-  return { drivers: merged, changed };
-}
-
-function normalizeWriting(savedWriting) {
-  const merged = { ...DEFAULT_WRITING_CONFIG, ...(savedWriting && typeof savedWriting === 'object' ? savedWriting : {}) };
-  if (!['adaptive', 'legacy'].includes(merged.harnessMode)) merged.harnessMode = DEFAULT_WRITING_CONFIG.harnessMode;
-  if (!['auto', 'compact', 'deep'].includes(merged.contextDepth)) merged.contextDepth = DEFAULT_WRITING_CONFIG.contextDepth;
-  if (!['auto', 'chapter', 'scene'].includes(merged.sceneGeneration)) merged.sceneGeneration = DEFAULT_WRITING_CONFIG.sceneGeneration;
-  if (!['auto', 'fast', 'strict'].includes(merged.verificationLevel)) merged.verificationLevel = DEFAULT_WRITING_CONFIG.verificationLevel;
-  const rawRounds = Number(merged.roleplayMaxInteractionRounds);
-  const rounds = Number.isFinite(rawRounds) ? Math.trunc(rawRounds) : DEFAULT_WRITING_CONFIG.roleplayMaxInteractionRounds;
-  merged.roleplayMaxInteractionRounds = Math.min(99, Math.max(0, rounds));
-  return merged;
-}
-
-function normalizeLanRemote(savedLanRemote) {
-  const merged = {
-    ...DEFAULT_LAN_REMOTE_CONFIG,
-    ...(savedLanRemote && typeof savedLanRemote === 'object' ? savedLanRemote : {}),
+function normalizeLicense(value) {
+  return {
+    secretMigrationVersion: Math.max(0, Number(value?.secretMigrationVersion) || 0),
+    lastAuthStatus: typeof value?.lastAuthStatus === 'string' ? value.lastAuthStatus.slice(0, 64) : '',
   };
-  const rawPort = Number(merged.port);
-  merged.port = Number.isFinite(rawPort)
-    ? Math.min(65535, Math.max(1024, Math.trunc(rawPort)))
-    : DEFAULT_LAN_REMOTE_CONFIG.port;
-  merged.enabled = merged.enabled === true;
-  return merged;
 }
-
-async function load() {
-  const file = paths().appConfig;
-  const data = await readJson(file, null);
-  let changed = false;
-  if (!data || typeof data !== 'object') {
-    const next = { ...DEFAULT_APP_CONFIG, drivers: { ...DEFAULT_DRIVERS } };
-    await writeJson(file, next);
-    return next;
-  }
-  const { drivers, changed: driversChanged } = normalizeDrivers(data.drivers);
-
-  // Merge feishuSync: saved non-empty values take precedence over defaults,
-  // but empty strings do NOT override pre-seeded defaults (for beta builds).
-  const savedFeishu = data.feishuSync || {};
-  const feishuSync = normalizeFeishuSync(savedFeishu);
-
-  // Merge license: same rules as feishuSync
-  const savedLicense = data.license || {};
-  const license = { ...DEFAULT_APP_CONFIG.license };
-  for (const key of Object.keys(DEFAULT_APP_CONFIG.license)) {
-    const saved = savedLicense[key];
-    const hasSavedValue = saved !== undefined && saved !== null && saved !== '';
-    if (hasSavedValue) {
-      license[key] = saved;
-    }
-  }
-
-  // Merge updater: same rules as feishuSync
-  const savedUpdater = data.updater || {};
-  const updater = { ...DEFAULT_APP_CONFIG.updater };
-  for (const key of Object.keys(DEFAULT_APP_CONFIG.updater)) {
-    const saved = savedUpdater[key];
-    const hasSavedValue = saved !== undefined && saved !== null && saved !== '';
-    if (hasSavedValue) {
-      updater[key] = saved;
-    }
-  }
-
-  const next = {
+function normalize(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  return {
     ...DEFAULT_APP_CONFIG,
-    ...data,
-    writing: normalizeWriting(data.writing),
-    lanRemote: normalizeLanRemote(data.lanRemote),
-    feishuSync,
-    license,
-    updater,
-    drivers,
+    language: source.language || DEFAULT_APP_CONFIG.language,
+    recents: Array.isArray(source.recents) ? source.recents : [],
+    lastNovelId: source.lastNovelId || null,
+    lastNovelDir: source.lastNovelDir || null,
+    storageQuota: { ...DEFAULT_APP_CONFIG.storageQuota, ...(source.storageQuota || {}) },
+    searchEngine: source.searchEngine || DEFAULT_APP_CONFIG.searchEngine,
+    enrichmentConcurrency: Math.max(1, Number(source.enrichmentConcurrency) || DEFAULT_APP_CONFIG.enrichmentConcurrency),
+    feishuSync: { ...DEFAULT_APP_CONFIG.feishuSync, ...(source.feishuSync || {}), endpointProfile: 'release-public-config' },
+    license: normalizeLicense(source.license),
+    updater: { ...DEFAULT_APP_CONFIG.updater, ...(source.updater || {}) },
+    lanRemote: normalizeLanRemote(source.lanRemote),
   };
-  if (next.schemaVersion !== SCHEMA_VERSION) {
-    next.schemaVersion = SCHEMA_VERSION;
-    changed = true;
-  }
-  if (!next.activeDriverId || !next.drivers[next.activeDriverId]) {
-    next.activeDriverId = 'direct-api';
-    changed = true;
-  }
-  changed = changed || driversChanged;
-  if (JSON.stringify(next.drivers) !== JSON.stringify(data.drivers || {})) changed = true;
-  if (JSON.stringify(next) !== JSON.stringify(data)) {
-    changed = true;
-  }
-  if (changed) {
-    await writeJson(file, next);
-  }
+}
+function redactSensitiveConfig(config) {
+  const copy = JSON.parse(JSON.stringify(config || {}));
+  if (copy.feishuSync) { delete copy.feishuSync.relayApiKey; delete copy.feishuSync.relayUrl; }
+  if (copy.license) { delete copy.license.authCode; delete copy.license.deviceId; delete copy.license.verifiedUntil; delete copy.license.offlineLease; }
+  return copy;
+}
+async function readLegacyLicenseMaterial() {
+  const raw = await readJson(paths().appConfig, null);
+  return {
+    authCode: String(raw?.license?.authCode || ''), relayUrl: String(raw?.feishuSync?.relayUrl || ''),
+    relayApiKey: String(raw?.feishuSync?.relayApiKey || ''), deviceId: String(raw?.license?.deviceId || ''),
+    verifiedUntil: String(raw?.license?.verifiedUntil || ''),
+  };
+}
+async function clearLegacyLicenseMaterial() {
+  const raw = await readJson(paths().appConfig, null);
+  if (!raw || typeof raw !== 'object') return false;
+  await writeJson(paths().appConfig, normalize(raw));
+  return true;
+}
+async function load() {
+  const raw = await readJson(paths().appConfig, null);
+  const next = normalize(raw);
+  if (JSON.stringify(raw) !== JSON.stringify(next)) await writeJson(paths().appConfig, next);
   return next;
 }
-
 async function save(patch) {
   const current = await load();
-  const next = { ...current, ...patch, schemaVersion: SCHEMA_VERSION };
-  // If patch.drivers is provided, deep-merge it so partial driver patches
-  // (e.g. just updating one binPath) don't drop sibling driver configs.
-  if (patch && patch.drivers) {
-    next.drivers = mergeDrivers({ ...current.drivers, ...patch.drivers });
-  } else {
-    next.drivers = current.drivers;
-  }
-  // Deep-merge feishuSync so partial patches don't drop sibling fields.
-  if (patch && patch.feishuSync) {
-    next.feishuSync = normalizeFeishuSync({ ...current.feishuSync, ...patch.feishuSync });
-  } else {
-    next.feishuSync = current.feishuSync;
-  }
-  // Deep-merge license so partial patches don't drop sibling fields.
-  if (patch && patch.license) {
-    next.license = { ...current.license, ...patch.license };
-  } else {
-    next.license = current.license;
-  }
-  // Deep-merge updater so partial patches don't drop sibling fields.
-  if (patch && patch.updater) {
-    next.updater = { ...current.updater, ...patch.updater };
-  } else {
-    next.updater = current.updater;
-  }
-  if (patch && patch.writing) {
-    next.writing = normalizeWriting({ ...current.writing, ...patch.writing });
-  } else {
-    next.writing = current.writing;
-  }
-  if (patch && patch.lanRemote) {
-    next.lanRemote = normalizeLanRemote({ ...current.lanRemote, ...patch.lanRemote });
-  } else {
-    next.lanRemote = current.lanRemote;
-  }
+  const source = patch && typeof patch === 'object' ? patch : {};
+  const next = normalize({
+    ...current,
+    ...source,
+    storageQuota: { ...current.storageQuota, ...(source.storageQuota || {}) },
+    feishuSync: { ...current.feishuSync, ...(source.feishuSync || {}) },
+    license: { ...current.license, ...(source.license || {}) },
+    updater: { ...current.updater, ...(source.updater || {}) },
+    lanRemote: { ...current.lanRemote, ...(source.lanRemote || {}) },
+  });
   await writeJson(paths().appConfig, next);
   return next;
 }
+async function loadPublic() { return redactSensitiveConfig(await load()); }
 
-module.exports = { load, save, DEFAULT_APP_CONFIG, DEFAULT_DRIVERS, DEFAULT_WRITING_CONFIG, DEFAULT_LAN_REMOTE_CONFIG, SCHEMA_VERSION };
+module.exports = { clearLegacyLicenseMaterial, load, loadPublic, readLegacyLicenseMaterial, redactSensitiveConfig, save, DEFAULT_APP_CONFIG, DEFAULT_LAN_REMOTE_CONFIG, SCHEMA_VERSION };

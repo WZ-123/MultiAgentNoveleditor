@@ -1,0 +1,12 @@
+# Copy this file to .dev.vars for local relay development. Never commit the copy.
+FEISHU_APP_ID=replace-me
+FEISHU_APP_SECRET=replace-me
+FEISHU_APP_TOKEN=replace-me
+FEISHU_AUTH_TABLE_ID=replace-me
+FEISHU_TABLE_ID=replace-me
+RELAY_SIGNING_KID=dev-key-1
+RELAY_SIGNING_PRIVATE_JWK={"kty":"EC","crv":"P-256","kid":"dev-key-1","x":"replace-me","y":"replace-me","d":"replace-me"}
+RELAY_PUBLIC_JWKS={"keys":[{"kty":"EC","crv":"P-256","kid":"dev-key-1","x":"replace-me","y":"replace-me","alg":"ES256","use":"sig"}]}
+RELAY_ISSUER=https://relay.example.invalid
+RELAY_AUTH_CODE_PEPPER=replace-with-a-long-random-value
+RELAY_REDIS_URL=rediss://user:password@redis.example.invalid:6379/0

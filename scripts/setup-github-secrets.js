@@ -2,167 +2,70 @@
 'use strict';
 
 /**
- * One-shot script to check latest GitHub Actions status, set relay secrets,
- * and optionally re-trigger the workflow.
+ * Upload public release configuration to GitHub Actions without embedding any
+ * credential in this repository or exposing values on the command line.
  *
- * Usage:
- *   node scripts/setup-github-secrets.js
+ * Required environment:
+ *   GITHUB_REPOSITORY=owner/repository
+ *   RELEASE_RELAY_URL=https://relay.example.com
+ *   RELEASE_RELAY_JWKS={"keys":[...]}
+ *   RELEASE_MINIMUM_CLIENT_VERSION=0.0.9
+ *
+ * Authentication is delegated to an existing `gh auth login` session or the
+ * standard GH_TOKEN environment variable. Secret values are passed over stdin.
  */
 
-const https = require('https');
-const readline = require('readline');
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+const { spawnSync } = require('node:child_process');
 
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-function ask(q) { return new Promise(r => rl.question(q, r)); }
-
-function gitRemote() {
-  try {
-    const url = execSync('git remote get-url origin', { encoding: 'utf8' }).trim();
-    const m = url.match(/github\.com[\/:]([^\/]+)\/([^\/]+?)(?:\.git)?$/);
-    if (!m) throw new Error('Cannot parse remote URL: ' + url);
-    return { owner: m[1], repo: m[2] };
-  } catch (e) {
-    console.error('Failed to get git remote:', e.message);
-    process.exit(1);
-  }
+function required(name) {
+  const value = String(process.env[name] || '').trim();
+  if (!value) throw new Error(`${name} is required`);
+  return value;
 }
 
-function githubApi(apiPath, token, method = 'GET', body = null) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: 'api.github.com',
-      path: apiPath,
-      method,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'User-Agent': 'mana-setup-script',
-        'Accept': 'application/vnd.github.v3+json',
-      },
-    };
-    if (body) options.headers['Content-Type'] = 'application/json';
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => {
-        try {
-          const json = JSON.parse(data);
-          if (res.statusCode >= 400) {
-            reject(new Error(`GitHub API ${res.statusCode}: ${JSON.stringify(json)}`));
-          } else {
-            resolve(json);
-          }
-        } catch {
-          resolve(data);
-        }
-      });
-    });
-    req.on('error', reject);
-    if (body) req.write(JSON.stringify(body));
-    req.end();
+function validatePublicJwks(raw) {
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch { throw new Error('RELEASE_RELAY_JWKS must be valid JSON'); }
+  if (!Array.isArray(parsed?.keys) || parsed.keys.length === 0) {
+    throw new Error('RELEASE_RELAY_JWKS must contain at least one public key');
+  }
+  for (const key of parsed.keys) {
+    if (key?.kty !== 'EC' || key?.crv !== 'P-256' || !key?.kid || !key?.x || !key?.y || key?.d) {
+      throw new Error('RELEASE_RELAY_JWKS may contain only public P-256 keys with kid/x/y and no private d value');
+    }
+  }
+  return JSON.stringify({ keys: parsed.keys });
+}
+
+function setSecret(repo, name, value) {
+  const result = spawnSync('gh', ['secret', 'set', name, '--repo', repo, '--body', '-'], {
+    encoding: 'utf8',
+    input: value,
+    stdio: ['pipe', 'pipe', 'pipe'],
   });
-}
-
-async function getPublicKey(owner, repo, token) {
-  return githubApi(`/repos/${owner}/${repo}/actions/secrets/public-key`, token);
-}
-
-function ensureNaclDeps() {
-  try {
-    return {
-      nacl: require('tweetnacl'),
-      sealedbox: require('tweetnacl-sealedbox-js'),
-    };
-  } catch {
-    console.log('Installing tweetnacl + tweetnacl-sealedbox-js temporarily...');
-    const tmpDir = fs.mkdtempSync('/tmp/mana-nacl-');
-    execSync('npm install tweetnacl tweetnacl-sealedbox-js', {
-      cwd: tmpDir,
-      stdio: 'inherit',
-    });
-    module.paths.unshift(path.join(tmpDir, 'node_modules'));
-    return {
-      nacl: require('tweetnacl'),
-      sealedbox: require('tweetnacl-sealedbox-js'),
-    };
+  if (result.status !== 0) {
+    throw new Error(`gh secret set ${name} failed: ${String(result.stderr || '').trim() || `exit ${result.status}`}`);
   }
+  process.stdout.write(`Configured ${name}\n`);
 }
 
-function encryptSecret(publicKeyBase64, value) {
-  const { sealedbox } = ensureNaclDeps();
-  const publicKey = Buffer.from(publicKeyBase64, 'base64');
-  const message = Buffer.from(value, 'utf8');
-  const encrypted = sealedbox.seal(message, publicKey);
-  return Buffer.from(encrypted).toString('base64');
-}
-
-async function setSecret(owner, repo, token, name, value, keyId, publicKey) {
-  const encryptedValue = encryptSecret(publicKey, value);
-  await githubApi(
-    `/repos/${owner}/${repo}/actions/secrets/${name}`,
-    token,
-    'PUT',
-    { encrypted_value: encryptedValue, key_id: keyId }
-  );
-  console.log(`  -> Secret "${name}" set.`);
-}
-
-async function getLatestRun(owner, repo, token) {
-  const data = await githubApi(`/repos/${owner}/${repo}/actions/runs?per_page=1`, token);
-  return data.workflow_runs?.[0] || null;
-}
-
-async function reRunWorkflow(owner, repo, token, runId) {
-  await githubApi(`/repos/${owner}/${repo}/actions/runs/${runId}/rerun`, token, 'POST');
-  console.log(`Workflow run ${runId} re-triggered.`);
-}
-
-async function main() {
-  const { owner, repo } = gitRemote();
-  console.log(`Repository: ${owner}/${repo}\n`);
-
-  const token = process.env.GITHUB_TOKEN || await ask('Enter GitHub Personal Access Token: ');
-  if (!token) {
-    console.error('Token is required.');
-    process.exit(1);
+function main() {
+  const repo = required('GITHUB_REPOSITORY');
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) throw new Error('GITHUB_REPOSITORY must be owner/repository');
+  const relayUrl = new URL(required('RELEASE_RELAY_URL'));
+  if (relayUrl.protocol !== 'https:') throw new Error('RELEASE_RELAY_URL must use HTTPS');
+  const jwks = validatePublicJwks(required('RELEASE_RELAY_JWKS'));
+  const minimumVersion = required('RELEASE_MINIMUM_CLIENT_VERSION');
+  if (!/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(minimumVersion)) {
+    throw new Error('RELEASE_MINIMUM_CLIENT_VERSION must be semver');
   }
 
-  // 1. Check latest run
-  console.log('\nChecking latest Actions run...');
-  const latestRun = await getLatestRun(owner, repo, token);
-  if (latestRun) {
-    console.log(`  Run #${latestRun.run_number} (${latestRun.name})`);
-    console.log(`  Status: ${latestRun.status}, Conclusion: ${latestRun.conclusion || 'N/A'}`);
-    console.log(`  URL: ${latestRun.html_url}`);
-  } else {
-    console.log('  No runs found.');
-  }
-
-  // 2. Get public key
-  console.log('\nFetching repository public key...');
-  const { key_id, key } = await getPublicKey(owner, repo, token);
-
-  // 3. Set secrets
-  const relayUrl = 'https://1301861337-iyb2r0f8lz.ap-guangzhou.tencentscf.com';
-  const relayApiKey = 'mana-relay-7c5d98a5787f415a62c89277cdeec1fb';
-
-  console.log('\nSetting repository secrets...');
-  await setSecret(owner, repo, token, 'RELEASE_RELAY_URL', relayUrl, key_id, key);
-  await setSecret(owner, repo, token, 'RELEASE_RELAY_API_KEY', relayApiKey, key_id, key);
-
-  // 4. Auto re-trigger if there is a failed run on current tag
-  if (latestRun && latestRun.conclusion === 'failure') {
-    console.log('\nLatest run failed, auto re-triggering...');
-    await reRunWorkflow(owner, repo, token, latestRun.id);
-  }
-
-  rl.close();
-  console.log('\nDone. Check https://github.com/' + owner + '/' + repo + '/actions');
+  setSecret(repo, 'RELEASE_RELAY_URL', relayUrl.toString().replace(/\/$/, ''));
+  setSecret(repo, 'RELEASE_RELAY_JWKS', jwks);
+  setSecret(repo, 'RELEASE_MINIMUM_CLIENT_VERSION', minimumVersion);
 }
 
-main().catch(err => {
-  console.error('\nError:', err.message);
-  process.exit(1);
-});
+try { main(); } catch (error) {
+  process.stderr.write(`setup-github-secrets failed: ${error.message}\n`);
+  process.exitCode = 1;
+}

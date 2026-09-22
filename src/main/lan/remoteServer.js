@@ -11,11 +11,11 @@ const { execFileSync } = require('node:child_process');
 const appConfig = require('../store/appConfig');
 const { paths } = require('../store/paths');
 const novelsStore = require('../store/novels');
-const clientEvents = require('../runtime/clientEvents');
+const clientEvents = require('../events/clientEvents');
 const ipcBridge = require('./ipcBridge');
+const { getRendererDevOrigin } = require('./rendererDevOrigin');
 
 const DEFAULT_PORT = 8788;
-const DEV_PORTS = [5173, 5174, 5175, 5176];
 const COOKIE_NAME = 'mana_lan_token';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
@@ -23,8 +23,6 @@ let server = null;
 let serverPort = DEFAULT_PORT;
 let accessCode = generateAccessCode();
 let sessionToken = generateToken();
-let devOriginCache = null;
-let devOriginCheckedAt = 0;
 
 const BLOCKED_CHANNELS = new Set([
   'mana:fs:pickDirectory',
@@ -38,20 +36,15 @@ const BLOCKED_CHANNELS = new Set([
 ]);
 
 const ALLOWED_PREFIXES = [
-  'mana:chat:',
-  'mana:chatAgent:',
   'mana:chatHistory:',
+  'mana:codex:',
   'mana:config:',
   'mana:feedback:',
   'mana:import:',
-  'mana:mcp:',
-  'mana:modelAliases:',
   'mana:modelConfig:',
   'mana:networkStatus:',
   'mana:novel:',
   'mana:offlineLog:',
-  'mana:provider:',
-  'mana:runtime:',
   'mana:updater:',
 ];
 
@@ -239,7 +232,6 @@ async function assertRpcAllowed(channel, payload) {
   if (BLOCKED_CHANNELS.has(channel)) {
     throw new Error(`This operation must be completed in the Mac desktop window: ${channel}`);
   }
-  if (channel === 'mana-chat-completions') return;
   if (channel.startsWith('mana:lan:')) {
     if (channel === 'mana:lan:getStatus') return;
     throw new Error(`This LAN setting can only be changed in the Mac desktop window: ${channel}`);
@@ -247,9 +239,10 @@ async function assertRpcAllowed(channel, payload) {
   if (
     channel === 'mana:config:setApp' &&
     payload?.patch &&
-    Object.prototype.hasOwnProperty.call(payload.patch, 'lanRemote')
+    (Object.prototype.hasOwnProperty.call(payload.patch, 'lanRemote')
+      || Object.prototype.hasOwnProperty.call(payload.patch, 'testing'))
   ) {
-    throw new Error('LAN remote settings can only be changed in the Mac desktop window');
+    throw new Error('LAN remote and local test settings can only be changed in the Mac desktop window');
   }
   if (channel.startsWith('mana:fs:')) {
     const keys = FS_PATH_KEYS[channel];
@@ -261,6 +254,32 @@ async function assertRpcAllowed(channel, payload) {
   }
   if (ALLOWED_PREFIXES.some((prefix) => channel.startsWith(prefix))) return;
   throw new Error(`LAN remote channel is not allowed: ${channel}`);
+}
+
+function sanitizeRpcResultForLan(channel, result) {
+  if (channel !== 'mana:config:getApp' || !result || typeof result !== 'object') return result;
+  const value = result.value;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return result;
+  const sanitizedValue = { ...value };
+  // Local test switches are a desktop-only control plane. The generic app
+  // config getter remains available to the LAN client, but must not become a
+  // side channel for reading whether a local Codex account is under test.
+  delete sanitizedValue.testing;
+  return { ...result, value: sanitizedValue };
+}
+
+function sanitizeClientEventForLan(packet) {
+  if (packet?.channel !== 'runtime:changed' || !packet.payload || typeof packet.payload !== 'object') {
+    return packet;
+  }
+  if (!Object.prototype.hasOwnProperty.call(packet.payload, 'codexMock')) return packet;
+  const payload = { ...packet.payload };
+  delete payload.codexMock;
+  // A Codex toggle event currently contains only its private status plus a
+  // timestamp. Do not forward a meaningless shell event to remote clients.
+  const meaningfulKeys = Object.keys(payload).filter((key) => key !== 'ts');
+  if (meaningfulKeys.length === 0) return null;
+  return { ...packet, payload };
 }
 
 function bridgeScript() {
@@ -358,18 +377,6 @@ function bridgeScript() {
   const config = {
     getApp: () => invoke('mana:config:getApp'),
     setApp: (patch) => invoke('mana:config:setApp', { patch }),
-    listSubagents: () => invoke('mana:config:listSubagents'),
-    getSubagent: (id) => invoke('mana:config:getSubagent', { id }),
-    saveSubagent: (subagent) => invoke('mana:config:saveSubagent', { subagent }),
-    deleteSubagent: (id) => invoke('mana:config:deleteSubagent', { id }),
-    cloneBuiltinSubagent: (id, newId) => invoke('mana:config:cloneBuiltinSubagent', { id, newId }),
-    resetSubagentToBuiltin: (id) => invoke('mana:config:resetSubagentToBuiltin', { id }),
-    listDags: () => invoke('mana:config:listDags'),
-    listDagsByStage: (stage) => invoke('mana:config:listDagsByStage', { stage }),
-    getDag: (id) => invoke('mana:config:getDag', { id }),
-    saveDag: (dag) => invoke('mana:config:saveDag', { dag }),
-    deleteDag: (id) => invoke('mana:config:deleteDag', { id }),
-    cloneDag: (id, newId, newName) => invoke('mana:config:cloneDag', { id, newId, newName }),
     setSecret: (id, value) => invoke('mana:config:setSecret', { id, value }),
     deleteSecret: (id) => invoke('mana:config:deleteSecret', { id }),
     listSecretIds: () => invoke('mana:config:listSecretIds'),
@@ -378,30 +385,30 @@ function bridgeScript() {
     getSkill: (id) => invoke('mana:config:getSkill', { id }),
     saveSkill: (skill) => invoke('mana:config:saveSkill', { skill }),
     deleteSkill: (id) => invoke('mana:config:deleteSkill', { id }),
-    assignSkill: (skillId, subagentId) => invoke('mana:config:assignSkill', { skillId, subagentId }),
-    unassignSkill: (skillId, subagentId) => invoke('mana:config:unassignSkill', { skillId, subagentId }),
+    setSkillEnabled: (id, enabled) => invoke('mana:config:setSkillEnabled', { id, enabled }),
     exportSkill: (id) => invoke('mana:config:exportSkill', { id }),
     importSkill: (bundle) => invoke('mana:config:importSkill', { bundle }),
   };
 
-  const runtime = {
-    runSubagent: (payload) => invoke('mana:runtime:runSubagent', payload),
-    cancel: (runId) => invoke('mana:runtime:cancel', { runId }),
-    listRuns: () => invoke('mana:runtime:listRuns'),
-    getRunEvents: (runId) => invoke('mana:runtime:getRunEvents', { runId }),
-    resolveToolConfirmation: (runId, toolUseId, decision) => invoke('mana:runtime:resolveToolConfirmation', { runId, toolUseId, decision }),
-    listPendingConfirmations: () => invoke('mana:runtime:listPendingConfirmations'),
-    runPipeline: (payload) => invoke('mana:runtime:runPipeline', payload),
-    cancelPipeline: (pipelineRunId) => invoke('mana:runtime:cancelPipeline', { pipelineRunId }),
-    resumePipeline: (pipelineRunId, nodeId, payload) => invoke('mana:runtime:resumePipeline', { pipelineRunId, nodeId, payload }),
-    listActivePipelines: () => invoke('mana:runtime:listActivePipelines'),
-    listDrivers: () => invoke('mana:runtime:listDrivers'),
-    getActiveDriver: () => invoke('mana:runtime:getActiveDriver'),
-    setActiveDriver: (id) => invoke('mana:runtime:setActiveDriver', { id }),
-    getDriverCapabilities: (id) => invoke('mana:runtime:getDriverCapabilities', { id }),
-    driverAvailability: (id) => invoke('mana:runtime:driverAvailability', { id }),
-    autoDetectDriverBinPath: (id) => invoke('mana:runtime:autoDetectDriverBinPath', { id }),
-    on: (channel, handler) => onChannel(channel, handler),
+  const codex = {
+    status: () => invoke('mana:codex:status'),
+    accountStatus: (payload) => invoke('mana:codex:accountStatus', payload || {}),
+    accountLogin: (mode) => invoke('mana:codex:accountLogin', { mode }),
+    accountCancel: (loginId) => invoke('mana:codex:accountCancel', { loginId }),
+    accountLogout: () => invoke('mana:codex:accountLogout'),
+    accountRateLimits: () => invoke('mana:codex:accountRateLimits'),
+    refreshSubscriptionModels: (expectedRevision) => invoke('mana:codex:refreshSubscriptionModels', { expectedRevision }),
+    startTurn: (payload) => invoke('mana:codex:startTurn', payload || {}),
+    getWritingAuthorization: (novelId) => invoke('mana:codex:getWritingAuthorization', { novelId }),
+    setWritingAuthorization: (novelId, mode) => invoke('mana:codex:setWritingAuthorization', { novelId, mode }),
+    revokeWritingAuthorization: (novelId) => invoke('mana:codex:revokeWritingAuthorization', { novelId }),
+    getWritingProgress: (novelId, conversationId) => invoke('mana:codex:getWritingProgress', { novelId, conversationId }),
+    getConversationState: (payload) => invoke('mana:codex:getConversationState', payload || {}),
+    getRunState: (payload) => invoke('mana:codex:getRunState', payload || {}),
+    getResourceContext: (payload) => invoke('mana:codex:getResourceContext', payload || {}),
+    interrupt: (payload) => invoke('mana:codex:interrupt', payload || {}),
+    resolveConfirmation: (payload) => invoke('mana:codex:resolveConfirmation', payload || {}),
+    onEvent: (handler) => onChannel('mana:codex:event', handler),
   };
 
   const novel = {
@@ -417,7 +424,7 @@ function bridgeScript() {
     listChapterMetas: (id) => invoke('mana:novel:listChapterMetas', { id }),
     readChapter: (id, name) => invoke('mana:novel:readChapter', { id, name }),
     saveChapter: (id, name, content, metadata, options) => invoke('mana:novel:saveChapter', { id, name, content, metadata, options }),
-    deleteChapter: (id, name) => invoke('mana:novel:deleteChapter', { id, name }),
+    deleteChapter: (id, name, options) => invoke('mana:novel:deleteChapter', { id, name, options }),
     listChapterRevisions: (id, name) => invoke('mana:novel:listChapterRevisions', { id, name }),
     readChapterRevision: (id, name, revisionId) => invoke('mana:novel:readChapterRevision', { id, name, revisionId }),
     restoreChapterRevision: (id, name, revisionId) => invoke('mana:novel:restoreChapterRevision', { id, name, revisionId }),
@@ -453,59 +460,23 @@ function bridgeScript() {
     search: (id, query, options) => invoke('mana:novel:search', { id, query, options }),
   };
 
-  const mcp = {
-    listTools: () => invoke('mana:mcp:listTools'),
-    callTool: (name, args) => invoke('mana:mcp:callTool', { name, args }),
-  };
-
-  const ccs = {
-    detect: () => invoke('mana:provider:detect'),
-    list: () => invoke('mana:provider:list'),
-    current: () => invoke('mana:provider:current'),
-    use: (name) => invoke('mana:provider:use', { name }),
-    add: (payload) => invoke('mana:provider:add', payload || {}),
-    remove: (name) => invoke('mana:provider:remove', { name }),
-    getProvider: (id) => invoke('mana:provider:getProvider', { id }),
-    addModel: (providerId, model) => invoke('mana:provider:addModel', { providerId, model }),
-    removeModel: (providerId, modelId) => invoke('mana:provider:removeModel', { providerId, modelId }),
-    discoverModels: (providerId) => invoke('mana:provider:discoverModels', { providerId }),
-  };
-
-  const modelAliases = {
-    list: () => invoke('mana:modelAliases:list'),
-    getAlias: (id) => invoke('mana:modelAliases:getAlias', { id }),
-    saveAlias: (alias) => invoke('mana:modelAliases:saveAlias', { alias }),
-    deleteAlias: (id) => invoke('mana:modelAliases:deleteAlias', { id }),
-    resetToDefaults: () => invoke('mana:modelAliases:resetToDefaults'),
-  };
-
   const modelConfig = {
     snapshot: () => invoke('mana:modelConfig:snapshot'),
-    saveProvider: (provider, expectedRevision) => invoke('mana:modelConfig:saveProvider', { provider, expectedRevision }),
-    deleteProvider: (id, replacementProviderId, expectedRevision) => invoke('mana:modelConfig:deleteProvider', { id, replacementProviderId, expectedRevision }),
-    discoverModels: (providerId) => invoke('mana:modelConfig:discoverModels', { providerId }),
-    applyDiscoveredModels: (providerId, models, expectedRevision) => invoke('mana:modelConfig:applyDiscoveredModels', { providerId, models, expectedRevision }),
-    testProvider: (providerId) => invoke('mana:modelConfig:testProvider', { providerId }),
-    testProfile: (profileId) => invoke('mana:modelConfig:testProfile', { profileId }),
-    saveProfile: (profile, expectedRevision) => invoke('mana:modelConfig:saveProfile', { profile, expectedRevision }),
-    deleteProfile: (id, replacementProfileId, expectedRevision) => invoke('mana:modelConfig:deleteProfile', { id, replacementProfileId, expectedRevision }),
-    saveRouting: (routing, expectedRevision) => invoke('mana:modelConfig:saveRouting', { routing, expectedRevision }),
-    resolvePreview: (context) => invoke('mana:modelConfig:resolvePreview', context || {}),
-  };
+  startSetup: (payload) => invoke('mana:modelConfig:startSetup', payload),
+  querySetup: (id) => invoke('mana:modelConfig:querySetup', { id }),
+  retrySetup: (payload) => invoke('mana:modelConfig:retrySetup', payload),
+  cancelSetup: (id) => invoke('mana:modelConfig:cancelSetup', { id }),
+  onSetupProgress: (handler) => onChannel('mana:modelConfig:setupProgress', handler),
+  onChanged: (handler) => onChannel('mana:modelConfig:changed', handler),
 
-  const chat = {
-    complete: (payload) => invoke('mana:chat:complete', payload),
-  };
-
-  const chatAgent = {
-    createSession: (ctx) => invoke('mana:chatAgent:createSession', ctx || {}),
-    sendMessage: (sessionId, text) => invoke('mana:chatAgent:sendMessage', { sessionId, text }),
-    cancel: (sessionId) => invoke('mana:chatAgent:cancel', { sessionId }),
-    resolveAction: (sessionId, actionId, result) => invoke('mana:chatAgent:resolveAction', { sessionId, actionId, result }),
-    closeSession: (sessionId) => invoke('mana:chatAgent:closeSession', { sessionId }),
-    updateContext: (sessionId, editorContext) => invoke('mana:chatAgent:updateContext', { sessionId, editorContext }),
-    getSessionInfo: (sessionId) => invoke('mana:chatAgent:getSessionInfo', { sessionId }),
-    onEvent: (handler) => onChannel('chatAgent:event', handler),
+    saveCredential: (credential, expectedRevision) => invoke('mana:modelConfig:saveCredential', { credential, expectedRevision }),
+    deleteCredential: (id, expectedRevision) => invoke('mana:modelConfig:deleteCredential', { id, expectedRevision }),
+    previewConnection: (payload) => invoke('mana:modelConfig:previewConnection', payload),
+    discoverConnection: (payload) => invoke('mana:modelConfig:discoverConnection', payload),
+    saveConnection: (connection, expectedRevision) => invoke('mana:modelConfig:saveConnection', { connection, expectedRevision }),
+    deleteConnection: (id, expectedRevision) => invoke('mana:modelConfig:deleteConnection', { id, expectedRevision }),
+    verifyModel: (payload) => invoke('mana:modelConfig:verifyModel', payload),
+    setActive: (connectionId, modelId, reasoningEffort, expectedRevision, interruptActive = false) => invoke('mana:modelConfig:setActive', { connectionId, modelId, reasoningEffort, expectedRevision, interruptActive }),
   };
 
   const chatHistory = {
@@ -536,6 +507,11 @@ function bridgeScript() {
     parseFiles: localOnly,
     checkDuplicate: localOnly,
     createStaging: (payload) => invoke('mana:import:createStaging', payload || {}),
+    start: (payload) => invoke('mana:import:start', payload || {}),
+    get: (runId) => invoke('mana:import:get', { runId }),
+    cancel: (runId) => invoke('mana:import:cancel', { runId }),
+    resume: (runId) => invoke('mana:import:resume', { runId }),
+    finalize: (runId, target) => invoke('mana:import:finalize', { runId, target }),
     getStaging: (importId) => invoke('mana:import:getStaging', { importId }),
     listStaging: () => invoke('mana:import:listStaging'),
     discardStaging: (importId) => invoke('mana:import:discardStaging', { importId }),
@@ -562,14 +538,9 @@ function bridgeScript() {
     isLanRemote: true,
     fs,
     config,
-    runtime,
+    codex,
     novel,
-    mcp,
-    ccs,
     modelConfig,
-    modelAliases,
-    chat,
-    chatAgent,
     chatHistory,
     offlineLog,
     feedback: {
@@ -588,7 +559,6 @@ function bridgeScript() {
     lanRemote: {
       getStatus: () => invoke('mana:lan:getStatus'),
     },
-    chatCompletions: (payload) => invoke('mana-chat-completions', payload),
   };
 })();
 `;
@@ -640,31 +610,8 @@ function injectBridge(html) {
   return `${script}${html}`;
 }
 
-async function findDevOrigin() {
-  const now = Date.now();
-  if (devOriginCache && now - devOriginCheckedAt < 5000) return devOriginCache;
-  devOriginCheckedAt = now;
-  for (const port of DEV_PORTS) {
-    const origin = `http://127.0.0.1:${port}`;
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 350);
-      const res = await fetch(origin, { method: 'GET', signal: controller.signal });
-      clearTimeout(timeout);
-      if (res.ok) {
-        devOriginCache = origin;
-        return origin;
-      }
-    } catch {
-      // Try the next Vite port.
-    }
-  }
-  devOriginCache = null;
-  return null;
-}
-
 async function proxyDev(req, res, url) {
-  const origin = await findDevOrigin();
+  const origin = getRendererDevOrigin();
   if (!origin) return false;
   const target = `${origin}${url.pathname}${url.search}`;
   const upstream = await fetch(target, {
@@ -758,7 +705,7 @@ async function handleRpc(req, res) {
     throw new Error(`RPC channel is not available: ${channel}`);
   }
   const result = await ipcBridge.invoke(channel, body.payload);
-  sendJson(res, 200, result);
+  sendJson(res, 200, sanitizeRpcResultForLan(channel, result));
 }
 
 function handleEvents(req, res) {
@@ -769,7 +716,8 @@ function handleEvents(req, res) {
   });
   res.write('\n');
   const unsubscribe = clientEvents.subscribe((packet) => {
-    res.write(`data: ${JSON.stringify(packet)}\n\n`);
+    const safePacket = sanitizeClientEventForLan(packet);
+    if (safePacket) res.write(`data: ${JSON.stringify(safePacket)}\n\n`);
   });
   const heartbeat = setInterval(() => {
     res.write(':heartbeat\n\n');
@@ -922,5 +870,7 @@ module.exports = {
     assertRpcAllowed,
     bridgeScript,
     loginPage,
+    sanitizeClientEventForLan,
+    sanitizeRpcResultForLan,
   },
 };

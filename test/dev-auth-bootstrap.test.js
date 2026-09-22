@@ -1,73 +1,55 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
+const fs = require('node:fs/promises');
 const path = require('node:path');
 
 async function runDevAuthBootstrapTest() {
   const root = path.resolve(__dirname, '..');
-  const appConfigPath = path.join(root, 'src/main/store/appConfig.js');
+  const tempRoot = path.join(root, 'tmp-test-dev-auth-bootstrap');
+  const configPath = path.join(tempRoot, 'release-public-config.json');
   const bootstrapPath = path.join(root, 'src/main/license/devAuthBootstrap.js');
-
-  const oldForceAuth = process.env.MANA_FORCE_AUTH;
-  const oldNodeEnv = process.env.NODE_ENV;
-  const oldRelayUrl = process.env.MANA_DEV_AUTH_RELAY_URL;
-  const oldRelayKey = process.env.MANA_DEV_AUTH_RELAY_API_KEY;
+  const previous = {
+    force: process.env.MANA_FORCE_AUTH,
+    local: process.env.MANA_ALLOW_LOCAL_RELAY,
+    config: process.env.MANA_RELEASE_PUBLIC_CONFIG,
+  };
 
   try {
+    await fs.rm(tempRoot, { recursive: true, force: true });
+    await fs.mkdir(tempRoot, { recursive: true });
+    const pair = await crypto.webcrypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+    const jwk = await crypto.webcrypto.subtle.exportKey('jwk', pair.publicKey);
+    await fs.writeFile(configPath, JSON.stringify({
+      schemaVersion: 1,
+      environment: 'staging',
+      relayBaseUrl: 'http://127.0.0.1:8789',
+      minimumClientVersion: '0.0.9',
+      jwks: { keys: [{ ...jwk, kid: 'dev-auth-test', alg: 'ES256', use: 'sig' }] },
+    }), 'utf8');
     process.env.MANA_FORCE_AUTH = '1';
-    process.env.NODE_ENV = 'production';
-    process.env.MANA_DEV_AUTH_RELAY_URL = 'http://127.0.0.1:8789';
-    process.env.MANA_DEV_AUTH_RELAY_API_KEY = 'mana-dev-relay-key';
-
-    delete require.cache[appConfigPath];
+    process.env.MANA_ALLOW_LOCAL_RELAY = '1';
+    process.env.MANA_RELEASE_PUBLIC_CONFIG = configPath;
     delete require.cache[bootstrapPath];
+    const { ensureDevAuthRelayConfig } = require(bootstrapPath);
+    const result = await ensureDevAuthRelayConfig();
 
-    const appConfig = require(appConfigPath);
-    const originalLoad = appConfig.load;
-    const originalSave = appConfig.save;
-
-    try {
-      appConfig.load = async () => ({
-        feishuSync: {
-          enabled: true,
-          endpointProfile: 'dev',
-          relayUrl: '',
-          relayApiKey: '',
-        },
-      });
-
-      let savedPatch = null;
-      appConfig.save = async (patch) => {
-        savedPatch = patch;
-        return patch;
-      };
-
-      const { ensureDevAuthRelayConfig } = require(bootstrapPath);
-      const result = await ensureDevAuthRelayConfig();
-
-      assert.equal(result.seeded, true);
-      assert.equal(savedPatch.feishuSync.relayUrl, 'http://127.0.0.1:8789');
-      assert.equal(savedPatch.feishuSync.relayApiKey, 'mana-dev-relay-key');
-      assert.equal(savedPatch.feishuSync.enabled, true);
-      assert.equal(savedPatch.feishuSync.endpointProfile, 'dev');
-    } finally {
-      appConfig.load = originalLoad;
-      appConfig.save = originalSave;
-      delete require.cache[appConfigPath];
-      delete require.cache[bootstrapPath];
-    }
+    assert.deepEqual(result, {
+      seeded: false,
+      relayUrl: 'http://127.0.0.1:8789',
+      environment: 'staging',
+    });
+    assert.equal(JSON.stringify(result).includes('apiKey'), false);
   } finally {
-    if (oldForceAuth === undefined) delete process.env.MANA_FORCE_AUTH;
-    else process.env.MANA_FORCE_AUTH = oldForceAuth;
-    if (oldNodeEnv === undefined) delete process.env.NODE_ENV;
-    else process.env.NODE_ENV = oldNodeEnv;
-    if (oldRelayUrl === undefined) delete process.env.MANA_DEV_AUTH_RELAY_URL;
-    else process.env.MANA_DEV_AUTH_RELAY_URL = oldRelayUrl;
-    if (oldRelayKey === undefined) delete process.env.MANA_DEV_AUTH_RELAY_API_KEY;
-    else process.env.MANA_DEV_AUTH_RELAY_API_KEY = oldRelayKey;
+    await fs.rm(tempRoot, { recursive: true, force: true });
+    if (previous.force === undefined) delete process.env.MANA_FORCE_AUTH; else process.env.MANA_FORCE_AUTH = previous.force;
+    if (previous.local === undefined) delete process.env.MANA_ALLOW_LOCAL_RELAY; else process.env.MANA_ALLOW_LOCAL_RELAY = previous.local;
+    if (previous.config === undefined) delete process.env.MANA_RELEASE_PUBLIC_CONFIG; else process.env.MANA_RELEASE_PUBLIC_CONFIG = previous.config;
+    delete require.cache[bootstrapPath];
   }
 
-  console.log('TEST_PASS DEV_AUTH_BOOTSTRAP: auto-seeds relay config in forced dev auth mode');
+  console.log('TEST_PASS DEV_AUTH_BOOTSTRAP: forced auth reads public Relay V2 config without seeding a shared key');
   console.log('TEST_SUMMARY 1/1 passed, 0 failed');
   console.log('TEST_DONE');
 }
@@ -75,8 +57,8 @@ async function runDevAuthBootstrapTest() {
 module.exports = { runDevAuthBootstrapTest };
 
 if (require.main === module) {
-  runDevAuthBootstrapTest().catch((err) => {
-    console.error(err);
+  runDevAuthBootstrapTest().catch((error) => {
+    console.error(error);
     process.exitCode = 1;
   });
 }

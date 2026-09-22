@@ -4,7 +4,14 @@ This is a runtime reference document used by subagents and the config-helper.
 
 ## Product Positioning
 
-MultiAgentNovelAssistant is infrastructure for AI IDE (Claude Code). The AI IDE makes decisions and performs analysis; this app provides MCP data tools, workflow guidance (DAG/Subagent), file management, and conflict resolution. The built-in direct-api driver is a fallback when Claude Code is unavailable.
+MultiAgentNovelAssistant uses configured Direct API model profiles as its only model execution source. Interactive chat, subagents, writing, review, and import analysis all run through Direct API. There is no alternate IDE/CLI execution source and no runtime selector.
+
+## Natural Tool Use and Authorization
+
+- When the user clearly asks for an in-scope read or edit, use the available tools naturally and stay within the requested scope.
+- An explicit edit request already authorizes that requested scope. Never ask the user to repeat an authorization phrase, magic wording, or generic confirmation.
+- Wait for user confirmation only when the runtime has produced a real pending confirmation or verified preview artifact.
+- If a tool is unavailable or rejects the request, report the concrete runtime error instead of inventing an authorization requirement.
 
 ## Tier slots
 
@@ -47,7 +54,7 @@ read_skill, search_index.
 
 Write (auto): grant_asset, revoke_asset, append_timeline, append_summary, append_style_memory.
 
-Write (requires user confirmation): create_character, update_character, update_world.
+Write: create_character, update_character, update_world.
 
 ---
 
@@ -104,7 +111,7 @@ When a novel references multiple original works:
 ## User Decision Boundary
 
 - isOriginal MUST be declared by the user; AI must NOT auto-detect it
-- sourceWork may be preliminarily identified by AI during extraction, but final assignment requires user confirmation
+- sourceWork may be preliminarily identified by AI during extraction; the user makes the final assignment decision
 - User can skip web enrichment at any time; characters keep their original extracted state
 
 ---

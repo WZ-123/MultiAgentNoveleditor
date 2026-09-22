@@ -10,6 +10,8 @@ export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged }) {
   const { novels, active, open, close, create, importExisting, remove } = useNovel();
   const [busy, setBusy] = useState(false);
   const [createTitle, setCreateTitle] = useState('');
+  const [createAuthorizationMode, setCreateAuthorizationMode] = useState('confirm-each-change');
+  const [error, setError] = useState('');
   const [opened, setOpened] = useState(false);
   const [menuPos, setMenuPos] = useState(null);
   const popRef = useRef(null);
@@ -51,21 +53,26 @@ export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged }) {
   const onCreate = useCallback(async () => {
     if (!mana?.fs) return;
     setBusy(true);
+    setError('');
     try {
       const dir = await mana.fs.pickDirectory({ title: t('novel.pickDir') });
       if (!dir) return;
       const title = createTitle.trim() || dir.split(/[/\\]/).pop() || 'Untitled';
       const r = await create({ title, dir });
       if (r?.id) {
+        if (createAuthorizationMode === 'append-prose') await mana.codex.setWritingAuthorization(r.id, 'append-prose');
         await open(r.id);
         await onActiveNovelChanged?.();
       }
       setCreateTitle('');
+      setCreateAuthorizationMode('confirm-each-change');
       setOpened(false);
+    } catch (err) {
+      setError(err?.message || String(err));
     } finally {
       setBusy(false);
     }
-  }, [mana, t, createTitle, create, open, onActiveNovelChanged]);
+  }, [mana, t, createTitle, createAuthorizationMode, create, open, onActiveNovelChanged]);
 
   const onImport = useCallback(async () => {
     if (!mana?.fs) return;
@@ -130,6 +137,7 @@ export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged }) {
     <div className="relative">
       <button
         ref={triggerRef}
+        data-testid="workspace-switcher-trigger"
         type="button"
         className="flex items-center gap-1 px-2 py-0.5 hover:bg-white/15 rounded text-xs"
         title={label}
@@ -159,7 +167,7 @@ export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged }) {
               ) : novels.map((n) => {
                 const isActive = active?.id === n.id;
                 return (
-                  <div key={n.id} className="flex items-center gap-2 px-2 py-1 border-b border-vscode-panel-border/40 last:border-0">
+                  <div key={n.id} data-novel-id={n.id} className="flex items-center gap-2 px-2 py-1 border-b border-vscode-panel-border/40 last:border-0">
                     <div className="flex-1 min-w-0">
                       <div className="truncate text-gray-200">{n.title}</div>
                       <div className="truncate text-gray-500 font-mono text-[10px]">{n.dir}</div>
@@ -171,6 +179,7 @@ export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged }) {
                         type="button"
                         className="px-2 py-0.5 rounded bg-vscode-active-item hover:bg-blue-600/40 text-[11px] disabled:opacity-50"
                         disabled={busy}
+                        data-testid="switch-novel"
                         onClick={() => onSwitch(n.id)}
                       >
                         {t('novel.switch')}
@@ -198,6 +207,18 @@ export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged }) {
                 placeholder={t('novel.titlePlaceholder')}
                 className="bg-vscode-bg/60 border border-vscode-panel-border/60 rounded px-2 py-1 text-xs outline-none focus:border-blue-500"
               />
+              <fieldset className="rounded border border-vscode-panel-border/60 p-2" data-testid="new-novel-writing-authorization">
+                <legend className="px-1 text-[10px] text-gray-400">AI 正文写入</legend>
+                <label className="flex cursor-pointer items-start gap-2 py-1">
+                  <input type="radio" name="new-novel-writing-authorization" value="confirm-each-change" checked={createAuthorizationMode === 'confirm-each-change'} onChange={(event) => setCreateAuthorizationMode(event.target.value)} />
+                  <span><span className="block text-gray-200">逐次确认</span><span className="block text-[10px] text-gray-500">每次修改都先展示差异。</span></span>
+                </label>
+                <label className="flex cursor-pointer items-start gap-2 py-1">
+                  <input type="radio" name="new-novel-writing-authorization" value="append-prose" checked={createAuthorizationMode === 'append-prose'} onChange={(event) => setCreateAuthorizationMode(event.target.value)} />
+                  <span><span className="block text-gray-200">允许在本项目内新增正文</span><span className="block text-[10px] text-gray-500">仅自动保存新章和章末追加，改动已有文字仍需确认。</span></span>
+                </label>
+              </fieldset>
+              {error && <div className="rounded border border-red-500/30 bg-red-500/10 px-2 py-1 text-[10px] text-red-300">{error}</div>}
               <div className="flex gap-2">
                 <button
                   type="button"

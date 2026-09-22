@@ -95,3 +95,31 @@ export function applyToolResultMessage(messages, data, now = Date.now()) {
 
   return next;
 }
+
+export function isToolMessageCoveredByExecutionTrace(messages, toolMessage, liveTrace = null) {
+  const toolUseId = toolMessage?.toolUseId;
+  if (!toolUseId) return false;
+
+  const traceIncludesTool = (trace) => Array.isArray(trace?.tools)
+    && trace.tools.some((tool) => tool?.id === toolUseId);
+
+  if (traceIncludesTool(liveTrace)) return true;
+
+  const timeline = Array.isArray(messages) ? messages : [];
+  const toolIndex = timeline.indexOf(toolMessage);
+  if (toolIndex < 0) return false;
+
+  for (let cursor = toolIndex - 1; cursor >= 0; cursor -= 1) {
+    const message = timeline[cursor];
+    if (message?.role === 'user') break;
+    if (message?.role === 'assistant' && traceIncludesTool(message.executionTrace)) return true;
+  }
+
+  for (let cursor = toolIndex + 1; cursor < timeline.length; cursor += 1) {
+    const message = timeline[cursor];
+    if (message?.role === 'user') break;
+    if (message?.role === 'assistant' && traceIncludesTool(message.executionTrace)) return true;
+  }
+
+  return false;
+}

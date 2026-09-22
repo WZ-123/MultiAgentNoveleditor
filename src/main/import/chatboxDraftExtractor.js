@@ -1,14 +1,14 @@
 'use strict';
 
 const JSON5 = require('json5');
-const { createProfileProvider } = require('../runtime/profileProvider');
+const { createNativeCodexProvider } = require('../codex-runtime/nativeProvider');
 
 const SINGLE_PASS_CHAR_LIMIT = 60000;
 const BATCH_CHAR_LIMIT = 45000;
 const DEFAULT_BATCH_CONCURRENCY = 3;
 
 async function resolveProvider() {
-  return createProfileProvider({ systemTask: 'chatbox-extraction', legacyTier: 'sonnet' }, { extra: { maxTokens: 32768, streaming: false } });
+  return createNativeCodexProvider({}, { skillName: 'mana-import-enrichment' });
 }
 
 function parseJsonFromText(text) {

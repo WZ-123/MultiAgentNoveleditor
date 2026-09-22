@@ -4,7 +4,7 @@ const { ipcMain } = require('electron');
 const feedbackOutbox = require('../store/feedbackOutbox');
 const recentLogBuffer = require('../store/recentLogBuffer');
 const appConfig = require('../store/appConfig');
-const providerManager = require('../providerManager');
+const modelConfig = require('../modelConfig');
 
 function getFeedbackSyncWorker() {
   return require('../index').getFeedbackSyncWorker();
@@ -79,19 +79,16 @@ function redactSensitive(obj) {
 async function collectSanitizedSettings() {
   try {
     const cfg = await appConfig.load();
-    const providers = await providerManager.list();
+    const models = await modelConfig.publicSnapshot();
     return redactSensitive({
       language: cfg.language,
-      activeDriverId: cfg.activeDriverId,
-      drivers: cfg.drivers,
       storageQuota: cfg.storageQuota,
       searchEngine: cfg.searchEngine,
       enrichmentConcurrency: cfg.enrichmentConcurrency,
-      enrichmentMode: cfg.enrichmentMode,
       feishuSync: cfg.feishuSync,
       license: cfg.license,
       updater: cfg.updater,
-      providers,
+      models,
     });
   } catch {
     return null;
@@ -114,14 +111,14 @@ function registerFeedbackIpc() {
     nextPayload.errors = {
       ...(nextPayload.errors && typeof nextPayload.errors === 'object' ? nextPayload.errors : {}),
       latestMainProcessError: includeLogs ? mainLogs.latestMainProcessError : null,
-      latestChatAgentError: includeLogs ? mainLogs.latestChatAgentError : null,
+      latestCodexError: includeLogs ? mainLogs.latestCodexError : null,
     };
 
     nextPayload.recentLogs = includeLogs
       ? {
           ...(nextPayload.recentLogs && typeof nextPayload.recentLogs === 'object' ? nextPayload.recentLogs : {}),
           mainProcess: mainLogs.recentMainLogs,
-          chatAgent: mainLogs.recentChatAgentLogs,
+          codex: mainLogs.recentCodexLogs,
         }
       : {};
 

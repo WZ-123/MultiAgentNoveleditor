@@ -26,7 +26,7 @@ function serializeValue(value) {
 
 function inferSource(message) {
   if (typeof message !== 'string') return 'main';
-  if (message.includes('[chatAgent')) return 'chatAgent';
+  if (message.includes('[codex')) return 'codex';
   if (message.includes('[offlineLog')) return 'offlineLog';
   return 'main';
 }
@@ -106,9 +106,9 @@ function getLatestEntry({ sources, levels } = {}) {
 function getFeedbackLogSnapshot() {
   return {
     latestMainProcessError: getLatestEntry({ sources: ['main', 'offlineLog'], levels: ['error', 'warn'] }),
-    latestChatAgentError: getLatestEntry({ sources: ['chatAgent'], levels: ['error', 'warn'] }),
+    latestCodexError: getLatestEntry({ sources: ['codex'], levels: ['error', 'warn'] }),
     recentMainLogs: getRecentEntries({ limit: 20, sources: ['main', 'offlineLog'] }),
-    recentChatAgentLogs: getRecentEntries({ limit: 20, sources: ['chatAgent'] }),
+    recentCodexLogs: getRecentEntries({ limit: 20, sources: ['codex'] }),
   };
 }
 

@@ -10,9 +10,13 @@ const characterEnricher = require('../import/characterEnricher');
 const conflictDetector = require('../import/conflictDetector');
 const mergeEngine = require('../import/mergeEngine');
 const aiMerge = require('../import/aiMerge');
-const eventBus = require('../runtime/eventBus');
+const eventBus = require('../events/appEventBus');
 const { paths: getPaths } = require('../store/paths');
 const resultMerger = require('../import/resultMerger');
+const { ImportSagaService } = require('../import/importSaga');
+
+let importSaga = null;
+function saga() { if (!importSaga) importSaga = new ImportSagaService(); return importSaga; }
 
 function safeIpc(handler) {
   return async (event, ...args) => {
@@ -20,12 +24,19 @@ function safeIpc(handler) {
       return { ok: true, value: await handler(event, ...args) };
     } catch (err) {
       console.error('[import ipc]', err);
-      return { ok: false, error: err.message || String(err) };
+      return { ok: false, error: err.message || String(err), errorCode: err.code || null };
     }
   };
 }
 
 function registerImportIpc() {
+  // Durable ImportRun API. Older endpoints below are compatibility shims and
+  // no longer own the import lifecycle state.
+  ipcMain.handle('mana:import:start', safeIpc(async (_e, payload) => saga().start(payload || {})));
+  ipcMain.handle('mana:import:get', safeIpc(async (_e, { runId }) => saga().get(runId)));
+  ipcMain.handle('mana:import:cancel', safeIpc(async (_e, { runId }) => saga().cancel(runId)));
+  ipcMain.handle('mana:import:resume', safeIpc(async (_e, { runId }) => saga().resume(runId)));
+  ipcMain.handle('mana:import:finalize', safeIpc(async (_e, { runId, target }) => saga().finalize(runId, { target })));
   // Pick novel files (.md, .txt, .epub, Chatbox .html)
   ipcMain.handle('mana:import:pickFiles', safeIpc(async () => {
     const result = await dialog.showOpenDialog({
@@ -57,12 +68,14 @@ function registerImportIpc() {
   // Create a staging project from parsed chapters
   ipcMain.handle('mana:import:createStaging', safeIpc(async (_e, payload) => {
     const { sourceFiles, chapters, metadata, targetNovelId } = payload || {};
-    return stagingProject.createStagingProject({
+    const result = await stagingProject.createStagingProject({
       sourceFiles,
       chapters,
       metadata,
       targetNovelId,
     });
+    const runSnapshot = await saga().get(result.importId);
+    return { ...result, runId: runSnapshot.runId, runSnapshot };
   }));
 
   // Get a staging project with all its data
@@ -82,7 +95,11 @@ function registerImportIpc() {
 
   // Promote staging project to a real novel
   ipcMain.handle('mana:import:promoteToNovel', safeIpc(async (_e, { importId, title, dir }) => {
-    return stagingProject.promoteToNovel(importId, { title, dir });
+    const run = await saga().get(importId);
+    if (run.state === 'staged') await saga()._transition(run, 'review', { compatibilityForward: 'promoteToNovel' });
+    const snapshot = await saga().finalize(run.runId, { target: { title, dir } });
+    if (snapshot.state !== 'completed') throw Object.assign(new Error(snapshot.error?.message || 'promotion did not complete'), { code: snapshot.error?.code });
+    return snapshot.result;
   }));
 
   // Cleanup expired staging projects
@@ -95,11 +112,9 @@ function registerImportIpc() {
   // When all agent:done events received, frontend calls finalizeAnalysis.
   ipcMain.handle('mana:import:analyze', async (_e, { importId }) => {
     try {
-      const staging = await stagingProject.getStagingProject(importId);
-      if (!staging) return { ok: false, error: 'Staging project not found' };
-      const stagingDir = path.join(getPaths().root, 'import-staging', importId);
-      const { runIds, taskIds, chunkMode, chunkCount } = await analyzer.startAnalyses(stagingDir);
-      return { ok: true, value: { runIds, taskIds, chunkMode, chunkCount } };
+      const run = await saga().get(importId);
+      const snapshot = await saga().resume(run.runId);
+      return { ok: true, value: { ...(snapshot.analysis || {}), importRun: snapshot } };
     } catch (err) {
       console.error('[import analyze]', err);
       return { ok: false, error: err.message || String(err) };
@@ -109,9 +124,9 @@ function registerImportIpc() {
   // Wait for pending analyses and write results to staging project files.
   ipcMain.handle('mana:import:finalizeAnalysis', async (_e, { importId }) => {
     try {
-      const stagingDir = path.join(getPaths().root, 'import-staging', importId);
-      const result = await analyzer.finalizeAnalyses(stagingDir);
-      return { ok: true, value: result };
+      const run = await saga().get(importId);
+      const snapshot = await saga().resume(run.runId);
+      return { ok: true, value: snapshot.checkpoints?.at(-1)?.analysis || snapshot };
     } catch (err) {
       console.error('[import finalize]', err);
       return { ok: false, error: err.message || String(err) };
@@ -156,7 +171,8 @@ function registerImportIpc() {
     return mergeEngine.getMergeSession(sessionId);
   }));
 
-  ipcMain.handle('mana:import:resolveConflict', safeIpc(async (_e, { sessionId, itemId, decision, resolvedContent, userNote }) => {
+  ipcMain.handle('mana:import:resolveConflict', safeIpc(async (_e, { runId, sessionId, itemId, decision, resolvedContent, userNote }) => {
+    if (runId) return saga().resolveConflict(runId, { itemId, decision, resolvedContent, userNote });
     return mergeEngine.resolveConflict(sessionId, itemId, decision, { resolvedContent, userNote });
   }));
 

@@ -3,6 +3,15 @@
 const { ipcMain } = require('electron');
 const chatHistory = require('../store/chatHistory');
 const appConfig = require('../store/appConfig');
+const { getCodexSessionService } = require('../codex-runtime');
+
+function assertThreadMutable(threadId) {
+  const service = getCodexSessionService();
+  if (!service.threadRuns.has(String(threadId))) return;
+  const error = new Error('当前对话仍在生成中，请先停止本轮再编辑或回退');
+  error.code = 'CHAT_TURN_ACTIVE';
+  throw error;
+}
 
 function safeIpc(handler) {
   return async (event, ...args) => {
@@ -35,6 +44,9 @@ function registerChatHistoryIpc() {
   }));
 
   ipcMain.handle('mana:chatHistory:deleteThread', safeIpc(async (_e, { threadId }) => {
+    assertThreadMutable(threadId);
+    const thread = await chatHistory.getThread(threadId);
+    if (thread?.codexBinding?.threadId) await getCodexSessionService().archiveThread(thread.codexBinding.threadId);
     await chatHistory.deleteThread(threadId);
     return { ok: true };
   }));
@@ -48,11 +60,16 @@ function registerChatHistoryIpc() {
   }));
 
   ipcMain.handle('mana:chatHistory:editMessage', safeIpc(async (_e, { threadId, messageId, text }) => {
-    return chatHistory.editMessage(threadId, messageId, text);
+    assertThreadMutable(threadId);
+    const thread = await chatHistory.editMessage(threadId, messageId, text);
+    await getCodexSessionService().reconcileBranchMutation(threadId, messageId);
+    return thread;
   }));
 
   ipcMain.handle('mana:chatHistory:revertToNode', safeIpc(async (_e, { threadId, messageId }) => {
+    assertThreadMutable(threadId);
     const thread = await chatHistory.revertToNode(threadId, messageId);
+    await getCodexSessionService().reconcileBranchMutation(threadId, messageId);
     if (!thread) return null;
     return { ...thread, branch: chatHistory.getBranch(thread) };
   }));

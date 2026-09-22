@@ -1,0 +1,22 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const root = path.resolve('artifacts/codex-luna-medium-100k-2026-09-05');
+const sourceRoot = path.resolve('artifacts/deepseek-max-100k-2026-09-05');
+const progress = JSON.parse(fs.readFileSync(path.join(root, 'progress.json'), 'utf8'));
+const hash = value => crypto.createHash('sha256').update(value).digest('hex');
+const sources = [];
+const texts = progress.chapters.map(chapter => {
+  const raw = fs.readFileSync(path.join(root, 'novel/chapters', chapter.file), 'utf8');
+  const oldPath = path.join(sourceRoot, 'novel/chapters', chapter.file);
+  const old = fs.existsSync(oldPath) ? fs.readFileSync(oldPath, 'utf8') : null;
+  sources.push({ ...chapter, sha256: hash(raw), origin: old === null ? 'Luna medium' : raw === old ? 'DeepSeek v4 Flash max/xhigh' : 'DeepSeek draft edited by Luna medium', ...(old === null ? {} : { originalDeepseekSha256: hash(old) }) });
+  return raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/u, '').trim();
+});
+if (progress.bodyCjk < 100000 || sources.length < 30) throw new Error('The 100,000-character / 30-chapter manuscript is not ready');
+const filename = '逆光档案-十万字验证稿.md';
+const text = `# 逆光档案\n\n> 长篇写作流程验证稿。${sources.length}章，净正文${progress.bodyCjk}汉字。前期稿件由真实DeepSeek v4 Flash max/xhigh生成，续写与后续编辑使用Codex登录态下的真实gpt-5.6-luna medium。仅汇编正式保存的章节原文；总纲、角色卡、推理和测试日志不计入正文。\n\n${texts.join('\n\n---\n\n')}\n`;
+fs.writeFileSync(path.join(root, filename), text);
+fs.writeFileSync(path.join(root, 'manuscript-provenance.json'), JSON.stringify({ generatedAt: new Date().toISOString(), artifact: filename, bodyCjk: progress.bodyCjk, countDefinition: 'CJK U+3400–U+9FFF; excluding frontmatter, Markdown headings and 时间/雨情 metadata lines', sha256: hash(text), sources }, null, 2) + '\n');
+console.log(JSON.stringify({ artifact: path.join(root, filename), bodyCjk: progress.bodyCjk, chapters: sources.length }));

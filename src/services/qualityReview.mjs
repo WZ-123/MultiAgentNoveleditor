@@ -2,6 +2,115 @@ function compactText(text) {
   return String(text || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
 }
 
+const NOT_BUT_TURN_TOKENS = [
+  '更像是', '反而是', '反倒是', '而是', '却是', '只是',
+  '那是', '这是', '他是', '她是', '它是', '是',
+];
+const NOT_BUT_BRIDGE_CHARS = /^[,;:.!?…—\-_'"“”‘’「」『』（）()【】\[\]《》〈〉<>\n]*$/u;
+const NOT_BUT_BARE_IS_BOUNDARY = /[,;:.!?…—\-\n]/u;
+
+/**
+ * Canonical text used only for deterministic not-but matching. Keep paragraph
+ * boundaries, remove visually ignorable spacing inside keywords, and map
+ * Chinese/full-width punctuation to the same ASCII representation.
+ */
+export function normalizeNotButText(text) {
+  return String(text || '')
+    .normalize('NFKC')
+    .replace(/\r\n?/gu, '\n')
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/gu, '')
+    .replace(/[\p{Zs}\t\f\v]+/gu, '')
+    .replace(/\n{2,}/gu, '\n')
+    .replace(/[。．]/gu, '.')
+    .replace(/[，、]/gu, ',')
+    .replace(/；/gu, ';')
+    .replace(/！/gu, '!')
+    .replace(/？/gu, '?')
+    .replace(/：/gu, ':');
+}
+
+function bridgeOnly(text) {
+  return NOT_BUT_BRIDGE_CHARS.test(String(text || ''));
+}
+
+function bareIsHasTurnBoundary(text) {
+  let cursor = text.length - 1;
+  while (cursor >= 0 && /['"“”‘’「」『』（）()【】\[\]《》〈〉<>]/u.test(text[cursor])) cursor -= 1;
+  return cursor >= 0 && NOT_BUT_BARE_IS_BOUNDARY.test(text[cursor]);
+}
+
+function validNotButBridge(text, turn) {
+  if (!text || !/[\p{L}\p{N}]/u.test(text)) return false;
+  if (turn === '是' && !bareIsHasTurnBoundary(text)) return false;
+  const boundaryIndex = text.search(/[.!?\n]/u);
+  if (boundaryIndex < 0) return true;
+  return bridgeOnly(text.slice(boundaryIndex + 1));
+}
+
+function positiveClauseAfter(text, start, maxChars) {
+  const tail = text.slice(start, start + maxChars);
+  const boundaryIndex = tail.search(/[.!?\n]/u);
+  const clause = boundaryIndex >= 0 ? tail.slice(0, boundaryIndex) : tail;
+  const lexical = clause.replace(/[,;:.!?…—\-_'"“”‘’「」『』（）()【】\[\]《》〈〉<>]/gu, '');
+  return /[\p{L}\p{N}]/u.test(lexical) ? clause : '';
+}
+
+/**
+ * Find high-confidence "不是 A，而是/是/却是/只是 B" skeletons. A single
+ * sentence or paragraph boundary is allowed only when the reveal starts the
+ * next sentence/paragraph; unrelated intervening prose prevents a match.
+ */
+export function findDeterministicNotButPatterns(text, options = {}) {
+  const normalized = normalizeNotButText(text);
+  const maxSpanChars = Math.max(24, Number(options.maxSpanChars) || 120);
+  const maxPositiveChars = Math.max(12, Number(options.maxPositiveChars) || 80);
+  const matches = [];
+  let searchFrom = 0;
+  while (searchFrom < normalized.length) {
+    const start = normalized.indexOf('不是', searchFrom);
+    if (start < 0) break;
+    const negativeStart = start + 2;
+    const scanEnd = Math.min(normalized.length, negativeStart + maxSpanChars);
+    let chosen = null;
+    for (const turn of NOT_BUT_TURN_TOKENS) {
+      let turnStart = normalized.indexOf(turn, negativeStart);
+      while (turnStart >= 0 && turnStart < scanEnd) {
+        const bridge = normalized.slice(negativeStart, turnStart);
+        if (validNotButBridge(bridge, turn)) {
+          const positive = positiveClauseAfter(normalized, turnStart + turn.length, maxPositiveChars);
+          if (positive) {
+            const candidate = {
+              patternId: turn === '是' ? 'not_is' : `not_${turn}`,
+              start,
+              turnStart,
+              end: turnStart + turn.length + positive.length,
+              turn,
+              excerpt: normalized.slice(start, turnStart + turn.length + positive.length),
+            };
+            if (!chosen || candidate.turnStart < chosen.turnStart
+              || (candidate.turnStart === chosen.turnStart && candidate.turn.length > chosen.turn.length)) {
+              chosen = candidate;
+            }
+          }
+          break;
+        }
+        turnStart = normalized.indexOf(turn, turnStart + Math.max(1, turn.length));
+      }
+    }
+    if (chosen) matches.push(chosen);
+    searchFrom = start + 2;
+  }
+
+  const seenTurns = new Set();
+  return matches
+    .sort((left, right) => left.start - right.start || left.turnStart - right.turnStart)
+    .filter((match) => {
+      if (seenTurns.has(match.turnStart)) return false;
+      seenTurns.add(match.turnStart);
+      return true;
+    });
+}
+
 function trimLeadingQuotes(text) {
   return compactText(text).replace(/^["'“”‘’「」『』（）()【】\s]+/, '');
 }
@@ -20,13 +129,13 @@ function isSplitReactionExplanation(text) {
 }
 
 function isSplitNotButPair(leftText, rightText) {
-  const left = compactText(leftText);
-  const right = trimLeadingQuotes(rightText);
+  const left = normalizeNotButText(leftText);
+  const right = normalizeNotButText(rightText);
   if (!left || !right) return false;
-  const leftLooksIncomplete = /不是[^。！？；;]{0,40}(?:[,，]也不是[^。！？；;]{0,40})?$/u.test(left)
-    || /不是[^。！？；;]{0,40}[,，]?$/u.test(left);
-  const rightLooksLikeTurn = /^(?:而是|更像是|是)[^。！？]?/u.test(right);
-  return leftLooksIncomplete && rightLooksLikeTurn;
+  const boundary = left.length;
+  return findDeterministicNotButPatterns(`${left}\n${right}`).some((match) => (
+    match.start < boundary && match.turnStart > boundary
+  ));
 }
 
 function isSplitMultiNegativePair(leftText, rightText) {
@@ -220,6 +329,19 @@ function detectHeuristicParagraphAnnotations(paragraphs) {
     const normalized = compactText(paragraph.text);
     if (!normalized) continue;
 
+    const multiNegativeEnumeration = hasMultiNegativeEnumeration(normalized);
+    const notButPatterns = findDeterministicNotButPatterns(paragraph.text);
+    if (notButPatterns.length > 0 && !multiNegativeEnumeration) {
+      annotations.push({
+        paragraphId: paragraph.id,
+        kind: 'not_but_overuse',
+        patternId: notButPatterns[0].patternId,
+        confidence: 0.97,
+        severity: 'high',
+        note: '「不是 A，而是/是/却是/只是 B」对照骨架会形成机械解释感；包括同句、跨句和空白/全半角变体，建议删掉否定铺垫，直接写 B。',
+      });
+    }
+
     if (isAiEndingTriad(normalized) && index >= Math.max(0, list.length - 3)) {
       annotations.push({
         paragraphId: paragraph.id,
@@ -247,7 +369,7 @@ function detectHeuristicParagraphAnnotations(paragraphs) {
       });
     }
 
-    if (hasMultiNegativeEnumeration(normalized)) {
+    if (multiNegativeEnumeration) {
       annotations.push({
         paragraphId: paragraph.id,
         kind: 'not_but_overuse',
@@ -339,13 +461,14 @@ export function detectCrossParagraphQualityAnnotations(paragraphs) {
       annotations.push({ paragraphId: next.id, kind: 'choppy', patternId: 'reaction_then_explanation', confidence: 0.94, severity: 'high', note });
     }
 
-    if (isSplitNotButPair(current.text, next.text)) {
+    const splitMultiNegative = isSplitMultiNegativePair(current.text, next.text);
+    if (isSplitNotButPair(current.text, next.text) && !splitMultiNegative) {
       const note = '跨段 AI 套句：对照骨架被拆到了相邻两段里，仍属于「不是……而是……/更像是……」类八股，建议删掉对照骨架直接直叙。';
       annotations.push({ paragraphId: current.id, kind: 'not_but_overuse', patternId: 'split_not_but', confidence: 0.94, severity: 'high', note });
       annotations.push({ paragraphId: next.id, kind: 'not_but_overuse', patternId: 'split_not_but', confidence: 0.94, severity: 'high', note });
     }
 
-    if (isSplitMultiNegativePair(current.text, next.text)) {
+    if (splitMultiNegative) {
       const note = '跨段 AI 套句：连续否定铺排被拆到了相邻两段里（前一段结尾「不是A、不是B」、后一段开头「是D」），建议砍掉整套否定排比，把正句直接写进叙事。';
       annotations.push({ paragraphId: current.id, kind: 'not_but_overuse', patternId: 'split_multi_negative', confidence: 0.96, severity: 'high', note });
       annotations.push({ paragraphId: next.id, kind: 'not_but_overuse', patternId: 'split_multi_negative', confidence: 0.96, severity: 'high', note });

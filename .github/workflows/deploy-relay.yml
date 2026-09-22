@@ -1,55 +1,61 @@
-name: Deploy Feedback Relay Worker
+name: Deploy Relay V2
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'relay-worker/**'
-      - '.github/workflows/deploy-relay.yml'
+    paths: ['relay-worker/**', '.github/workflows/deploy-relay.yml']
   pull_request:
-    paths:
-      - 'relay-worker/**'
+    paths: ['relay-worker/**', '.github/workflows/deploy-relay.yml']
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 24.19.0
+
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: relay-worker/package-lock.json
+      - run: npm ci --prefix relay-worker
+      - run: npm --prefix relay-worker test
+      - run: npm audit --prefix relay-worker --omit=dev
+      - run: npm --prefix relay-worker run deploy:dry-run
+
+  deploy-cloudflare:
+    needs: verify
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: relay-production
     defaults:
       run:
         working-directory: relay-worker
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Lint / Type-check (placeholder)
-        run: echo "Linting and type-checking would go here"
-
-  deploy:
-    needs: test
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: relay-worker
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: relay-worker
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: relay-worker/package-lock.json
+      - run: npm ci
+      - name: Generate immutable D1 deployment config
+        run: node scripts/prepare-deploy-config.cjs
+        env:
+          CLOUDFLARE_D1_DATABASE_ID: ${{ secrets.CLOUDFLARE_D1_DATABASE_ID }}
+      - name: Apply Relay V2 state migration
+        run: npx wrangler d1 migrations apply mana-relay-state --remote --config .wrangler/generated-release.toml
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Deploy V2 and V1 tombstones
+        run: npx wrangler deploy --config .wrangler/generated-release.toml
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

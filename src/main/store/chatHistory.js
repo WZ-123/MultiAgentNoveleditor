@@ -21,11 +21,47 @@ const fs = require('node:fs').promises;
 const path = require('node:path');
 const { paths, generateId } = require('./paths');
 const { readJson, writeJson } = require('./jsonStore');
-const clientEvents = require('../runtime/clientEvents');
+const clientEvents = require('../events/clientEvents');
 
 const THREADS_DIR = 'chat-threads';
 const INDEX_FILE = 'index.json';
 const changeListeners = new Set();
+const threadMutationQueues = new Map();
+const branchMutationPendingCounts = new Map();
+let branchMutationGuard = null;
+
+function enqueueThreadMutation(threadId, mutation) {
+  if (!threadId) return Promise.resolve(null);
+  const previous = threadMutationQueues.get(threadId) || Promise.resolve();
+  const current = previous.catch(() => {}).then(mutation);
+  threadMutationQueues.set(threadId, current);
+  current.finally(() => {
+    if (threadMutationQueues.get(threadId) === current) threadMutationQueues.delete(threadId);
+  }).catch(() => {});
+  return current;
+}
+
+function setBranchMutationGuard(guard) {
+  branchMutationGuard = typeof guard === 'function' ? guard : null;
+}
+
+function isBranchMutationPending(threadId) {
+  return (branchMutationPendingCounts.get(threadId) || 0) > 0;
+}
+
+function enqueueBranchMutation(threadId, kind, mutation) {
+  if (!threadId) return Promise.resolve(null);
+  branchMutationPendingCounts.set(threadId, (branchMutationPendingCounts.get(threadId) || 0) + 1);
+  const pending = enqueueThreadMutation(threadId, async () => {
+    if (branchMutationGuard) await branchMutationGuard({ threadId, kind });
+    return mutation();
+  });
+  return pending.finally(() => {
+    const next = Math.max(0, (branchMutationPendingCounts.get(threadId) || 1) - 1);
+    if (next) branchMutationPendingCounts.set(threadId, next);
+    else branchMutationPendingCounts.delete(threadId);
+  });
+}
 
 function threadsDir() {
   return path.join(paths().root, THREADS_DIR);
@@ -50,6 +86,12 @@ async function _readIndex() {
 async function _writeIndex(index) {
   await _ensureThreadsDir();
   await writeJson(indexPath(), index);
+}
+
+async function touchThreadIndex(thread) {
+  const idx = await _readIndex();
+  const entry = (idx.threads || []).find(item => item.id === thread.id);
+  if (entry) { entry.updatedAt = thread.updatedAt; await _writeIndex(idx); }
 }
 
 function _emitChange(event) {
@@ -116,6 +158,7 @@ async function createThread({ title, novelId, maxBytes } = {}) {
     updatedAt: now,
     messages: [],
     currentNodeId: null,
+    codexBinding: null,
   };
   await writeJson(threadPath(threadId), thread);
   const idx = await _readIndex();
@@ -133,6 +176,10 @@ async function getThread(threadId) {
 
 async function deleteThread(threadId) {
   if (!threadId) return;
+  return enqueueBranchMutation(threadId, 'delete', () => deleteThreadFile(threadId));
+}
+
+async function deleteThreadFile(threadId) {
   try {
     await fs.unlink(threadPath(threadId));
   } catch { /* ignore */ }
@@ -159,9 +206,51 @@ async function renameThread(threadId, title) {
   return thread;
 }
 
+async function updateRoleplayWorkflow(threadId, workflow) {
+  const snapshot = workflow && typeof workflow === 'object'
+    ? JSON.parse(JSON.stringify(workflow))
+    : null;
+  return enqueueThreadMutation(threadId, async () => {
+    const thread = await getThread(threadId);
+    if (!thread) return null;
+    thread.pendingRoleplayWorkflow = snapshot;
+    thread.updatedAt = new Date().toISOString();
+    await writeJson(threadPath(threadId), thread);
+    const idx = await _readIndex();
+    const entry = (idx.threads || []).find((item) => item.id === threadId);
+    if (entry) {
+      entry.updatedAt = thread.updatedAt;
+      await _writeIndex(idx);
+    }
+    _emitChange({ type: 'workflow', threadId, thread });
+    return thread;
+  });
+}
+
+async function updateChapterTransaction(threadId, transaction) {
+  const snapshot = transaction && typeof transaction === 'object'
+    ? JSON.parse(JSON.stringify(transaction))
+    : null;
+  return enqueueThreadMutation(threadId, async () => {
+    const thread = await getThread(threadId);
+    if (!thread) return null;
+    thread.pendingChapterTransaction = snapshot;
+    thread.updatedAt = new Date().toISOString();
+    await writeJson(threadPath(threadId), thread);
+    const idx = await _readIndex();
+    const entry = (idx.threads || []).find((item) => item.id === threadId);
+    if (entry) {
+      entry.updatedAt = thread.updatedAt;
+      await _writeIndex(idx);
+    }
+    _emitChange({ type: 'chapter-transaction', threadId, thread });
+    return thread;
+  });
+}
+
 // ---------- message operations (DAG) ----------
 
-function createMessage({ role, text, parentId, toolCalls }) {
+function createMessage({ role, text, parentId, toolCalls, codexTurnId }) {
   return {
     id: generateId('msg'),
     parentId: parentId || null,
@@ -170,45 +259,138 @@ function createMessage({ role, text, parentId, toolCalls }) {
     timestamp: Date.now(),
     edited: false,
     toolCalls: toolCalls || null,
+    codexTurnId: codexTurnId || null,
   };
 }
 
 async function appendMessage(threadId, message) {
-  const thread = await getThread(threadId);
-  if (!thread) return null;
-  thread.messages = thread.messages || [];
-  // Auto-link to previous message so getBranch() can reconstruct full chain
-  if (message.parentId === undefined && thread.messages.length > 0) {
-    const prev = thread.messages[thread.messages.length - 1];
-    message.parentId = prev.id;
-  }
-  thread.messages.push(message);
-  thread.currentNodeId = message.id;
-  thread.updatedAt = new Date().toISOString();
-  await writeJson(threadPath(threadId), thread);
-  // Update index
-  const idx = await _readIndex();
-  const entry = (idx.threads || []).find((t) => t.id === threadId);
-  if (entry) {
-    entry.updatedAt = thread.updatedAt;
-    await _writeIndex(idx);
-  }
-  _emitChange({ type: 'append', threadId, message, thread });
-  return thread;
+  return enqueueThreadMutation(threadId, async () => {
+    const thread = await getThread(threadId);
+    if (!thread) return null;
+    thread.messages = thread.messages || [];
+    // Auto-link to previous message so getBranch() can reconstruct full chain
+    if (message.parentId === undefined && thread.messages.length > 0) {
+      const prev = thread.messages[thread.messages.length - 1];
+      message.parentId = prev.id;
+    }
+    thread.messages.push(message);
+    thread.currentNodeId = message.id;
+    thread.updatedAt = new Date().toISOString();
+    await writeJson(threadPath(threadId), thread);
+    // Update index
+    const idx = await _readIndex();
+    const entry = (idx.threads || []).find((t) => t.id === threadId);
+    if (entry) {
+      entry.updatedAt = thread.updatedAt;
+      await _writeIndex(idx);
+    }
+    _emitChange({ type: 'append', threadId, message, thread });
+    return thread;
+  });
 }
 
+async function ensureRuntimeMessage(threadId, message, parentId) {
+  return enqueueThreadMutation(threadId, async () => {
+    const thread = await getThread(threadId);
+    if (!thread) return null;
+    thread.messages = thread.messages || [];
+    const id = String(message?.id || '');
+    if (!id) throw new Error('runtime chat message requires a deterministic id');
+    const existing = thread.messages.find((item) => item.id === id);
+    if (existing) {
+      if (String(existing.runtimeTaskRunId || '') !== String(message.runtimeTaskRunId || '') || String(existing.text || '') !== String(message.text || '')) {
+        throw new Error(`runtime chat message identity collision: ${id}`);
+      }
+      return thread;
+    }
+    const parent = String(parentId || message.parentId || '');
+    if (parent && !thread.messages.some((item) => item.id === parent)) {
+      throw new Error(`runtime chat message parent is missing: ${parent}`);
+    }
+    const stored = { ...JSON.parse(JSON.stringify(message)), parentId: parent || null };
+    thread.messages.push(stored);
+    thread.currentNodeId = stored.id;
+    thread.updatedAt = new Date().toISOString();
+    await writeJson(threadPath(threadId), thread);
+    const idx = await _readIndex();
+    const entry = (idx.threads || []).find((item) => item.id === threadId);
+    if (entry) {
+      entry.updatedAt = thread.updatedAt;
+      await _writeIndex(idx);
+    }
+    _emitChange({ type: 'append', threadId, message: stored, thread });
+    await touchThreadIndex(thread);
+    return thread;
+  });
+}
+
+// Host-owned, idempotent chat submission. The UI must not append first.
+async function ensureUserMessage(threadId, novelId, message) {
+  return enqueueThreadMutation(threadId, async () => {
+    const thread = await getThread(threadId);
+    if (!thread || String(thread.novelId || '') !== String(novelId || '')) {
+      const error = new Error('对话不属于目标小说，请重新选择对话');
+      error.code = 'conversation_project_mismatch';
+      throw error;
+    }
+    const existing = thread.messages.find(item => item.id === message.id);
+    if (existing) {
+      if (existing.role !== 'user' || existing.text !== message.text || !getBranch(thread).some(item => item.id === message.id)) {
+        const error = new Error('用户消息身份或分支不一致');
+        error.code = 'message_identity_conflict';
+        throw error;
+      }
+      thread.currentNodeId = existing.id;
+      await writeJson(threadPath(threadId), thread);
+      return thread;
+    }
+    const stored = { ...message, parentId: thread.currentNodeId || null, role: 'user', timestamp: Date.now() };
+    thread.messages.push(stored);
+    thread.currentNodeId = stored.id;
+    thread.updatedAt = new Date().toISOString();
+    await writeJson(threadPath(threadId), thread);
+    _emitChange({ type: 'append', threadId, message: stored, thread });
+    return thread;
+  });
+}
+
+async function saveRunMessage(threadId, message) {
+  return enqueueThreadMutation(threadId, async () => {
+    const thread = await getThread(threadId);
+    if (!thread) throw new Error('运行所属对话不存在');
+    if (!thread.messages.some(item => item.id === message.parentId && item.role === 'user')) throw new Error('运行所属用户消息不存在');
+    const existing = thread.messages.find(item => item.id === message.id);
+    if (existing && existing.runtimeTaskRunId !== message.runtimeTaskRunId) throw new Error('运行消息身份冲突');
+    if (existing && Number(existing.execution?.version || 0) > Number(message.execution?.version || 0)) return thread;
+    if (existing) Object.assign(existing, cloneMessage(message));
+    else {
+      thread.messages.push(cloneMessage(message));
+      if (thread.currentNodeId === message.parentId) thread.currentNodeId = message.id;
+    }
+    thread.updatedAt = new Date().toISOString();
+    await writeJson(threadPath(threadId), thread);
+    _emitChange({ type: 'runtime-checkpoint', threadId, message, thread });
+    await touchThreadIndex(thread);
+    return thread;
+  });
+}
+
+function cloneMessage(message) { return JSON.parse(JSON.stringify(message)); }
+
 async function editMessage(threadId, messageId, newText) {
-  const thread = await getThread(threadId);
-  if (!thread) return null;
-  const msg = (thread.messages || []).find((m) => m.id === messageId);
-  if (!msg) return null;
-  msg.text = newText;
-  msg.edited = true;
-  msg.editedAt = new Date().toISOString();
-  thread.updatedAt = new Date().toISOString();
-  await writeJson(threadPath(threadId), thread);
-  _emitChange({ type: 'edit', threadId, messageId, thread });
-  return thread;
+  return enqueueBranchMutation(threadId, 'edit', async () => {
+    const thread = await getThread(threadId);
+    if (!thread) return null;
+    const msg = (thread.messages || []).find((m) => m.id === messageId);
+    if (!msg) return null;
+    msg.text = newText;
+    msg.edited = true;
+    msg.editedAt = new Date().toISOString();
+    thread.updatedAt = new Date().toISOString();
+    await writeJson(threadPath(threadId), thread);
+    _emitChange({ type: 'edit', threadId, messageId, thread });
+    return thread;
+  });
 }
 
 /**
@@ -217,26 +399,30 @@ async function editMessage(threadId, messageId, newText) {
  * parent, or null when reverting before the root message.
  */
 async function revertToNode(threadId, messageId) {
-  const thread = await getThread(threadId);
-  if (!thread) return null;
-  const messages = thread.messages || [];
-  const target = messages.find((m) => m.id === messageId);
-  if (!target) return null;
+  return enqueueBranchMutation(threadId, 'revert', async () => {
+    const thread = await getThread(threadId);
+    if (!thread) return null;
+    const messages = thread.messages || [];
+    const target = messages.find((m) => m.id === messageId);
+    if (!target) return null;
 
-  // Build set of ancestor IDs from root to the target's parent.
-  const keepIds = new Set();
-  let cur = target.parentId ? messages.find((m) => m.id === target.parentId) : null;
-  while (cur) {
-    keepIds.add(cur.id);
-    cur = cur.parentId ? messages.find((m) => m.id === cur.parentId) : null;
-  }
+    // Build set of ancestor IDs from root to the target's parent.
+    const keepIds = new Set();
+    let cur = target.parentId ? messages.find((m) => m.id === target.parentId) : null;
+    while (cur) {
+      keepIds.add(cur.id);
+      cur = cur.parentId ? messages.find((m) => m.id === cur.parentId) : null;
+    }
 
-  thread.messages = messages.filter((m) => keepIds.has(m.id));
-  thread.currentNodeId = target.parentId || null;
-  thread.updatedAt = new Date().toISOString();
-  await writeJson(threadPath(threadId), thread);
-  _emitChange({ type: 'revert', threadId, messageId, thread });
-  return thread;
+    thread.messages = messages.filter((m) => keepIds.has(m.id));
+    thread.currentNodeId = target.parentId || null;
+    thread.pendingRoleplayWorkflow = null;
+    thread.pendingChapterTransaction = null;
+    thread.updatedAt = new Date().toISOString();
+    await writeJson(threadPath(threadId), thread);
+    _emitChange({ type: 'revert', threadId, messageId, thread });
+    return thread;
+  });
 }
 
 /**
@@ -261,6 +447,7 @@ function getBranch(thread) {
 }
 
 async function updateThreadNovelId(threadId, novelId) {
+  return enqueueBranchMutation(threadId, 'move', async () => {
   const thread = await getThread(threadId);
   if (!thread) return null;
   thread.novelId = novelId || null;
@@ -275,6 +462,19 @@ async function updateThreadNovelId(threadId, novelId) {
   }
   _emitChange({ type: 'move', threadId, novelId: thread.novelId, thread });
   return thread;
+  });
+}
+
+async function updateCodexBinding(threadId, binding) {
+  return enqueueThreadMutation(threadId, async () => {
+    const thread = await getThread(threadId);
+    if (!thread) return null;
+    thread.codexBinding = binding ? JSON.parse(JSON.stringify(binding)) : null;
+    thread.updatedAt = new Date().toISOString();
+    await writeJson(threadPath(threadId), thread);
+    _emitChange({ type: 'codex-binding', threadId, codexBinding: thread.codexBinding, thread });
+    return thread;
+  });
 }
 
 // ---------- storage quota management ----------
@@ -309,33 +509,39 @@ async function enforceQuota(maxBytes) {
   for (const t of oldestFirst) {
     if (stats.totalBytes <= targetBytes) break;
     try {
+      await enqueueBranchMutation(t.id, 'quota', async () => {
       const p = threadPath(t.id);
       const stat = await fs.stat(p);
-      await fs.unlink(p);
+      await deleteThreadFile(t.id);
       stats.totalBytes -= stat.size;
       deleted += 1;
-      // Remove from index
-      const idx = await _readIndex();
-      idx.threads = (idx.threads || []).filter((entry) => entry.id !== t.id);
-      await _writeIndex(idx);
+      });
     } catch { /* ignore */ }
   }
   return { deleted };
 }
 
 module.exports = {
+  ensureUserMessage,
+  saveRunMessage,
   listThreads,
   createThread,
   getThread,
   deleteThread,
   renameThread,
   appendMessage,
+  ensureRuntimeMessage,
   editMessage,
   revertToNode,
   getBranch,
   updateThreadNovelId,
+  updateCodexBinding,
+  updateRoleplayWorkflow,
+  updateChapterTransaction,
   createMessage,
   getStorageStats,
   enforceQuota,
   subscribe,
+  isBranchMutationPending,
+  setBranchMutationGuard,
 };

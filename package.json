@@ -4,26 +4,15 @@
   "description": "A multi-platform Electron application",
   "main": "main.js",
   "scripts": {
-    "test:harness": "node scripts/run-harness-benchmark.js --mode=offline --profile=full",
-    "benchmark:harness:offline": "node scripts/run-harness-benchmark.js --mode=offline",
-    "benchmark:harness:live": "node scripts/run-harness-benchmark.js --mode=live",
-    "benchmark:harness:eval": "node scripts/eval-harness-benchmark.js",
-    "benchmark:harness:compare": "node scripts/compare-harness-benchmark.js",
-    "benchmark:harness:replay": "node scripts/replay-harness-benchmark.js",
+    "test": "node scripts/run-test-script.js",
     "dev": "npm run start",
     "dev:auth": "node scripts/dev-auth.js",
     "dev:auth:fresh": "node scripts/dev-auth.js --fresh",
     "start": "node scripts/dev-start.js",
-    "feishu:show-config": "node scripts/feishu-debug.js --action=show-config",
-    "feishu:configure": "node scripts/feishu-debug.js --action=configure",
-    "feishu:verify": "node scripts/feishu-debug.js --action=verify",
-    "feishu:list-fields": "node scripts/feishu-debug.js --action=list-fields",
-    "feishu:smoke": "node scripts/feishu-debug.js --action=smoke",
     "build": "node scripts/build-release.js",
     "build:beta": "node scripts/build-release.js",
     "build:win": "node scripts/build-release.js --win",
     "build:portable:win": "node scripts/build-release.js --win portable",
-    "verify:win-package": "node scripts/verify-win-package.js",
     "build:mac": "node scripts/build-release.js --mac",
     "build:portable:mac": "node scripts/build-release.js --mac zip",
     "build:linux": "node scripts/build-release.js --linux",
@@ -38,12 +27,16 @@
   ],
   "author": "GitHub",
   "license": "CC0-1.0",
+  "engines": {
+    "node": "24.19.0"
+  },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "6.1.0",
     "concurrently": "^9.2.1",
-    "electron": "^28.0.0",
-    "electron-builder": "^24.9.0",
-    "vite": "^5.4.14"
+    "electron": "43.4.0",
+    "electron-builder": "26.15.3",
+    "eslint": "^9.39.5",
+    "vite": "8.2.2"
   },
   "build": {
     "appId": "com.mana.app",
@@ -65,12 +58,20 @@
       "!**/*.md",
       "!**/*.test.js"
     ],
-    "asarUnpack": [
-      "mcp-server-entry.js",
-      "src/main/mcp/**",
-      "src/main/store/**",
-      "src/main/runtime/providers/claudeCli.js"
-    ],
+  "extraResources": [
+    {
+      "from": ".cache/codex-runtime/staging",
+      "to": "codex-runtime"
+    },
+    {
+      "from": "resources/codex-skills",
+      "to": "codex-skills"
+    },
+    {
+      "from": ".cache/release-public-config.json",
+      "to": "release-public-config.json"
+    }
+  ],
     "win": {
       "target": "nsis"
     },
@@ -87,7 +88,11 @@
     },
     "mac": {
       "target": "dmg",
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "binaries": [
+        "Contents/Resources/codex-runtime/codex",
+        "Contents/Resources/codex-runtime/codex-code-mode-host"
+      ]
     },
     "linux": {
       "target": "AppImage",
@@ -101,9 +106,12 @@
     "@codemirror/search": "^6.7.1",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.43.1",
-    "@heroui/react": "^3.0.1",
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "@tailwindcss/postcss": "^4.1.18",
+    "@heroui/react": "3.2.4",
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@react-aria/i18n": "3.13.1",
+    "@react-aria/ssr": "3.10.1",
+    "@react-aria/utils": "3.34.1",
+    "@tailwindcss/postcss": "4.1.18",
     "@xyflow/react": "^12.10.2",
     "autoprefixer": "^10.4.24",
     "clsx": "^2.1.1",
@@ -113,13 +121,21 @@
     "framer-motion": "^12.38.0",
     "https-proxy-agent": "^5.0.1",
     "lucide-react": "^0.563.0",
-    "postcss": "^8.5.6",
+    "postcss": "8.5.26",
     "proper-lockfile": "^4.1.2",
     "react": "^19.2.4",
+    "react-aria": "3.51.0",
+    "react-aria-components": "1.20.0",
     "react-dom": "^19.2.4",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.4.0",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "4.1.18"
+  },
+  "overrides": {
+    "nanoid": "3.3.18",
+    "fast-uri": "3.1.6",
+    "ip-address": "10.5.0",
+    "qs": "6.15.3"
   }
 }

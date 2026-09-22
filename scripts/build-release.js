@@ -2,95 +2,78 @@
 'use strict';
 
 /**
- * Build a packaged release with pre-seeded relay configuration.
- *
- * Usage:
- *   RELEASE_RELAY_URL=https://relay.example RELEASE_RELAY_API_KEY=xxx npm run build:win
- *   BETA_RELAY_URL=https://relay.example BETA_RELAY_API_KEY=xxx npm run build
- *
- * This script injects relayUrl + relayApiKey into DEFAULT_APP_CONFIG for the
- * duration of the build so packaged clients can pass relay-backed auth.
+ * Build without mutating tracked source files. The generated resource contains
+ * only a public Relay URL, minimum version and public ES256 verification keys.
  */
 
 const fs = require('node:fs');
-const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const { validateReleasePublicConfig } = require('../src/main/release/publicConfig');
 
 const ROOT = path.resolve(__dirname, '..');
-const APPCONFIG_PATH = path.resolve(ROOT, 'src', 'main', 'store', 'appConfig.js');
-const BACKUP_PATH = path.join(os.tmpdir(), `mana-build-release-appConfig-${process.pid}-${Date.now()}.js.bak`);
-
-const RELAY_URL = process.env.RELEASE_RELAY_URL || process.env.BETA_RELAY_URL || '';
-const RELAY_API_KEY = process.env.RELEASE_RELAY_API_KEY || process.env.BETA_RELAY_API_KEY || '';
+const PUBLIC_CONFIG_PATH = path.join(ROOT, '.cache', 'release-public-config.json');
 const BUILDER_ARGS = process.argv.slice(2);
 
-function log(...args) {
-  console.log('[build-release]', ...args);
+// Prefer the pinned Electron installation already present in the workspace.
+// This keeps release builds reproducible and prevents electron-builder from
+// silently reaching out to GitHub when the matching distribution is local.
+if (!BUILDER_ARGS.some((value) => value.startsWith('--config.electronDist'))) {
+  const localElectronDist = path.join(ROOT, 'node_modules', 'electron', 'dist');
+  if (fs.existsSync(localElectronDist)) BUILDER_ARGS.push(`--config.electronDist=${localElectronDist}`);
 }
 
-function errorExit(msg) {
-  throw new Error(`[build-release] ${msg}`);
+function fail(message) { throw new Error(`[build-release] ${message}`); }
+function log(message) { process.stdout.write(`[build-release] ${message}\n`); }
+
+function parseJwks(raw) {
+  try { return JSON.parse(String(raw || '')); }
+  catch { fail('RELEASE_RELAY_JWKS must be valid JSON'); }
 }
 
-function injectValue(content, key, value) {
-  const pattern = new RegExp(`(\\b${key}\\s*:\\s*)['"][^'"]*['"]`, 'g');
-  return content.replace(pattern, `$1'${value.replace(/'/g, "\\'")}'`);
+function generatePublicConfig() {
+  const relayBaseUrl = String(process.env.RELEASE_RELAY_URL || '').trim();
+  const jwksRaw = String(process.env.RELEASE_RELAY_JWKS || '').trim();
+  const minimumClientVersion = String(process.env.RELEASE_MINIMUM_CLIENT_VERSION || require('../package.json').version).trim();
+  const releaseRequired = process.env.MANA_REQUIRE_RELEASE_CONFIG === '1' || process.env.MANA_REQUIRE_RELEASE_SIGNATURE === '1';
+  if (!relayBaseUrl || !jwksRaw) {
+    if (releaseRequired) fail('release builds require RELEASE_RELAY_URL and RELEASE_RELAY_JWKS');
+    log('Public Relay config is absent; generating an explicit local staging placeholder. Online authentication will fail closed.');
+    return {
+      schemaVersion: 1,
+      environment: 'staging',
+      relayBaseUrl: 'http://127.0.0.1:9',
+      minimumClientVersion,
+      jwks: { keys: [{ kty: 'EC', crv: 'P-256', kid: 'local-placeholder', x: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', y: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' }] },
+    };
+  }
+  return validateReleasePublicConfig({
+    schemaVersion: 1,
+    environment: process.env.RELEASE_ENVIRONMENT === 'staging' ? 'staging' : 'production',
+    relayBaseUrl,
+    minimumClientVersion,
+    jwks: parseJwks(jwksRaw),
+  });
 }
 
-if (!RELAY_URL) errorExit('RELEASE_RELAY_URL (or legacy BETA_RELAY_URL) is required');
-if (!RELAY_API_KEY) errorExit('RELEASE_RELAY_API_KEY (or legacy BETA_RELAY_API_KEY) is required');
+function run(command, args, label, env = process.env) {
+  log(label);
+  const result = spawnSync(command, args, { cwd: ROOT, env, stdio: 'inherit', shell: process.platform === 'win32' });
+  if (result.status !== 0) fail(`${label} failed with exit code ${result.status}`);
+}
 
-log('Relay URL:', RELAY_URL);
-log('API Key:', `${RELAY_API_KEY.slice(0, 4)}...${RELAY_API_KEY.slice(-4)}`);
-
-const original = fs.readFileSync(APPCONFIG_PATH, 'utf8');
-fs.writeFileSync(BACKUP_PATH, original);
-log('Backup created:', BACKUP_PATH);
-
-let injected = original;
-injected = injected.replace(
-  /(feishuSync:\s*\{[\s\S]*?enabled:\s*)false(\s*,)/,
-  '$1true$2'
-);
-injected = injectValue(injected, 'relayUrl', RELAY_URL);
-injected = injectValue(injected, 'relayApiKey', RELAY_API_KEY);
-fs.writeFileSync(APPCONFIG_PATH, injected);
-
-const verify = fs.readFileSync(APPCONFIG_PATH, 'utf8');
-if (!verify.includes(RELAY_URL)) errorExit('Injection failed: relayUrl not found');
-if (!verify.includes(RELAY_API_KEY)) errorExit('Injection failed: relayApiKey not found');
+const publicConfig = generatePublicConfig();
+fs.mkdirSync(path.dirname(PUBLIC_CONFIG_PATH), { recursive: true });
+fs.writeFileSync(PUBLIC_CONFIG_PATH, `${JSON.stringify(publicConfig, null, 2)}\n`, { mode: 0o644 });
+log(`Generated public release config for ${publicConfig.environment}; no Relay credential was embedded.`);
 
 const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-
-try {
-  log('Running vite build...');
-  const viteResult = spawnSync(npmCmd, ['exec', 'vite', 'build'], {
-    cwd: ROOT,
-    stdio: 'inherit',
-    shell: process.platform === 'win32',
-  });
-  if (viteResult.status !== 0) {
-    errorExit(`vite build failed with exit code ${viteResult.status}`);
-  }
-
-  log('Running electron-builder', BUILDER_ARGS.join(' ') || '(default)');
-  const builderResult = spawnSync(npmCmd, ['exec', '--', 'electron-builder', ...BUILDER_ARGS], {
-    cwd: ROOT,
-    stdio: 'inherit',
-    shell: process.platform === 'win32',
-  });
-  if (builderResult.status !== 0) {
-    errorExit(`electron-builder failed with exit code ${builderResult.status}`);
-  }
-} finally {
-  fs.writeFileSync(APPCONFIG_PATH, original);
-  try {
-    fs.unlinkSync(BACKUP_PATH);
-  } catch {
-    // ignore cleanup failure
-  }
-  log('Restored original appConfig.js');
-}
-
-log('Packaged build complete. Relay config is baked into the app.');
+run(process.execPath, ['scripts/prepare-codex-runtime.js'], 'Preparing pinned Codex App Server sidecar');
+run(process.execPath, ['scripts/verify-codex-runtime-package.js'], 'Verifying pinned Codex App Server sidecar');
+run(npmCmd, ['exec', 'vite', 'build'], 'Building renderer');
+const builderEnv = process.env.MANA_REQUIRE_RELEASE_SIGNATURE === '1'
+  ? process.env
+  : { ...process.env, CSC_IDENTITY_AUTO_DISCOVERY: 'false' };
+run(npmCmd, ['exec', '--', 'electron-builder', ...BUILDER_ARGS], `Building Electron artifact ${BUILDER_ARGS.join(' ') || '(default)'}`, builderEnv);
+run(process.execPath, ['scripts/verify-packaged-codex-runtime.js'], 'Verifying packaged Codex App Server resource');
+log('Packaged build complete.');

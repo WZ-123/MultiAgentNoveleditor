@@ -5,16 +5,14 @@ const fs = require('node:fs').promises;
 const path = require('node:path');
 const novelsStore = require('../store/novels');
 const novelData = require('../store/novelData');
-const mcpClient = require('../mcp/mcpClientStdio');
 const appConfig = require('../store/appConfig');
 const offlineLog = require('../store/offlineLog');
 const networkStatus = require('../store/networkStatus');
 const characterEnricher = require('../import/characterEnricher');
 const { assertFanworkCharacters } = require('../import/characterEnrichmentEligibility');
 const { extractCharacters } = require('../import/analyzer');
-const eventBus = require('../runtime/eventBus');
-const clientEvents = require('../runtime/clientEvents');
-const chapterDraftService = require('../runtime/chapterDraftService');
+const eventBus = require('../events/appEventBus');
+const clientEvents = require('../events/clientEvents');
 
 function notifyChapterChanged(name, action, title) {
   if (!name) return;
@@ -66,7 +64,7 @@ function notifyActiveNovelChanged(entry, action) {
 function safeIpc(handler) {
   return async (event, ...args) => {
     try { return { ok: true, value: await handler(event, ...args) }; }
-    catch (err) { return { ok: false, error: err.message || String(err) }; }
+    catch (err) { return { ok: false, error: err.message || String(err), errorCode: err.code || null }; }
   };
 }
 
@@ -102,7 +100,6 @@ function registerNovelIpc() {
 
   ipcMain.handle('mana:novel:open', safeIpc(async (_e, { id }) => {
     const r = await novelsStore.openNovel(id);
-    mcpClient.setActiveNovel(id, r.entry?.dir);
     const cfg = await appConfig.load();
     await appConfig.save({ ...cfg, lastNovelId: id, lastNovelDir: r.entry.dir });
     notifyActiveNovelChanged(r.entry || null, 'opened');
@@ -110,13 +107,14 @@ function registerNovelIpc() {
   }));
 
   ipcMain.handle('mana:novel:close', safeIpc(async () => {
-    mcpClient.setActiveNovel(null);
+    const cfg = await appConfig.load();
+    await appConfig.save({ ...cfg, lastNovelId: null, lastNovelDir: null });
     notifyActiveNovelChanged(null, 'closed');
     return true;
   }));
 
   ipcMain.handle('mana:novel:active', safeIpc(async () => {
-    const id = mcpClient.getActiveNovel();
+    const id = (await appConfig.load())?.lastNovelId;
     if (!id) return null;
     return novelsStore.getNovelById(id);
   }));
@@ -205,34 +203,6 @@ function registerNovelIpc() {
     };
   }));
 
-  ipcMain.handle('mana:novel:verifyChapterContent', safeIpc(async (_e, { id, name, displayName, title, content, userText, editorContext }) => {
-    const np = await novelsStore.pathsFor(id);
-    const verification = await chapterDraftService.verifyChapterContentStrict({
-      name,
-      displayName,
-      title,
-      text: content,
-      userText,
-      editorContext,
-      runtimeDeps: { novelDir: np.root },
-    });
-    const checks = Array.isArray(verification?.checks) ? verification.checks : [];
-    const issues = (Array.isArray(verification?.issues) ? verification.issues : []).map((issue, index) => ({
-      id: String(issue?.issueId || issue?.id || `issue-${index + 1}`),
-      status: String(issue?.status || 'open'),
-      severity: issue?.severity === 'blocking' ? 'blocking' : 'advisory',
-      summary: String(issue?.summary || issue?.message || issue?.code || '验证未通过'),
-      evidenceParagraphIds: Array.isArray(issue?.evidenceParagraphIds) ? issue.evidenceParagraphIds.map(String) : [],
-    }));
-    return {
-      status: verification?.status === 'passed' ? 'passed' : 'blocked',
-      contentHash: String(verification?.contentHash || ''),
-      checks,
-      issues,
-      blockingCount: issues.filter((issue) => issue.severity === 'blocking' && issue.status !== 'resolved').length,
-    };
-  }));
-
   ipcMain.handle('mana:novel:listChapterRevisions', safeIpc(async (_e, { id, name }) => {
     const np = await novelsStore.pathsFor(id);
     return novelData.listChapterRevisions(np.root, name);
@@ -252,11 +222,13 @@ function registerNovelIpc() {
     return { ...result, ...snapshot };
   }));
 
-  ipcMain.handle('mana:novel:deleteChapter', safeIpc(async (_e, { id, name }) => {
+  ipcMain.handle('mana:novel:deleteChapter', safeIpc(async (_e, { id, name, options }) => {
     const np = await novelsStore.pathsFor(id);
-    const result = await novelData.deleteChapter(np.root, name);
-    notifyChapterChanged(result.name || name, 'deleted', null);
-    await maybeLogOffline({ type: 'chapter', action: 'delete', targetId: name, targetName: name, payload: { name }, novelId: id });
+    const result = await novelData.deleteChapter(np.root, name, options || {});
+    if (result.treeChanged) {
+      notifyChapterChanged(result.name || name, 'deleted', null);
+      await maybeLogOffline({ type: 'chapter', action: 'delete', targetId: name, targetName: name, payload: { name, commandId: result.commandId }, novelId: id });
+    }
     return result;
   }));
 

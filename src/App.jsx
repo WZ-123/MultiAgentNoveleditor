@@ -1,44 +1,40 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FileText, Settings, Search, GitBranch, MessageSquare, Play, Cpu } from 'lucide-react';
-import { PipelineRunnerPanel } from '@/components/PipelineRunnerPanel.jsx';
-import { AppSettingsPanel } from '@/components/AppSettingsPanel.jsx';
+import { FileText, Settings, Search, MessageSquare, Cpu } from 'lucide-react';
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher.jsx';
-import { ToolConfirmationModal } from '@/components/ToolConfirmationModal.jsx';
 import { RuntimeStatusIndicator } from '@/components/RuntimeStatusIndicator.jsx';
-import { BlueprintEditor } from '@/components/BlueprintEditor.jsx';
-import { ProviderSettingsPanel } from '@/components/ProviderSettingsPanel.jsx';
-import { RuntimeDriverSettings } from '@/components/RuntimeDriverSettings.jsx';
 import { saveNovelTree } from '@/services/chapterStore.js';
-import { createRemoteAIClient } from '@/services/remoteAI.js';
-import { SubagentEditor } from '@/components/SubagentEditor.jsx';
-import { DagEditor } from '@/components/DagEditor.jsx';
-import { ConfigHelperChat } from '@/components/ConfigHelperChat.jsx';
 import { AiChatPanel } from '@/components/AiChatPanel.jsx';
-import { LanguageSettings } from '@/components/LanguageSettings.jsx';
-import { StorageSettings } from '@/components/StorageSettings.jsx';
-import { SearchSettings } from '@/components/SearchSettings.jsx';
-import { SkillSettings } from '@/components/SkillSettings.jsx';
-import { WritingSettings } from '@/components/WritingSettings.jsx';
-import { LanRemoteSettings } from '@/components/LanRemoteSettings.jsx';
 import { ChapterEditor } from '@/components/ChapterEditor.jsx';
-import { OfflineSyncDialog } from '@/components/OfflineSyncDialog.jsx';
-import { ImportNovelPanel } from '@/components/ImportNovelPanel.jsx';
-import { ImportMergePanel } from '@/components/ImportMergePanel.jsx';
-import { SearchPanel } from '@/components/SearchPanel.jsx';
-import { NovelDataBrowser } from '@/components/NovelDataBrowser.jsx';
-import { DataTabContent } from '@/components/DataTabContent.jsx';
+import { mergeChapterIntoNovelTree } from '@/components/chapterTreeSync.mjs';
 import { countMeaningfulCharacters } from '@/domain/text.js';
 import { collectPreferredTextMatches } from '@/domain/textMatch.js';
-import { assessDeAiMinimality, minimalityRetryInstruction } from '@/services/deAiMinimality.mjs';
 import { useI18n } from '@/i18n/LanguageContext.jsx';
 import DiffMatchPatch from 'diff-match-patch';
 
+const lazyNamed = (loader, name) => React.lazy(() => loader().then((module) => ({ default: module[name] })));
+const AppSettingsPanel = lazyNamed(() => import('@/components/AppSettingsPanel.jsx'), 'AppSettingsPanel');
+const ProviderSettingsPanel = lazyNamed(() => import('@/components/ProviderSettingsPanel.jsx'), 'ProviderSettingsPanel');
+const LanguageSettings = lazyNamed(() => import('@/components/LanguageSettings.jsx'), 'LanguageSettings');
+const StorageSettings = lazyNamed(() => import('@/components/StorageSettings.jsx'), 'StorageSettings');
+const SearchSettings = lazyNamed(() => import('@/components/SearchSettings.jsx'), 'SearchSettings');
+const SkillSettings = lazyNamed(() => import('@/components/SkillSettings.jsx'), 'SkillSettings');
+const LanRemoteSettings = lazyNamed(() => import('@/components/LanRemoteSettings.jsx'), 'LanRemoteSettings');
+const OfflineSyncDialog = lazyNamed(() => import('@/components/OfflineSyncDialog.jsx'), 'OfflineSyncDialog');
+const ImportNovelPanel = lazyNamed(() => import('@/components/ImportNovelPanel.jsx'), 'ImportNovelPanel');
+const ImportMergePanel = lazyNamed(() => import('@/components/ImportMergePanel.jsx'), 'ImportMergePanel');
+const SearchPanel = lazyNamed(() => import('@/components/SearchPanel.jsx'), 'SearchPanel');
+const NovelDataBrowser = lazyNamed(() => import('@/components/NovelDataBrowser.jsx'), 'NovelDataBrowser');
+const DataTabContent = lazyNamed(() => import('@/components/DataTabContent.jsx'), 'DataTabContent');
+
 const TAB_PREFIX = 'chapter:';
-const BLUEPRINT_PREFIX = 'blueprint:';
 const SETTINGS_PREFIX = 'settings:';
 const DATA_PREFIX = 'data:'; // character, world, outline, timeline, style
-const DEFAULT_RIGHT_PANEL_WIDTH = 640;
-const MIN_RIGHT_PANEL_WIDTH = 420;
+const DEFAULT_RIGHT_PANEL_WIDTH = 480;
+const MIN_RIGHT_PANEL_WIDTH = 320;
+const MAX_RIGHT_PANEL_WIDTH = 720;
+const MIN_EDITOR_WIDTH = 480;
+const DRAWER_ENTER_WIDTH = 840;
+const DRAWER_EXIT_WIDTH = 880;
 const FIXED_LEFT_CHROME_WIDTH = 48 + 256;
 const RIGHT_PANEL_WIDTH_STORAGE_KEY = 'mana-right-panel-width-v1';
 const EDITOR_CONTEXT_MENU_WIDTH = 220;
@@ -115,11 +111,11 @@ const EDITOR_AI_ACTIONS = {
 
 const EDITOR_AI_SYSTEM_PROMPT = '你是中文小说正文编辑助手。输出必须是可直接粘贴进正文的简体中文小说内容；标点使用全角中文标点（，。！？：；、“”‘’（）《》——）；不要输出标题、列表、解释、前后缀说明或 Markdown 围栏。';
 
-function clampRightPanelWidth(width) {
+function clampRightPanelWidth(width, workspaceWidth = null) {
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1440;
-  const availableWidth = Math.max(0, viewportWidth - FIXED_LEFT_CHROME_WIDTH);
-  const minWidth = Math.min(MIN_RIGHT_PANEL_WIDTH, availableWidth);
-  const maxWidth = Math.max(minWidth, Math.min(Math.floor(viewportWidth * 0.75), availableWidth));
+  const availableWidth = Math.max(0, Number.isFinite(workspaceWidth) ? workspaceWidth : viewportWidth - FIXED_LEFT_CHROME_WIDTH);
+  const minWidth = Math.min(MIN_RIGHT_PANEL_WIDTH, availableWidth || MIN_RIGHT_PANEL_WIDTH);
+  const maxWidth = Math.max(minWidth, Math.min(MAX_RIGHT_PANEL_WIDTH, Math.max(minWidth, availableWidth - MIN_EDITOR_WIDTH)));
   return Math.min(Math.max(width, minWidth), maxWidth);
 }
 
@@ -182,9 +178,9 @@ function App() {
   const [activeSidebarItem, setActiveSidebarItem] = useState('explorer');
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [rightPanelWidth, setRightPanelWidth] = useState(() => readInitialRightPanelWidth());
+  const [rightPanelDrawer, setRightPanelDrawer] = useState(false);
   const [novel, setNovel] = useState({ volumes: [] });
   const [openChapterIds, setOpenChapterIds] = useState([]);
-  const [openBlueprintIds, setOpenBlueprintIds] = useState([]);
   const [openSettingsIds, setOpenSettingsIds] = useState([]);
   const [activeEditorTab, setActiveEditorTab] = useState('');
 
@@ -198,14 +194,19 @@ function App() {
   const [existingNovels, setExistingNovels] = useState([]);
   const [mergePanel, setMergePanel] = useState(null);
   const [activeNovelId, setActiveNovelId] = useState('');
+  const currentProjectRef = useRef(activeNovelId);
+  const currentNovelRef = useRef(novel);
+  const treeRefreshVersionRef = useRef(0);
+  const activeRefreshVersionRef = useRef(0);
+  currentProjectRef.current = activeNovelId;
+  currentNovelRef.current = novel;
   const [saveStatus, setSaveStatus] = useState(null); // null | 'saving' | 'saved' | 'save-failed'
-  const [saveToast, setSaveToast] = useState(null); // { type: 'success' | 'error', message: string } | null
+  const [saveToast, setSaveToast] = useState(null); // { type: 'success' | 'warning' | 'error', message: string } | null
   const hasInitializedActiveNovelRef = useRef(false);
 
   const resetNovelUiState = useCallback((clearCache = false) => {
     setNovel({ volumes: [] });
     setOpenChapterIds([]);
-    setOpenBlueprintIds([]);
     setOpenSettingsIds([]);
     setActiveEditorTab('');
     if (clearCache) {
@@ -280,6 +281,7 @@ function App() {
   // Sync the novel tree (volumes/sections/chapters) from the project directory on disk
   async function syncNovelTreeFromDisk(novelEntry) {
     if (!novelEntry?.dir || !window.mana) return;
+    const refreshVersion = ++treeRefreshVersionRef.current;
     try {
       const chapterMetaEntries = await window.mana.novel.listChapterMetas(novelEntry.id);
 
@@ -300,6 +302,8 @@ function App() {
             section: chapterMeta.section,
           };
         });
+      const loadedNames = new Set(currentNovelRef.current.volumes.flatMap(v => v.sections.flatMap(s => s.chapters)).filter(ch => ch.isContentLoaded).map(ch => ch.fileName));
+      const loadedContent = new Map(await Promise.all(chapters.filter(ch => loadedNames.has(ch.fileName)).map(async ch => [ch.fileName, await window.mana.novel.readChapter(novelEntry.id, ch.fileName)])));
 
       // Compute correct display names immediately (listChapterMetas doesn't
       // include displayName, so we'd otherwise show raw filenames until
@@ -343,7 +347,23 @@ function App() {
         } else {
           volumes = [{ id: `vol-${Date.now()}`, name: '卷1', sections: [{ id: `sec-${Date.now()}`, name: '节1', chapters }] }];
         }
-        setNovel({ volumes });
+        if (currentProjectRef.current !== novelEntry.id || refreshVersion !== treeRefreshVersionRef.current) return;
+        setNovel(previous => {
+          if (currentProjectRef.current !== novelEntry.id || refreshVersion !== treeRefreshVersionRef.current) return previous;
+          const existing = new Map(previous.volumes.flatMap(v => v.sections.flatMap(section => section.chapters)).map(ch => [ch.fileName, ch]));
+          const dirty = new Map([...existing].filter(([, ch]) => ch.isDirty));
+          const present = new Set();
+          const next = volumes.map(v => ({ ...v, sections: v.sections.map(section => ({ ...section, chapters: section.chapters.map(ch => {
+            present.add(ch.fileName);
+            const old = existing.get(ch.fileName);
+            if (old?.isDirty) return old;
+            if (!old) return ch;
+            const content = loadedContent.has(ch.fileName) ? loadedContent.get(ch.fileName) : old.content;
+            return { ...ch, id: old.id, content, lastSavedContent: content, isContentLoaded: loadedContent.has(ch.fileName) || old.isContentLoaded };
+          }) })) }));
+          for (const [fileName, chapter] of dirty) if (!present.has(fileName) && next[0]?.sections[0]) next[0].sections[0].chapters.push(chapter);
+          return { volumes: next };
+        });
       }
     } catch (err) {
       console.error('[App] syncNovelTree failed:', err);
@@ -352,15 +372,18 @@ function App() {
 
   const refreshActiveNovelState = useCallback(async (novelEntry, options = {}) => {
     if (!window.mana?.novel?.active) return null;
+    const requestVersion = ++activeRefreshVersionRef.current;
     try {
       const activeEntry = novelEntry === undefined
         ? await window.mana.novel.active()
         : novelEntry;
+      if (requestVersion !== activeRefreshVersionRef.current) return null;
       const nextId = activeEntry?.id || '';
       if (nextId === activeNovelId && !options.forceReload) {
         return activeEntry || null;
       }
 
+      currentProjectRef.current = nextId;
       setActiveNovelId(nextId);
       if (!nextId) {
         resetNovelUiState(true);
@@ -404,6 +427,19 @@ function App() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshActiveNovelState]);
+
+  useEffect(() => {
+    if (!window.mana?.codex?.onEvent) return undefined;
+    let refreshQueued = false;
+    const off = window.mana.codex.onEvent((payload) => {
+      if (!payload?.committedResources?.length || (payload.novelId && payload.novelId !== activeNovelId) || refreshQueued) return;
+      refreshQueued = true;
+      queueMicrotask(() => {
+        refreshActiveNovelState(undefined, { forceReload: true }).catch((err) => console.error('[App] Codex commit refresh failed', err)).finally(() => { refreshQueued = false; });
+      });
+    });
+    return () => { try { off(); } catch {} };
+  }, [activeNovelId, refreshActiveNovelState]);
 
   async function loadExistingNovels() {
     if (!window.mana?.novel?.list) return;
@@ -546,6 +582,22 @@ function App() {
       try {
         const activeEntry = await mana.novel.active();
         if (!activeEntry?.id) return;
+        if (data.novelId && data.novelId !== activeEntry.id) return;
+        if (currentProjectRef.current !== activeEntry.id) return;
+        const dirty = currentNovelRef.current.volumes.flatMap(v => v.sections.flatMap(section => section.chapters)).find(ch => ch.fileName === data.name && ch.isDirty);
+        if (dirty) {
+          const diskContent = data.action === 'delete' ? '' : await mana.novel.readChapter(activeEntry.id, data.name);
+          setSaveConflict({ chapterId: dirty.id, name: data.name, localContent: dirty.content, diskContent, baseContent: dirty.lastSavedContent || '', message: 'AI 已更新磁盘内容；你的未保存草稿已保留，请处理冲突。' });
+          return;
+        }
+        if (data.action === 'delete') {
+          setNovel(prev => ({ ...prev, volumes: prev.volumes.map(volume => ({
+            ...volume, sections: volume.sections.map(section => ({
+              ...section, chapters: section.chapters.filter(chapter => chapter.fileName !== data.name),
+            })),
+          })) }));
+          return;
+        }
         const meta = await mana.novel.readChapterMeta(activeEntry.id, data.name);
         const content = await mana.novel.readChapter(activeEntry.id, data.name);
         const title = resolveChapterTitle({
@@ -569,16 +621,9 @@ function App() {
           section: meta?.section ?? meta?.metadata?.section ?? null,
         };
         setNovel(prev => {
-          const volumes = prev.volumes.map(v => ({
-            ...v,
-            sections: v.sections.map(s => ({
-              ...s,
-              chapters: existing
-                ? s.chapters.map((chapter) => (chapter.fileName === data.name ? { ...chapter, ...nextChapter } : chapter))
-                : [...s.chapters, nextChapter].sort((a, b) => a.fileName.localeCompare(b.fileName)),
-            })),
-          }));
-          const nextNovel = { ...prev, volumes };
+          if (currentProjectRef.current !== activeEntry.id) return prev;
+          if (prev.volumes.some(v => v.sections.some(s => s.chapters.some(ch => ch.fileName === data.name && ch.isDirty)))) return prev;
+          const nextNovel = mergeChapterIntoNovelTree(prev, nextChapter);
           refreshAllChapterDisplayNames(activeEntry.id, nextNovel).catch(() => {});
           return nextNovel;
         });
@@ -616,23 +661,11 @@ function App() {
         content: chapter.content,
         type: 'chapter',
       }));
-    const blueprintTabs = openBlueprintIds.map((bpId) => ({
-      id: `${BLUEPRINT_PREFIX}${bpId}`,
-      blueprintId: bpId,
-      title: `流程: ${bpId}`,
-      language: 'Blueprint',
-      type: 'blueprint',
-    }));
     const settingsTitle = (sid) => {
       switch (sid) {
         case 'language': return t('settings.languageTitle');
-        case 'runtime': return t('runtime.title');
-        case 'subagent': return t('subagent.title');
-        case 'dag': return t('dag.title');
-        case 'config-helper': return '配置助手';
         case 'models': return '模型中心';
         case 'storage': return '存储空间';
-        case 'writing': return '写作设置';
         case 'lan-remote': return '局域网遥控';
         case 'search': return '搜索引擎';
         case 'skill': return 'Skill';
@@ -653,20 +686,23 @@ function App() {
       title: dataTabLabel(activeDataTabId),
       type: 'data',
     }] : [];
-    return [...chapterTabs, ...blueprintTabs, ...settingsTabs, ...dataTabs];
-  }, [openChapterIds, openBlueprintIds, openSettingsIds, chapterMap, t, activeEditorTab]);
+    return [...chapterTabs, ...settingsTabs, ...dataTabs];
+  }, [openChapterIds, openSettingsIds, chapterMap, t, activeEditorTab]);
 
   const activeChapterId = activeEditorTab.startsWith(TAB_PREFIX)
     ? activeEditorTab.slice(TAB_PREFIX.length)
     : '';
   const activeChapterEntry = activeChapterId ? chapterMap.get(activeChapterId) : null;
   const activeChapter = activeChapterEntry?.chapter ?? null;
-  const activeBlueprintId = activeEditorTab.startsWith(BLUEPRINT_PREFIX)
-    ? activeEditorTab.slice(BLUEPRINT_PREFIX.length)
-    : '';
   const activeSettingsId = activeEditorTab.startsWith(SETTINGS_PREFIX)
     ? activeEditorTab.slice(SETTINGS_PREFIX.length)
     : '';
+
+  useEffect(() => {
+    // Keep configuration actions visible when entering the narrow drawer layout.
+    // Users can still reopen chat explicitly using its toolbar button.
+    if (activeSettingsId === 'models' && rightPanelDrawer) setRightPanelOpen(false);
+  }, [activeSettingsId, rightPanelDrawer]);
 
   const openChapterInEditor = async (chapterId, jump = null) => {
     if (!chapterMap.get(chapterId)) return;
@@ -682,10 +718,6 @@ function App() {
     }
   };
 
-  const openBlueprintInEditor = (bpId) => {
-    setOpenBlueprintIds((ids) => (ids.includes(bpId) ? ids : [...ids, bpId]));
-    setActiveEditorTab(`${BLUEPRINT_PREFIX}${bpId}`);
-  };
 
   const openSettingsInEditor = (sid) => {
     setOpenSettingsIds((ids) => (ids.includes(sid) ? ids : [...ids, sid]));
@@ -812,19 +844,6 @@ function App() {
           const fallbackIndex = Math.max(0, currentIndex - 1);
           const fallbackId = nextIds[fallbackIndex] ?? nextIds[0] ?? '';
           setActiveEditorTab(fallbackId ? `${TAB_PREFIX}${fallbackId}` : '');
-        }
-        return nextIds;
-      });
-    } else if (tabId.startsWith(BLUEPRINT_PREFIX)) {
-      const bpId = tabId.slice(BLUEPRINT_PREFIX.length);
-      setOpenBlueprintIds((ids) => {
-        if (!ids.includes(bpId)) return ids;
-        const currentIndex = ids.indexOf(bpId);
-        const nextIds = ids.filter((id) => id !== bpId);
-        if (activeEditorTab === tabId) {
-          const fallbackIndex = Math.max(0, currentIndex - 1);
-          const fallbackId = nextIds[fallbackIndex] ?? nextIds[0] ?? '';
-          setActiveEditorTab(fallbackId ? `${BLUEPRINT_PREFIX}${fallbackId}` : '');
         }
         return nextIds;
       });
@@ -984,7 +1003,7 @@ function App() {
     }
   };
 
-  const deleteChapter = (chapterId) => {
+  const deleteChapter = async (chapterId) => {
     const entry = chapterMap.get(chapterId);
     const chapter = entry?.chapter;
     if (!chapter) return;
@@ -992,29 +1011,27 @@ function App() {
     const ok = window.confirm(confirmText);
     if (!ok) return;
 
-    const updated = {
-      ...novel,
-      volumes: novel.volumes.map((v) => ({
-        ...v,
-        sections: v.sections.map((s) => ({
-          ...s,
-          chapters: s.chapters.filter((c) => c.id !== chapterId),
+    if (!activeNovelId || !chapter.fileName || !window.mana?.novel?.deleteChapter) return;
+    try {
+      const commandId = globalThis.crypto?.randomUUID?.() || `delete-${Date.now()}-${chapter.id}`;
+      const receipt = await window.mana.novel.deleteChapter(activeNovelId, chapter.fileName, { confirmed: true, commandId });
+      if (!receipt?.treeChanged && receipt?.reason !== 'not_found') return;
+      const updated = {
+        ...novel,
+        volumes: novel.volumes.map((v) => ({
+          ...v,
+          sections: v.sections.map((s) => ({
+            ...s,
+            chapters: s.chapters.filter((c) => c.id !== chapterId),
+          })),
         })),
-      })),
-    };
-    setNovel(updated);
-    refreshAllChapterDisplayNames(activeNovelId, updated).catch(() => {});
-    removeDeletedChapterIdsFromTabs([chapterId]);
-    // Delete file from disk
-    if (chapter.fileName && window.mana?.fs?.deleteFile) {
-      (async () => {
-        try {
-          const active = await window.mana.novel.active();
-          if (active?.dir) {
-            await window.mana.fs.deleteFile(`${active.dir}/chapters/${chapter.fileName}`);
-          }
-        } catch (err) { console.error('[App] delete chapter file failed:', err); }
-      })();
+      };
+      setNovel(updated);
+      await refreshAllChapterDisplayNames(activeNovelId, updated);
+      removeDeletedChapterIdsFromTabs([chapterId]);
+    } catch (err) {
+      console.error('[App] delete chapter failed:', err);
+      window.alert(err?.message || String(err));
     }
   };
 
@@ -1035,11 +1052,15 @@ function App() {
   const isResizingRightPanelRef = useRef(false);
   const [isRightPanelResizeHover, setIsRightPanelResizeHover] = useState(false);
   const [isRightPanelResizing, setIsRightPanelResizing] = useState(false);
+  const editorWorkspaceRef = useRef(null);
+  const editorTabRefs = useRef(new Map());
 
   useEffect(() => {
     const handlePointerMove = (event) => {
       if (!isResizingRightPanelRef.current) return;
-      setRightPanelWidth(clampRightPanelWidth(window.innerWidth - event.clientX));
+      const workspace = editorWorkspaceRef.current?.clientWidth || null;
+      const left = editorWorkspaceRef.current?.getBoundingClientRect?.().left || 0;
+      setRightPanelWidth(clampRightPanelWidth(window.innerWidth - event.clientX, workspace || window.innerWidth - left));
     };
 
     const stopResize = () => {
@@ -1063,12 +1084,30 @@ function App() {
 
   useEffect(() => {
     const handleResize = () => {
-      setRightPanelWidth((currentWidth) => clampRightPanelWidth(currentWidth));
+      setRightPanelWidth((currentWidth) => clampRightPanelWidth(currentWidth, editorWorkspaceRef.current?.clientWidth || null));
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    const node = editorWorkspaceRef.current;
+    if (!node || typeof ResizeObserver === 'undefined') return undefined;
+    const update = (width) => {
+      setRightPanelDrawer((wasDrawer) => width < (wasDrawer ? DRAWER_EXIT_WIDTH : DRAWER_ENTER_WIDTH));
+      setRightPanelWidth((currentWidth) => clampRightPanelWidth(currentWidth, width));
+    };
+    const observer = new ResizeObserver((entries) => update(entries[0]?.contentRect?.width || node.clientWidth));
+    update(node.clientWidth);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const tab = editorTabRefs.current.get(activeEditorTab);
+    tab?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  }, [activeEditorTab, editorTabs.length]);
 
   useEffect(() => {
     try {
@@ -1141,22 +1180,26 @@ function App() {
     }
   }, [activeNovelId, chapterMap, applySavedChapterSnapshot]);
 
-  const flushActiveChapterToDisk = useCallback(async ({ silent = false } = {}) => {
-    if (!activeChapterId || !activeNovelId) return;
-    const entry = chapterMap.get(activeChapterId);
+  const flushActiveChapterToDisk = useCallback(async ({ silent = false, resourceRef, novelId } = {}) => {
+    if (novelId && novelId !== activeNovelId) throw new Error('编辑目标已切换，请返回原项目发送');
+    if (resourceRef && !resourceRef.startsWith('chapter:')) return;
+    const targetChapterId = resourceRef ? [...chapterMap.entries()].find(([, value]) => `chapter:${value.chapter.fileName}` === resourceRef)?.[0] : activeChapterId;
+    if (resourceRef && !targetChapterId) throw new Error('目标章节已不存在');
+    if (!targetChapterId || !activeNovelId) return;
+    const entry = chapterMap.get(targetChapterId);
     if (!entry?.chapter?.fileName) return;
     if (!entry.chapter.isContentLoaded || !entry.chapter.isDirty) {
       if (!silent) setSaveStatus(null);
       return;
     }
     const name = entry.chapter.fileName;
-    const content = activeChapter?.content || '';
+    const content = targetChapterId === activeChapterId ? (activeChapter?.content || '') : (entry.chapter.content || '');
     if (!window.mana?.novel?.saveChapter) return;
     const key = `_save_${name}`;
     clearTimeout(window[key]);
     if (!silent) setSaveStatus('saving');
     try {
-      await saveChapterContentToDisk(activeChapterId, content, {
+      await saveChapterContentToDisk(targetChapterId, content, {
         source: silent ? 'autosave' : 'manual',
         revisionLabel: silent ? '自动保存' : '手动保存',
       });
@@ -1415,21 +1458,48 @@ function App() {
     return { start, end, text: expectedText };
   };
 
-  const replaceSelectedText = (replacement, rangeOverride = null) => {
+  const persistChatEditorMutation = async (currentContent, nextContent, rangeOverride, revisionLabel) => {
+    if (!activeChapterId || !activeChapter) throw new Error('当前没有打开的章节');
+    const saveKey = activeChapter.fileName ? `_save_${activeChapter.fileName}` : '';
+    if (saveKey) clearTimeout(window[saveKey]);
+    updateActiveChapterContent(nextContent, { scheduleSave: false });
+    setSaveStatus('saving');
+    try {
+      const saved = await saveChapterContentToDisk(activeChapterId, nextContent, {
+        source: 'ai-chat',
+        revisionLabel,
+        baseContent: currentContent,
+        verifiedContentHash: rangeOverride?.verifiedContentHash || undefined,
+      });
+      if (!saved) throw new Error('章节保存接口没有返回落盘结果');
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus(null), 2000);
+      return saved;
+    } catch (err) {
+      // The chat tool must not report success for a React-only edit. Roll the
+      // editor back if the atomic save/readback failed and keep the pending
+      // confirmation alive in the main process.
+      updateActiveChapterContent(currentContent, { scheduleSave: false });
+      setSaveStatus('save-failed');
+      throw err;
+    }
+  };
+
+  const replaceSelectedText = async (replacement, rangeOverride = null) => {
     if (!activeChapterId || !activeChapter) throw new Error('当前没有打开的章节');
     const current = activeChapter.content;
     const { start, end } = resolveVerifiedPreviewRange(rangeOverride, current, 'replace') || resolveEditorSelectionRange('replace');
     const before = current.substring(0, start);
     const after = current.substring(end);
     const newContent = before + replacement + after;
-    updateActiveChapterContent(newContent);
+    await persistChatEditorMutation(current, newContent, rangeOverride, '聊天 AI 替换选中文本');
     const nextPos = start + replacement.length;
     pendingEditorSelectionRef.current = { start, end: nextPos };
     setEditorSelection({ text: '', start: nextPos, end: nextPos });
     return `Text replaced successfully (${end - start} chars)`;
   };
 
-  const replaceTextNearCursor = (targetText, replacement, rangeOverride = null) => {
+  const replaceTextNearCursor = async (targetText, replacement, rangeOverride = null) => {
     if (!activeChapterId || !activeChapter) throw new Error('当前没有打开的章节');
     const current = activeChapter.content || '';
     const needle = String(targetText || '');
@@ -1438,7 +1508,7 @@ function App() {
     const verifiedRange = resolveVerifiedPreviewRange(rangeOverride, current, 'replace');
     if (verifiedRange) {
       const nextContent = current.substring(0, verifiedRange.start) + replacement + current.substring(verifiedRange.end);
-      updateActiveChapterContent(nextContent);
+      await persistChatEditorMutation(current, nextContent, rangeOverride, '聊天 AI 替换光标附近文本');
       const nextPos = verifiedRange.start + replacement.length;
       pendingEditorSelectionRef.current = { start: verifiedRange.start, end: nextPos };
       setEditorSelection({ text: '', start: nextPos, end: nextPos });
@@ -1459,7 +1529,7 @@ function App() {
     const domEnd = editorRange && typeof editorRange.end === 'number' ? editorRange.end : null;
     const selectedFromDom = domStart != null && domEnd != null ? current.substring(domStart, domEnd) : '';
     if (domStart != null && domEnd != null && domEnd > domStart && selectionCoversTarget(selectedFromDom)) {
-      return replaceSelectedText(replacement);
+      return replaceSelectedText(replacement, rangeOverride);
     }
 
     const cached = editorSelection;
@@ -1470,7 +1540,7 @@ function App() {
         const before = current.substring(0, cached.start);
         const after = current.substring(cached.end);
         const nextContent = before + replacement + after;
-        updateActiveChapterContent(nextContent);
+        await persistChatEditorMutation(current, nextContent, rangeOverride, '聊天 AI 替换光标附近文本');
         const nextPos = cached.start + replacement.length;
         pendingEditorSelectionRef.current = { start: cached.start, end: nextPos };
         setEditorSelection({ text: '', start: nextPos, end: nextPos });
@@ -1487,7 +1557,7 @@ function App() {
       const before = current.substring(0, only.start);
       const after = current.substring(only.end);
       const nextContent = before + replacement + after;
-      updateActiveChapterContent(nextContent);
+      await persistChatEditorMutation(current, nextContent, rangeOverride, '聊天 AI 替换光标附近文本');
       const nextPos = only.start + replacement.length;
       pendingEditorSelectionRef.current = { start: only.start, end: nextPos };
       setEditorSelection({ text: '', start: nextPos, end: nextPos });
@@ -1521,21 +1591,21 @@ function App() {
     const before = current.substring(0, best.start);
     const after = current.substring(best.end);
     const nextContent = before + replacement + after;
-    updateActiveChapterContent(nextContent);
+    await persistChatEditorMutation(current, nextContent, rangeOverride, '聊天 AI 替换光标附近文本');
     const nextPos = best.start + replacement.length;
     pendingEditorSelectionRef.current = { start: best.start, end: nextPos };
     setEditorSelection({ text: '', start: nextPos, end: nextPos });
     return `Text replaced near cursor successfully (${best.end - best.start} chars)`;
   };
 
-  const insertTextAtCursor = (text, rangeOverride = null) => {
+  const insertTextAtCursor = async (text, rangeOverride = null) => {
     if (!activeChapterId || !activeChapter) throw new Error('当前没有打开的章节');
     const current = activeChapter.content;
     const { start, end } = resolveVerifiedPreviewRange(rangeOverride, current, 'insert') || resolveEditorSelectionRange('insert');
     const before = current.substring(0, start);
     const after = current.substring(end);
     const newContent = before + text + after;
-    updateActiveChapterContent(newContent);
+    await persistChatEditorMutation(current, newContent, rangeOverride, '聊天 AI 插入文本');
     const nextPos = start + text.length;
     pendingEditorSelectionRef.current = { start: nextPos, end: nextPos };
     setEditorSelection({ text: '', start: nextPos, end: nextPos });
@@ -1621,100 +1691,27 @@ function App() {
       return;
     }
 
-    setEditorAiStatus(action.label);
     try {
       await flushActiveChapterToDisk({ silent: true });
-      const client = createRemoteAIClient();
-      const deAiBaseline = actionId === 'deAi' ? await loadEditorDeAiBaseline(range) : null;
-      const userPrompt = buildEditorAiUserPrompt(action, range, customInstruction, deAiBaseline);
-      const callEditorAgent = (prompt) => client.completeForAgent(
-        actionId === 'deAi' ? 'de_ai_rewrite' : (action.mode === 'insert' ? 'chapter_draft' : 'agent5'),
-        [
-          { role: 'system', content: EDITOR_AI_SYSTEM_PROMPT },
-          { role: 'user', content: prompt },
-        ],
-        { expectJson: false }
-      );
-      let result = await callEditorAgent(userPrompt);
-      let output = cleanEditorAiOutput(result);
-      let minimality = null;
-      if (actionId === 'deAi') {
-        minimality = assessDeAiMinimality(range.text || '', output, { guidance: customInstruction || action.instruction });
-        if (!minimality.ok) {
-          result = await callEditorAgent(`${userPrompt}\n\n${minimalityRetryInstruction(minimality)}`);
-          output = cleanEditorAiOutput(result);
-          minimality = assessDeAiMinimality(range.text || '', output, { guidance: customInstruction || action.instruction });
-        }
-        if (!minimality.ok) {
-          throw new Error(`两版候选都偏离最小必要修改原则：${minimality.violations.map((item) => item.label).join('；')}`);
-        }
-      }
-      if (!output) throw new Error('AI 没有返回可插入的正文');
-      const current = activeChapter.content || '';
-      const insertionPoint = action.mode === 'insert' ? range.end : range.start;
-      const safeStart = Math.max(0, Math.min(insertionPoint, current.length));
-      const safeEnd = action.mode === 'insert'
-        ? safeStart
-        : Math.max(safeStart, Math.min(range.end, current.length));
-      if (action.mode !== 'insert' && current.substring(safeStart, safeEnd) !== range.text) {
-        throw new Error('选中文本已变化，请重新选中后再试');
-      }
-      const previewId = makeId('editor-ai-preview');
-      const candidateContent = current.substring(0, safeStart) + output + current.substring(safeEnd);
-      const preview = {
-        id: previewId,
-        actionId,
-        actionLabel: action.label,
-        mode: action.mode,
-        range: { start: safeStart, end: safeEnd, text: range.text || '' },
-        original: action.mode === 'insert' ? '' : current.substring(safeStart, safeEnd),
-        output,
-        minimality,
-        customInstruction,
-        baseContent: current,
-        verification: { status: 'running', checks: [], issues: [], blockingCount: 0, contentHash: '' },
-      };
-      setEditorAiPreview(preview);
-      const verification = await window.mana?.novel?.verifyChapterContent?.(activeNovelId, {
-        name: activeChapter.fileName,
-        displayName: activeChapter.displayName || activeChapter.fileName,
-        title: getChapterSaveTitle(activeChapter, candidateContent),
-        content: candidateContent,
-        userText: customInstruction || action.instruction,
-        editorContext: {
-          type: 'chapter',
-          novelId: activeNovelId,
-          chapterFileName: activeChapter.fileName,
-          title: activeChapter.displayName || activeChapter.fileName,
-          selectedText: range.text || '',
-        },
-      });
-      const finalVerification = verification || {
-        status: 'blocked',
-        checks: [],
-        issues: [{ severity: 'blocking', summary: '严格验证服务不可用。' }],
-        blockingCount: 1,
-        contentHash: '',
-      };
-      setEditorAiPreview((currentPreview) => currentPreview?.id === previewId
-        ? { ...currentPreview, verification: finalVerification }
-        : currentPreview);
-      if (finalVerification.status === 'passed' && Number(finalVerification.blockingCount || 0) === 0) {
-        showSaveToast('success', `${action.label}已生成并通过严格验证`);
-      } else {
-        showSaveToast('error', `${action.label}预览未通过严格验证，已禁止写入`);
-      }
+      const resourceRef = `chapter:${activeChapter.fileName}`;
+      const context = await window.mana.codex.getResourceContext({ novelId: activeNovelId, resourceRef });
+      const current = currentNovelRef.current.volumes.flatMap(v => v.sections.flatMap(s => s.chapters)).find(ch => ch.fileName === activeChapter.fileName);
+      if (currentProjectRef.current !== activeNovelId || !current || current.content !== activeChapter.content) throw new Error('准备期间正文或项目已变化，请重新选择');
+      const editScope = { mode: action.mode === 'insert' ? 'insertion' : 'selection', resourceRef, baseHash: context.baseHash, start: range.start, end: range.end };
+      const prompt = customInstruction || action.instruction;
+      window.dispatchEvent(new CustomEvent('mana:codex-prompt', { detail: {
+        text: `${prompt}\n目标章节：${activeChapter.fileName}。${range.text ? `仅处理当前选区 ${range.start}-${range.end}` : `光标位置 ${range.start}`}。请读取最新资源，自行完成必要审查，并使用 Codex 原生 apply_patch 修改工作区文件；展示差异并等待确认。`,
+        skillName: actionId === 'deAi' ? 'mana-de-ai' : 'mana-fiction-writing',
+        novelId: activeNovelId, editorContext: { novelId: activeNovelId, resourceRef }, editScope,
+      } }));
+      setRightPanelOpen(true);
+      showSaveToast('success', `已交给 Codex：${action.label}`);
     } catch (err) {
       showSaveToast('error', `${action.label}失败：${err?.message || String(err)}`);
-    } finally {
-      setEditorAiStatus(null);
     }
   }, [
-    activeChapter,
-    activeNovelId,
-    buildEditorAiUserPrompt,
+    activeChapter, activeNovelId,
     flushActiveChapterToDisk,
-    loadEditorDeAiBaseline,
     resolveEditorSelectionRange,
     showSaveToast,
   ]);
@@ -1725,7 +1722,7 @@ function App() {
     await runEditorAiAction('rewrite', `按用户要求处理选中文本：${instruction.trim()}。只输出处理后的正文，不要解释。`);
   }, [runEditorAiAction]);
 
-  const acceptEditorAiPreview = useCallback(async () => {
+  const acceptEditorAiPreview = useCallback(async (overrideReview = false) => {
     if (!editorAiPreview || !activeChapterId || !activeChapter) return;
     const { range, output, mode, actionLabel } = editorAiPreview;
     const current = activeChapter.content || '';
@@ -1739,7 +1736,7 @@ function App() {
     }
     const nextContent = current.substring(0, start) + output + current.substring(end);
     let verification = editorAiPreview.verification || null;
-    if (current !== editorAiPreview.baseContent || verification?.status !== 'passed' || Number(verification?.blockingCount || 0) > 0) {
+    if (current !== editorAiPreview.baseContent || !verification?.contentHash) {
       setEditorAiPreview((preview) => preview ? { ...preview, baseContent: current, verification: { ...(preview.verification || {}), status: 'running' } } : preview);
       try {
         verification = await window.mana?.novel?.verifyChapterContent?.(activeNovelId, {
@@ -1747,6 +1744,7 @@ function App() {
           displayName: activeChapter.displayName || activeChapter.fileName,
           title: getChapterSaveTitle(activeChapter, nextContent),
           content: nextContent,
+          baseContent: current,
           userText: editorAiPreview.customInstruction || editorAiPreview.actionLabel || '编辑器 AI 章节变更',
           editorContext: {
             type: 'chapter',
@@ -1759,21 +1757,33 @@ function App() {
       } catch (err) {
         verification = {
           status: 'blocked', checks: [], blockingCount: 1, contentHash: '',
+          hardBlockingCount: 1, canOverride: false,
           issues: [{ severity: 'blocking', summary: err?.message || String(err) }],
         };
       }
       setEditorAiPreview((preview) => preview ? { ...preview, baseContent: current, verification } : preview);
     }
-    if (verification?.status !== 'passed' || Number(verification?.blockingCount || 0) > 0 || !verification?.contentHash) {
-      showSaveToast('error', '严格验证未通过，章节内容保持不变');
+    const hasReviewWarnings = verification?.status !== 'passed' || Number(verification?.blockingCount || 0) > 0;
+    const canUserOverride = verification?.canOverride === true
+      && Number(verification?.hardBlockingCount || 0) === 0
+      && !!verification?.contentHash;
+    if (!verification?.contentHash || (hasReviewWarnings && !(overrideReview && canUserOverride))) {
+      showSaveToast(
+        'error',
+        canUserOverride
+          ? '存在创作/一致性警告；如确认接受，请使用“仍然保存”'
+          : '写入保护未通过，章节内容保持不变'
+      );
       return;
     }
     const nextPos = start + output.length;
     setSaveStatus('saving');
     try {
       await saveChapterContentToDisk(activeChapterId, nextContent, {
-        source: 'ai',
-        revisionLabel: actionLabel || 'AI 修改',
+        source: overrideReview && hasReviewWarnings ? 'ai-user-overridden' : 'ai',
+        revisionLabel: overrideReview && hasReviewWarnings
+          ? `${actionLabel || 'AI 修改'}（用户接受创作警告）`
+          : (actionLabel || 'AI 修改'),
         baseContent: current,
         verifiedContentHash: verification.contentHash,
       });
@@ -1782,12 +1792,32 @@ function App() {
         : { start, end: nextPos };
       setEditorSelection({ text: '', start: nextPos, end: nextPos });
       setSaveStatus('saved');
-      showSaveToast('success', `${actionLabel || 'AI 修改'}已应用并保存`);
+      showSaveToast('success', overrideReview && hasReviewWarnings
+        ? `${actionLabel || 'AI 修改'}已按你的决定保存（保留创作警告）`
+        : `${actionLabel || 'AI 修改'}已应用并保存`);
       setTimeout(() => setSaveStatus(null), 2000);
       setEditorAiPreview(null);
     } catch (err) {
       setSaveStatus('save-failed');
-      showSaveToast('error', `AI 修改保存失败：${err?.message || String(err)}`);
+      const message = err?.message || String(err);
+      const snapshotConflict = /snapshot mismatch|快照.*(?:冲突|不一致)|正文.*(?:已变化|发生变化)/iu.test(message);
+      if (snapshotConflict) {
+        setEditorAiPreview((preview) => preview ? {
+          ...preview,
+          verification: {
+            ...(preview.verification || {}),
+            status: 'blocked',
+            canOverride: false,
+            blockingCount: 1,
+            overrideableBlockingCount: 0,
+            hardBlockingCount: 1,
+            issues: [{ severity: 'blocking', summary: '章节在预览后发生变化，请基于最新正文重新生成。' }],
+          },
+        } : preview);
+      }
+      showSaveToast('error', snapshotConflict
+        ? '章节在预览后发生变化；旧预览不能覆盖新内容，请重新生成'
+        : `AI 修改保存失败：${message}`);
     }
   }, [activeChapter, activeChapterId, activeNovelId, editorAiPreview, saveChapterContentToDisk, showSaveToast]);
 
@@ -1900,16 +1930,14 @@ function App() {
         chapterId: activeChapterId,
         selectionStart: editorSelection.start,
         selectionEnd: editorSelection.end,
+        revision: String(activeChapter.revision || activeChapter.updatedAt || ''),
       };
-    }
-    if (activeBlueprintId) {
-      return { ...base, type: 'blueprint', title: `流程: ${activeBlueprintId}` };
     }
     if (activeSettingsId) {
       return { ...base, type: 'settings', title: `设置: ${activeSettingsId}` };
     }
     return { ...base, type: 'none', title: '' };
-  }, [activeChapter, activeChapterId, activeBlueprintId, activeSettingsId, editorSelection, activeNovelId, chapterEntries]);
+  }, [activeChapter, activeChapterId, activeSettingsId, editorSelection, activeNovelId, chapterEntries]);
 
   const activeEditor = activeChapter
     ? {
@@ -1954,13 +1982,6 @@ function App() {
             onClick={() => setActiveSidebarItem('source-control')}
             label={t('app.sourceControl')}
           /> */}
-          {/* NOTE: Pipeline 功能尚未完成，暂时隐藏 */}
-          {/* <ActivityBarItem
-            icon={<Play size={24} />}
-            active={activeSidebarItem === 'pipeline'}
-            onClick={() => setActiveSidebarItem('pipeline')}
-            label="Pipeline"
-          /> */}
         </div>
         <div className="flex flex-col gap-2 w-full mb-2">
           <ActivityBarItem
@@ -1974,7 +1995,6 @@ function App() {
             active={activeSidebarItem === 'settings'}
             onClick={() => {
               setActiveSidebarItem('settings');
-              if (window.innerWidth < 1100) setRightPanelOpen(false);
             }}
             label={t('app.settings')}
           />
@@ -2006,23 +2026,6 @@ function App() {
                 )}
               </div>
               <div className="flex-1 overflow-y-auto p-2 text-sm">
-                {/* NOTE: 写作流程 / Pipeline 编排功能尚未完成，暂时隐藏 */}
-                {/*
-                <div className="font-bold mt-4 mb-2 px-2 text-gray-400 flex items-center justify-between gap-2">
-                  <span>写作流程</span>
-                  <button
-                    type="button"
-                    className="px-2 py-0.5 rounded bg-purple-800/90 text-[11px] text-white"
-                    onClick={() => openBlueprintInEditor('default')}
-                  >
-                    打开蓝图
-                  </button>
-                </div>
-                <div className="px-2 py-1 text-gray-500 text-xs mb-2">
-                  拖拽节点编排Agent执行顺序
-                </div>
-                */}
-
                 {!activeNovelId ? (
                   <div className="px-2 py-3 text-gray-500 text-xs text-center">
                     未打开小说项目
@@ -2190,7 +2193,6 @@ function App() {
             <div className="h-9 px-4 flex items-center text-xs font-bold tracking-wide uppercase text-gray-400">
               {activeSidebarItem === 'source-control' && t('app.sourceControl')}
               {activeSidebarItem === 'settings' && t('app.settings')}
-              {activeSidebarItem === 'pipeline' && 'Pipeline'}
             </div>
             <div className="flex-1 overflow-y-auto">
               {activeSidebarItem === 'search' && (
@@ -2215,11 +2217,6 @@ function App() {
                   />
                 </div>
               )}
-              {activeSidebarItem === 'pipeline' && (
-                <div className="text-sm p-2">
-                  <PipelineRunnerPanel />
-                </div>
-              )}
             </div>
           </>
         )}
@@ -2230,14 +2227,19 @@ function App() {
         
         {/* Tabs */}
         <div className="flex bg-vscode-sidebar border-b border-vscode-panel-border min-h-9 min-w-0 overflow-hidden">
-          <div className="flex flex-1 min-w-0 overflow-x-auto overflow-y-hidden" data-testid="editor-tab-strip">
+          <div className="flex flex-1 min-w-0 overflow-x-auto overflow-y-hidden" data-testid="editor-tab-strip" role="tablist" aria-label="打开的编辑器标签">
             {editorTabs.map((tab) => (
               <TabItem
                 key={tab.id}
+                tabId={tab.id}
                 title={tab.title}
                 active={tab.id === activeEditorTab}
                 onClick={() => setActiveEditorTab(tab.id)}
                 onClose={() => closeEditorTab(tab.id)}
+                tabRef={(node) => {
+                  if (node) editorTabRefs.current.set(tab.id, node);
+                  else editorTabRefs.current.delete(tab.id);
+                }}
               />
             ))}
             {editorTabs.length === 0 && (
@@ -2268,7 +2270,7 @@ function App() {
         </div>
 
         {/* Editor + Right Panel row */}
-        <div className="flex-1 flex min-h-0">
+        <div ref={editorWorkspaceRef} className="flex-1 flex min-h-0 relative" data-testid="editor-workspace" data-chat-layout={rightPanelDrawer ? 'drawer' : 'split'}>
           {/* Editor Content */}
           <div className="flex-1 min-h-0 overflow-hidden">
             {activeEditorTab.startsWith(TAB_PREFIX) && activeChapter ? (
@@ -2387,8 +2389,6 @@ function App() {
                   <span className="text-[9px] text-gray-600">自动保存至项目文件</span>
                 </div>
               </div>
-            ) : activeEditorTab.startsWith(BLUEPRINT_PREFIX) && activeBlueprintId ? (
-              <BlueprintEditor dagId={activeBlueprintId} />
             ) : activeEditorTab.startsWith(SETTINGS_PREFIX) && activeSettingsId ? (
               <SettingsTabContent settingsId={activeSettingsId} />
             ) : activeEditorTab.startsWith(DATA_PREFIX) ? (
@@ -2412,7 +2412,7 @@ function App() {
 
           {/* Right AI Chat Panel */}
           <div
-            className={`relative border-l border-vscode-panel-border flex flex-col bg-vscode-panel-bg transition-[width] duration-200 overflow-hidden ${rightPanelOpen ? 'shrink-0' : 'w-0'}`}
+            className={`border-l border-vscode-panel-border flex flex-col bg-vscode-panel-bg transition-[width] duration-200 overflow-hidden ${rightPanelDrawer ? 'absolute inset-y-0 right-0 z-30 shadow-[-16px_0_28px_rgba(0,0,0,0.3)]' : 'relative'} ${rightPanelOpen ? 'shrink-0' : 'w-0'}`}
             style={rightPanelOpen ? { width: `${rightPanelWidth}px` } : undefined}
           >
             {rightPanelOpen && (
@@ -2443,11 +2443,13 @@ function App() {
             </div>
             <div className="flex-1 min-h-0 overflow-hidden">
               <AiChatPanel
+                key={activeNovelId || "projectless"}
                 editorContext={editorContext}
                 onReplaceSelectedText={replaceSelectedText}
                 onReplaceTextNearCursor={replaceTextNearCursor}
                 onInsertTextAtCursor={insertTextAtCursor}
-                onBeforeSendMessage={() => flushActiveChapterToDisk({ silent: true })}
+                onBeforeSendMessage={(target) => flushActiveChapterToDisk({ silent: true, novelId: target?.novelId, resourceRef: target?.resourceRef || (target?.chapterFileName ? `chapter:${target.chapterFileName}` : undefined) })}
+                onOpenModelSettings={() => openSettingsInEditor('models')}
               />
             </div>
           </div>
@@ -2455,7 +2457,6 @@ function App() {
 
       </div>
 
-      <ToolConfirmationModal />
 
       {editorAiPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-6" data-testid="editor-ai-preview">
@@ -2479,8 +2480,14 @@ function App() {
                   </span>
                 ))}
               </div>
-              <div data-testid="editor-ai-strict-verification" className={`mt-3 rounded border px-3 py-2 ${editorAiPreview.verification?.status === 'passed' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : editorAiPreview.verification?.status === 'running' ? 'border-sky-500/30 bg-sky-500/10 text-sky-200' : 'border-rose-500/30 bg-rose-500/10 text-rose-200'}`}>
-                严格验证：{editorAiPreview.verification?.status === 'running' ? '进行中' : editorAiPreview.verification?.status === 'passed' ? '通过' : '未通过，禁止写入'}
+              <div data-testid="editor-ai-strict-verification" className={`mt-3 rounded border px-3 py-2 ${editorAiPreview.verification?.status === 'passed' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : editorAiPreview.verification?.status === 'running' ? 'border-sky-500/30 bg-sky-500/10 text-sky-200' : editorAiPreview.verification?.canOverride ? 'border-amber-500/30 bg-amber-500/10 text-amber-100' : 'border-rose-500/30 bg-rose-500/10 text-rose-200'}`}>
+                严格验证：{editorAiPreview.verification?.status === 'running'
+                  ? '进行中'
+                  : editorAiPreview.verification?.status === 'passed'
+                    ? '通过'
+                    : editorAiPreview.verification?.canOverride
+                      ? '发现创作/一致性警告；最终决定权在你'
+                      : '写入保护未通过'}
                 {Array.isArray(editorAiPreview.verification?.issues) && editorAiPreview.verification.issues.length > 0 && (
                   <div className="mt-1 space-y-1 text-[11px]">
                     {editorAiPreview.verification.issues.slice(0, 6).map((issue, index) => <div key={`${issue.id || 'issue'}-${index}`}>{issue.summary || '验证问题'}</div>)}
@@ -2492,7 +2499,10 @@ function App() {
               <button type="button" className="rounded border border-vscode-panel-border px-3 py-1 text-xs text-gray-300 hover:bg-vscode-active-item" onClick={() => navigator.clipboard?.writeText(editorAiPreview.output || '')}>复制结果</button>
               <button type="button" className="rounded border border-vscode-panel-border px-3 py-1 text-xs text-gray-300 hover:bg-vscode-active-item" onClick={regenerateEditorAiPreview} disabled={!!editorAiStatus}>重新生成</button>
               <button type="button" className="rounded border border-vscode-panel-border px-3 py-1 text-xs text-gray-300 hover:bg-vscode-active-item" onClick={() => setEditorAiPreview(null)}>拒绝</button>
-              <button data-testid="editor-ai-accept" type="button" className="rounded bg-blue-600 px-4 py-1 text-xs text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40" onClick={acceptEditorAiPreview} disabled={editorAiPreview.verification?.status !== 'passed' || Number(editorAiPreview.verification?.blockingCount || 0) > 0}>接受并保存</button>
+              {editorAiPreview.verification?.canOverride === true && Number(editorAiPreview.verification?.hardBlockingCount || 0) === 0 && editorAiPreview.verification?.status !== 'passed' && (
+                <button data-testid="editor-ai-override" type="button" className="rounded bg-amber-700 px-4 py-1 text-xs text-white hover:bg-amber-600" onClick={() => acceptEditorAiPreview(true)}>仍然保存</button>
+              )}
+              <button data-testid="editor-ai-accept" type="button" className="rounded bg-blue-600 px-4 py-1 text-xs text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40" onClick={() => acceptEditorAiPreview(false)} disabled={editorAiPreview.verification?.status !== 'passed' || Number(editorAiPreview.verification?.blockingCount || 0) > 0}>接受并保存</button>
             </div>
           </div>
         </div>
@@ -2638,7 +2648,9 @@ function App() {
           <div className={`rounded px-3 py-2 text-xs shadow-lg border ${
             saveToast.type === 'success'
               ? 'border-emerald-500/30 bg-emerald-900/80 text-emerald-200'
-              : 'border-rose-500/30 bg-rose-900/80 text-rose-200'
+              : saveToast.type === 'warning'
+                ? 'border-amber-500/30 bg-amber-900/80 text-amber-100'
+                : 'border-rose-500/30 bg-rose-900/80 text-rose-200'
           }`}>
             {saveToast.message}
           </div>
@@ -2661,10 +2673,20 @@ function ActivityBarItem({ icon, active, onClick, label }) {
     )
 }
 
-function TabItem({ title, active, onClick, onClose }) {
+function TabItem({ tabId, title, active, onClick, onClose, tabRef }) {
     return (
         <div
+            ref={tabRef}
             onClick={onClick}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick?.(); }
+            }}
+            role="tab"
+            aria-selected={active}
+            aria-controls={`editor-tab-panel-${tabId}`}
+            tabIndex={active ? 0 : -1}
+            data-testid="editor-tab"
+            data-tab-id={tabId}
             className={`px-3 py-1.5 min-w-[120px] flex items-center gap-2 border-r border-vscode-panel-border cursor-pointer text-sm ${active ? 'bg-vscode-editor-bg text-white border-t-2 border-t-blue-500' : 'bg-vscode-sidebar text-gray-400 hover:bg-[#2a2d2e]'}`}
         >
             <span className="truncate">{title}</span>
@@ -2695,30 +2717,6 @@ function SettingsTabContent({ settingsId }) {
           <LanguageSettings />
         </div>
       );
-    case 'runtime':
-      return (
-        <div className="h-full overflow-y-auto p-6">
-          <RuntimeDriverSettings />
-        </div>
-      );
-    case 'subagent':
-      return (
-        <div className="h-full overflow-hidden">
-          <SubagentEditor />
-        </div>
-      );
-    case 'dag':
-      return (
-        <div className="h-full overflow-hidden">
-          <DagEditor />
-        </div>
-      );
-    case 'config-helper':
-      return (
-        <div className="h-full overflow-hidden">
-          <ConfigHelperChat />
-        </div>
-      );
     case 'models':
       return (
         <div className="h-full overflow-hidden">
@@ -2729,12 +2727,6 @@ function SettingsTabContent({ settingsId }) {
       return (
         <div className="h-full overflow-y-auto p-6">
           <StorageSettings />
-        </div>
-      );
-    case 'writing':
-      return (
-        <div className="h-full overflow-y-auto p-6">
-          <WritingSettings />
         </div>
       );
     case 'lan-remote':

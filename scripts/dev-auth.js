@@ -1,106 +1,73 @@
 #!/usr/bin/env node
 'use strict';
 
-/**
- * Cross-platform `npm run dev:auth` / `npm run dev:auth:fresh` wrapper.
- *
- * Original (Unix-only):
- *   REAL_RELAY_KEY=$(grep '^RELAY_API_KEY=' "$PWD/relay-worker/.dev.vars" | cut -d= -f2-) \
- *   && NODE_ENV=production vite build \
- *   && NODE_ENV=production MANA_USER_DATA_ROOT=... MANA_FORCE_AUTH=1 ... \
- *      concurrently "node scripts/start-real-feishu-relay.js" "unset ELECTRON_RUN_AS_NODE && electron . --no-sandbox"
- *
- * This script does the same thing using Node APIs so it works on Windows too.
- */
-
-const { spawn, execSync } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
+const PORT = Number(process.env.MANA_DEV_AUTH_RELAY_PORT || 8789);
+const RELAY_URL = `http://127.0.0.1:${PORT}`;
 const isFresh = process.argv.includes('--fresh');
 
-// --- 1. Read RELAY_API_KEY from relay-worker/.dev.vars ---
-const devVarsPath = path.join(ROOT, 'relay-worker', '.dev.vars');
-let relayKey = '';
-try {
-  const text = fs.readFileSync(devVarsPath, 'utf8');
-  const match = text.match(/^RELAY_API_KEY=(.+)$/m);
-  if (match) relayKey = match[1].trim();
-} catch (err) {
-  console.error('[dev:auth] Cannot read', devVarsPath, err.message);
-  process.exit(1);
-}
-if (!relayKey) {
-  console.error('[dev:auth] RELAY_API_KEY not found in', devVarsPath);
-  process.exit(1);
-}
+async function run() {
+  const freshDir = path.join(ROOT, 'tmp-test-auth-required-userdata', 'fresh');
+  if (isFresh && fs.existsSync(freshDir)) fs.rmSync(freshDir, { recursive: true, force: true });
+  const userDir = isFresh ? freshDir : path.join(ROOT, 'tmp-test-auth-required-userdata', 'client');
 
-// --- 2. If --fresh, clean the fresh test directory ---
-const freshDir = path.join(ROOT, 'tmp-test-auth-required-userdata', 'fresh');
-if (isFresh && fs.existsSync(freshDir)) {
-  fs.rmSync(freshDir, { recursive: true, force: true });
-}
+  const pair = await crypto.webcrypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  const privateJwk = await crypto.webcrypto.subtle.exportKey('jwk', pair.privateKey);
+  privateJwk.kid = 'local-dev-active';
+  const { d: _private, ...publicJwk } = privateJwk;
+  const publicConfigPath = path.join(ROOT, '.cache', 'dev-auth-release-public-config.json');
+  fs.mkdirSync(path.dirname(publicConfigPath), { recursive: true });
+  fs.writeFileSync(publicConfigPath, JSON.stringify({
+    schemaVersion: 1,
+    environment: 'staging',
+    relayBaseUrl: RELAY_URL,
+    minimumClientVersion: require('../package.json').version,
+    jwks: { keys: [{ ...publicJwk, use: 'sig', alg: 'ES256' }] },
+  }, null, 2));
 
-// --- 3. Determine user data root ---
-const userDir = isFresh
-  ? freshDir
-  : path.join(ROOT, 'tmp-test-auth-required-userdata', 'client');
-
-// --- 4. Run vite build ---
-console.log('[dev:auth] Building vite...');
-try {
-  execSync('npx vite build', { cwd: ROOT, stdio: 'inherit', env: { ...process.env, NODE_ENV: 'production' } });
-} catch {
-  console.error('[dev:auth] Vite build failed');
-  process.exit(1);
-}
-
-// --- 5. Start relay + Electron ---
-const relayEnv = {
-  ...process.env,
-  RELAY_API_KEY: relayKey,
-};
-
-const electronEnv = {
-  ...process.env,
-  NODE_ENV: 'production',
-  MANA_USER_DATA_ROOT: userDir,
-  MANA_FORCE_AUTH: '1',
-  MANA_DEV_AUTH_RELAY_PORT: '8787',
-  MANA_DEV_AUTH_RELAY_URL: 'http://127.0.0.1:8787',
-  MANA_DEV_AUTH_RELAY_API_KEY: relayKey,
-  RELAY_API_KEY: relayKey,
-};
-delete electronEnv.ELECTRON_RUN_AS_NODE;
-
-// Start relay server
-const relayProc = spawn(
-  process.execPath,
-  [path.join(ROOT, 'scripts', 'start-real-feishu-relay.js')],
-  { cwd: ROOT, stdio: 'inherit', env: relayEnv }
-);
-
-// Start electron (slight delay for relay to bind)
-setTimeout(() => {
-  const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-  const electronProc = spawn(
-    npx,
-    ['electron', '.', '--no-sandbox'],
-    { cwd: ROOT, stdio: 'inherit', env: electronEnv }
-  );
-
-  electronProc.on('exit', (code) => {
-    relayProc.kill();
-    process.exit(code ?? 0);
+  const vite = spawnSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['vite', 'build'], {
+    cwd: ROOT, stdio: 'inherit', env: { ...process.env, NODE_ENV: 'production' }, shell: process.platform === 'win32',
   });
-}, 1000);
+  if (vite.status !== 0) throw new Error(`Vite build failed with exit ${vite.status}`);
 
-relayProc.on('exit', (code) => {
-  process.exit(code ?? 0);
-});
+  const sharedEnv = {
+    ...process.env,
+    MANA_DEV_AUTH_RELAY_PORT: String(PORT),
+    RELAY_SIGNING_KID: privateJwk.kid,
+    RELAY_SIGNING_PRIVATE_JWK: JSON.stringify(privateJwk),
+    RELAY_PUBLIC_JWKS: JSON.stringify({ keys: [{ ...publicJwk, use: 'sig', alg: 'ES256' }] }),
+    RELAY_ISSUER: RELAY_URL,
+    RELAY_AUTH_CODE_PEPPER: 'local-development-pepper-only',
+  };
+  const relay = spawn(process.execPath, [path.join(ROOT, 'scripts', 'dev-auth-relay.js')], { cwd: ROOT, stdio: 'inherit', env: sharedEnv });
+  const cleanup = () => { if (!relay.killed) relay.kill(); };
 
-process.on('SIGINT', () => {
-  relayProc.kill();
-  process.exit(0);
+  setTimeout(() => {
+    const electronEnv = {
+      ...sharedEnv,
+      NODE_ENV: 'production',
+      MANA_USER_DATA_ROOT: userDir,
+      MANA_FORCE_AUTH: '1',
+      MANA_ALLOW_LOCAL_RELAY: '1',
+      MANA_RELEASE_PUBLIC_CONFIG: publicConfigPath,
+    };
+    delete electronEnv.ELECTRON_RUN_AS_NODE;
+    const electron = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['electron', '.'], {
+      cwd: ROOT, stdio: 'inherit', env: electronEnv, shell: process.platform === 'win32',
+    });
+    electron.on('exit', (code) => { cleanup(); process.exit(code ?? 0); });
+  }, 750);
+
+  relay.on('exit', (code) => process.exit(code ?? 0));
+  process.on('SIGINT', () => { cleanup(); process.exit(0); });
+}
+
+run().catch((error) => {
+  console.error(`[dev:auth] ${error.message}`);
+  process.exitCode = 1;
 });

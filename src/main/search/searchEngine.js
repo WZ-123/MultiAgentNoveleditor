@@ -16,6 +16,26 @@ const SNIPPET_CONTEXT_CHARS = 80;
 const CONCURRENCY_LIMIT = 4;
 
 /**
+ * Return a bounded field snippet centred on its first normalized match.
+ * Long card fields used to always expose their first 200 characters, which
+ * made a valid match near the end invisible in the result list.
+ */
+function snippetAroundFieldMatch(value, query, maxLength = 200) {
+  const source = String(value || '');
+  if (source.length <= maxLength) return source;
+
+  const match = findNormalizedRanges(buildNormalizedTextIndex(source), query)[0];
+  if (!match) return source.slice(0, maxLength) + '...';
+
+  const start = Math.max(0, match.start - SNIPPET_CONTEXT_CHARS);
+  const end = Math.min(
+    source.length,
+    Math.max(start + maxLength, match.end + SNIPPET_CONTEXT_CHARS),
+  );
+  return (start > 0 ? '...' : '') + source.slice(start, end) + (end < source.length ? '...' : '');
+}
+
+/**
  * Search the entire novel project.
  * @param {string} novelDir
  * @param {string} query - search string (will be NFKC-normalized)
@@ -253,7 +273,7 @@ async function searchCharacters(novelDir, query, maxResults) {
         if (effectiveWeight > bestWeight) {
           bestWeight = effectiveWeight;
           bestField = label;
-          bestSnippet = value.length > 200 ? value.slice(0, 200) + '...' : value;
+          bestSnippet = snippetAroundFieldMatch(value, query);
         }
       }
     }

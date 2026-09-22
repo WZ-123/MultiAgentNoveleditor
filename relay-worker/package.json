@@ -1,16 +1,22 @@
 {
   "name": "feedback-relay-worker",
   "version": "1.0.0",
-  "description": "Tencent Cloud SCF primary feedback relay with Cloudflare Worker backup",
+  "description": "Relay V2 adapters backed by one shared request-routing core",
+  "type": "module",
   "main": "src/index.js",
   "scripts": {
     "dev": "wrangler dev",
+    "dev:scf": "node scripts/local-v2-server.cjs",
     "deploy": "wrangler deploy",
-    "test": "node scripts/test-relay.js",
-    "tail": "wrangler tail",
-    "init": "node scripts/init.js"
+    "deploy:dry-run": "node scripts/verify-cloudflare-bundle.cjs",
+    "test": "node ../test/relay-v2-core-regression.test.js && node ../test/relay-platform-adapter-contract.test.js",
+    "test:deployed": "node scripts/test-deployed-v2.cjs",
+    "tail": "wrangler tail"
   },
   "devDependencies": {
-    "wrangler": "^3.100.0"
+    "wrangler": "4.125.0"
+  },
+  "dependencies": {
+    "ioredis": "5.7.0"
   }
 }

@@ -19,6 +19,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { paths, generateId } = require('../store/paths');
 const { readJson, writeJson } = require('../store/jsonStore');
+const { atomicWriteFile, contentHashExact } = require('../store/resourceIdentity');
 
 const STAGING_DIR = 'import-staging';
 const STAGING_REGISTRY = 'staging-registry.json';
@@ -213,10 +214,14 @@ async function getStagingProject(importId) {
     for (const f of files.sort()) {
       if (f.endsWith('.md')) {
         const content = await fs.readFile(path.join(np.chapters, f), 'utf8');
-        const titleMatch = content.match(/^#\s+(.+)\n/);
+        // An empty source file is represented by an intentionally blank Markdown
+        // heading (`# \n\n`).  Accept that heading as a real header as well:
+        // the former `\s+(.+)` parser missed it and surfaced the literal `#` as
+        // chapter body text when a staging project was reopened.
+        const titleMatch = content.match(/^#[ \t]*(.*)\r?\n/);
         chapterFiles.push({
           fileName: f,
-          title: titleMatch ? titleMatch[1] : f,
+          title: titleMatch ? titleMatch[1].trim() : f,
           content: content.slice(titleMatch ? titleMatch[0].length : 0).trim(),
         });
       }
@@ -345,84 +350,85 @@ async function cleanupExpiredProjects() {
   return { deleted: toDelete.length };
 }
 
-async function promoteToNovel(importId, { title, dir }) {
+async function promoteToNovel(importId, { title, dir, abortSignal }) {
+  const assertNotAborted = () => { if (abortSignal?.aborted) throw abortSignal.reason || new DOMException('aborted', 'AbortError'); };
+  assertNotAborted();
   const staging = await getStagingProject(importId);
-  if (!staging) throw new Error('Staging project not found');
-
+  if (!staging) { const error = new Error('Staging project not found'); error.code = 'staging_missing'; throw error; }
+  if (!dir || typeof dir !== 'string') throw new Error('promotion target directory is required');
   const novelsStore = require('../store/novels');
-  const result = await novelsStore.createNovel({ title: title || staging.novelMeta.title, dir });
-
-  // Defensive: verify the registry entry was actually created.
-  // createNovel skips adding if {id,dir} already exists — but we need it to.
-  const verifyList = await novelsStore.listNovels();
-  if (!verifyList.find((n) => n.id === result.id)) {
-    console.error('[promoteToNovel] createNovel returned', result.id, 'but registry has no entry — forcing add');
-    // Read registry directly and add entry
-    const { paths: getPaths } = require('../store/paths');
-    const { readJson, writeJson } = require('../store/jsonStore');
-    const reg = await readJson(getPaths().novelsRegistry, { novels: [] });
-    reg.novels = reg.novels || [];
-    reg.novels.push({ id: result.id, title: result.title, dir: result.dir, addedAt: new Date().toISOString(), lastOpenedAt: null });
-    await writeJson(getPaths().novelsRegistry, reg);
-  }
-
-  // Copy files from staging to the new novel directory.
-  // Skip novel.json — createNovel already wrote the correct one in the target.
   const sourceDir = projectDir(importId);
-  const targetDir = result.dir;
+  const targetDir = path.resolve(dir);
+  const parentDir = path.dirname(targetDir);
+  const tempDir = path.join(parentDir, `.${path.basename(targetDir)}.import-${crypto.randomUUID()}`);
+  const existingRegistry = await novelsStore.listNovels();
+  if (existingRegistry.some((entry) => path.resolve(entry.dir) === targetDir)) {
+    const error = new Error('promotion target conflicts with a registered project'); error.code = 'resource_name_conflict'; throw error;
+  }
+  try { await fs.access(targetDir); const error = new Error('promotion target already exists'); error.code = 'resource_name_conflict'; throw error; }
+  catch (error) { if (error?.code !== 'ENOENT') throw error; }
+  await fs.mkdir(parentDir, { recursive: true });
 
   async function copyDir(src, dst) {
+    assertNotAborted();
     await fs.mkdir(dst, { recursive: true });
     const entries = await fs.readdir(src, { withFileTypes: true });
     for (const entry of entries) {
-      // Skip novel.json — target already has the correct one from createNovel
-      if (!entry.isDirectory() && entry.name === 'novel.json') continue;
+      assertNotAborted();
       const srcPath = path.join(src, entry.name);
       const dstPath = path.join(dst, entry.name);
       if (entry.isDirectory()) {
         await copyDir(srcPath, dstPath);
       } else {
-        await fs.copyFile(srcPath, dstPath);
+        await fs.copyFile(srcPath, dstPath, fs.constants?.COPYFILE_EXCL || 0);
       }
     }
   }
+  let renamed = false;
+  try {
+    await copyDir(sourceDir, tempDir);
+    assertNotAborted();
+    const result = { id: generateId('novel'), title: title || staging.novelMeta.title || '导入的小说', dir: targetDir };
+    const novelJsonPath = path.join(tempDir, 'novel.json');
+    const novelMeta = await readJson(novelJsonPath, {});
+    const sourceImportMeta = staging.novelMeta?.importMeta || {};
+    delete novelMeta.importMeta;
+    if (sourceImportMeta.sourceType === 'chatbox-html') {
+      const { sourceType, sourceFiles, importedAt, messageCount, sessionTitles, extractedAt, notes } = sourceImportMeta;
+      novelMeta.importMeta = { sourceType, sourceFiles: sourceFiles || [], importedAt: importedAt || new Date().toISOString(), messageCount: messageCount || 0, sessionTitles: sessionTitles || [], extractedAt: extractedAt || '', notes: notes || '' };
+    }
+    novelMeta.id = result.id;
+    novelMeta.title = result.title;
+    novelMeta.updatedAt = new Date().toISOString();
+    await writeJson(novelJsonPath, novelMeta);
+    await atomicWriteFile(path.join(tempDir, '.mana-project'), JSON.stringify({ type: 'novel', version: 1, id: result.id, title: result.title, createdAt: new Date().toISOString() }, null, 2));
 
-  await copyDir(sourceDir, targetDir);
-
-  // Ensure the target novel.json has the correct ID and clean metadata
-  const novelJsonPath = path.join(targetDir, 'novel.json');
-  const novelMeta = await readJson(novelJsonPath, {});
-  delete novelMeta.importMeta;
-  if (staging.novelMeta?.importMeta?.sourceType === 'chatbox-html') {
-    const { sourceType, sourceFiles, importedAt, messageCount, sessionTitles, extractedAt, notes } = staging.novelMeta.importMeta;
-    novelMeta.importMeta = {
-      sourceType,
-      sourceFiles: sourceFiles || [],
-      importedAt: importedAt || new Date().toISOString(),
-      messageCount: messageCount || 0,
-      sessionTitles: sessionTitles || [],
-      extractedAt: extractedAt || '',
-      notes: notes || '',
-    };
+    const manifest = [];
+    async function scan(dirPath, prefix = '') {
+      for (const entry of (await fs.readdir(dirPath, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
+        const relative = prefix ? path.join(prefix, entry.name) : entry.name;
+        if (entry.isDirectory()) await scan(path.join(dirPath, entry.name), relative);
+        else {
+          const data = await fs.readFile(path.join(dirPath, entry.name));
+          manifest.push({ path: relative, bytes: data.length, hash: contentHashExact(data) });
+        }
+      }
+    }
+    await scan(tempDir);
+    assertNotAborted();
+    if (!manifest.some((item) => item.path === 'novel.json') || !manifest.some((item) => item.path === '.mana-project')) throw new Error('promotion manifest is incomplete');
+    await atomicWriteFile(path.join(tempDir, '.mana', 'import-manifest.json'), JSON.stringify({ schemaVersion: 1, resources: manifest }, null, 2));
+    assertNotAborted();
+    await fs.rename(tempDir, targetDir);
+    renamed = true;
+    try { await novelsStore.importExistingNovel(targetDir); }
+    catch (error) { await fs.rename(targetDir, tempDir); renamed = false; throw error; }
+    await updateStagingStatus(importId, 'promoted');
+    return result;
+  } catch (error) {
+    if (!renamed) await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+    throw error;
   }
-  novelMeta.id = result.id;
-  novelMeta.title = title || novelMeta.title;
-  await writeJson(novelJsonPath, novelMeta);
-
-  // Write .mana-project marker file so the editor can recognize this directory
-  const markerPath = path.join(targetDir, '.mana-project');
-  await fs.writeFile(markerPath, JSON.stringify({
-    type: 'novel',
-    version: 1,
-    id: result.id,
-    title: novelMeta.title,
-    createdAt: new Date().toISOString(),
-  }, null, 2), 'utf8');
-
-  // Mark staging as promoted
-  await updateStagingStatus(importId, 'promoted');
-
-  return result;
 }
 
 module.exports = {

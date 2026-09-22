@@ -1,29 +1,50 @@
-# 项目知识库（Knowledge Base）
+# 项目知识库
 
-这个目录用于沉淀项目的长期上下文，便于在不同设备上快速恢复开发状态。
+更新基线：2026-09-22，当前工作区源码。知识库重建后的聊天链修复已实施；当前验证证据与范围见缺陷清单和审计报告，不代表生产部署验收。
 
-## 目录说明
+## 阅读顺序与职责
 
-- `goals.md`：短期 / 中期 / 长期目标
-- `system-overview.md`：系统说明（架构、模块、依赖、约束）
-- `progress.md`：开发进展与里程碑
-- `vibe-coding-dialogues.md`：vibe coding 关键对话与决策记录
-- `handover-checklist.md`：跨设备续接时的快速检查清单
-- `quick-feedback-design.md`：用户快速反馈功能设计（字段、快照、脱敏、发送策略）
-- `feishu-feedback-sync-design.md`：飞书多维表格反馈同步设计（outbox、同步层、附件、重试、联调）
-- `packaged-client-design.md`：打包客户端设计（relay 授权码认证、一键反馈、GitHub Actions 打包流程）
-- `chatbox-import.md`：Chatbox HTML 导入、最终稿整理、角色识别清理、删除旧脏角色卡的回归要点
+**项目开发必读：[统一开发与验收工作流（含直白版）](ux-dev-flow.md)。** 每次修改都检查改动本身、关联系统和完整用户流程；各模块分别正确，不代表产品完整正确。这是工作规则，不代表当前缺陷已经修复。
 
-## 建议更新节奏
+| 文档 | 负责的唯一主题 |
+| --- | --- |
+| [系统总览](system-overview.md) | 产品功能、模块边界和执行链 |
+| [运行契约](codex-native-runtime-contract.md) | 聊天、工具、原生补丁、批准与完成的共同语义 |
+| [数据与编辑器](data-and-editor.md) | 项目身份、磁盘布局、编辑器保存、资源映射 |
+| [模型接入](model-config-v8.md) | 配置、验证、激活和供应商兼容 |
+| [导入与合并](import-and-merge.md) | 文件解析、Chatbox、暂存、分析、冲突及落盘 |
+| [角色补全](character-enrichment-system.md) | 二创角色资格、网页证据、提取与合并 |
+| [搜索路由](search-routing.md) | 项目搜索与联网搜索的不同职责 |
+| [周边服务与安全](services-and-security.md) | 反馈、Relay、局域网、许可、更新和密钥 |
+| [开发与发布](development-and-release.md) | 当前可用命令、测试范围和发布门禁 |
+| [统一开发与验收工作流](ux-dev-flow.md) | 从基线、复现、关联分析到实现、验收、交接的统一流程，含直白版 |
+| [已知缺陷与边界](edge-cases.md) | 当前实现偏差、验证范围与待验证风险 |
 
-- 每次开始开发前：先看 `progress.md` 与 `vibe-coding-dialogues.md`
-- 每次结束开发后：至少更新一次 `progress.md`
-- 有关键决策时：追加到 `vibe-coding-dialogues.md`
-- 目标调整时：更新 `goals.md`
+## 如何使用这份知识库
 
-## 快速续接流程（换设备）
+- **现状**描述已经存在的源码行为，不自动表示行为正确。
+- **契约要求**描述模块必须共同遵守的规则。尚未满足的规则必须链接到缺陷清单，不能写成已实现。
+- **验证证据**必须说明日期、范围、环境和结果。测试脚本存在不等于测试通过；旧截图、旧实验和旧发布 receipt 不代表当前版本。
+- 修改一个入口时，先读总览、对应领域文档、运行契约及缺陷清单。变更跨域语义时，同次更新契约、实现和相应验收用例；不得在另一篇文档重新定义同一规则。
+- 源码与文档冲突时，源码用于判断现状，契约用于判断是否正确。先记录差异，不通过复制错误实现来消除冲突。
+- 不保存密钥、测试账号、机器专属端口、临时目录或未经验证的部署结论。证据文件放在 `artifacts/` 或 `qa-screenshots/`，知识库只引用可核验结果。
 
-1. 打开本目录，先读 `handover-checklist.md`
-2. 根据 `progress.md` 定位当前里程碑与下一步
-3. 根据 `vibe-coding-dialogues.md` 恢复上下文与关键决策
-4. 开始前补充今天的会话计划，结束时回写结果
+## 本次清理
+
+原有 17 篇现存文档重组为 12 篇；保留路径的 8 篇也全部重写，新增 4 篇领域文档，删除以下 9 篇旧文档：
+
+| 删除的旧文档 | 当前职责归属 |
+| --- | --- |
+| deepseek-max-100k-live-study.md | 历史实验结论不进入现行规范；验收方法见用户流程验收 |
+| git-history-cleanup.md | 周边服务与安全，仅保留运维边界，不继承旧状态 |
+| quick-feedback-design.md | 周边服务与安全 |
+| feishu-feedback-sync-design.md | 周边服务与安全 |
+| security-hardening-runbook.md | 周边服务与安全、开发与发布 |
+| five-platform-release-gate.md | 开发与发布 |
+| chatbox-import.md | 导入与合并 |
+| character-enrichment-test-contract.md | 角色补全、用户流程验收 |
+| responses-verification-compatibility.md | 模型接入、运行契约 |
+
+未把旧正文复制进知识库归档。重建前工作区已经缺失的其他历史文件不计入本次删除数量。
+
+保留 `ux-dev-flow.md`、`edge-cases.md`、`search-routing.md` 等路径，是为了继续承接项目技能的引用；内容以本次重建为准。项目技能中的规则若与这里冲突，需要另行校准，不能假定它们已随文档更新。

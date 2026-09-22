@@ -1,69 +1,171 @@
-name: Release
+name: Release hardening gate
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+env:
+  NODE_VERSION: 24.19.0
 
 jobs:
-  build:
+  security-preflight:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm ci --prefix relay-worker
+      - run: node scripts/run-maintenance-script.js security:preflight
+      - run: node scripts/run-maintenance-script.js security:audit-policy
+      - run: npm test -- test:unit
+      - run: npx vite build
+      - run: node scripts/run-maintenance-script.js verify:renderer-build
+      - run: npm test -- prepare:codex-runtime
+      - run: npm test -- test:codex-runtime:sidecar
+      - run: npm --prefix relay-worker test
+      - run: npm --prefix relay-worker run deploy:dry-run
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-preflight-report
+          path: artifacts/security/preflight.json
+          if-no-files-found: error
+
+  live-provider-smoke:
+    needs: security-preflight
+    runs-on: ubuntu-24.04
+    environment: live-provider-smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm test -- prepare:codex-runtime
+      - name: Run three DeepSeek routes and Pro sanity
+        run: xvfb-run -a npm test -- test:codex-runtime:deepseek-live
+        env:
+          MANA_USER_DATA_ROOT: ${{ runner.temp }}/mana-live-provider
+          MANA_DEEPSEEK_LIVE_KEY: ${{ secrets.DEEPSEEK_LIVE_SMOKE_KEY }}
+
+  e2e-five-platform:
+    needs: security-preflight
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - os: macos-latest
-            platform: mac
-          - os: windows-latest
-            platform: win
-          - os: ubuntu-latest
-            platform: linux
+          - { os: macos-15, target: darwin-arm64 }
+          - { os: windows-2025, target: win32-x64 }
+          - { os: windows-11-arm, target: win32-arm64 }
+          - { os: ubuntu-24.04, target: linux-x64 }
+          - { os: ubuntu-24.04-arm, target: linux-arm64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Electron app
-        run: npm run build:${{ matrix.platform }} -- --publish=never
-        env:
-          RELEASE_RELAY_URL: ${{ secrets.RELEASE_RELAY_URL }}
-          RELEASE_RELAY_API_KEY: ${{ secrets.RELEASE_RELAY_API_KEY }}
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm test -- prepare:codex-runtime
+      - name: Run Electron P4 E2E on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm test -- test:codex-runtime:ui
+      - name: Run Electron P4 E2E
+        if: runner.os != 'Linux'
+        run: npm test -- test:codex-runtime:ui
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: ${{ matrix.platform }}-build
-          path: |
-            dist/*.dmg
-            dist/*.exe
-            dist/*.AppImage
+          name: e2e-${{ matrix.target }}
+          path: artifacts/qa/codex-runtime-p4-*.png
+          if-no-files-found: error
 
-  release:
-    needs: build
-    runs-on: ubuntu-latest
+  package-and-verify:
+    needs: [security-preflight, live-provider-smoke, e2e-five-platform]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-15, platform: mac, canonical: darwin, arch: arm64 }
+          - { os: windows-2025, platform: win, canonical: win32, arch: x64 }
+          - { os: windows-11-arm, platform: win, canonical: win32, arch: arm64 }
+          - { os: ubuntu-24.04, platform: linux, canonical: linux, arch: x64 }
+          - { os: ubuntu-24.04-arm, platform: linux, canonical: linux, arch: arm64 }
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          path: artifacts
-          merge-multiple: true
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - name: Build unsigned release artifact
+        run: npm run build:${{ matrix.platform }} -- --${{ matrix.arch }} --publish=never
+        env:
+          MANA_REQUIRE_RELEASE_CONFIG: '1'
+          RELEASE_ENVIRONMENT: production
+          RELEASE_RELAY_URL: ${{ vars.RELEASE_RELAY_URL }}
+          RELEASE_RELAY_JWKS: ${{ vars.RELEASE_RELAY_JWKS }}
+          RELEASE_MINIMUM_CLIENT_VERSION: ${{ vars.RELEASE_MINIMUM_CLIENT_VERSION }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          MANA_RELEASE_SIGNING_POLICY: github-actions-unsigned
+      - name: Verify package integrity and packaged Fake turn
+        run: node scripts/run-maintenance-script.js verify:release-package -- --platform=${{ matrix.canonical }} --arch=${{ matrix.arch }} --signingPolicy=github-actions-unsigned
+        env:
+          MANA_RELEASE_SIGNING_POLICY: github-actions-unsigned
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-unsigned-release-${{ matrix.canonical }}-${{ matrix.arch }}
+          path: artifacts/release-output/**
+          if-no-files-found: error
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+  aggregate-release:
+    needs: package-and-verify
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          files: artifacts/**
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: verified-unsigned-release-*
+          path: artifacts/release-input
+      - run: node scripts/run-maintenance-script.js verify:release-aggregate -- --input=artifacts/release-input --output=artifacts/release-manifest.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-unsigned-release-bundle
+          path: |
+            artifacts/release-input/**
+            artifacts/release-manifest.json
+          if-no-files-found: error
+
+  publish:
+    needs: aggregate-release
+    runs-on: ubuntu-24.04
+    environment: production-release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-unsigned-release-bundle
+          path: verified-unsigned-release-bundle
+      - name: Publish only uniquely named verified unsigned artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: verified-unsigned-release-bundle/release-input/**/MultiAgentNovelAssistant-*
+          fail_on_unmatched_files: true
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,578 +1,130 @@
 'use strict';
 
-/**
- * Skills store — manages named skill documents that can be assigned to subagents.
- *
- * <userData>/skills/
- *   index.json   — registry of all skills (metadata only, no content)
- *   <id>.md      — per-skill Markdown content
- */
-
-const path = require('node:path');
+const fsp = require('node:fs/promises');
 const fs = require('node:fs');
-const fsp = require('node:fs').promises;
-const { paths, skillContentPath } = require('./paths');
-const { readJson, writeJson } = require('./jsonStore');
+const path = require('node:path');
+const { paths } = require('./paths');
+const { readJson, writeJson, listJsonFiles } = require('./jsonStore');
 
-const SCHEMA_VERSION = 1;
-
-const INDEX_PATH = () => paths().skillsIndex;
-
-function _emptyIndex() {
-  return { schemaVersion: SCHEMA_VERSION, skills: [] };
+const SCHEMA_VERSION = 2;
+const BUILTIN_NAMES = ['mana-novel-workspace', 'mana-fiction-writing', 'mana-de-ai', 'mana-consistency-review', 'mana-outline', 'mana-character-roleplay', 'mana-import-enrichment'];
+function root() { return path.join(paths().root, 'codex-home', 'skills'); }
+function indexFile() { return path.join(root(), 'index.json'); }
+function builtinRoot() {
+  const packaged = process.resourcesPath && path.join(process.resourcesPath, 'codex-skills');
+  if (packaged && fs.existsSync(packaged)) return packaged;
+  return path.resolve(__dirname, '..', '..', '..', 'resources', 'codex-skills');
 }
-
-async function _loadIndex() {
-  return readJson(INDEX_PATH(), _emptyIndex());
+function safeName(value) {
+  const raw = String(value || '').trim().toLowerCase().replace(/[^a-z0-9._-]+/gu, '-').replace(/^-+|-+$/gu, '');
+  if (!raw) throw new Error('Skill 名称无效');
+  return raw.startsWith('mana-user-') ? raw : `mana-user-${raw}`;
 }
-
-async function _saveIndex(idx) {
-  await writeJson(INDEX_PATH(), idx);
+function stripFrontMatter(content) { return String(content || '').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/u, '').trim(); }
+function frontMatter(name, description, content) {
+  return ['---', `name: ${name}`, `description: ${String(description || name).replace(/[\r\n]+/gu, ' ').slice(0, 200)}`, '---', '', stripFrontMatter(content), ''].join('\n');
 }
-
-const DE_AI_LEGACY_BLOCK = [
-  '### 1. 避免「不是……而是」对照句式',
-  '- 错误：「她不是愤怒，而是感到一种深深的悲哀。」',
-  '- 正确：「她感到一种深深的悲哀。」',
-  '- 这种 not-but 结构是 GPT 系列最明显的特征之一。',
-  '',
-  '### 2. 避免「不是……更像是／不是，是」句式',
-  '- 错误：「那不是愤怒，更像是疲惫。」',
-  '- 错误：「不是他不愿意，是他做不到。」',
-  '- 正确：直接写「他疲惫不堪。」或「他做不到。」',
-  '- 所有「不是X，(而)是Y」变体都要砍掉。直接说 Y。',
-].join('\n');
-
-const DE_AI_UPDATED_BLOCK = [
-  '### 1. 重点避免「不是……，也不是……，而是……」与「不是……，不是……，是」',
-  '- 错误：「她不是害怕，也不是犹豫，而是忽然觉得心里空了一块。」',
-  '- 错误：「不是他不想回头，不是他不念旧，是他知道再站下去只会更狼狈。」',
-  '- 这两种都是 AI 八股文高频骨架，看起来像在制造层递，实际常常只是在绕远路。',
-  '- 更自然：直接改成直叙，「她心里忽然空了一块。」「他知道再站下去只会更狼狈。」',
-  '- 后期补偿：如果必须保留三段对照转折，可退一步改成「并非……抑或……而是……」，但这只是补救方案，不应高频使用。',
-  '',
-  '### 2. 扩展到所有「不是X，(也)不是Y，而是Z / 不是X，不是Y，是Z / 不是X，更像是Y」变体',
-  '- 错误：「那不是愤怒，更像是疲惫。」',
-  '- 错误：「她不是冷静，而是在硬撑。」',
-  '- 只要句子骨架是先连否两个判断、再托出真正判断，就要高度警惕。',
-  '- 处理原则：优先删掉整套对照骨架，直接说 Y 或 Z；只有在节奏确实需要时，才考虑用「并非……抑或……而是……」做补偿。',
-  '',
-  '### 2b. 警惕「不是A、不是B、不是C。是D」连续否定铺排式',
-  '- 错误：「他又收服了四个。而且这一次——不是用钱、不是用药、不是用暴力。他是用一碗温热的肉粥。」',
-  '- 错误：「那不是偶然，不是运气，不是天赋。那是日复一日的打磨。」',
-  '- 错误：「没有愤怒，没有悲伤，只是疲惫。」「没有挣扎，没有辩解，只是低头。」',
-  '- 这是升级版 AI 八股：罗列三个或以上「不是X」制造节奏，再用「是」「那是」「他是」兜出反转。',
-  '- 「没有A，没有B，只是C」本质上也是同一类骨架：先连否两个状态，再用「只是」抬出答案，仍然是绕远路的 AI 对照句。',
-  '- 本质上仍是 not-but 骨架的变体，只不过把否定项拉成了排比。读起来刻意、机械，辨识度极高。',
-  '- 处理原则：砍掉整套否定排比，把正句直接写进叙事里：「他靠一碗温热的肉粥收服了他们。」',
-].join('\n');
-
-const DE_AI_SUPPLEMENT_BLOCK = [
-  '### AI 八股补充：警惕「不是……，也不是……，而是……」与「不是……，不是……，是」以及连续否定铺排',
-  '- 这两类句式都属于 AI 八股文的高频变体。写作时尽量避免，别靠连否加转折制造文气。',
-  '- 后期补偿有两种办法：可以改成「并非……抑或……而是……」；更彻底的做法是删掉整套对照骨架，直接改成直叙。',
-  '- 特别注意连续否定铺排式：「不是A、不是B、不是C。是D」——罗列否定项制造节奏再兜出反转，辨识度极高，同样属于 AI 八股。',
-  '- 同样警惕「没有A，没有B，只是C」——虽然不用“不是”，但骨架完全一样，仍属于靠连否再兜答案的 AI 经典句式。',
-].join('\n');
-
-const DE_AI_REACTION_BLOCK = [
-  '### 3. 绝对避免「然后她笑了」式独立短反应句，以及后接「那是一个……」解释句',
-  '- 错误：「然后她笑了。」',
-  '- 错误：「那是一个与之前所有微笑都不同的笑容。」',
-  '- 错误组合：先独立成段写一个很短的反应句，再下一句用「那是一个……」「那是一种……」去解释这个反应。',
-  '- 这种写法是非常典型的 AI 八股：先空拍一下，再补一句抽象总结，看似有节奏，实际上既断气又空泛。',
-  '- 正确：把动作、神态、情绪和前文动作链写在一起，直接写具体变化，不要拆成“短反应句 + 定义句”两段。',
-  '- 后审要求：生成后如果出现这种结构，优先删掉独立短句，改为并回上文或直接直叙。',
-].join('\n');
-
-const DE_AI_NEW_CLICHE_BLOCK = [
-  '### 13. 避免「如同……般/一样」比喻堆叠',
-  '- 错误：一个场景里连续用3次以上「如同一只被晒干的海星般」「如同一只翻不过来的小乌龟」这类比喻，每个角色出场都来一个。',
-  '- 比喻越少越有力。全篇最多保留0-2个最传神的，其余直接用动作本身。',
-  '',
-  '### 14. 避免出场说明书式全描写',
-  '- 错误：每个新角色登场都按固定模板扫描：头发→眼睛→衣服→姿势→细节。信息密集无留白，像在填角色卡。',
-  '- 正确：只抓1-2个最有辨识度的特征，其余让读者自己脑补。越重要的角色，出场越不需要全写。',
-  '',
-  '### 15. 避免「与……不同」对比引入句式',
-  '- 错误：「与牧场其他区域的工业风金属门不同，这扇门上贴着手绘招牌。」',
-  '- 每次引入新场景/新角色时先否定一个常规再兜出正题，这是AI制造"反差感"的机械套路。',
-  '- 正确：直接描写对象本身，不需要先否定一个不存在的参照物。',
-  '',
-  '### 16. 避免全知作者跳出做总结',
-  '- 错误：突然从角色视角跳出来，用第三人称全知视角概括心理或局势：「她又收服了四个——而且这一次，不是用钱、不是用药、不是用暴力。」',
-  '- 这种"作者替读者做总结"的写法既破坏沉浸感，又是not-but骨架+铺排的复合八股。',
-  '- 正确：保持叙事视角一致。如果是角色的视角，就写她看到的、感觉到的，而不是写"作者的最终评价"。结尾用角色对话或场景画面淡出，不靠金句总结。',
-].join('\n');
-
-const DE_AI_NEW_SUMMARIZED_BLOCK = [
-  '### 17. 避免抽象否定递进句：先否定一个抽象词，再兜出更抽象的判断',
-  '- 错误：「不是被强迫的服从式的笑，而是一种——满足。」',
-  '- 错误：「不是敌意。更像是一种——确认。」',
-  '- 错误：「那不是一个温柔的吻——」',
-  '- 这类句子表面在细化情绪或性质，本质仍是 not-but 骨架的变体：先否定一个抽象标签，再拿另一个抽象词兜底，读起来像 AI 在端着讲道理。',
-  '- 正确：直接改成具体可见的动作、表情、触感或目光，比如「她脸上绽开一个满足的笑容」「那是一种确认的目光」「他粗暴地撬开她的嘴唇」。',
-  '',
-  '### 18. 避免空泛笑容金句：给“笑”套空壳形容词',
-  '- 错误：「一丝难以察觉的微笑」',
-  '- 错误：「一个真正的、没有一点阴霾的笑容」',
-  '- 这类写法信息量很低，只是在给“笑”加一层空泛光环，读者看不到脸部动作，也看不到情绪落点。',
-  '- 正确：改成具体可见的表情动作，如「嘴角微微上扬」「她笑了，干净明亮」。',
-].join('\n');
-
-const DE_AI_PARAGRAPH_FUNCTION_LINES = [
-  '### 25. 避免机械的一句一段，按段落功能组织自然段',
-  '- 错误：连续3个以上非对话单句自然段讲同一件事、同一组背景说明、同一个动作链或同一层心理，只是机械换行。',
-  '- 这会让正文像短视频文案或模型输出，而不是小说自然段；问题不在“短段”本身，而在单句段没有明确节奏功能。',
-  '- 正确：连续描述同一叙事功能时合并成一个自然段。只在强停顿、反转、惊吓、讽刺、情绪落点、对话分隔或场景/视角切换时保留单句段。',
-  '- 后审要求：连续单句自然段超过2段时，逐段判断是否有独立节奏目的；没有就合并相邻段落，只做少量衔接调整。',
-];
-
-const DE_AI_STRUCTURE_BLOCK = [
-  '### 19. 避免 AI 式章末三段式收尾：抛问题 + 下结论 + 下一章预告',
-  '- 错误：「她是否还有更多未曾展示的隐藏珍宝，等待着被发掘？而这场盛宴，也才刚刚拉开帷幕。」',
-  '- 这类句子像 AI 在章节末尾强行吊胃口：先抛一个问题，再盖一个抽象结论，最后补一句“才刚开始”。套路感很重。',
-  '- 正确：章末用角色动作、对话、现场余波或一个具体画面收住，不要替读者总结“局势意义”或预告“盛宴开始”。',
-  '',
-  '### 20. 避免转场过度依赖「……」分隔线',
-  '- 错误：一章里频繁出现「……」做硬切转场，几乎每个场景段落都靠它换气。',
-  '- 这会让文本显得像 AI 在用统一模板切镜头，而不是自然推进。',
-  '- 正确：只有确实需要时间/场景跳切时才保留少量分隔；其余转场直接用动作、视线、时间变化接过去。',
-  '',
-  '### 21. 避免跨章重复意象和陈词滥调比喻',
-  '- 错误：同一批意象反复回收，如「揉碎的丝绸」「从梦境深处传来」「活物般」在多章重复出现。',
-  '- AI 常会抓住一个顺手意象在后文反复复用，越写越像套模板。',
-  '- 正确：同类比喻全书最多偶尔用一次。若已经写过，就换成直接描写，不要回收同一意象库存。',
-  '',
-  '### 22. 避免标签式描述反复贴词：X中带着一丝/一种Y',
-  '- 错误：「她的声音中带着一丝慵懒的笑意」「暗黄色的眼眸中带着一丝……」',
-  '- 这种写法是在给人物贴标签，不是在写当下状态；一旦高频重复，就非常像 AI 的稳定句柄。',
-  '- 正确：把“带着一丝/一种”拆成具体声音、眼神、停顿、口型或动作，不要靠抽象词挂件支撑句子。',
-  '',
-  '### 23. 避免感官清单式枚举描写',
-  '- 错误：按耳朵→眼睛→鼻子→嘴巴→乳头→切口这类顺序逐项扫描，像在照着清单打勾。',
-  '- 这类系统化枚举不是自然观察，更像 AI 在按部位表生成内容。',
-  '- 正确：只抓最有压力、最有情绪价值的1-2个感官点，不要把全身扫描写成流程图。',
-  '',
-  '### 24. 避免过度依赖破折号制造节奏',
-  '- 错误：一段里频繁用「——」补充解释、转折、插入旁白，几乎每两句就来一次。',
-  '- 人类作者通常只在少数需要强停顿或插入语时用破折号；AI 则很容易把它当节奏器滥用。',
-  '- 正确：能用逗号、句号直接说清的就直接说，不要把大量句子写成“前半句——后半句说明”的模板。',
-  '',
-  ...DE_AI_PARAGRAPH_FUNCTION_LINES,
-].join('\n');
-
-const DE_AI_PARAGRAPH_FUNCTION_BLOCK = DE_AI_PARAGRAPH_FUNCTION_LINES.join('\n');
-
-const DE_AI_CROSS_PARAGRAPH_BLOCK = [
-  '### AI 审稿补充：跨段拆开的套句也要算',
-  '- 审稿时必须逐段看，但不能只看单段。每一段都要连同前后相邻段一起判断。',
-  '- 如果上一段是「然后她笑了。」、下一段才是「那是一个……」，仍然算同一组 AI 套句，不能因为分段而漏掉。',
-  '- 如果上一段还停在「不是……/也不是……」，下一段才出现「而是……/更像是……」，也仍然算同一组对照骨架。',
-  '- 处理原则：把涉及到的两段一起标出来，再改写成连续的具体直叙。',
-].join('\n');
-
-function buildSeedContent(seedId, skillSeedMd) {
-  if (seedId === 'writing-reference' && skillSeedMd) {
-    const sepIdx = skillSeedMd.indexOf('\n\n---\n\n');
-    if (sepIdx > 0) return skillSeedMd.slice(0, sepIdx).trim();
-    return skillSeedMd;
-  }
-
-  if (seedId === 'outline-cleanup') {
-    return [
-      '# 章节写作：大纲标记物清除',
-      '',
-      '## 核心原则',
-      '',
-      '> 大纲是脚手架，建成后要拆除。最终交付的正文不应携带任何大纲标记物。',
-      '',
-      '## 核心规则',
-      '当你将大纲节点转化为章节正文时，必须移除所有大纲标记物。大纲节点的编号和标题是内部规划工具，永远不应出现在最终正文中。',
-      '',
-      '## 具体做法',
-      '',
-      '### 禁止的写法',
-      '- ## 1. 办公室商议',
-      '- ### 暮色的码头',
-      '- 任何形式的 "数字 + 小节名称" 标题',
-      '- 在正文段落之间插入带编号的分隔标记',
-      '',
-      '### 正确的写法',
-      '- 章节正文是**连续叙事流**，场景切换使用原文既有的分隔符（如 ……）做自然过渡',
-      '- 写入正文前，先读取已有章节，观察其排版格式并保持一致',
-      '- 每个场景的开场用描写/对话直接切入，不给场景"挂牌"',
-      '',
-      '### 心理模型',
-      '把大纲当作建筑施工时的脚手架——规划阶段用它定位每个场景，但竣工交付前必须拆除。读者看到的不应该有脚手架残留。',
-      '',
-    ].join('\n');
-  }
-
-  if (seedId === 'de-ai-ify') {
-    return [
-      '# 去 AI 味写作指南',
-      '',
-      '## 核心原则',
-      '避免 AI 生成文本的常见痕迹，让文字读起来像人类作者写的。',
-      '',
-      '## 句法禁忌',
-      '',
-      DE_AI_UPDATED_BLOCK,
-      '',
-      DE_AI_REACTION_BLOCK,
-      '',
-      DE_AI_CROSS_PARAGRAPH_BLOCK,
-      '',
-      DE_AI_NEW_CLICHE_BLOCK,
-      '',
-      DE_AI_NEW_SUMMARIZED_BLOCK,
-      '',
-      DE_AI_STRUCTURE_BLOCK,
-      '',
-      '### 4. 避免模糊限定词与「仿佛+解释」旁白',
-      '- 避免词：仿佛、似乎、好像、略显、有些、某种、几乎、大概',
-      '- 特别警惕"仿佛……"做解释型旁白：写完一个动作后立刻用"仿佛……"替读者做解读。',
-      '- 错误：「嘴唇无声地嚅动着——仿佛在反复重复某句话。」',
-      '- 正确：砍掉"仿佛"后半句。好的描写让读者自己猜，不需要AI替你解说。',
-      '- 除非是不确定视角（比如角色自己在猜测），否则直接陈述。',
-      '',
-      '### 5. 避免定义式开头',
-      '- 错误：「沉默是一种无声的语言。」「爱情是人类永恒的主题。」',
-      '- 每段首句不要用「X 是/指的是/意味着」这种定义句式。直接从叙事切入。除非是角色自己在说',
-      '',
-      '### 6. 避免AI八股金句套话',
-      '- 学术套话：值得注意的是、毋庸置疑、众所周知、不可否认、从某种意义上说',
-      '- 高频AI金句（直接删除或重写）：',
-      '  - 她自己都没有察觉到的柔和',
-      '  - 嘴角挂着一丝不易察觉的笑意',
-      '  - 一道柔和的光线洒落在……',
-      '  - 空气中弥漫着……的气息',
-      '- 这些是AI语料库高频套话，读者一眼就能认出。不传递信息，只占字数。直接写事实。',
-      '',
-      '### 7. 避免过度概括，具体代替抽象',
-      '- 错误：「这是一个充满希望的时刻。」',
-      '- 正确：「这是四月的一个清晨，樱花正开。」',
-      '- 用具体的感官细节（视觉、听觉、嗅觉）代替概括性描述。',
-      '',
-      '## 风格要求',
-      '',
-      '### 8. 多用短句',
-      '- 长句不超过 30 字。复杂逻辑拆成 2-3 个短句。',
-      '- 少用多层从句嵌套。',
-      '',
-      '### 9. 动作代替心理',
-      '- 错误：「他感到非常紧张。」',
-      '- 正确：「他手心全是汗，指节捏得发白。」',
-      '- 用外部描写暗示内心状态，不要直接贴标签。',
-      '',
-      '### 10. 多用具体动词，少用「是」',
-      '- 错误：「他是愤怒的。」「她是疲惫的。」',
-      '- 正确：「他怒吼着。」「她瘫坐在地上。」',
-      '- 「是」字过多会让文本感觉平淡无力，换成具体动词可以增强画面感。',
-      '',
-      '### 11. 避免排比句式过多',
-      '- 偶尔使用排比可以增强节奏，但连续 3 段以上排比就是 AI 味。',
-      '',
-      '### 12. 称呼一致性',
-      '- 确定角色称呼（全名/名字/昵称/代称）后保持一致，不要来回切换。',
-      '',
-      '## 示例对比',
-      '',
-      '| AI 版 | 人类版 |',
-      '|-------|--------|',
-      '| 她不置可否地沉默了片刻，仿佛在思考什么重要的事情 | 她没说话。|',
-      '| 这座城市不仅有繁华的现代建筑，更有深厚的历史底蕴 | 高楼后面就是老街，青石板路上还有昨天的雨迹。|',
-      '| 值得注意的是，这一发现将彻底改变我们对这个问题的理解 | 这个发现意味着我们之前的假设可能全是错的。|',
-      '',
-    ].join('\n');
-  }
-
-  if (seedId === 'character-search') {
-    return [
-      '# 角色网络搜索策略',
-      '',
-      '## 文化圈检测',
-      '根据作品名判断文化圈：east-asian-cn / east-asian-jp / east-asian-kr / western-en / global。',
-      '',
-      '## 搜索源优先级',
-      '- 中文作品：萌娘百科 > Biligame Wiki > Bing > Wikipedia',
-      '- 日文作品：Wikipedia(ja) > 萌娘百科 > Bing',
-      '- 韩文作品：Wikipedia > Bing > 萌娘百科',
-      '- 英文作品：Wikipedia(en) > Bing',
-      '- 全局：Wikipedia > Bing',
-      '',
-      '## 查询构建',
-      '角色名 + 作品名 + 作品原名（如果有）。',
-      '',
-      '## 回退策略',
-      '1. 主要来源无结果 → 相邻文化圈搜索',
-      '2. 所有文化圈来源均无结果 → 最后尝试 DuckDuckGo（仅当所有其他来源均失败时）',
-      '',
-      '## 合并规则',
-      '保留小说已有值，网络数据作为参考追加（括号标注原作设定）。',
-    ].join('\n');
-  }
-
-  return '';
+async function loadIndex() { return readJson(indexFile(), { schemaVersion: SCHEMA_VERSION, skills: [] }); }
+async function saveIndex(index) { await writeJson(indexFile(), { schemaVersion: SCHEMA_VERSION, skills: index.skills || [] }, { mode: 0o600 }); }
+async function writeMigratedSkill(name, description, content, source) {
+  const skillName = safeName(name);
+  const dir = path.join(root(), skillName);
+  await fsp.mkdir(dir, { recursive: true, mode: 0o700 });
+  await fsp.writeFile(path.join(dir, 'SKILL.md'), frontMatter(skillName, description, content), { encoding: 'utf8', mode: 0o600 });
+  return { name: skillName, description: String(description || skillName), enabled: true, builtIn: false, source };
 }
-
-function maybeRefreshSeedContent(seedId, currentContent, skillSeedMd) {
-  const fallback = buildSeedContent(seedId, skillSeedMd);
-  if (!currentContent) return fallback;
-  if (seedId !== 'de-ai-ify') return currentContent;
-  let nextContent = currentContent;
-  if (currentContent.includes(DE_AI_LEGACY_BLOCK)) {
-    nextContent = nextContent.replace(DE_AI_LEGACY_BLOCK, DE_AI_UPDATED_BLOCK);
+async function unusedBackupTarget(directory, name) {
+  for (let index = 0; index < 100; index += 1) {
+    const candidate = path.join(directory, index === 0 ? name : `${name}-${index}`);
+    try { await fsp.access(candidate); } catch { return candidate; }
   }
-  if (nextContent.includes('# 去 AI 味写作指南') && !nextContent.includes('AI 八股补充')) {
-    nextContent = `${nextContent.trim()}\n\n${DE_AI_SUPPLEMENT_BLOCK}\n`;
-  }
-  if (nextContent.includes('# 去 AI 味写作指南') && !nextContent.includes('绝对避免「然后她笑了」式独立短反应句')) {
-    nextContent = `${nextContent.trim()}\n\n${DE_AI_REACTION_BLOCK}\n`;
-  }
-  if (nextContent.includes('# 去 AI 味写作指南') && !nextContent.includes('跨段拆开的套句也要算')) {
-    nextContent = `${nextContent.trim()}\n\n${DE_AI_CROSS_PARAGRAPH_BLOCK}\n`;
-  }
-  if (nextContent.includes('# 去 AI 味写作指南') && !nextContent.includes('比喻堆叠')) {
-    nextContent = `${nextContent.trim()}\n\n${DE_AI_NEW_CLICHE_BLOCK}\n`;
-  }
-  if (nextContent.includes('# 去 AI 味写作指南') && !nextContent.includes('不是被强迫的服从式的笑，而是一种——满足')) {
-    nextContent = `${nextContent.trim()}\n\n${DE_AI_NEW_SUMMARIZED_BLOCK}\n`;
-  }
-  if (nextContent.includes('# 去 AI 味写作指南') && !nextContent.includes('AI 式章末三段式收尾')) {
-    nextContent = `${nextContent.trim()}\n\n${DE_AI_STRUCTURE_BLOCK}\n`;
-  }
-  if (nextContent.includes('# 去 AI 味写作指南') && !nextContent.includes('避免机械的一句一段')) {
-    nextContent = `${nextContent.trim()}\n\n${DE_AI_PARAGRAPH_FUNCTION_BLOCK}\n`;
-  }
-  return nextContent;
+  throw new Error(`无法为 ${name} 创建迁移备份目录`);
 }
-
-/**
- * Ensure default skills exist on first run.
- * Called once during app startup from index.js.
- * @param {string} [skillSeedMd] - The existing skill.md Markdown to migrate as a skill entry.
- */
-async function ensureSeeds(skillSeedMd) {
-  const idx = await _loadIndex();
-  let indexChanged = false;
-  const seeds = [
-    {
-      id: 'writing-reference',
-      name: '写作参考手册',
-      description: 'Multi-Agent Novel Assistant 产品概述、内置 Agent/DAG 列表、成本质量权衡建议。',
-      tags: ['reference', 'config'],
-      assignedSubagentIds: ['sa-config-helper', 'sa-chat', 'sa-outline-drafter'],
-      schemaVersion: SCHEMA_VERSION,
-    },
-    {
-      id: 'outline-cleanup',
-      name: '章节写作：大纲标记物清除',
-      description: '从大纲节点生成章节正文时，必须移除大纲编号/标题标记物，保留连续叙事流。',
-      tags: ['writing', 'outline', 'format'],
-      assignedSubagentIds: ['sa-writer', 'sa-chat'],
-      schemaVersion: SCHEMA_VERSION,
-    },
-    {
-      id: 'character-search',
-      name: '角色网络搜索策略',
-      description: '同人角色联网搜索的文化圈路由、查询格式、回退策略与合并规则。',
-      tags: ['search', 'character'],
-      assignedSubagentIds: ['sa-import-orchestrator', 'sa-chat'],
-      schemaVersion: SCHEMA_VERSION,
-    },
-    {
-      id: 'de-ai-ify',
-      name: '去 AI 味写作指南',
-      description: '避免 AI 生成文本常见痕迹的写作规则，保持人类风格。',
-      tags: ['writing', 'style'],
-      assignedSubagentIds: ['sa-chat', 'sa-writer'],
-      schemaVersion: SCHEMA_VERSION,
-    },
-  ];
-
-  for (const seed of seeds) {
-    // Ensure skills dir
-    const dir = paths().skills;
-    try { fs.mkdirSync(dir, { recursive: true }); } catch {}
-
-    const existingIndex = (idx.skills || []).findIndex((s) => s.id === seed.id);
-    if (existingIndex < 0) {
-      idx.skills.push({
-        id: seed.id,
-        name: seed.name,
-        description: seed.description,
-        tags: seed.tags,
-        assignedSubagentIds: seed.assignedSubagentIds,
-        schemaVersion: SCHEMA_VERSION,
-      });
-      indexChanged = true;
-    }
-
-    const mdPath = skillContentPath(seed.id);
-    let currentContent = '';
-    try { currentContent = fs.readFileSync(mdPath, 'utf8'); } catch {}
-    const nextContent = existingIndex < 0
-      ? buildSeedContent(seed.id, skillSeedMd)
-      : maybeRefreshSeedContent(seed.id, currentContent, skillSeedMd);
-    if (nextContent !== currentContent) {
-      try { fs.writeFileSync(mdPath, nextContent, 'utf8'); } catch {}
-    }
+async function makeTreeReadOnly(target) {
+  const entries = await fsp.readdir(target, { withFileTypes: true }).catch(() => []);
+  for (const entry of entries) {
+    const child = path.join(target, entry.name);
+    if (entry.isDirectory()) await makeTreeReadOnly(child);
+    else await fsp.chmod(child, 0o400).catch(() => {});
   }
-
-  if (indexChanged) {
-    await _saveIndex(idx);
-  }
+  await fsp.chmod(target, 0o500).catch(() => {});
 }
-
-/**
- * List all skills (metadata only, no content).
- * @returns {Promise<Array>}
- */
+async function migrateLegacy() {
+  const marker = path.join(paths().root, 'migrations', 'codex-native-v1.json');
+  if (await readJson(marker, null)) return;
+  await fsp.mkdir(root(), { recursive: true, mode: 0o700 });
+  const migrated = [];
+  const legacyIndex = await readJson(paths().skillsIndex, { skills: [] });
+  for (const entry of legacyIndex.skills || []) {
+    const file = path.join(paths().skills, `${entry.id}.md`);
+    let content = '';
+    try { content = await fsp.readFile(file, 'utf8'); } catch { continue; }
+    migrated.push(await writeMigratedSkill(entry.id, entry.description || entry.name, content, 'skill'));
+  }
+  for (const file of await listJsonFiles(paths().subagentsUser)) {
+    const value = await readJson(file, null);
+    if (!value?.id) continue;
+    const content = ['# 原自定义 Subagent', '', value.systemPrompt || value.prompt || value.instructions || '', '', '## 允许工具提示', '', (value.allowedTools || []).map((tool) => `- ${tool}`).join('\n') || '- 仅使用当前 Codex 会话允许的 novel-tools。'].join('\n');
+    migrated.push(await writeMigratedSkill(value.id, value.description || value.displayName || value.id, content, 'subagent'));
+  }
+  for (const file of await listJsonFiles(paths().pipelinesUser)) {
+    const value = await readJson(file, null);
+    if (!value?.id) continue;
+    const nodes = (value.nodes || []).map((node) => `- ${node.id || node.name}: ${node.description || node.instruction || ''}; dependsOn=${JSON.stringify(node.dependsOn || node.dependencies || [])}`).join('\n');
+    migrated.push(await writeMigratedSkill(value.id, value.description || value.name || value.id, `# 原自定义工作流\n\n按以下节点与依赖关系执行；由 Codex 自主规划工具调用和原生 subagent。\n\n${nodes}`, 'dag'));
+  }
+  await saveIndex({ skills: migrated });
+  const backup = path.join(paths().root, 'migration-backups', 'codex-native-v1');
+  await fsp.mkdir(backup, { recursive: true, mode: 0o700 });
+  for (const [source, name] of [[paths().skills, 'legacy-skills'], [path.join(paths().root, 'subagents'), 'legacy-subagents'], [path.join(paths().root, 'pipelines'), 'legacy-pipelines']]) {
+    try {
+      const target = await unusedBackupTarget(backup, name);
+      await fsp.rename(source, target);
+      await makeTreeReadOnly(target);
+    } catch (error) { if (error?.code !== 'ENOENT') throw error; }
+  }
+  await writeJson(marker, { schemaVersion: 1, marker: 'codex-native-v1', migratedAt: new Date().toISOString(), migrated: migrated.map((item) => ({ name: item.name, source: item.source })) }, { mode: 0o600 });
+}
 async function listSkills() {
-  const idx = await _loadIndex();
-  return idx.skills || [];
+  await migrateLegacy();
+  const index = await loadIndex();
+  const builtins = await Promise.all(BUILTIN_NAMES.map(async (name) => ({ id: name, name, description: name, enabled: true, builtIn: true, content: await fsp.readFile(path.join(builtinRoot(), name, 'SKILL.md'), 'utf8') })));
+  const custom = await Promise.all((index.skills || []).map(async (entry) => ({ id: entry.name, ...entry, content: await fsp.readFile(path.join(root(), entry.name, 'SKILL.md'), 'utf8').catch(() => '') })));
+  return [...builtins, ...custom];
 }
-
-/**
- * Get a single skill's full data (metadata + content).
- * @param {string} id
- * @returns {Promise<object|null>}
- */
-async function getSkill(id) {
-  const idx = await _loadIndex();
-  const entry = (idx.skills || []).find((s) => s.id === id);
-  if (!entry) return null;
-
-  let content = '';
-  try {
-    content = await fsp.readFile(skillContentPath(id), 'utf8');
-  } catch {}
-  return { ...entry, content };
+async function getSkill(id) { return (await listSkills()).find((skill) => skill.id === id || skill.name === id) || null; }
+async function saveSkill(skill) {
+  await migrateLegacy();
+  if (BUILTIN_NAMES.includes(skill?.id) || skill?.builtIn) throw new Error('内置 Skill 只读');
+  const entry = await writeMigratedSkill(skill?.id || skill?.name, skill?.description, skill?.content, 'user');
+  entry.enabled = skill?.enabled !== false;
+  const index = await loadIndex();
+  index.skills = (index.skills || []).filter((item) => item.name !== entry.name);
+  index.skills.push(entry);
+  await saveIndex(index);
+  return { id: entry.name, ...entry, content: await fsp.readFile(path.join(root(), entry.name, 'SKILL.md'), 'utf8') };
 }
-
-/**
- * Save a skill (create or update).
- * @param {object} spec - SkillSpec with at least id, name, content
- */
-async function saveSkill(spec) {
-  if (!spec || !spec.id || !spec.name) throw new Error('skill id and name required');
-  const idx = await _loadIndex();
-  const existing = (idx.skills || []).findIndex((s) => s.id === spec.id);
-
-  const meta = {
-    id: spec.id,
-    name: spec.name,
-    description: spec.description || '',
-    tags: Array.isArray(spec.tags) ? spec.tags : [],
-    assignedSubagentIds: Array.isArray(spec.assignedSubagentIds) ? spec.assignedSubagentIds : [],
-    schemaVersion: SCHEMA_VERSION,
-  };
-
-  if (existing >= 0) {
-    idx.skills[existing] = meta;
-  } else {
-    idx.skills.push(meta);
-  }
-  await _saveIndex(idx);
-
-  // Write content to .md file
-  const mdPath = skillContentPath(spec.id);
-  const dir = path.dirname(mdPath);
-  try { fs.mkdirSync(dir, { recursive: true }); } catch {}
-  await fsp.writeFile(mdPath, spec.content || '', 'utf8');
-
-  return { ...meta, content: spec.content || '' };
-}
-
-/**
- * Delete a skill.
- * @param {string} id
- */
 async function deleteSkill(id) {
-  const idx = await _loadIndex();
-  idx.skills = (idx.skills || []).filter((s) => s.id !== id);
-  await _saveIndex(idx);
-
-  // Remove content file
-  try {
-    await fsp.unlink(skillContentPath(id));
-  } catch {}
+  await migrateLegacy();
+  if (BUILTIN_NAMES.includes(id)) throw new Error('内置 Skill 不能删除');
+  const name = safeName(id);
+  const index = await loadIndex();
+  index.skills = (index.skills || []).filter((item) => item.name !== name);
+  await saveIndex(index);
+  await fsp.rm(path.join(root(), name), { recursive: true, force: true });
 }
-
-/**
- * Assign a skill to a subagent.
- * @param {string} skillId
- * @param {string} subagentId
- */
-async function assignSkillToSubagent(skillId, subagentId) {
-  const idx = await _loadIndex();
-  const entry = (idx.skills || []).find((s) => s.id === skillId);
-  if (!entry) throw new Error(`skill not found: ${skillId}`);
-  const set = new Set(entry.assignedSubagentIds || []);
-  set.add(subagentId);
-  entry.assignedSubagentIds = [...set];
-  await _saveIndex(idx);
+async function setSkillEnabled(id, enabled) {
+  await migrateLegacy();
+  if (BUILTIN_NAMES.includes(id)) throw new Error('内置 Skill 始终启用');
+  const name = safeName(id);
+  const index = await loadIndex();
+  const entry = (index.skills || []).find((item) => item.name === name);
+  if (!entry) throw new Error('Skill 不存在');
+  entry.enabled = enabled === true;
+  await saveIndex(index);
+  return entry;
 }
+async function exportSkill(id) { const skill = await getSkill(id); if (!skill) throw new Error('Skill 不存在'); return { schemaVersion: 2, type: 'codex-skill', name: skill.name, description: skill.description, content: skill.content }; }
+async function importSkill(bundle) { if (!bundle || !['codex-skill', 'mana-skill'].includes(bundle.type)) throw new Error('无效 Skill 文件'); return saveSkill({ id: bundle.name || bundle.id, description: bundle.description, content: bundle.content, enabled: true }); }
 
-/**
- * Unassign a skill from a subagent.
- * @param {string} skillId
- * @param {string} subagentId
- */
-async function unassignSkillFromSubagent(skillId, subagentId) {
-  const idx = await _loadIndex();
-  const entry = (idx.skills || []).find((s) => s.id === skillId);
-  if (!entry) throw new Error(`skill not found: ${skillId}`);
-  entry.assignedSubagentIds = (entry.assignedSubagentIds || []).filter((id) => id !== subagentId);
-  await _saveIndex(idx);
-}
-
-/**
- * Export a skill as a portable JSON+Markdown bundle.
- * @param {string} skillId
- * @returns {Promise<object>}
- */
-async function exportSkill(skillId) {
-  const skill = await getSkill(skillId);
-  if (!skill) throw new Error(`skill not found: ${skillId}`);
-  return {
-    schemaVersion: SCHEMA_VERSION,
-    type: 'mana-skill',
-    id: skill.id,
-    name: skill.name,
-    description: skill.description,
-    tags: skill.tags,
-    content: skill.content,
-  };
-}
-
-/**
- * Import a skill from a portable bundle.
- * @param {object} bundle - The export bundle
- */
-async function importSkill(bundle) {
-  if (!bundle || bundle.type !== 'mana-skill') throw new Error('Invalid skill bundle');
-  return saveSkill({
-    id: bundle.id,
-    name: bundle.name || bundle.id,
-    description: bundle.description || '',
-    tags: Array.isArray(bundle.tags) ? bundle.tags : [],
-    content: bundle.content || '',
-    assignedSubagentIds: [],
-  });
-}
-
-module.exports = {
-  SCHEMA_VERSION,
-  ensureSeeds,
-  listSkills,
-  getSkill,
-  saveSkill,
-  deleteSkill,
-  assignSkillToSubagent,
-  unassignSkillFromSubagent,
-  exportSkill,
-  importSkill,
-};
+module.exports = { BUILTIN_NAMES, SCHEMA_VERSION, deleteSkill, exportSkill, getSkill, importSkill, listSkills, migrateLegacy, saveSkill, setSkillEnabled };

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "description": "Codex 原生宿主与产品测试入口。",
+  "scripts": {
+    "prepare:codex-runtime": "node scripts/prepare-codex-runtime.js",
+    "test:codex-native": "node test/codex-native-cutover.test.js",
+    "test:mcp-mutations": "node test/novel-mcp-mutation.test.js",
+    "test:unit": "node scripts/run-unit-tests.js",
+    "test:ui-e2e": "npx vite build && node scripts/run-codex-native-ui-e2e.js",
+    "test:responses-config:ui": "npx vite build && node scripts/run-responses-config-v6-ui-e2e.js",
+    "test:deepseek-live-provider:ui": "npx vite build && node scripts/run-deepseek-live-provider-ui-e2e.js",
+    "test:deepseek-live-novel:ui": "npx vite build && node scripts/run-deepseek-live-novel-ui-e2e.js",
+    "test:import-saga:ui": "npx vite build && node scripts/run-import-saga-ui-e2e.js",
+    "test:chat-chain": "node test/chat-chain-contract.test.js && node test/chat-chain-lan.test.js",
+    "test:chat-chain:live": "node scripts/check-chat-chain-live.js"
+  }
+}

@@ -1,845 +1,457 @@
 'use strict';
 
-/**
- * Unified model configuration domain.
- *
- * model-config.json contains only non-secret provider metadata, semantic model
- * profiles and assignments. API keys live in store/secrets.js and are resolved
- * only inside the main process.
- */
-
-const fs = require('node:fs');
+const crypto = require('node:crypto');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
-const crypto = require('node:crypto');
-const lockfile = require('proper-lockfile');
-const { paths: appPaths } = require('../store/paths');
+const { paths } = require('../store/paths');
 const { readJson, writeJson } = require('../store/jsonStore');
 const secrets = require('../store/secrets');
-const { BUILTIN_SUBAGENTS, LEGACY_AGENT_TO_SUBAGENT } = require('../seeds/builtinSubagents');
+const { enrichModel } = require('./modelMetadata');
 
-const SCHEMA_VERSION = 3;
-const DIRECT_DRIVER = 'direct-api';
-const LEGACY_PROFILE_IDS = {
-  opus: 'profile-deep-reasoning',
-  sonnet: 'profile-longform-writing',
-  haiku: 'profile-fast-utility',
-};
-const SYSTEM_TASKS = [
-  'chat',
-  'import-analysis',
-  'character-enrichment',
-  'chatbox-extraction',
-  'config-helper',
-];
+const SCHEMA_VERSION = 8;
+const VERIFICATION_VALUES = new Set(['unknown', 'ok', 'failed']);
+let queue = Promise.resolve();
 
-let cache = null;
-let cacheMtimeMs = -1;
-let inProcessQueue = Promise.resolve();
-
-function filePath() {
-  return appPaths().modelConfig || path.join(appPaths().root, 'model-config.json');
+function filePath() { return paths().modelConfig; }
+function clone(value) { return value == null ? value : JSON.parse(JSON.stringify(value)); }
+function normalizeId(value, prefix) {
+  return String(value || '').trim().toLowerCase().replace(/[^a-z0-9._-]+/gu, '-').replace(/^-+|-+$/gu, '') || `${prefix}-${crypto.randomUUID()}`;
 }
-
-function normalizeId(value, fallback = '') {
-  const id = String(value || '').trim().toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return id || fallback;
+function nullablePositiveInt(value) {
+  if (value == null || value === '') return null;
+  const number = Number(value);
+  if (!Number.isSafeInteger(number) || number <= 0) throw new Error('模型容量参数必须是正整数或未知');
+  return number;
 }
-
-function generatedId(prefix) {
-  return `${prefix}-${crypto.randomUUID()}`;
+function uniqueStrings(values) {
+  return [...new Set((Array.isArray(values) ? values : []).map((value) => String(value || '').trim()).filter(Boolean))];
 }
-
-function adapterFromLegacy(provider) {
-  if (provider?.adapterId) return provider.adapterId;
-  if (provider?.type === 'anthropic') return 'anthropic-messages';
-  if (provider?.type === 'openai-compat') return 'openai-chat-completions';
-  const hint = `${provider?.id || ''} ${provider?.name || ''} ${provider?.baseUrl || ''}`.toLowerCase();
-  return hint.includes('anthropic') ? 'anthropic-messages' : 'openai-chat-completions';
-}
-
-function legacyTypeFromAdapter(adapterId) {
-  return adapterId === 'anthropic-messages' ? 'anthropic' : 'openai-compat';
-}
-
-function builtinAnthropic() {
-  return {
-    id: 'anthropic',
-    name: 'Anthropic',
-    adapterId: 'anthropic-messages',
-    baseUrl: 'https://api.anthropic.com',
-    endpoints: {},
-    auth: { mode: 'x-api-key', secretRef: 'provider:anthropic:api-key', headerName: 'x-api-key' },
-    isBuiltin: true,
-    models: [
-      modelRecord({ id: 'claude-opus-4-7', name: 'Claude Opus 4.7', contextWindow: 200000, maxOutputTokens: 8192, supportsThinking: true, thinkingBudget: 32000 }, 'builtin'),
-      modelRecord({ id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', contextWindow: 200000, maxOutputTokens: 8192, supportsThinking: true, thinkingBudget: 32000 }, 'builtin'),
-      modelRecord({ id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', contextWindow: 200000, maxOutputTokens: 4096, supportsThinking: false }, 'builtin'),
-    ],
-  };
-}
-
-function modelRecord(model, source = 'manual') {
-  const capabilities = model?.capabilities || {};
-  return {
-    id: String(model?.id || '').trim(),
-    name: String(model?.name || model?.id || '').trim(),
-    capabilities: {
-      contextWindow: positiveInt(capabilities.contextWindow ?? model?.contextWindow, 128000),
-      maxOutputTokens: positiveInt(capabilities.maxOutputTokens ?? model?.maxOutputTokens, 4096),
-      supportsThinking: !!(capabilities.supportsThinking ?? model?.supportsThinking),
-      thinkingBudget: positiveInt(capabilities.thinkingBudget ?? model?.thinkingBudget, 0, true),
-      supportsTools: capabilities.supportsTools !== false,
-      supportsStreaming: capabilities.supportsStreaming !== false,
-      supportsStructuredOutput: capabilities.supportsStructuredOutput !== false,
-    },
-    source: model?.source || source,
-    discoveredAt: model?.discoveredAt || null,
-    updatedAt: new Date().toISOString(),
-  };
-}
-
-function positiveInt(value, fallback, allowZero = false) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return fallback;
-  const i = Math.trunc(n);
-  if (allowZero && i === 0) return 0;
-  return i > 0 ? i : fallback;
-}
-
-function defaultParams(tier) {
-  if (tier === 'opus') return { maxOutputTokens: 8192, temperature: 0.7, thinking: true, thinkingBudget: 32000, effortLevel: 'max' };
-  if (tier === 'haiku') return { maxOutputTokens: 4096, temperature: 0.9, thinking: false, thinkingBudget: 0, effortLevel: 'low' };
-  return { maxOutputTokens: 8192, temperature: 0.7, thinking: false, thinkingBudget: 0, effortLevel: 'high' };
-}
-
-function createProfileFromAlias(tier, alias, providerId = 'anthropic') {
-  const profileNames = {
-    opus: '深度推理',
-    sonnet: '长篇正文',
-    haiku: '快速任务',
-  };
-  const descriptions = {
-    opus: '复杂推理、主聊天与一致性审查',
-    sonnet: '长篇正文、改写与均衡型任务',
-    haiku: '批量整理、轻量审查与低延迟任务',
-  };
-  const params = { ...defaultParams(tier) };
-  for (const key of ['maxOutputTokens', 'temperature', 'thinking', 'thinkingBudget', 'effortLevel']) {
-    if (alias?.[key] != null) params[key] = alias[key];
-  }
-  if (alias?.contextWindow != null) params.contextLimit = positiveInt(alias.contextWindow, 128000);
-  const target = {
-    id: `target-${tier}-direct-primary`,
-    providerId: alias?.providerId || providerId,
-    modelId: alias?.modelId || '',
-    params,
-  };
-  const externalTarget = {
-    id: `target-${tier}-claude-primary`,
-    providerId: target.providerId,
-    modelId: target.modelId,
-    params: { effortLevel: params.effortLevel },
-  };
-  return {
-    id: LEGACY_PROFILE_IDS[tier],
-    name: profileNames[tier],
-    description: descriptions[tier],
-    workloadTags: tier === 'opus' ? ['reasoning', 'review', 'chat'] : tier === 'sonnet' ? ['longform-writing', 'editing'] : ['fast-utility', 'structured-extraction'],
-    priority: tier === 'opus' ? 'quality' : tier === 'haiku' ? 'cost' : 'balanced',
-    targetsByDriver: {
-      [DIRECT_DRIVER]: { primary: target, fallbacks: [] },
-      'claude-code-vscode': { primary: externalTarget, fallbacks: [] },
-      'claude-code-cli': { primary: { ...externalTarget, id: `target-${tier}-claude-cli-primary` }, fallbacks: [] },
-    },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-}
-
-function defaultRouting() {
-  const subagentAssignments = {};
-  for (const subagent of BUILTIN_SUBAGENTS) {
-    subagentAssignments[subagent.id] = LEGACY_PROFILE_IDS[subagent.tier] || LEGACY_PROFILE_IDS.sonnet;
-  }
-  return {
-    defaultProfileId: LEGACY_PROFILE_IDS.sonnet,
-    systemAssignments: {
-      chat: LEGACY_PROFILE_IDS.opus,
-      'import-analysis': LEGACY_PROFILE_IDS.sonnet,
-      'character-enrichment': LEGACY_PROFILE_IDS.haiku,
-      'chatbox-extraction': LEGACY_PROFILE_IDS.sonnet,
-      'config-helper': LEGACY_PROFILE_IDS.haiku,
-    },
-    subagentAssignments,
-    legacyTierProfileMap: { ...LEGACY_PROFILE_IDS },
-  };
-}
-
 function defaultState() {
-  const provider = builtinAnthropic();
-  const aliases = {
-    opus: { providerId: provider.id, modelId: 'claude-opus-4-7' },
-    sonnet: { providerId: provider.id, modelId: 'claude-sonnet-4-6' },
-    haiku: { providerId: provider.id, modelId: 'claude-haiku-4-5-20251001' },
-  };
-  return {
-    schemaVersion: SCHEMA_VERSION,
-    revision: 1,
-    providers: [provider],
-    profiles: Object.keys(LEGACY_PROFILE_IDS).map((tier) => createProfileFromAlias(tier, aliases[tier], provider.id)),
-    routing: defaultRouting(),
-    migration: { source: 'fresh', migratedAt: new Date().toISOString(), warnings: [] },
-  };
+  return { schemaVersion: SCHEMA_VERSION, revision: 0, credentials: [], connections: [], activeSelection: null, setupOperations: [] };
 }
-
-async function migrateLegacy() {
-  const root = appPaths().root;
-  const legacyProviders = await readJson(path.join(root, 'providers.json'), null);
-  const legacyAliases = await readJson(path.join(root, 'modelAliases.json'), null);
-  if (!legacyProviders && !legacyAliases) return defaultState();
-
-  const warnings = [];
-  const providers = [];
-  for (const raw of legacyProviders?.providers || []) {
-    const id = normalizeId(raw.id || raw.name, `provider-${providers.length + 1}`);
-    const secretRef = `provider:${id}:api-key`;
-    if (raw.apiKey) {
-      await secrets.setSecret(secretRef, raw.apiKey);
-    }
-    providers.push({
-      id,
-      name: String(raw.name || id),
-      adapterId: adapterFromLegacy(raw),
-      baseUrl: String(raw.baseUrl || (raw.type === 'anthropic' ? 'https://api.anthropic.com' : '')).replace(/\/+$/, ''),
-      endpoints: {},
-      auth: {
-        mode: adapterFromLegacy(raw) === 'anthropic-messages' ? 'x-api-key' : 'bearer',
-        secretRef,
-        headerName: adapterFromLegacy(raw) === 'anthropic-messages' ? 'x-api-key' : 'Authorization',
-      },
-      isBuiltin: !!raw.isBuiltin,
-      models: (raw.models || []).filter((m) => m?.id).map((m) => modelRecord(m, 'legacy')),
-    });
+function normalizeUrl(value, label = 'API 地址') {
+  const url = new URL(String(value || '').trim());
+  if (!['http:', 'https:'].includes(url.protocol)) throw new Error(`${label}必须使用 HTTP 或 HTTPS`);
+  url.hash = '';
+  return url.toString().replace(/\/+$/u, '');
+}
+function normalizeQueryParams(value) {
+  const result = {};
+  for (const [key, item] of Object.entries(value && typeof value === 'object' ? value : {})) {
+    const name = String(key || '').trim();
+    if (name) result[name] = String(item ?? '');
   }
-  if (!providers.length) providers.push(builtinAnthropic());
-  if (!providers.some((p) => p.id === 'anthropic')) providers.unshift(builtinAnthropic());
-
-  const aliasesById = new Map((legacyAliases?.aliases || []).map((alias) => [alias.id, alias]));
-  const activeProviderId = normalizeId(legacyProviders?.activeProviderId || 'anthropic', 'anthropic');
-  const fallbackProvider = providers.find((p) => p.id === activeProviderId) || providers[0];
-  const profiles = Object.keys(LEGACY_PROFILE_IDS).map((tier) => {
-    const alias = aliasesById.get(tier) || {};
-    const provider = providers.find((p) => p.id === normalizeId(alias.providerId || '')) || fallbackProvider;
-    const modelId = alias.modelId || provider?.models?.[0]?.id || '';
-    if (!modelId) warnings.push(`档案 ${tier} 没有可用模型，请在模型中心补充。`);
-    return createProfileFromAlias(tier, { ...alias, providerId: provider?.id, modelId }, provider?.id);
-  });
-  // Legacy Alias values were user-editable and may be higher than the old
-  // provider metadata. Preserve the effective configuration during migration
-  // by promoting the legacy model capability instead of silently clamping it.
-  for (const profile of profiles) {
-    const target = profile.targetsByDriver?.[DIRECT_DRIVER]?.primary;
-    const provider = providers.find((item) => item.id === target?.providerId);
-    const model = provider?.models?.find((item) => item.id === target?.modelId);
-    if (!model) continue;
-    model.capabilities.contextWindow = Math.max(
-      positiveInt(model.capabilities.contextWindow, 128000),
-      positiveInt(target.params?.contextLimit, 0, true),
-    );
-    model.capabilities.maxOutputTokens = Math.max(
-      positiveInt(model.capabilities.maxOutputTokens, 4096),
-      positiveInt(target.params?.maxOutputTokens, 0, true),
-    );
-    if (target.params?.thinking) {
-      model.capabilities.supportsThinking = true;
-      model.capabilities.thinkingBudget = Math.max(
-        positiveInt(model.capabilities.thinkingBudget, 0, true),
-        positiveInt(target.params?.thinkingBudget, 0, true),
-      );
-    }
-  }
-
-  return {
-    schemaVersion: SCHEMA_VERSION,
-    revision: 1,
-    providers,
-    profiles,
-    routing: defaultRouting(),
-    migration: { source: 'providers-v2+aliases-v2', migratedAt: new Date().toISOString(), warnings },
-  };
-}
-
-function clone(value) {
-  return JSON.parse(JSON.stringify(value));
-}
-
-function validateUrl(value, label, allowEmpty = false) {
-  if (!value && allowEmpty) return;
-  try {
-    const parsed = new URL(value);
-    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('protocol');
-  } catch {
-    throw new Error(`${label} 必须是有效的 HTTP(S) URL`);
-  }
-}
-
-function validateTarget(state, profile, driverId, target, label) {
-  if (!target || typeof target !== 'object') throw new Error(`${label} 缺少目标配置`);
-  if (!target.id) throw new Error(`${label} 缺少 target.id`);
-  if (!target.modelId) throw new Error(`${label} 缺少模型`);
-  if (driverId === DIRECT_DRIVER) {
-    const provider = state.providers.find((item) => item.id === target.providerId);
-    if (!provider) throw new Error(`${label} 引用了不存在的 Provider：${target.providerId || '(空)'}`);
-    const model = provider.models.find((item) => item.id === target.modelId);
-    if (!model) throw new Error(`${label} 引用了 Provider 中不存在的模型：${target.modelId}`);
-    const params = target.params || {};
-    const caps = model.capabilities || {};
-    if (params.contextLimit != null && positiveInt(params.contextLimit, 0, true) > positiveInt(caps.contextWindow, 0, true)) {
-      throw new Error(`${label} 的上下文上限超过模型能力`);
-    }
-    if (params.maxOutputTokens != null && positiveInt(params.maxOutputTokens, 0, true) > positiveInt(caps.maxOutputTokens, 0, true)) {
-      throw new Error(`${label} 的最大输出超过模型能力`);
-    }
-    if (params.temperature != null && (!Number.isFinite(Number(params.temperature)) || Number(params.temperature) < 0 || Number(params.temperature) > 2)) {
-      throw new Error(`${label} 的 temperature 必须在 0-2 之间`);
-    }
-    if (params.thinking && !caps.supportsThinking) throw new Error(`${label} 的模型不支持思考模式`);
-  } else if (target.providerId) {
-    const provider = state.providers.find((item) => item.id === target.providerId);
-    if (!provider) throw new Error(`${label} 引用了不存在的 Provider：${target.providerId}`);
-    if ((driverId === 'claude-code-vscode' || driverId === 'claude-code-cli') && provider.adapterId !== 'anthropic-messages') {
-      throw new Error(`${label} 的 Claude Code 目标只能使用 Anthropic Messages Provider`);
-    }
-  }
-}
-
-function validateState(state) {
-  if (!state || typeof state !== 'object') throw new Error('模型配置必须是对象');
-  const providerIds = new Set();
-  for (const provider of state.providers || []) {
-    if (!provider.id || providerIds.has(provider.id)) throw new Error(`Provider ID 无效或重复：${provider.id || '(空)'}`);
-    providerIds.add(provider.id);
-    if (!['anthropic-messages', 'openai-chat-completions'].includes(provider.adapterId)) throw new Error(`Provider ${provider.name} 的 Adapter 不受支持`);
-    validateUrl(provider.baseUrl, `Provider ${provider.name} 的 Base URL`);
-    const modelIds = new Set();
-    for (const model of provider.models || []) {
-      if (!model.id || modelIds.has(model.id)) throw new Error(`Provider ${provider.name} 的模型 ID 无效或重复`);
-      modelIds.add(model.id);
-    }
-  }
-  const profileIds = new Set();
-  for (const profile of state.profiles || []) {
-    if (!profile.id || profileIds.has(profile.id)) throw new Error(`模型档案 ID 无效或重复：${profile.id || '(空)'}`);
-    profileIds.add(profile.id);
-    for (const [driverId, group] of Object.entries(profile.targetsByDriver || {})) {
-      validateTarget(state, profile, driverId, group?.primary, `档案「${profile.name}」/${driverId}/主目标`);
-      const targetIds = new Set([group.primary.id]);
-      for (const [idx, target] of (group.fallbacks || []).entries()) {
-        validateTarget(state, profile, driverId, target, `档案「${profile.name}」/${driverId}/备用 ${idx + 1}`);
-        if (targetIds.has(target.id)) throw new Error(`档案「${profile.name}」存在重复目标 ID`);
-        targetIds.add(target.id);
-      }
-    }
-  }
-  const routing = state.routing || {};
-  if (!profileIds.has(routing.defaultProfileId)) throw new Error('全局默认模型档案不存在');
-  for (const [task, profileId] of Object.entries(routing.systemAssignments || {})) {
-    if (!profileIds.has(profileId)) throw new Error(`系统任务 ${task} 引用了不存在的模型档案`);
-  }
-  for (const [subagentId, profileId] of Object.entries(routing.subagentAssignments || {})) {
-    if (!profileIds.has(profileId)) throw new Error(`Subagent ${subagentId} 引用了不存在的模型档案`);
-  }
-  state.schemaVersion = SCHEMA_VERSION;
-  return state;
-}
-
-async function statMtime() {
-  try { return (await fsp.stat(filePath())).mtimeMs; } catch { return -1; }
-}
-
-async function load(options = {}) {
-  const mtime = await statMtime();
-  if (!options.force && cache && cacheMtimeMs === mtime) return cache;
-  let state = await readJson(filePath(), null);
-  if (!state || state.schemaVersion !== SCHEMA_VERSION) {
-    state = await migrateLegacy();
-    validateState(state);
-    await writeJson(filePath(), state, { mode: 0o600 });
-    try { await fsp.chmod(filePath(), 0o600); } catch {}
-  }
-  validateState(state);
-  cache = state;
-  cacheMtimeMs = await statMtime();
-  return cache;
-}
-
-async function withExclusiveLock(fn) {
-  const run = async () => {
-    await fsp.mkdir(appPaths().root, { recursive: true });
-    const release = await lockfile.lock(appPaths().root, {
-      realpath: false,
-      lockfilePath: `${filePath()}.lock`,
-      retries: { retries: 8, factor: 1.5, minTimeout: 20, maxTimeout: 250 },
-    });
-    try { return await fn(); } finally { await release(); }
-  };
-  const promise = inProcessQueue.then(run, run);
-  inProcessQueue = promise.catch(() => {});
-  return promise;
-}
-
-async function transaction(mutator, expectedRevision) {
-  return withExclusiveLock(async () => {
-    const current = clone(await load({ force: true }));
-    if (expectedRevision != null && current.revision !== expectedRevision) {
-      const err = new Error('模型配置已被其他窗口修改，请刷新后重试');
-      err.code = 'MODEL_CONFIG_CONFLICT';
-      throw err;
-    }
-    const next = await mutator(current) || current;
-    validateState(next);
-    next.revision = positiveInt(current.revision, 0, true) + 1;
-    next.updatedAt = new Date().toISOString();
-    await writeJson(filePath(), next, { mode: 0o600 });
-    try { await fsp.chmod(filePath(), 0o600); } catch {}
-    cache = next;
-    cacheMtimeMs = await statMtime();
-    return clone(next);
-  });
-}
-
-async function providerHasKey(provider) {
-  if (!provider?.auth?.secretRef) return false;
-  const ids = await secrets.listSecretIds();
-  return ids.includes(provider.auth.secretRef);
-}
-
-function redactTarget(target) {
-  return target ? clone(target) : target;
-}
-
-async function publicSnapshot() {
-  const state = await load();
-  const secretStates = new Map(await Promise.all(state.providers.map(async (provider) => [
-    provider.id,
-    await secrets.getSecretStatus(provider.auth?.secretRef || ''),
-  ])));
-  const secretStatus = await secrets.status();
-  return {
-    schemaVersion: state.schemaVersion,
-    revision: state.revision,
-    providers: state.providers.map((provider) => ({
-      ...clone(provider),
-      auth: {
-        mode: provider.auth?.mode || 'none',
-        headerName: provider.auth?.headerName || '',
-        hasApiKey: !!secretStates.get(provider.id)?.readable,
-        keyStatus: secretStates.get(provider.id)?.issue || 'missing',
-      },
-    })),
-    profiles: clone(state.profiles),
-    routing: clone(state.routing),
-    migration: clone(state.migration || {}),
-    secretStatus,
-    environment: {
-      kind: appPaths().root.includes('MultiAgentNovelAssistant-dev') ? 'development' : 'production',
-      configRoot: appPaths().root,
-    },
-  };
-}
-
-async function getProviderInternal(id, { includeSecret = false } = {}) {
-  const state = await load();
-  const provider = state.providers.find((item) => item.id === normalizeId(id)) || null;
-  if (!provider) return null;
-  const result = clone(provider);
-  if (includeSecret) result.apiKey = await secrets.getSecret(provider.auth?.secretRef || '');
   return result;
 }
-
-async function saveProvider(input, expectedRevision) {
-  if (!input || typeof input !== 'object') throw new Error('Provider 配置不能为空');
-  if (!String(input.id || input.name || '').trim()) throw new Error('Provider 名称不能为空');
-  const id = normalizeId(input.id || input.name, generatedId('provider'));
-  const existing = await getProviderInternal(id);
-  const secretRef = existing?.auth?.secretRef || `provider:${id}:api-key`;
-  if (Object.prototype.hasOwnProperty.call(input, 'apiKey')) {
-    if (input.apiKey) await secrets.setSecret(secretRef, String(input.apiKey));
-    else await secrets.deleteSecret(secretRef);
-  }
-  return transaction((state) => {
-    const idx = state.providers.findIndex((item) => item.id === id);
-    const current = idx >= 0 ? state.providers[idx] : null;
-    const adapterId = input.adapterId || current?.adapterId || 'openai-chat-completions';
-    const provider = {
-      ...(current || {}),
-      id,
-      name: String(input.name || current?.name || id).trim(),
-      adapterId,
-      baseUrl: String(input.baseUrl ?? current?.baseUrl ?? '').trim().replace(/\/+$/, ''),
-      endpoints: { ...(current?.endpoints || {}), ...(input.endpoints || {}) },
-      auth: {
-        mode: input.auth?.mode || current?.auth?.mode || (adapterId === 'anthropic-messages' ? 'x-api-key' : 'bearer'),
-        headerName: input.auth?.headerName || current?.auth?.headerName || (adapterId === 'anthropic-messages' ? 'x-api-key' : 'Authorization'),
-        secretRef,
-      },
-      models: Array.isArray(input.models) ? input.models.map((model) => modelRecord(model, model.source || 'manual')) : (current?.models || []),
-      isBuiltin: !!current?.isBuiltin,
-    };
-    if (idx >= 0) state.providers[idx] = provider;
-    else state.providers.push(provider);
-    return state;
-  }, expectedRevision);
+function normalizeCredential(value) {
+  const id = normalizeId(value?.id, 'credential');
+  return { id, name: String(value?.name || id).trim() || id, secretRef: String(value?.secretRef || `credential:${id}:api-key`) };
 }
-
-function providerReferences(state, providerId) {
-  const refs = [];
-  for (const profile of state.profiles) {
-    for (const [driverId, group] of Object.entries(profile.targetsByDriver || {})) {
-      for (const target of [group?.primary, ...(group?.fallbacks || [])].filter(Boolean)) {
-        if (target.providerId === providerId) refs.push({ profileId: profile.id, profileName: profile.name, driverId, targetId: target.id });
-      }
-    }
-  }
-  return refs;
-}
-
-async function deleteProvider(id, replacementProviderId, expectedRevision) {
-  const normalized = normalizeId(id);
-  const existing = await getProviderInternal(normalized);
-  if (!existing) throw new Error(`Provider 不存在：${id}`);
-  if (existing.isBuiltin) throw new Error('内置 Provider 不能删除，可以清空密钥或修改连接');
-  let secretToDelete = existing.auth?.secretRef || '';
-  const next = await transaction((state) => {
-    const refs = providerReferences(state, normalized);
-    if (refs.length && !replacementProviderId) {
-      const err = new Error(`Provider 正被 ${refs.length} 个模型目标引用，请先选择替代 Provider`);
-      err.code = 'PROVIDER_IN_USE';
-      err.references = refs;
-      throw err;
-    }
-    if (replacementProviderId) {
-      const replacement = state.providers.find((item) => item.id === normalizeId(replacementProviderId));
-      if (!replacement) throw new Error('替代 Provider 不存在');
-      for (const profile of state.profiles) {
-        for (const group of Object.values(profile.targetsByDriver || {})) {
-          for (const target of [group?.primary, ...(group?.fallbacks || [])].filter(Boolean)) {
-            if (target.providerId === normalized) {
-              target.providerId = replacement.id;
-              if (!replacement.models.some((model) => model.id === target.modelId)) {
-                target.modelId = replacement.models[0]?.id || '';
-              }
-            }
-          }
-        }
-      }
-    }
-    state.providers = state.providers.filter((item) => item.id !== normalized);
-    return state;
-  }, expectedRevision);
-  if (secretToDelete) {
-    const stillUsed = next.providers.some((provider) => provider.auth?.secretRef === secretToDelete);
-    if (!stillUsed) await secrets.deleteSecret(secretToDelete);
-  }
-  return next;
-}
-
-async function saveProfile(profile, expectedRevision) {
-  if (!profile?.id && !profile?.name) throw new Error('模型档案名称不能为空');
-  const id = normalizeId(profile.id || profile.name, generatedId('profile'));
-  return transaction((state) => {
-    const idx = state.profiles.findIndex((item) => item.id === id);
-    const current = idx >= 0 ? state.profiles[idx] : null;
-    const next = {
-      ...(current || {}),
-      ...clone(profile),
-      id,
-      name: String(profile.name || current?.name || id).trim(),
-      targetsByDriver: clone(profile.targetsByDriver || current?.targetsByDriver || {}),
-      createdAt: current?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    if (idx >= 0) state.profiles[idx] = next;
-    else state.profiles.push(next);
-    return state;
-  }, expectedRevision);
-}
-
-function profileReferences(state, profileId) {
-  const refs = [];
-  if (state.routing.defaultProfileId === profileId) refs.push({ kind: 'default' });
-  for (const [task, id] of Object.entries(state.routing.systemAssignments || {})) if (id === profileId) refs.push({ kind: 'system', id: task });
-  for (const [subagentId, id] of Object.entries(state.routing.subagentAssignments || {})) if (id === profileId) refs.push({ kind: 'subagent', id: subagentId });
-  return refs;
-}
-
-async function deleteProfile(id, replacementProfileId, expectedRevision) {
-  const normalized = normalizeId(id);
-  return transaction((state) => {
-    if (!state.profiles.some((profile) => profile.id === normalized)) throw new Error('模型档案不存在');
-    const refs = profileReferences(state, normalized);
-    if (refs.length && !replacementProfileId) {
-      const err = new Error(`模型档案正被 ${refs.length} 处引用，请先选择替代档案`);
-      err.code = 'PROFILE_IN_USE';
-      err.references = refs;
-      throw err;
-    }
-    if (replacementProfileId) {
-      const replacement = normalizeId(replacementProfileId);
-      if (!state.profiles.some((profile) => profile.id === replacement)) throw new Error('替代模型档案不存在');
-      if (state.routing.defaultProfileId === normalized) state.routing.defaultProfileId = replacement;
-      for (const key of Object.keys(state.routing.systemAssignments || {})) if (state.routing.systemAssignments[key] === normalized) state.routing.systemAssignments[key] = replacement;
-      for (const key of Object.keys(state.routing.subagentAssignments || {})) if (state.routing.subagentAssignments[key] === normalized) state.routing.subagentAssignments[key] = replacement;
-    }
-    state.profiles = state.profiles.filter((profile) => profile.id !== normalized);
-    return state;
-  }, expectedRevision);
-}
-
-async function saveRouting(routing, expectedRevision) {
-  return transaction((state) => {
-    const systemAssignments = { ...state.routing.systemAssignments };
-    for (const [key, value] of Object.entries(routing?.systemAssignments || {})) {
-      if (value) systemAssignments[key] = value;
-      else delete systemAssignments[key];
-    }
-    const subagentAssignments = { ...state.routing.subagentAssignments };
-    for (const [key, value] of Object.entries(routing?.subagentAssignments || {})) {
-      if (value) subagentAssignments[key] = value;
-      else delete subagentAssignments[key];
-    }
-    state.routing = {
-      ...state.routing,
-      ...clone(routing || {}),
-      systemAssignments,
-      subagentAssignments,
-      legacyTierProfileMap: { ...state.routing.legacyTierProfileMap, ...(routing?.legacyTierProfileMap || {}) },
-    };
-    return state;
-  }, expectedRevision);
-}
-
-function profileSelection(state, context = {}) {
-  const candidates = [
-    ['explicit', context.modelProfileId],
-    ['dag-node', context.dagModelProfileId],
-    ['subagent', context.subagentId ? state.routing.subagentAssignments?.[context.subagentId] : null],
-    ['system-task', context.systemTask ? state.routing.systemAssignments?.[context.systemTask] : null],
-    ['legacy-tier', context.legacyTier ? state.routing.legacyTierProfileMap?.[context.legacyTier] : null],
-    ['default', state.routing.defaultProfileId],
-  ];
-  for (const [source, profileId] of candidates) {
-    if (!profileId) continue;
-    const profile = state.profiles.find((item) => item.id === profileId);
-    if (profile) return { profile, source };
-  }
-  throw new Error('没有可用的模型档案，请打开模型中心完成配置');
-}
-
-async function resolveTargets(context = {}) {
-  const state = await load();
-  const driverId = context.driverId || DIRECT_DRIVER;
-  const { profile, source } = profileSelection(state, context);
-  const group = profile.targetsByDriver?.[driverId];
-  if (!group?.primary) throw new Error(`模型档案「${profile.name}」没有配置 Driver「${driverId}」的目标`);
-  const targets = [group.primary, ...(group.fallbacks || [])];
-  const resolved = [];
-  for (let idx = 0; idx < targets.length; idx += 1) {
-    const target = clone(targets[idx]);
-    if (driverId === DIRECT_DRIVER) {
-      const provider = state.providers.find((item) => item.id === target.providerId);
-      if (!provider) throw new Error(`模型目标引用的 Provider 不存在：${target.providerId}`);
-      const model = provider.models.find((item) => item.id === target.modelId);
-      if (!model) throw new Error(`模型目标引用的模型不存在：${target.modelId}`);
-      const key = await secrets.getSecretStatus(provider.auth?.secretRef || '');
-      if (!key.readable) {
-        if (key.present) {
-          throw new Error(`Provider「${provider.name}」的 API Key 已保存但无法从系统安全存储读取，请在 Provider 中重新输入并保存该密钥`);
-        }
-        throw new Error(`Provider「${provider.name}」尚未配置 API Key`);
-      }
-      const apiKey = key.value;
-      resolved.push({
-        profileId: profile.id,
-        profileName: profile.name,
-        selectionSource: source,
-        driverId,
-        targetIndex: idx,
-        isFallback: idx > 0,
-        target,
-        provider: { ...clone(provider), apiKey },
-        model: clone(model),
-      });
-    } else {
-      const provider = target.providerId ? state.providers.find((item) => item.id === target.providerId) : null;
-      resolved.push({
-        profileId: profile.id,
-        profileName: profile.name,
-        selectionSource: source,
-        driverId,
-        targetIndex: idx,
-        isFallback: idx > 0,
-        target,
-        provider: provider ? { ...clone(provider), apiKey: await secrets.getSecret(provider.auth?.secretRef || '') } : null,
-        model: provider?.models?.find((item) => item.id === target.modelId) || { id: target.modelId, name: target.modelId, capabilities: {} },
-      });
-    }
-  }
-  return resolved;
-}
-
-async function resolvePreview(context = {}) {
-  const targets = await resolveTargets(context);
-  return targets.map((item) => ({
-    profileId: item.profileId,
-    profileName: item.profileName,
-    selectionSource: item.selectionSource,
-    driverId: item.driverId,
-    targetIndex: item.targetIndex,
-    isFallback: item.isFallback,
-    providerId: item.provider?.id || null,
-    providerName: item.provider?.name || null,
-    modelId: item.model?.id || item.target.modelId,
-    params: clone(item.target.params || {}),
-  }));
-}
-
-function tierFromResolved(resolved) {
-  const provider = resolved.provider;
-  const params = resolved.target.params || {};
-  const caps = resolved.model?.capabilities || {};
-  const adapterId = provider?.adapterId || 'anthropic-messages';
+function normalizeCapabilities(value = {}) {
   return {
-    tierName: resolved.profileId,
-    profileId: resolved.profileId,
-    profileName: resolved.profileName,
-    selectionSource: resolved.selectionSource,
-    targetIndex: resolved.targetIndex,
-    driverId: resolved.driverId,
-    type: legacyTypeFromAdapter(adapterId),
-    adapterId,
-    baseUrl: provider?.baseUrl || '',
-    endpoint: provider?.endpoints?.messages || '',
-    model: resolved.target.modelId,
-    apiKey: provider?.apiKey || '',
-    contextWindow: positiveInt(params.contextLimit, positiveInt(caps.contextWindow, 128000)),
-    extra: {
-      maxTokens: positiveInt(params.maxOutputTokens, positiveInt(caps.maxOutputTokens, 4096)),
-      ...(params.temperature != null ? { temperature: Number(params.temperature) } : {}),
-      ...(params.reasoningEffort ? { reasoningEffort: params.reasoningEffort } : {}),
-      ...(params.effortLevel ? { effortLevel: params.effortLevel } : {}),
-    },
-    thinking: params.thinking ? { type: 'enabled', budget_tokens: positiveInt(params.thinkingBudget, 16000) } : undefined,
-    provenance: {
-      profileId: resolved.profileId,
-      profileName: resolved.profileName,
-      selectionSource: resolved.selectionSource,
-      driverId: resolved.driverId,
-      providerId: provider?.id || null,
-      providerName: provider?.name || null,
-      modelId: resolved.target.modelId,
-      targetIndex: resolved.targetIndex,
-      isFallback: resolved.targetIndex > 0,
-    },
+    contextWindow: nullablePositiveInt(value.contextWindow),
+    maxOutputTokens: nullablePositiveInt(value.maxOutputTokens),
+    inputModalities: uniqueStrings(value.inputModalities),
+    supportsTools: typeof value.supportsTools === 'boolean' ? value.supportsTools : null,
+    supportsStructuredOutput: typeof value.supportsStructuredOutput === 'boolean' ? value.supportsStructuredOutput : null,
+    reasoningEfforts: uniqueStrings(value.reasoningEfforts),
+    verbosityLevels: uniqueStrings(value.verbosityLevels),
   };
 }
-
-function shouldFallback(err) {
-  if (!err) return false;
-  if (err.name === 'AbortError' || err.name === 'TimeoutError' && err?.userInitiated) return false;
-  const status = Number(err.status || err.statusCode || err.httpStatus || err.cause?.status || 0);
-  if ([401, 403, 404, 408, 409, 429].includes(status) || status >= 500) return true;
-  const message = String(err.message || err).toLowerCase();
-  return /timeout|timed out|econn|enotfound|network|fetch failed|socket|model.*not found|unavailable|api key|authentication|unauthorized|forbidden/.test(message);
+function normalizeVerification(value = {}) {
+  const byEffort = value.byEffort || (value.responses || value.tools ? { default: { responses: value.responses || 'unknown', tools: value.tools || 'unknown', verifiedAt: value.verifiedAt || null } } : {});
+  return {
+    byEffort: clone(byEffort),
+    responses: VERIFICATION_VALUES.has(value.responses) ? value.responses : 'unknown',
+    tools: VERIFICATION_VALUES.has(value.tools) ? value.tools : 'unknown',
+    verifiedEfforts: uniqueStrings(value.verifiedEfforts),
+    verifiedAt: value.verifiedAt ? String(value.verifiedAt) : null,
+    credentialRevision: Number.isInteger(value.credentialRevision) && value.credentialRevision > 0 ? value.credentialRevision : null,
+    errorCode: value.errorCode ? String(value.errorCode) : null,
+  };
 }
-
-function stateTokenSync() {
-  try {
-    const raw = fs.readFileSync(filePath(), 'utf8');
-    return `model-config:${crypto.createHash('sha1').update(raw).digest('hex')}`;
-  } catch (err) {
-    return `model-config:${err?.code || 'missing'}:v${SCHEMA_VERSION}`;
-  }
+function normalizeModel(value, source = 'manual') {
+  const id = String(value?.id || '').trim();
+  if (!id) throw new Error('模型 ID 不能为空');
+  return {
+    id,
+    name: String(value?.name || id).trim() || id,
+    capabilities: normalizeCapabilities(value?.capabilities || value),
+    fieldSources: Object.fromEntries(Object.entries(value?.fieldSources || {}).map(([key, item]) => [String(key), String(item)])),
+    availability: value?.availability === 'stale' ? 'stale' : 'available',
+    verification: normalizeVerification(value?.verification),
+    source: String(value?.source || source),
+  };
 }
-
-async function importLegacyRendererConfig(config) {
-  if (!config || typeof config !== 'object') return { imported: 0 };
-  let imported = 0;
-  const assignmentUpdates = {};
-  for (const [legacyId, row] of Object.entries(config)) {
-    if (!row || row.useMock || !String(row.apiKey || '').trim() || !String(row.baseUrl || '').trim() || !String(row.model || '').trim()) continue;
-    const id = normalizeId(`legacy-${row.providerId || legacyId}`);
-    const existing = await getProviderInternal(id);
-    const models = [...(existing?.models || [])];
-    if (!models.some((model) => model.id === row.model)) {
-      models.push({ id: row.model, name: row.model, contextWindow: 128000, maxOutputTokens: 4096 });
-    }
-    await saveProvider({
+function normalizeAuth(value = {}) {
+  const mode = value.mode === 'header' ? 'header' : 'bearer';
+  const headerName = mode === 'header' ? String(value.headerName || '').trim() : '';
+  if (mode === 'header' && !/^[A-Za-z0-9-]{1,80}$/u.test(headerName)) throw new Error('自定义认证 Header 名称无效');
+  return { mode, ...(headerName ? { headerName } : {}) };
+}
+function normalizeConnection(value) {
+  const id = normalizeId(value?.id, 'connection');
+  const models = (Array.isArray(value?.models) ? value.models : []).map((model) => normalizeModel(model));
+  if (new Set(models.map((model) => model.id)).size !== models.length) throw new Error('同一连接内模型 ID 不能重复');
+  const kind = value?.kind === 'codexSubscription' ? 'codexSubscription' : 'api';
+  if (kind === 'codexSubscription') {
+    return {
       id,
-      name: existing?.name || `迁移配置 · ${row.providerId || legacyId}`,
-      adapterId: 'openai-chat-completions',
-      baseUrl: row.baseUrl,
-      apiKey: row.apiKey,
-      models,
-    });
-    const profileId = normalizeId(`profile-legacy-${legacyId}`);
-    const currentState = await load({ force: true });
-    const existingProfile = currentState.profiles.find((profile) => profile.id === profileId);
-    await saveProfile({
-      ...(existingProfile || {}),
-      id: profileId,
-      name: existingProfile?.name || `迁移档案 · ${legacyId}`,
-      description: '从旧 Agent API 配置迁移',
-      workloadTags: ['legacy'],
-      priority: 'balanced',
-      targetsByDriver: {
-        ...(existingProfile?.targetsByDriver || {}),
-        'direct-api': {
-          primary: {
-            id: `target-${profileId}-primary`,
-            providerId: id,
-            modelId: row.model,
-            params: { contextLimit: 128000, maxOutputTokens: 4096, temperature: 0.7, thinking: false, thinkingBudget: 0 },
-          },
-          fallbacks: [],
-        },
+      kind,
+      name: String(value?.name || 'Codex 订阅').trim() || 'Codex 订阅',
+      credentialId: '', baseUrl: '', queryParams: {}, auth: { mode: 'managed' },
+      templateId: 'codex-subscription', modelsUrl: '',
+      discovery: {
+        status: models.length ? 'ok' : 'never',
+        discoveredAt: value?.discovery?.discoveredAt ? String(value.discovery.discoveredAt) : null,
+        errorCode: value?.discovery?.errorCode ? String(value.discovery.errorCode) : null,
       },
+      models,
+    };
+  }
+  return {
+    id,
+    kind,
+    name: String(value?.name || id).trim() || id,
+    credentialId: String(value?.credentialId || '').trim(),
+    baseUrl: normalizeUrl(value?.baseUrl, 'Responses Base URL'),
+    queryParams: normalizeQueryParams(value?.queryParams),
+    auth: normalizeAuth(value?.auth),
+    templateId: String(value?.templateId || 'generic'),
+    modelsUrl: value?.modelsUrl ? normalizeUrl(value.modelsUrl, 'Models URL') : '',
+    discovery: {
+      status: ['never', 'ok', 'manual', 'failed'].includes(value?.discovery?.status) ? value.discovery.status : 'never',
+      discoveredAt: value?.discovery?.discoveredAt ? String(value.discovery.discoveredAt) : null,
+      errorCode: value?.discovery?.errorCode ? String(value.discovery.errorCode) : null,
+    },
+    models: models.map((model) => enrichModel(model, value?.baseUrl)),
+  };
+}
+function validateState(input) {
+  const state = { ...defaultState(), ...(input || {}), schemaVersion: SCHEMA_VERSION };
+  state.revision = Number.isInteger(state.revision) && state.revision >= 0 ? state.revision : 0;
+  state.credentials = (Array.isArray(state.credentials) ? state.credentials : []).map(normalizeCredential);
+  state.connections = (Array.isArray(state.connections) ? state.connections : []).map(normalizeConnection);
+  if (new Set(state.credentials.map((item) => item.id)).size !== state.credentials.length) throw new Error('凭据 ID 不能重复');
+  if (new Set(state.credentials.map((item) => item.secretRef)).size !== state.credentials.length) throw new Error('同一 secretRef 只能对应一条凭据');
+  if (new Set(state.connections.map((item) => item.id)).size !== state.connections.length) throw new Error('连接 ID 不能重复');
+  const credentialIds = new Set(state.credentials.map((item) => item.id));
+  for (const connection of state.connections) if (connection.kind === 'api' && !credentialIds.has(connection.credentialId)) throw new Error(`连接「${connection.name}」引用的 API 凭据不存在`);
+  const active = state.activeSelection;
+  if (!active || typeof active !== 'object') state.activeSelection = null;
+  else {
+    const connection = state.connections.find((item) => item.id === active.connectionId);
+    const model = connection?.models.find((item) => item.id === active.modelId && item.availability === 'available');
+    state.activeSelection = connection && model ? { connectionId: connection.id, modelId: model.id, reasoningEffort: active.reasoningEffort == null || active.reasoningEffort === '' ? null : String(active.reasoningEffort) } : null;
+  }
+  return state;
+}
+function legacyCapabilities(model = {}) {
+  const caps = model.capabilities || model;
+  return {
+    contextWindow: caps.contextWindow ?? caps.context_window ?? null,
+    maxOutputTokens: caps.maxOutputTokens ?? caps.max_output_tokens ?? null,
+    inputModalities: caps.inputModalities || [],
+    supportsTools: typeof caps.supportsTools === 'boolean' ? caps.supportsTools : null,
+    supportsStructuredOutput: typeof caps.supportsStructuredOutput === 'boolean' ? caps.supportsStructuredOutput : null,
+    reasoningEfforts: caps.reasoningEfforts || [],
+    verbosityLevels: caps.verbosityLevels || [],
+  };
+}
+function migrateProviderState(raw) {
+  const credentials = [];
+  const bySecretRef = new Map();
+  const connections = [];
+  for (const provider of Array.isArray(raw?.providers) ? raw.providers : []) {
+    const secretRef = String(provider?.secretRef || provider?.auth?.secretRef || `provider:${provider?.id || crypto.randomUUID()}:api-key`);
+    let credential = bySecretRef.get(secretRef);
+    if (!credential) {
+      credential = normalizeCredential({ id: `credential-${provider?.id || crypto.randomUUID()}`, name: provider?.name || provider?.id || '迁移的 API Key', secretRef });
+      bySecretRef.set(secretRef, credential);
+      credentials.push(credential);
+    }
+    const legacyHeader = provider?.auth?.headerName || (provider?.adapterId === 'anthropic-messages' ? 'x-api-key' : '');
+    const auth = legacyHeader && legacyHeader.toLowerCase() !== 'authorization' ? { mode: 'header', headerName: legacyHeader } : { mode: 'bearer' };
+    const models = (Array.isArray(provider?.models) ? provider.models : []).map((model) => typeof model === 'string' ? { id: model, name: model } : model).filter((model) => model?.id).map((model) => {
+      const capabilities = legacyCapabilities(model);
+      return normalizeModel({ id: model.id, name: model.name, capabilities, fieldSources: Object.fromEntries(Object.keys(capabilities).map((key) => [key, 'legacy'])), verification: { responses: 'unknown', tools: 'unknown' }, source: 'legacy' }, 'legacy');
     });
-    const subagentId = LEGACY_AGENT_TO_SUBAGENT[legacyId];
-    if (subagentId) assignmentUpdates[subagentId] = profileId;
-    imported += 1;
+    if (!provider?.baseUrl) continue;
+    const hint = `${provider.id || ''} ${provider.name || ''}`.toLowerCase();
+    connections.push(normalizeConnection({
+      id: `connection-${provider.id || crypto.randomUUID()}`,
+      name: provider.name || provider.id,
+      credentialId: credential.id,
+      baseUrl: provider.baseUrl,
+      auth,
+      templateId: hint.includes('kimi') ? 'kimi' : hint.includes('deepseek') ? 'deepseek' : provider.adapterId === 'anthropic-messages' ? 'anthropic' : 'generic',
+      discovery: { status: 'never' },
+      models,
+    }));
   }
-  if (Object.keys(assignmentUpdates).length) {
-    await saveRouting({ subagentAssignments: assignmentUpdates });
+  return validateState({ credentials, connections, activeSelection: null, revision: 1 });
+}
+async function backupLegacyState(raw) {
+  const dir = path.join(paths().root, 'migration-backups', 'responses-connections-v1');
+  const file = path.join(dir, raw?.schemaVersion === 7 ? 'model-config-pre-v8.json' : raw?.schemaVersion === 6 ? 'model-config-pre-v7.json' : 'model-config-pre-v6.json');
+  await fsp.mkdir(dir, { recursive: true, mode: 0o700 });
+  try { await fsp.access(file); } catch { await writeJson(file, raw, { mode: 0o600 }); }
+}
+function legacyRecoveryPaths() {
+  const dir = path.join(paths().root, 'migration-backups', 'responses-connections-v1');
+  return {
+    dir,
+    providersBackup: path.join(dir, 'providers-pre-v6.json'),
+    receipt: path.join(dir, 'providers-recovery-receipt.json'),
+  };
+}
+async function recoverLegacyProvidersFromEmptyV6(raw) {
+  if (raw?.schemaVersion !== SCHEMA_VERSION || raw.credentials?.length || raw.connections?.length) return null;
+  const recovery = legacyRecoveryPaths();
+  if (await readJson(recovery.receipt, null)) return null;
+  const legacyFile = path.join(paths().root, 'providers.json');
+  const legacy = await readJson(legacyFile, null);
+  if (!Array.isArray(legacy?.providers) || !legacy.providers.length) return null;
+  await fsp.mkdir(recovery.dir, { recursive: true, mode: 0o700 });
+  try { await fsp.access(recovery.providersBackup); }
+  catch { await writeJson(recovery.providersBackup, legacy, { mode: 0o600 }); }
+  const secretMigration = await secrets.migratePlainRecords();
+  const recovered = migrateProviderState(legacy);
+  recovered.revision = Math.max(Number(raw.revision) || 0, 0) + 1;
+  await writeJson(filePath(), recovered, { mode: 0o600 });
+  await writeJson(recovery.receipt, {
+    schemaVersion: 1,
+    recoveredAt: new Date().toISOString(),
+    source: 'providers.json',
+    providerCount: legacy.providers.length,
+    credentialCount: recovered.credentials.length,
+    connectionCount: recovered.connections.length,
+    migratedSecretCount: secretMigration.migrated || 0,
+    unrecoverableSecretCount: secretMigration.unrecoverable || 0,
+  }, { mode: 0o600 });
+  return recovered;
+}
+async function migrate(raw) {
+  if (raw?.schemaVersion === SCHEMA_VERSION) return validateState(raw);
+  if (raw && typeof raw === 'object') await backupLegacyState(raw);
+  await secrets.migratePlainRecords().catch(() => ({ migrated: 0 }));
+  const state = [6, 7].includes(raw?.schemaVersion)
+    ? validateState({ ...raw, connections: (raw.connections || []).map((connection) => ({ ...connection, kind: connection.kind || 'api', models: (connection.models || []).map((model) => ({ ...model, verification: { ...model.verification, byEffort: { [raw.activeSelection?.connectionId === connection.id && raw.activeSelection?.modelId === model.id ? raw.activeSelection.reasoningEffort || 'default' : 'default']: { responses: model.verification?.responses || 'unknown', tools: model.verification?.tools || 'unknown', verifiedAt: model.verification?.verifiedAt || null } } } })) })) })
+    : migrateProviderState(raw || {});
+  await writeJson(filePath(), state, { mode: 0o600 });
+  return await recoverLegacyProvidersFromEmptyV6(state) || state;
+}
+async function load() {
+  const raw = await readJson(filePath(), null);
+  if (raw?.schemaVersion === SCHEMA_VERSION) {
+    const recovered = await recoverLegacyProvidersFromEmptyV6(raw);
+    return recovered || validateState(raw);
   }
-  return { imported };
+  return migrate(raw);
+}
+async function persist(next, expectedRevision) {
+  const operation = queue.then(async () => {
+    const current = await load();
+    if (expectedRevision != null && Number(expectedRevision) !== current.revision) {
+      const error = new Error('模型配置已被其他窗口修改，请刷新后重试'); error.code = 'model_config_stale'; throw error;
+    }
+    const state = validateState({ ...next, revision: current.revision + 1 });
+    await writeJson(filePath(), state, { mode: 0o600 });
+    return clone(state);
+  });
+  queue = operation.catch(() => {});
+  return operation;
+}
+function invalidateConnection(connection) {
+  connection.models = connection.models.map((model) => ({ ...model, verification: normalizeVerification() }));
+}
+async function publicSnapshot() {
+  const state = await load();
+  const credentials = await Promise.all(state.credentials.map(async (credential) => {
+    const status = await secrets.getSecretStatus(credential.secretRef);
+    return { ...credential, secretStatus: { present: status.present, readable: status.readable, issue: status.issue || null, revision: status.revision || 0 }, connectionCount: state.connections.filter((item) => item.credentialId === credential.id).length };
+  }));
+  return { ...state, credentials };
+}
+async function saveCredential(input, expectedRevision) {
+  const state = await load();
+  if (expectedRevision != null && Number(expectedRevision) !== state.revision) { const error = new Error('模型配置已被其他窗口修改，请刷新后重试'); error.code = 'model_config_stale'; throw error; }
+  const current = state.credentials.find((item) => item.id === input?.id);
+  const credential = normalizeCredential({ ...current, ...input, secretRef: current?.secretRef || input?.secretRef });
+  const apiKeyProvided = Object.prototype.hasOwnProperty.call(input || {}, 'apiKey') && !!String(input.apiKey || '').trim();
+  if (!current && !apiKeyProvided) throw new Error('新凭据必须填写 API Key');
+  if (apiKeyProvided) await secrets.setSecret(credential.secretRef, String(input.apiKey).trim());
+  const index = state.credentials.findIndex((item) => item.id === credential.id);
+  if (index >= 0) state.credentials[index] = credential; else state.credentials.push(credential);
+  if (apiKeyProvided) for (const connection of state.connections.filter((item) => item.credentialId === credential.id)) invalidateConnection(connection);
+  return persist(state, expectedRevision);
+}
+async function deleteCredential(id, expectedRevision) {
+  const state = await load();
+  const credential = state.credentials.find((item) => item.id === String(id));
+  if (!credential) return publicSnapshot();
+  const references = [...state.connections.filter((item) => item.credentialId === credential.id), ...(state.setupOperations || []).filter((item) => item.credentialId === credential.id && item.status !== 'complete')].map((item) => ({ id: item.id, name: item.name || '未完成配置' }));
+  if (references.length) { const error = new Error(`API 凭据仍被 ${references.length} 个 Responses 连接引用`); error.code = 'credential_in_use'; error.references = references; throw error; }
+  state.credentials = state.credentials.filter((item) => item.id !== credential.id);
+  const saved = await persist(state, expectedRevision);
+  await secrets.deleteSecret(credential.secretRef);
+  return saved;
+}
+function connectionRouteIdentity(connection) {
+  return JSON.stringify({ kind: connection.kind, credentialId: connection.credentialId, baseUrl: connection.baseUrl, queryParams: connection.queryParams, auth: connection.auth });
+}
+async function saveConnection(input, expectedRevision) {
+  const state = await load();
+  const current = state.connections.find((item) => item.id === input?.id);
+  const connection = normalizeConnection({ ...current, ...input });
+  if (connection.kind === 'api' && !state.credentials.some((item) => item.id === connection.credentialId)) throw new Error('请选择有效的 API 凭据');
+  if (current && connectionRouteIdentity(current) !== connectionRouteIdentity(connection)) invalidateConnection(connection);
+  const index = state.connections.findIndex((item) => item.id === connection.id);
+  if (index >= 0) state.connections[index] = connection; else state.connections.push(connection);
+  if (state.activeSelection?.connectionId === connection.id) {
+    const model = connection.models.find((item) => item.id === state.activeSelection.modelId);
+    if (!model || model.availability === 'stale' || model.verification.responses !== 'ok') state.activeSelection = null;
+  }
+  return persist(state, expectedRevision);
+}
+async function deleteConnection(id, expectedRevision) {
+  const state = await load();
+  state.connections = state.connections.filter((item) => item.id !== String(id));
+  if (state.activeSelection?.connectionId === id) state.activeSelection = null;
+  return persist(state, expectedRevision);
+}
+async function updateModelVerification({ connectionId, modelId, mode, reasoningEffort, ok, errorCode, credentialRevision, expectedConnection }, expectedRevision) {
+  const state = await load();
+  const connection = state.connections.find((item) => item.id === connectionId);
+  const model = connection?.models.find((item) => item.id === modelId);
+  if (!connection || !model) throw new Error('待验证模型不存在');
+  if (connection.kind === 'api' && credentialRevision != null) {
+    const credential = state.credentials.find((item) => item.id === connection.credentialId);
+    const currentSecret = credential ? await secrets.getSecretStatus(credential.secretRef) : null;
+    if (currentSecret?.revision !== credentialRevision || !currentSecret?.readable
+      || (expectedConnection && connectionRouteIdentity(connection) !== connectionRouteIdentity(expectedConnection))) {
+      const error = new Error('验证期间连接或 Key 已变更，请重新验证');
+      error.code = 'verification_obsolete';
+      throw error;
+    }
+  }
+  const verification = normalizeVerification(model.verification);
+  if (mode === 'responses') verification.responses = ok ? 'ok' : 'failed';
+  else if (mode === 'tools') verification.tools = ok ? 'ok' : 'failed';
+  else throw new Error('未知模型验证模式');
+  if (ok && reasoningEffort && !verification.verifiedEfforts.includes(reasoningEffort)) verification.verifiedEfforts.push(reasoningEffort);
+  verification.verifiedAt = new Date().toISOString();
+  verification.credentialRevision = credentialRevision || null;
+  verification.errorCode = ok ? null : String(errorCode || 'verification_failed');
+  verification.byEffort[reasoningEffort || 'default'] = { ...(verification.byEffort[reasoningEffort || 'default'] || { responses: 'unknown', tools: 'unknown' }), [mode]: ok ? 'ok' : 'failed', verifiedAt: verification.verifiedAt, credentialRevision: verification.credentialRevision, errorCode: verification.errorCode };
+  model.verification = verification;
+  if (!ok && mode === 'responses' && state.activeSelection?.connectionId === connectionId && state.activeSelection?.modelId === modelId && (state.activeSelection.reasoningEffort || null) === (reasoningEffort || null)) state.activeSelection = null;
+  return persist(state, expectedRevision ?? state.revision);
+}
+async function setActive({ connectionId, modelId, reasoningEffort }, expectedRevision) {
+  const state = await load();
+  const connection = state.connections.find((item) => item.id === connectionId);
+  const model = connection?.models.find((item) => item.id === modelId);
+  if (!connection || !model || model.availability !== 'available') throw new Error('Responses 模型不存在或已不可用');
+  if (connection.kind !== 'codexSubscription' && verificationFor(model, reasoningEffort).responses !== 'ok') throw new Error('此思考档位必须先通过文本验证');
+  const effort = reasoningEffort == null || reasoningEffort === '' ? null : String(reasoningEffort);
+  if (effort && !model.capabilities.reasoningEfforts.includes(effort) && !model.verification.verifiedEfforts.includes(effort)) throw new Error('该 reasoning effort 尚未由供应商声明或实际验证');
+  state.activeSelection = { connectionId, modelId, reasoningEffort: effort };
+  state.selectionNotice = '';
+  return persist(state, expectedRevision);
+}
+async function connectionRoute(connectionId, modelId) {
+  const state = await load();
+  const selection = connectionId ? { connectionId, modelId } : state.activeSelection;
+  const connection = state.connections.find((item) => item.id === selection?.connectionId);
+  const model = connection?.models.find((item) => item.id === (modelId || selection?.modelId));
+  if (!connection || !model || model.availability !== 'available') { const error = new Error('尚未配置可用的 Responses 连接'); error.code = 'responses_provider_required'; throw error; }
+  if (connection.kind === 'codexSubscription') {
+    const effort = connectionId ? null : state.activeSelection?.reasoningEffort ?? null;
+    const fingerprint = crypto.createHash('sha256').update(JSON.stringify({ kind: connection.kind, connection: connection.id, model: model.id, effort, revision: state.revision })).digest('hex');
+    return { connection: clone(connection), model: clone(model), reasoningEffort: effort, apiKey: '', credentialRevision: null, fingerprint, modelProvider: 'openai' };
+  }
+  const credential = state.credentials.find((item) => item.id === connection.credentialId);
+  const secret = credential ? await secrets.getSecretStatus(credential.secretRef) : null;
+  if (!secret?.readable || !secret.value) { const error = new Error(`Responses 连接「${connection.name}」缺少可读取的 API Key`); error.code = 'responses_provider_required'; throw error; }
+  const effort = connectionId ? null : state.activeSelection?.reasoningEffort ?? null;
+  const fingerprint = crypto.createHash('sha256').update(JSON.stringify({ connection, model: model.id, effort, secretRevision: secret.revision })).digest('hex');
+  return { connection: clone(connection), model: clone(model), reasoningEffort: effort, apiKey: secret.value, credentialRevision: secret.revision, fingerprint, modelProvider: 'mana_responses' };
 }
 
-module.exports = {
-  SCHEMA_VERSION,
-  DIRECT_DRIVER,
-  LEGACY_PROFILE_IDS,
-  SYSTEM_TASKS,
-  load,
-  publicSnapshot,
-  transaction,
-  validateState,
-  saveProvider,
-  deleteProvider,
-  getProviderInternal,
-  providerReferences,
-  saveProfile,
-  deleteProfile,
-  saveRouting,
-  resolveTargets,
-  resolvePreview,
-  tierFromResolved,
-  shouldFallback,
-  stateTokenSync,
-  importLegacyRendererConfig,
-  modelRecord,
-  legacyTypeFromAdapter,
-};
+async function saveCodexSubscription(models, expectedRevision) {
+  const state = await load();
+  const normalizedModels = (Array.isArray(models) ? models : []).map((model) => normalizeModel({
+    ...model,
+    verification: { responses: 'ok', tools: 'ok', verifiedEfforts: model.capabilities?.reasoningEfforts || [], verifiedAt: new Date().toISOString() },
+    source: 'codex',
+  }, 'codex'));
+  if (!normalizedModels.length) throw new Error('Codex 订阅未返回可用模型');
+  const connection = normalizeConnection({
+    id: 'codex-subscription', kind: 'codexSubscription', name: 'Codex 订阅', models: normalizedModels,
+    discovery: { status: 'ok', discoveredAt: new Date().toISOString() },
+  });
+  const index = state.connections.findIndex((item) => item.kind === 'codexSubscription');
+  if (index >= 0) state.connections[index] = connection; else state.connections.unshift(connection);
+  // Refresh never selects a model. validateState clears a removed selection.
+  if (state.activeSelection?.connectionId === connection.id && !normalizedModels.some((model) => model.id === state.activeSelection.modelId)) state.selectionNotice = '当前订阅模型已从列表消失，请重新选择模型。';
+  return persist(state, expectedRevision);
+}
+async function credentialSecret(credentialId) {
+  const state = await load();
+  const credential = state.credentials.find((item) => item.id === String(credentialId || ''));
+  if (!credential) { const error = new Error('API 凭据不存在'); error.code = 'credential_unavailable'; throw error; }
+  const status = await secrets.getSecretStatus(credential.secretRef);
+  if (!status.readable || !status.value) { const error = new Error(`API 凭据「${credential.name}」不可读取`); error.code = 'credential_unavailable'; throw error; }
+  return { value: status.value, revision: status.revision, credential: clone(credential) };
+}
+async function activeRoute(connectionId = '', modelId = '') {
+  const route = await connectionRoute(connectionId, modelId);
+  if (route.connection.kind === 'api') route.model.verification = { ...route.model.verification, ...verificationFor(route.model, route.reasoningEffort) };
+  if (!connectionId && route.model.verification.responses !== 'ok') {
+    const error = new Error('当前模型尚未通过 Responses 文本验证');
+    error.code = 'responses_provider_required';
+    throw error;
+  }
+  return route;
+}
+function stateTokenSync() { return `model-config-v${SCHEMA_VERSION}`; }
+function mergeDiscoveredModels(existingModels, discoveredModels) {
+  const existing = new Map((existingModels || []).map((model) => [model.id, normalizeModel(model)]));
+  const merged = (discoveredModels || []).map((model) => {
+    const prior = existing.get(model.id); existing.delete(model.id);
+    if (!prior) return normalizeModel(model, 'provider');
+    const next = normalizeModel(model, 'provider');
+    for (const [field, source] of Object.entries(prior.fieldSources || {})) if (source === 'manual') { next.capabilities[field] = prior.capabilities[field]; next.fieldSources[field] = 'manual'; }
+    next.verification = prior.verification;
+    return next;
+  });
+  for (const prior of existing.values()) merged.push({ ...prior, availability: 'stale' });
+  return merged;
+}
+
+
+function verificationFor(model, effort) {
+  return model?.verification?.byEffort?.[effort || 'default'] || { responses: 'unknown', tools: 'unknown' };
+}
+// All operation mutations share the configuration write queue; no stale whole-file writes.
+async function mutateState(fn, expectedRevision) {
+  const operation = queue.then(async () => {
+    const state = await load();
+    if (expectedRevision != null && state.revision !== expectedRevision) throw Object.assign(new Error('配置已更新，输入已保留，请重新提交'), { code: 'model_config_stale' });
+    await fn(state);
+    const next = validateState({ ...state, revision: state.revision + 1 });
+    await writeJson(filePath(), next, { mode: 0o600 });
+    return clone(next);
+  });
+  queue = operation.catch(() => {});
+  return operation;
+}
+async function candidateRoute(connection, modelId) {
+  const model = connection.models.find((item) => item.id === modelId);
+  if (!model) throw new Error('请选择有效模型');
+  const secret = await credentialSecret(connection.credentialId);
+  return { connection: clone(connection), model: clone(model), apiKey: secret.value, credentialRevision: secret.revision, reasoningEffort: null, fingerprint: crypto.createHash('sha256').update(connectionRouteIdentity(connection) + secret.revision + modelId).digest('hex'), modelProvider: 'mana_responses' };
+}
+
+module.exports = { verificationFor, mutateState, candidateRoute, connectionRouteIdentity, SCHEMA_VERSION, activeRoute, connectionRoute, credentialSecret, deleteConnection, deleteCredential, load, mergeDiscoveredModels, normalizeCapabilities, normalizeConnection, normalizeCredential, normalizeModel, publicSnapshot, saveCodexSubscription, saveConnection, saveCredential, setActive, stateTokenSync, updateModelVerification, validateState };

@@ -25,7 +25,11 @@ async function runQualityCrossParagraphRegressionTest() {
     const qualityReviewModule = await import(
       pathToFileURL(path.join(ROOT, 'src/services/qualityReview.mjs')).href
     );
-    const { buildQualityReviewPayload, detectCrossParagraphQualityAnnotations } = qualityReviewModule;
+    const {
+      buildQualityReviewPayload,
+      detectCrossParagraphQualityAnnotations,
+      findDeterministicNotButPatterns,
+    } = qualityReviewModule;
 
     const paragraphs = [
       { id: 'p1', index: 0, text: '然后她笑了。' },
@@ -118,6 +122,33 @@ async function runQualityCrossParagraphRegressionTest() {
     assert.ok(normalizedVariants.some((annotation) => annotation.paragraphId === 'v5' && annotation.note.includes('跨段 AI 套句')));
     assert.ok(normalizedVariants.some((annotation) => annotation.paragraphId === 'v6' && annotation.note.includes('跨段 AI 套句')));
     pass('QCP6_fullwidth_halfwidth_and_reaction_variants_are_normalized', 'mixed punctuation and expanded reaction pronouns are detected without changing paragraph IDs');
+
+    const notButVariants = [
+      '她不是愤怒，而是疲惫。',
+      '她不是愤怒,是疲惫。',
+      '她不是愤怒；却是疲惫。',
+      '她不是愤怒。只是疲惫。',
+      '她不是愤怒。那是长途奔逃后的疲惫。',
+      '她不\u3000是愤怒．\n\n“更像\u00a0是疲惫。”',
+      '她不\u200b是愤怒！\r\n\r\n「是疲惫。」',
+    ];
+    for (const variant of notButVariants) {
+      assert.ok(findDeterministicNotButPatterns(variant).length > 0, `not-but variant was missed: ${variant}`);
+    }
+    assert.equal(findDeterministicNotButPatterns('这是不是他总是迟到的原因？').length, 0);
+    assert.equal(findDeterministicNotButPatterns('她不是愤怒。她转身离开。是疲惫让她沉默。').length, 0);
+
+    for (const punctuation of ['，', ',', '。', '．', '！', '!', '？', '?', '；', ';']) {
+      const pairAnnotations = detectCrossParagraphQualityAnnotations([
+        { id: `left-${punctuation}`, index: 0, text: `她不是愤怒${punctuation}` },
+        { id: `right-${punctuation}`, index: 1, text: '“是疲惫。”' },
+      ]).filter((annotation) => annotation.patternId === 'split_not_but');
+      assert.deepEqual(pairAnnotations.map((annotation) => annotation.paragraphId), [
+        `left-${punctuation}`,
+        `right-${punctuation}`,
+      ]);
+    }
+    pass('QCP7_not_but_variants_share_one_deterministic_normalizer', 'same-sentence, cross-sentence, cross-paragraph, full/half-width punctuation and ignorable spaces are detected without matching unrelated prose');
   } catch (err) {
     fail('QCP_regression', err?.message || String(err));
   }

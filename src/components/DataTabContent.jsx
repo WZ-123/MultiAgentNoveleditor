@@ -1,3 +1,4 @@
+import { committedSections } from './chatRunState.mjs';
 import React, { useEffect, useState } from 'react';
 import { User, Globe, Book, Pen, Calendar, Loader2, Edit3, Save, X, Sparkles, Package, Plus, ShieldAlert, Trash2 } from 'lucide-react';
 import { CharacterEnrichPanel } from './CharacterEnrichPanel.jsx';
@@ -67,14 +68,7 @@ async function buildOutlineTree(mana, novelDir) {
   return tree;
 }
 
-const DATA_REFRESH_TOOL_NAMES = {
-  characters: new Set(['create_character', 'update_character', 'delete_character']),
-  assets: new Set(['grant_asset', 'revoke_asset', 'apply_asset_patch']),
-  world: new Set(['update_world']),
-  timeline: new Set(['append_timeline', 'update_timeline', 'sync_chapter_timeline', 'dedupe_timeline']),
-  outline: new Set(['write_outline_nodes']),
-  style: new Set(['append_style_memory']),
-};
+
 
 export function DataTabContent({ dataType, novelId }) {
   const mana = typeof window !== 'undefined' ? window.mana : null;
@@ -90,6 +84,7 @@ export function DataTabContent({ dataType, novelId }) {
   const [editingCharacter, setEditingCharacter] = useState(null);
   const [savingCharacter, setSavingCharacter] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [externalChange, setExternalChange] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   // Hierarchical outline state
   const [outlineHierarchy, setOutlineHierarchy] = useState(null);
@@ -125,11 +120,12 @@ export function DataTabContent({ dataType, novelId }) {
           const evts = await mana.novel.listTimeline(nid);
           result = Array.isArray(evts) ? evts : [];
         } else if (dataType === 'outline') {
-          const active = await mana.novel.active();
+          const active = (await mana.novel.list()).find(entry => entry.id === nid);
           if (!active?.dir) { if (!cancelled) { setLoading(false); } return; }
           const dir = active.dir;
           // Scan for hierarchical structure
           const tree = await buildOutlineTree(mana, dir);
+          if (cancelled) return;
           setOutlineHierarchy(tree);
           // Default to master outline if exists, else main.md (legacy)
           let currentFile = null;
@@ -165,17 +161,20 @@ export function DataTabContent({ dataType, novelId }) {
   }, [mana, novelId, dataType, refreshKey]);
 
   useEffect(() => {
-    if (!novelId || !mana?.chatAgent?.onEvent) return undefined;
-    const refreshToolNames = DATA_REFRESH_TOOL_NAMES[dataType];
-    if (!refreshToolNames) return undefined;
-    const off = mana.chatAgent.onEvent((payload) => {
-      if (!payload || payload.kind !== 'tool_result') return;
-      const toolName = payload.data?.name;
-      if (payload.data?.isError || !refreshToolNames.has(toolName)) return;
-      setRefreshKey((key) => key + 1);
+    if (!novelId || !mana?.codex?.onEvent) return undefined;
+    return mana.codex.onEvent(payload => {
+      if (payload.novelId !== novelId || !committedSections(payload.committedResources).includes(dataType)) return;
+      if (editing || editingCharacter) {
+        setExternalChange(true);
+        setSaveFeedback('资料已被其他任务更新，本地草稿已保留。请复制草稿后取消编辑，再基于最新资料修改。');
+      } else setRefreshKey(key => key + 1);
     });
-    return () => { try { off(); } catch { /* ignore */ } };
-  }, [dataType, mana, novelId]);
+  }, [dataType, mana, novelId, editing, editingCharacter]);
+  useEffect(() => {
+    if (externalChange && !editing && !editingCharacter) {
+      setExternalChange(false); setRefreshKey(key => key + 1);
+    }
+  }, [externalChange, editing, editingCharacter]);
 
   const startEdit = () => {
     const text = dataType === 'characters' ? JSON.stringify(data, null, 2)
@@ -188,7 +187,7 @@ export function DataTabContent({ dataType, novelId }) {
   };
 
   const saveEdit = async () => {
-    if (!mana?.novel || !novelId) return;
+    if (!mana?.novel || !novelId || externalChange) return;
     setSaving(true);
     setError('');
     setSaveFeedback('');
@@ -233,13 +232,13 @@ export function DataTabContent({ dataType, novelId }) {
   if (editing) {
     return (
       <div className="h-full flex flex-col bg-vscode-bg" data-testid="data-tab-editor">
-        <div className="flex items-center justify-between px-3 py-1 border-b border-vscode-panel-border bg-vscode-sidebar">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-vscode-panel-border bg-vscode-sidebar">
           <span className="text-xs text-gray-400 font-mono">编辑 JSON / Markdown</span>
-          <div className="flex gap-1 items-center">
-            {saveFeedback && <span className={`text-[10px] ${saveFeedback.includes('失败') ? 'text-rose-400' : 'text-green-400'}`}>{saveFeedback}</span>}
-            <button onClick={() => setEditing(false)} className="px-2 py-0.5 text-gray-400 hover:text-gray-200 text-xs"><X size={12}/>取消</button>
-            <button data-testid="data-tab-save" onClick={saveEdit} disabled={saving} className="px-3 py-0.5 bg-blue-700 text-white rounded hover:bg-blue-600 text-xs disabled:opacity-40 flex items-center gap-1"><Save size={12}/>{saving?'保存中':'保存'}</button>
+          <div className="flex shrink-0 gap-1 items-center">
+            <button onClick={() => setEditing(false)} className="flex items-center gap-1 whitespace-nowrap px-2 py-0.5 text-gray-400 hover:text-gray-200 text-xs"><X size={12}/>取消</button>
+            <button data-testid="data-tab-save" onClick={saveEdit} disabled={saving || externalChange} className="whitespace-nowrap px-3 py-0.5 bg-blue-700 text-white rounded hover:bg-blue-600 text-xs disabled:opacity-40 flex items-center gap-1"><Save size={12}/>{saving?'保存中':'保存'}</button>
           </div>
+          {saveFeedback && <div className={`w-full text-xs ${externalChange ? 'text-amber-300' : saveFeedback.includes('失败') ? 'text-rose-400' : 'text-green-400'}`}>{saveFeedback}</div>}
         </div>
         <textarea data-testid="data-tab-editor-textarea" className="flex-1 w-full bg-transparent text-gray-300 font-mono text-xs p-4 resize-none outline-none border-none" value={editText} onChange={(e) => setEditText(e.target.value)} />
       </div>
@@ -277,7 +276,7 @@ export function DataTabContent({ dataType, novelId }) {
   };
 
   const saveCharacter = async (character) => {
-    if (!mana?.novel?.writeCharacter || !novelId) return;
+    if (!mana?.novel?.writeCharacter || !novelId || externalChange) return;
     setSavingCharacter(true);
     setError('');
     try {
@@ -561,10 +560,11 @@ export function DataTabContent({ dataType, novelId }) {
             onComplete={() => { setRefreshKey((k) => k + 1); }}
           />
         )}
+        {externalChange && <div role="alert" className="p-2 text-xs text-amber-300">{saveFeedback}</div>}
         {editingCharacter && (
           <CharacterEditDialog
             character={editingCharacter}
-            saving={savingCharacter}
+            saving={savingCharacter || externalChange}
             onCancel={() => setEditingCharacter(null)}
             onSave={saveCharacter}
             onDelete={deleteCharacter}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "description": "按需运行的安全、验证、发布维护与 Feishu 调试脚本；应用运行与构建脚本保留在 package.json。",
+  "scripts": {
+    "security:scan:current": "node scripts/security-preflight.js --current",
+    "security:scan:history": "node scripts/security-preflight.js --history",
+    "security:preflight": "node scripts/security-preflight.js --current --history --report artifacts/security/preflight.json",
+    "security:history:clean-mirror": "node scripts/clean-git-history-mirror.js",
+    "security:audit-policy": "node scripts/verify-audit-policy.js",
+    "verify:knowledge:codex-harness": "node scripts/verify-codex-harness-knowledge.js",
+    "verify:test:full-product-headless": "node scripts/verify-full-product-headless-test-contract.js",
+    "verify:codex-runtime-package": "node scripts/verify-codex-runtime-package.js",
+    "verify:packaged-codex-runtime": "node scripts/verify-packaged-codex-runtime.js",
+    "verify:renderer-build": "node scripts/verify-renderer-build.js",
+    "verify:release-package": "node scripts/verify-release-package.js",
+    "verify:release-aggregate": "node scripts/aggregate-release-receipts.js",
+    "verify:win-package": "node scripts/verify-win-package.js",
+    "feishu:show-config": "node scripts/feishu-debug.js --action=show-config",
+    "feishu:configure": "node scripts/feishu-debug.js --action=configure",
+    "feishu:verify": "node scripts/feishu-debug.js --action=verify",
+    "feishu:list-fields": "node scripts/feishu-debug.js --action=list-fields",
+    "feishu:smoke": "node scripts/feishu-debug.js --action=smoke"
+  }
+}

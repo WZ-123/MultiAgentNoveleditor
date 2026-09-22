@@ -14,8 +14,8 @@ const UNPACKED_EXE = path.join(DIST_DIR, 'win-unpacked', 'MultiAgentNovelAssista
 const DEFAULT_INSTALL_DIR = path.join(process.env.LOCALAPPDATA || '', 'Programs', 'multi-agent-novel-assistant');
 const INSTALLED_EXE = path.join(DEFAULT_INSTALL_DIR, 'MultiAgentNovelAssistant.exe');
 const NPM_CMD = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-const RELAY_URL = process.env.RELEASE_RELAY_URL || process.env.BETA_RELAY_URL || '';
-const RELAY_API_KEY = process.env.RELEASE_RELAY_API_KEY || process.env.BETA_RELAY_API_KEY || '';
+const RELAY_URL = process.env.RELEASE_RELAY_URL || '';
+const RELAY_JWKS = process.env.RELEASE_RELAY_JWKS || '';
 
 let failed = 0;
 
@@ -104,8 +104,8 @@ async function main() {
   log('=== Windows package verification ===');
 
   if (shouldBuild) {
-    if (!RELAY_URL || !RELAY_API_KEY) {
-      fail('RELEASE_RELAY_URL/RELEASE_RELAY_API_KEY required for --build (legacy BETA_* also accepted)');
+    if (!RELAY_URL || !RELAY_JWKS) {
+      fail('RELEASE_RELAY_URL and public RELEASE_RELAY_JWKS are required for --build');
       process.exit(1);
     }
     const build = runNpm(['run', 'build:win']);

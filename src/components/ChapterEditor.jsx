@@ -149,13 +149,16 @@ export const ChapterEditor = forwardRef(function ChapterEditor({
         backgroundColor: 'rgba(59,130,246,0.12)',
         color: '#bfdbfe',
       },
-      '.cm-selectionBackground, &.cm-focused .cm-selectionBackground': {
-        backgroundColor: 'rgba(96,165,250,0.32)',
+      '.cm-selectionBackground': {
+        backgroundColor: '#3a3d41',
+      },
+      '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground': {
+        backgroundColor: '#264f78',
       },
       '&.cm-focused': {
         outline: 'none',
       },
-    }),
+    }, { dark: true }),
   ], [placeholder]);
 
   useEffect(() => {

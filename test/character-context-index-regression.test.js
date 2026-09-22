@@ -74,18 +74,34 @@ async function runCharacterContextIndexRegressionTest() {
     assert.ok(rebuiltHero.summary.includes('手工改动后的克制'));
     pass('CCI2b_character_index_rebuilds_after_manual_file_edit', 'mtime check prevents stale character index summaries');
 
-    await novelData.writeOutlineNodes(novelDir, [{
-      id: 'scene-hero',
-      title: '天台暗号',
-      summary: '楚岚按阿宁留下的暗号追到天台。',
-      characters: ['hero'],
-      outfit: '夜行衣',
-      needBackground: true,
-      setting: '夜晚',
-      location: '天台',
-      pov: 'hero',
-      chapterIndex: 3,
-    }]);
+    await novelData.writeOutlineNodes(novelDir, [
+      {
+        id: 'scene-hero',
+        title: '天台暗号',
+        summary: '楚岚按阿宁留下的暗号追到天台。',
+        characters: ['hero'],
+        outfit: '夜行衣',
+        needBackground: true,
+        setting: '夜晚',
+        location: '天台',
+        pov: 'hero',
+        chapterIndex: 3,
+      },
+      {
+        id: 'scene-pov-added',
+        title: '双线会合',
+        characters: ['ally', 'missing-support'],
+        pov: 'hero',
+        chapterIndex: 4,
+      },
+      {
+        id: 'scene-pov-missing',
+        title: '失联视角',
+        characters: ['hero'],
+        pov: 'missing-pov',
+        chapterIndex: 5,
+      },
+    ]);
 
     const sceneTool = getToolByName('assemble_scene_context');
     const sceneResult = await sceneTool.handler({ nodeId: 'scene-hero' }, { novelDir });
@@ -100,7 +116,25 @@ async function runCharacterContextIndexRegressionTest() {
     assert.ok(Array.isArray(heroContext.skins));
     assert.equal(heroContext.currentOutfit, '夜行衣');
     assert.ok(Array.isArray(heroContext.omittedFields));
+    assert.deepEqual(scenePayload.unresolvedCharacterRefs, []);
+    assert.equal(scenePayload.povResolved, true);
     pass('CCI3_scene_context_uses_full_budgeted_involved_character_context', 'scene assembly gives involved character full writing context with traceable trimming');
+
+    const povAddedResult = await sceneTool.handler({ nodeId: 'scene-pov-added' }, { novelDir });
+    const povAddedPayload = JSON.parse(povAddedResult.content[0].text);
+    assert.deepEqual(povAddedPayload.characters.map((character) => character.id), ['ally', 'hero']);
+    assert.deepEqual(povAddedPayload.unresolvedCharacterRefs, ['missing-support']);
+    assert.equal(povAddedPayload.pov, 'hero');
+    assert.equal(povAddedPayload.povResolved, true);
+    pass('CCI3b_scene_context_merges_pov_and_reports_missing_characters', 'POV gets full context even when absent from characters, while unresolved refs remain visible');
+
+    const povMissingResult = await sceneTool.handler({ nodeId: 'scene-pov-missing' }, { novelDir });
+    const povMissingPayload = JSON.parse(povMissingResult.content[0].text);
+    assert.deepEqual(povMissingPayload.characters.map((character) => character.id), ['hero']);
+    assert.deepEqual(povMissingPayload.unresolvedCharacterRefs, ['missing-pov']);
+    assert.equal(povMissingPayload.pov, 'missing-pov');
+    assert.equal(povMissingPayload.povResolved, false);
+    pass('CCI3c_scene_context_exposes_unresolved_pov', 'missing POV is reported instead of being silently dropped');
 
     const deleted = await novelData.deleteCharacter(novelDir, 'ally');
     assert.equal(deleted.id, 'ally');

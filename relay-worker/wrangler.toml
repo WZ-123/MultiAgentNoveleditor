@@ -3,16 +3,22 @@ main = "src/index.js"
 compatibility_date = "2025-01-01"
 
 # Non-sensitive vars can be set here.
-# Sensitive vars (appSecret, relayApiKey) must be set via:
+# Sensitive vars must be set via the platform secret store:
 #   wrangler secret put FEISHU_APP_ID
 #   wrangler secret put FEISHU_APP_SECRET
 #   wrangler secret put FEISHU_APP_TOKEN
 #   wrangler secret put FEISHU_TABLE_ID
-#   wrangler secret put RELAY_API_KEY
+#   wrangler secret put FEISHU_AUTH_TABLE_ID
+#   wrangler secret put RELAY_SIGNING_KID
+#   wrangler secret put RELAY_SIGNING_PRIVATE_JWK
+#   wrangler secret put RELAY_PUBLIC_JWKS
+#   wrangler secret put RELAY_ISSUER
+#   wrangler secret put RELAY_AUTH_CODE_PEPPER
 #
 # For local dev, create a .dev.vars file:
 #   FEISHU_APP_ID=cli_xxx
 #   FEISHU_APP_SECRET=xxx
 #   FEISHU_APP_TOKEN=xxx
 #   FEISHU_TABLE_ID=xxx
-#   RELAY_API_KEY=your-relay-api-key
+# The desktop client never receives any of these private values. It is built
+# with relayBaseUrl and the public RELAY_PUBLIC_JWKS only.

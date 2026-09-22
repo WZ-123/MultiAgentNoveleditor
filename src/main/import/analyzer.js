@@ -1,11 +1,10 @@
 'use strict';
 
 /**
- * Import Analyzer — direct-api driver 专用。
+ * Import Analyzer — Direct API 运行时专用。
  *
- * 当使用 claude-code driver 时，导入分析由 sa-import-orchestrator subagent
- * 通过 MCP 工具自主完成。此模块的 6-task 并行分析逻辑仅作为 direct-api
- * 替补路径保留。
+ * 导入分析由 sa-import-orchestrator subagent 通过 MCP 工具完成；此模块
+ * 提供六任务并行分析的程序化能力。
  *
  * Uses the unified semantic model profile router to run analysis
  * tasks in parallel. Each task emits eventBus events so the frontend can
@@ -21,13 +20,13 @@
 
 const fs = require('node:fs').promises;
 const path = require('node:path');
-const { createProfileProvider } = require('../runtime/profileProvider');
-const eventBus = require('../runtime/eventBus');
+const { createNativeCodexProvider } = require('../codex-runtime/nativeProvider');
+const eventBus = require('../events/appEventBus');
 const characterEnricher = require('./characterEnricher');
 const { splitIntoChunks, mergeChunkResults } = require('./resultMerger');
 
 async function resolveProvider() {
-  return createProfileProvider({ systemTask: 'import-analysis', legacyTier: 'sonnet' }, { extra: { maxTokens: 16384 } });
+  return createNativeCodexProvider({}, { skillName: 'mana-import-enrichment' });
 }
 
 const MAX_TEXT_CHARS = 60000;
@@ -202,7 +201,7 @@ function _buildChunkContext(prevResults) {
   return context.join('\n');
 }
 
-async function _runTaskForChunk({ runId, provider, tier, task, chunkText, chunkIndex, chunkCount, chunkTitle, contextNote, sourceHints }) {
+async function _runTaskForChunk({ runId, provider, tier, task, chunkText, chunkIndex, chunkCount, chunkTitle, contextNote, sourceHints, abortSignal }) {
   const label = chunkCount > 1 ? `${task.label} [第 ${chunkIndex + 1}/${chunkCount} 片]` : task.label;
 
   try {
@@ -226,6 +225,7 @@ async function _runTaskForChunk({ runId, provider, tier, task, chunkText, chunkI
       messages: [{ role: 'user', content: [{ type: 'text', text: `${prompt}\n\n${analysisText}` }] }],
       tools: [],
       tier,
+      abortSignal,
     });
 
     const textBlock = (result.content || []).find((b) => b.type === 'text');
@@ -240,7 +240,7 @@ async function _runTaskForChunk({ runId, provider, tier, task, chunkText, chunkI
   }
 }
 
-async function _extractCandidateNamesForText(provider, tier, sourceHints, chunkText, chunkIndex = 0, chunkCount = 1) {
+async function _extractCandidateNamesForText(provider, tier, sourceHints, chunkText, chunkIndex = 0, chunkCount = 1, abortSignal) {
   const hintText = String(sourceHints || '').slice(0, 12000);
   const storyText = String(chunkText || '').slice(0, CHUNK_SIZE);
   if (!hintText && !storyText) return [];
@@ -271,11 +271,13 @@ ${storyText}`;
       messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
       tools: [],
       tier,
+      abortSignal,
     });
     const textBlock = (result.content || []).find((b) => b.type === 'text');
     const parsed = _parseJsonArray(textBlock?.text || '');
     return _normalizeCandidateNameItems(parsed).slice(0, 120);
   } catch (err) {
+    if (abortSignal?.aborted || err?.name === 'AbortError') throw err;
     console.error('[analyzer] AI candidate name extraction failed:', err.message);
     return [];
   }
@@ -340,7 +342,7 @@ function _mergeCandidateNameItems(items) {
   return [...byKey.values()];
 }
 
-async function _mergeCandidateNamesWithAi(provider, tier, candidateItems) {
+async function _mergeCandidateNamesWithAi(provider, tier, candidateItems, abortSignal) {
   const merged = _mergeCandidateNameItems(candidateItems).slice(0, 240);
   if (merged.length <= 1) return merged.map((item) => item.name);
   const prompt = `下面是从不同分片抽取到的角色姓名候选，可能有同一角色重复出现或别名。请合并为唯一角色姓名列表。
@@ -361,27 +363,30 @@ ${JSON.stringify(merged, null, 2)}`;
       messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
       tools: [],
       tier,
+      abortSignal,
     });
     const textBlock = (result.content || []).find((b) => b.type === 'text');
     const parsed = _parseJsonArray(textBlock?.text || '');
     const names = parsed.map(_cleanCandidateName).filter(Boolean);
     if (names.length > 0) return [...new Set(names)].slice(0, 180);
   } catch (err) {
+    if (abortSignal?.aborted || err?.name === 'AbortError') throw err;
     console.error('[analyzer] AI candidate name merge failed:', err.message);
   }
   return merged.map((item) => item.name).slice(0, 180);
 }
 
-async function _extractCandidateNamesWithAi(provider, tier, sourceHints, chunks) {
+async function _extractCandidateNamesWithAi(provider, tier, sourceHints, chunks, abortSignal) {
   const chunkList = Array.isArray(chunks) && chunks.length > 0
     ? chunks
     : [{ text: String(chunks || '') }];
   const candidates = [];
   for (let i = 0; i < chunkList.length; i++) {
-    const chunkNames = await _extractCandidateNamesForText(provider, tier, sourceHints, chunkList[i].text || '', i, chunkList.length);
+    if (abortSignal?.aborted) throw abortSignal.reason || new DOMException('aborted', 'AbortError');
+    const chunkNames = await _extractCandidateNamesForText(provider, tier, sourceHints, chunkList[i].text || '', i, chunkList.length, abortSignal);
     candidates.push(...chunkNames);
   }
-  return _mergeCandidateNamesWithAi(provider, tier, candidates);
+  return _mergeCandidateNamesWithAi(provider, tier, candidates, abortSignal);
 }
 
 function _appendCandidateNamesToHints(sourceHints, candidateNames) {
@@ -390,9 +395,9 @@ function _appendCandidateNamesToHints(sourceHints, candidateNames) {
   return `${sourceHints || ''}\n\n## AI候选角色姓名\n${names.map((name) => `- ${name}`).join('\n')}`.trim();
 }
 
-async function _analyzeSingleChunk({ provider, tier, chunk, chunkIndex, chunkCount, contextNote, runIdMap, sourceHints }) {
+async function _analyzeSingleChunk({ provider, tier, chunk, chunkIndex, chunkCount, contextNote, runIdMap, sourceHints, abortSignal }) {
   const promises = TASK_DEFS.map((task) =>
-    _runTaskForChunk({ runId: runIdMap[task.id], provider, tier, task, chunkText: chunk.text, chunkIndex, chunkCount, chunkTitle: chunk.title, contextNote, sourceHints })
+    _runTaskForChunk({ runId: runIdMap[task.id], provider, tier, task, chunkText: chunk.text, chunkIndex, chunkCount, chunkTitle: chunk.title, contextNote, sourceHints, abortSignal })
   );
   return Promise.all(promises);
 }
@@ -401,7 +406,8 @@ async function _analyzeSingleChunk({ provider, tier, chunk, chunkIndex, chunkCou
  * Start analysis tasks. Supports chunked mode for long texts.
  * Returns { runIds: string[], taskIds: string[], chunkMode?: boolean, chunkCount?: number }.
  */
-async function startAnalyses(stagingDir) {
+async function startAnalyses(stagingDir, options = {}) {
+  const abortSignal = options.abortSignal;
   // Read all chapter content
   const chaptersDir = path.join(stagingDir, 'chapters');
   let fullText = '';
@@ -428,7 +434,7 @@ async function startAnalyses(stagingDir) {
 
   const { provider, tier } = await resolveProvider();
   const analysisChunks = fullText.length > MAX_TEXT_CHARS ? splitIntoChunks(fullText, CHUNK_SIZE) : [{ title: '全文', text: fullText }];
-  const candidateNames = sourceHints ? await _extractCandidateNamesWithAi(provider, tier, sourceHints, analysisChunks) : [];
+  const candidateNames = sourceHints ? await _extractCandidateNamesWithAi(provider, tier, sourceHints, analysisChunks, abortSignal) : [];
   if (candidateNames.length > 0) {
     sourceHints = _appendCandidateNamesToHints(sourceHints, candidateNames);
   }
@@ -441,7 +447,7 @@ async function startAnalyses(stagingDir) {
       const runId = `import-${task.id}-${Date.now().toString(36)}`;
       runIds.push(runId);
       taskIds.push(task.id);
-      return _runTaskForChunk({ runId, provider, tier, task, chunkText: fullText, chunkIndex: 0, chunkCount: 1, chunkTitle: '全文', sourceHints });
+      return _runTaskForChunk({ runId, provider, tier, task, chunkText: fullText, chunkIndex: 0, chunkCount: 1, chunkTitle: '全文', sourceHints, abortSignal });
     });
 
     _pending.set(stagingDir, { promise: Promise.all(promises), chunkMode: false, chunkCount: 1, sourceHints });
@@ -470,7 +476,7 @@ async function startAnalyses(stagingDir) {
       taskIds.push(task.id);
     }
 
-    const promise = _analyzeSingleChunk({ provider, tier, chunk, chunkIndex: ci, chunkCount: chunks.length, contextNote, runIdMap, sourceHints });
+    const promise = _analyzeSingleChunk({ provider, tier, chunk, chunkIndex: ci, chunkCount: chunks.length, contextNote, runIdMap, sourceHints, abortSignal });
     chunkPromises.push(
       promise.then((results) => {
         // Collect results for this chunk into the accumulator for next chunk's context

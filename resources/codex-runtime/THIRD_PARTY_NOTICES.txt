@@ -1,0 +1,23 @@
+MultiAgentNovelAssistant bundles a dedicated Codex App Server sidecar in release builds.
+
+Project: OpenAI Codex
+Version: 0.153.0
+Tag: rust-v0.153.0
+Package source: @openai/codex@0.153.0-<platform>-<architecture>
+Source: https://github.com/openai/codex
+Release: https://github.com/openai/codex/releases/tag/rust-v0.153.0
+License: Apache License 2.0
+
+The release preparation script downloads the complete license from the pinned
+commit and packages it as LICENSE.openai-codex.txt beside the sidecar. Codex is
+used as an isolated agent runtime. MultiAgentNovelAssistant does not depend on
+the user's system Codex CLI, ChatGPT application binary, configuration, or auth.
+
+CC Switch is used only as a behavior-level reference for the independently
+implemented protocol bridges. No CC Switch source is currently copied or linked
+into this application.
+
+Reference project: CC Switch
+Pinned commit: 5ca9459d50ea4beea6a81bbc509de6ec5b6b09ca
+Source: https://github.com/farion1231/cc-switch
+License: MIT

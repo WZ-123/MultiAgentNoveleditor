@@ -24,7 +24,9 @@ if (typeof window !== 'undefined') {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <LanguageProvider>
-      <App />
+      <React.Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#181818] text-sm text-gray-400">正在载入工作区…</div>}>
+        <App />
+      </React.Suspense>
     </LanguageProvider>
   </React.StrictMode>,
 )

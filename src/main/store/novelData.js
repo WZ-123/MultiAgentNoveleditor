@@ -13,12 +13,19 @@ const lockfile = require('proper-lockfile');
 const { novelPaths, ensureNovelLayout, generateId, outlineVolumePath, outlineSectionPath, outlineChapterPath, outlineVolumeDir, outlineSectionDir } = require('./paths');
 const { parseFrontmatter, serializeFrontmatter, readFrontmatterFromFile, computeNextInsertName } = require('./frontmatter');
 const { readJson, writeJson, listJsonFiles, deleteFile, appendJsonl, readJsonl } = require('./jsonStore');
+const {
+  assertChapterName,
+  assertWritableChapterName,
+  atomicWriteFile,
+  chapterPath,
+  contentHashExact,
+} = require('./resourceIdentity');
 const { resolveAnchoredTextMatches } = require('../../domain/textMatch.cjs');
 
 // Global mutex per file path for jsonl writes (in-process serialization)
 const _mutex = new Map();
 function chapterContentHash(value) {
-  return createHash('sha256').update(String(value || '').replace(/\r\n/gu, '\n').trim()).digest('hex').slice(0, 16);
+  return contentHashExact(String(value ?? '')).slice(0, 16);
 }
 async function withMutex(key, fn) {
   const prev = _mutex.get(key) || Promise.resolve();
@@ -292,7 +299,7 @@ async function _buildCharacterIndexEntry(file, character) {
   };
 }
 
-async function rebuildCharacterIndex(novelDir) {
+async function _buildCharacterIndexSnapshot(novelDir) {
   const np = ensureNovelLayout(novelDir);
   const files = _characterJsonFiles(await listJsonFiles(np.characters)).sort();
   const characters = [];
@@ -301,34 +308,40 @@ async function rebuildCharacterIndex(novelDir) {
     if (!character) continue;
     characters.push(await _buildCharacterIndexEntry(file, character));
   }
-  const index = { schemaVersion: 1, generatedAt: Date.now(), characters };
+  return { schemaVersion: 1, generatedAt: Date.now(), characters };
+}
+
+async function rebuildCharacterIndex(novelDir) {
+  const np = ensureNovelLayout(novelDir);
+  const index = await _buildCharacterIndexSnapshot(novelDir);
   await writeJson(np.charactersIndex, index);
   return index;
 }
 
-async function readCharacterIndex(novelDir) {
+async function readCharacterIndex(novelDir, options = {}) {
   const np = ensureNovelLayout(novelDir);
+  const persistRebuild = options.persistRebuild !== false;
   const files = _characterJsonFiles(await listJsonFiles(np.characters));
   const index = await readJson(np.charactersIndex, null);
   if (!index || !Array.isArray(index.characters) || index.characters.length !== files.length) {
-    return rebuildCharacterIndex(novelDir);
+    return persistRebuild ? rebuildCharacterIndex(novelDir) : _buildCharacterIndexSnapshot(novelDir);
   }
   const generatedAt = Number(index.generatedAt) || 0;
   for (const file of files) {
     try {
       const stat = await fs.stat(file);
       if (Math.floor(stat.mtimeMs) > generatedAt) {
-        return rebuildCharacterIndex(novelDir);
+        return persistRebuild ? rebuildCharacterIndex(novelDir) : _buildCharacterIndexSnapshot(novelDir);
       }
     } catch {
-      return rebuildCharacterIndex(novelDir);
+      return persistRebuild ? rebuildCharacterIndex(novelDir) : _buildCharacterIndexSnapshot(novelDir);
     }
   }
   return index;
 }
 
-async function listCharacterIndex(novelDir) {
-  const index = await readCharacterIndex(novelDir);
+async function listCharacterIndex(novelDir, options = {}) {
+  const index = await readCharacterIndex(novelDir, options);
   return Array.isArray(index.characters) ? index.characters : [];
 }
 
@@ -422,11 +435,18 @@ async function writeCharacter(novelDir, character) {
 }
 
 async function patchCharacter(novelDir, id, patch) {
-  const current = await readCharacter(novelDir, id);
-  if (!current) throw new Error(`character not found: ${id}`);
-  const next = _deepMergePatch(current, _isPlainObject(patch) ? patch : {});
-  next.id = id;
-  return writeCharacter(novelDir, next);
+  const resolved = await resolveCharacterFile(novelDir, id);
+  if (!resolved?.character) throw new Error(`character not found: ${id}`);
+  const canonicalId = _cleanStr(resolved.character.id || resolved.fileId);
+  const next = _deepMergePatch(resolved.character, _isPlainObject(patch) ? patch : {});
+  // Names and aliases are valid lookup keys, but never new identities.
+  next.id = canonicalId;
+  const written = await writeCharacter(novelDir, next);
+  const canonicalFile = path.join(ensureNovelLayout(novelDir).characters, `${canonicalId}.json`);
+  if (path.resolve(resolved.file) !== path.resolve(canonicalFile)) {
+    await deleteFile(resolved.file);
+  }
+  return written;
 }
 
 async function deleteCharacter(novelDir, id) {
@@ -474,6 +494,19 @@ async function readCharacterMemory(novelDir, characterId) {
   const file = characterMemoryPath(novelDir, characterId);
   const memory = await readJson(file, null);
   return normalizeCharacterMemory(memory, characterId);
+}
+
+async function characterMemoryExists(novelDir, characterId) {
+  try {
+    await fs.access(characterMemoryPath(novelDir, characterId));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function deleteCharacterMemory(novelDir, characterId) {
+  await deleteFile(characterMemoryPath(novelDir, characterId));
 }
 
 function mergeMemoryArray(existing, incoming, keyPrefix) {
@@ -596,19 +629,29 @@ async function _writeAssetsIndex(novelDir, assets) {
   });
 }
 
+function _assetIndexIsCurrent(data, assets) {
+  if (!data || data.schemaVersion !== ASSET_SCHEMA_VERSION || data.storage !== 'items') return false;
+  const current = Array.isArray(data.assets) ? data.assets : [];
+  const expected = (Array.isArray(assets) ? assets : []).map(normalizeAsset).filter(Boolean).map(_assetSummary);
+  return JSON.stringify(current) === JSON.stringify(expected);
+}
+
 async function _ensureAssetStore(novelDir) {
   const np = ensureNovelLayout(novelDir);
   const itemFiles = await listJsonFiles(np.assetItems);
   if (itemFiles.length > 0) {
     const assets = await _readAssetItemFiles(novelDir);
-    await _writeAssetsIndex(novelDir, assets);
+    const currentIndex = await readJson(np.assetsMain, null);
+    if (!_assetIndexIsCurrent(currentIndex, assets)) {
+      await _writeAssetsIndex(novelDir, assets);
+    }
     return assets;
   }
 
   const data = await readJson(np.assetsMain, null);
   const legacyAssets = Array.isArray(data?.assets) ? data.assets : [];
   if (!legacyAssets.length) {
-    await _writeAssetsIndex(novelDir, []);
+    if (!_assetIndexIsCurrent(data, [])) await _writeAssetsIndex(novelDir, []);
     return [];
   }
 
@@ -648,6 +691,8 @@ async function listAssets(novelDir) {
 async function readAsset(novelDir, id) {
   const assetId = _cleanStr(id);
   if (!assetId) return null;
+  const direct = normalizeAsset(await readJson(_assetFilePath(novelDir, assetId), null));
+  if (direct) return direct;
   await _ensureAssetStore(novelDir);
   return normalizeAsset(await readJson(_assetFilePath(novelDir, assetId), null));
 }
@@ -1677,10 +1722,11 @@ async function listChapters(novelDir) {
 
 async function readChapter(novelDir, name) {
   const np = novelPaths(novelDir);
+  const safeName = assertChapterName(name);
   try {
-    const raw = await fs.readFile(path.join(np.chapters, name), 'utf8');
-    const { body } = parseFrontmatter(raw);
-    return body || raw;
+    const raw = await fs.readFile(path.join(np.chapters, safeName), 'utf8');
+    const { metadata, body } = parseFrontmatter(raw);
+    return metadata ? body : raw;
   } catch (err) {
     if (err.code === 'ENOENT') return '';
     throw err;
@@ -1693,8 +1739,9 @@ async function readChapter(novelDir, name) {
  */
 async function readChapterRaw(novelDir, name) {
   const np = novelPaths(novelDir);
+  const safeName = assertChapterName(name);
   try {
-    return await fs.readFile(path.join(np.chapters, name), 'utf8');
+    return await fs.readFile(path.join(np.chapters, safeName), 'utf8');
   } catch (err) {
     if (err.code === 'ENOENT') return '';
     throw err;
@@ -1707,10 +1754,11 @@ async function readChapterRaw(novelDir, name) {
  */
 async function readChapterWithMeta(novelDir, name) {
   const np = novelPaths(novelDir);
+  const safeName = assertChapterName(name);
   try {
-    const raw = await fs.readFile(path.join(np.chapters, name), 'utf8');
+    const raw = await fs.readFile(path.join(np.chapters, safeName), 'utf8');
     const { metadata, body } = parseFrontmatter(raw);
-    return { content: body || raw, metadata };
+    return { content: metadata ? body : raw, metadata };
   } catch (err) {
     if (err.code === 'ENOENT') return { content: '', metadata: null };
     throw err;
@@ -1769,9 +1817,10 @@ function _extractChapterMetaFromHead(head, name) {
  */
 async function readChapterMeta(novelDir, name) {
   const np = novelPaths(novelDir);
-  const filePath = path.join(np.chapters, name);
+  const safeName = assertChapterName(name);
+  const filePath = path.join(np.chapters, safeName);
   const head = await _readChapterHead(filePath, 0, 4096);
-  return _extractChapterMetaFromHead(head, name);
+  return _extractChapterMetaFromHead(head, safeName);
 }
 
 async function listChapterMetas(novelDir) {
@@ -1783,12 +1832,16 @@ async function listChapterMetas(novelDir) {
   return entries.filter(Boolean).sort((a, b) => a.fileName.localeCompare(b.fileName));
 }
 
+function sanitizeChapterContent(content) {
+  return String(content ?? '');
+}
+
 async function writeChapter(novelDir, name, content) {
   const np = ensureNovelLayout(novelDir);
-  const safe = String(name).replace(/[^\w.\-]/g, '_');
+  const safe = await assertWritableChapterName(novelDir, name);
   const file = path.join(np.chapters, safe);
-  await fs.writeFile(file, content || '', 'utf8');
-  return { name: safe, path: file };
+  const receipt = await atomicWriteFile(file, sanitizeChapterContent(content));
+  return { name: safe, path: file, contentHash: receipt.contentHash, bytes: receipt.bytes };
 }
 
 /**
@@ -1801,11 +1854,16 @@ async function writeChapter(novelDir, name, content) {
  */
 async function writeChapterWithMeta(novelDir, name, content, metadata) {
   const np = ensureNovelLayout(novelDir);
-  const safe = String(name).replace(/[^\w.\-]/g, '_');
+  const safe = await assertWritableChapterName(novelDir, name);
+  const sanitizedContent = sanitizeChapterContent(content);
+  const file = path.join(np.chapters, safe);
+  let existingRaw = null;
+  try { existingRaw = await fs.readFile(file, 'utf8'); }
+  catch (error) { if (error?.code !== 'ENOENT') throw error; }
   if (arguments.length >= 5) {
     const options = arguments[4] || {};
-    if (_hasOwn(options, 'verifiedContentHash') && chapterContentHash(content || '') !== options.verifiedContentHash) {
-      throw new Error('chapter verification hash mismatch: content changed after strict verification');
+    if (_hasOwn(options, 'verifiedContentHash') && chapterContentHash(sanitizedContent) !== options.verifiedContentHash) {
+      throw new Error('chapter verification hash mismatch: content changed after the verified preview was created');
     }
     if (_hasOwn(options, 'baseContent')) {
       const expectedBaseContent = typeof options.baseContent === 'string' ? options.baseContent : '';
@@ -1815,14 +1873,21 @@ async function writeChapterWithMeta(novelDir, name, content, metadata) {
       }
     }
   }
-  const file = path.join(np.chapters, safe);
-  const output = serializeFrontmatter(metadata || {}, content || '');
-  await fs.writeFile(file, output, 'utf8');
-  return { name: safe, path: file };
+  let output;
+  const existingParsed = existingRaw == null ? null : parseFrontmatter(existingRaw);
+  const sameMetadata = existingParsed?.metadata && JSON.stringify(existingParsed.metadata) === JSON.stringify(metadata || {});
+  if (sameMetadata) {
+    const bodyStart = existingRaw.length - existingParsed.body.length;
+    output = `${existingRaw.slice(0, bodyStart)}${sanitizedContent}`;
+  } else {
+    output = serializeFrontmatter(metadata || {}, sanitizedContent);
+  }
+  const receipt = await atomicWriteFile(file, output);
+  return { name: safe, path: file, contentHash: receipt.contentHash, bytes: receipt.bytes };
 }
 
 function _safeChapterRevisionStem(name) {
-  return String(name || 'chapter.md').replace(/[^\w.\-]/g, '_');
+  return assertChapterName(name);
 }
 
 function _chapterRevisionPaths(novelDir, name) {
@@ -1835,15 +1900,13 @@ function _chapterRevisionPaths(novelDir, name) {
 }
 
 async function _writeJsonlFile(file, entries) {
-  await fs.mkdir(path.dirname(file), { recursive: true });
   const lines = (Array.isArray(entries) ? entries : []).map((entry) => JSON.stringify(entry));
-  await fs.writeFile(file, lines.length ? `${lines.join('\n')}\n` : '', 'utf8');
+  await atomicWriteFile(file, lines.length ? `${lines.join('\n')}\n` : '');
 }
 
 async function createChapterRevision(novelDir, name, content, metadata = null, options = {}) {
   if (options?.createRevision === false) return null;
-  const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
-  if (!safeName) return null;
+  const safeName = assertChapterName(name);
 
   const source = _cleanStr(options.source) || 'manual';
   const now = new Date();
@@ -1862,7 +1925,7 @@ async function createChapterRevision(novelDir, name, content, metadata = null, o
         label: _cleanStr(options.revisionLabel) || latest.label || '自动保存',
         metadata: metadata || null,
       };
-      await fs.writeFile(path.join(paths.snapshots, latest.snapshotFile), serializeFrontmatter(metadata || {}, content || ''), 'utf8');
+      await atomicWriteFile(path.join(paths.snapshots, latest.snapshotFile), serializeFrontmatter(metadata || {}, String(content ?? '')));
       await _writeJsonlFile(paths.index, [...existing.slice(0, -1), updatedEntry]);
       return updatedEntry;
     }
@@ -1881,14 +1944,13 @@ async function createChapterRevision(novelDir, name, content, metadata = null, o
     snapshotFile,
     metadata: metadata || null,
   };
-  await fs.writeFile(path.join(paths.snapshots, snapshotFile), serializeFrontmatter(metadata || {}, content || ''), 'utf8');
+  await atomicWriteFile(path.join(paths.snapshots, snapshotFile), serializeFrontmatter(metadata || {}, String(content ?? '')));
   await appendJsonl(paths.index, entry);
   return entry;
 }
 
 async function listChapterRevisions(novelDir, name) {
-  const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
-  if (!safeName) return [];
+  const safeName = assertChapterName(name);
   const paths = _chapterRevisionPaths(novelDir, safeName);
   const entries = await readJsonl(paths.index);
   return entries
@@ -1897,7 +1959,7 @@ async function listChapterRevisions(novelDir, name) {
 }
 
 async function readChapterRevision(novelDir, name, revisionId) {
-  const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
+  const safeName = assertChapterName(name);
   const safeRevisionId = _cleanStr(revisionId);
   if (!safeName || !safeRevisionId) throw new Error('chapter name and revisionId are required');
   const paths = _chapterRevisionPaths(novelDir, safeName);
@@ -1908,13 +1970,13 @@ async function readChapterRevision(novelDir, name, revisionId) {
   const { metadata, body } = parseFrontmatter(raw);
   return {
     entry,
-    content: body || raw,
+    content: metadata ? body : raw,
     metadata: metadata || entry.metadata || null,
   };
 }
 
 async function restoreChapterRevision(novelDir, name, revisionId) {
-  const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
+  const safeName = assertChapterName(name);
   const revision = await readChapterRevision(novelDir, safeName, revisionId);
   const result = await writeChapterWithMeta(novelDir, safeName, revision.content || '', revision.metadata || null);
   const restoredRevision = await createChapterRevision(novelDir, safeName, revision.content || '', revision.metadata || null, {
@@ -1927,6 +1989,67 @@ async function restoreChapterRevision(novelDir, name, revisionId) {
     metadata: revision.metadata || null,
     revision: restoredRevision,
   };
+}
+
+function _chapterDeleteReceiptFile(novelDir) {
+  return path.join(ensureNovelLayout(novelDir).mana, 'chapter-delete-receipts.json');
+}
+
+async function deleteChapter(novelDir, name, options = {}) {
+  const safeName = assertChapterName(name);
+  const commandId = _cleanStr(options.commandId) || generateId('delete-chapter');
+  const receiptFile = _chapterDeleteReceiptFile(novelDir);
+  return withMutex(receiptFile, async () => {
+    const ledger = await readJson(receiptFile, { schemaVersion: 1, receipts: [] });
+    const previous = (ledger.receipts || []).find((receipt) => receipt.commandId === commandId);
+    if (previous) return previous;
+
+    const file = chapterPath(novelDir, safeName);
+    let raw;
+    try { raw = await fs.readFile(file, 'utf8'); }
+    catch (error) {
+      if (error?.code !== 'ENOENT') throw error;
+      const receipt = {
+        schemaVersion: 1, commandId, name: safeName, deleted: false,
+        reason: 'not_found', treeChanged: false, deletedAt: new Date().toISOString(),
+      };
+      ledger.receipts = [...(ledger.receipts || []), receipt].slice(-500);
+      await writeJson(receiptFile, ledger, { mode: 0o600 });
+      return receipt;
+    }
+
+    if (options.confirmed !== true) {
+      const error = new Error('deleting an existing chapter requires explicit confirmation');
+      error.code = 'confirmation_required';
+      throw error;
+    }
+    const parsed = parseFrontmatter(raw);
+    const revision = await createChapterRevision(
+      novelDir,
+      safeName,
+      parsed.metadata ? parsed.body : raw,
+      parsed.metadata || null,
+      { source: 'delete', revisionLabel: '删除前快照' },
+    );
+    const beforeHash = contentHashExact(raw);
+    await fs.unlink(file);
+    try {
+      await fs.access(file);
+      const error = new Error('chapter still exists after deletion');
+      error.code = 'storage_readback_mismatch';
+      throw error;
+    } catch (error) {
+      if (error?.code !== 'ENOENT') throw error;
+    }
+    const receipt = {
+      schemaVersion: 1, commandId, name: safeName, deleted: true,
+      reason: 'deleted', treeChanged: true, revisionId: revision?.id || null,
+      beforeHash, deletedAt: new Date().toISOString(),
+    };
+    ledger.receipts = [...(ledger.receipts || []), receipt].slice(-500);
+    await writeJson(receiptFile, ledger, { mode: 0o600 });
+    return receipt;
+  });
 }
 
 function _findLiteralRanges(haystack, needle) {
@@ -2143,7 +2266,7 @@ function _assertNonOverlappingPatchRanges(resolvedEdits, label = 'text patch edi
 }
 
 async function replaceChapterText(novelDir, name, targetText, replacementText, options = {}) {
-  const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
+  const safeName = assertChapterName(name);
   const search = typeof targetText === 'string' ? targetText : '';
   if (!safeName) throw new Error('chapter name is required');
   if (!search) throw new Error('targetText is required');
@@ -2169,7 +2292,7 @@ async function replaceChapterText(novelDir, name, targetText, replacementText, o
 
   const nextContent = _applyRangesToText(current, resolved.matches, replacement);
   if (options.verifiedContentHash && chapterContentHash(nextContent) !== options.verifiedContentHash) {
-    throw new Error('chapter verification hash mismatch: preview content changed after strict verification');
+    throw new Error('chapter verification hash mismatch: preview content changed after the verified preview was created');
   }
   if (options.previewOnly !== true) {
     await writeChapterWithMeta(novelDir, safeName, nextContent, metadata || null);
@@ -2187,7 +2310,7 @@ async function replaceChapterText(novelDir, name, targetText, replacementText, o
 }
 
 async function applyChapterPatch(novelDir, name, edits, options = {}) {
-  const safeName = String(name || '').replace(/[^\w.\-]/g, '_');
+  const safeName = assertChapterName(name);
   const patchEdits = Array.isArray(edits) ? edits : [];
   if (!safeName) throw new Error('chapter name is required');
   if (!patchEdits.length) throw new Error('edits must be a non-empty array');
@@ -2204,7 +2327,7 @@ async function applyChapterPatch(novelDir, name, edits, options = {}) {
   const nextContent = _applyResolvedEditRanges(current, resolvedRanges);
 
   if (options.verifiedContentHash && chapterContentHash(nextContent) !== options.verifiedContentHash) {
-    throw new Error('chapter verification hash mismatch: preview content changed after strict verification');
+    throw new Error('chapter verification hash mismatch: preview content changed after the verified preview was created');
   }
 
   if (options.previewOnly !== true) {
@@ -2504,10 +2627,11 @@ module.exports = {
   listCharacters, readCharacter, writeCharacter, patchCharacter, deleteCharacter,
   rebuildCharacterIndex, readCharacterIndex, listCharacterIndex,
   readCharacterMemory, writeCharacterMemory, patchCharacterMemory, normalizeCharacterMemory,
+  characterMemoryExists, deleteCharacterMemory,
   // assets
   normalizeAsset, listAssets, readAsset, upsertAsset, deleteAsset, grantAsset, revokeAsset, applyAssetPatch, auditAssets,
   // timeline
-  listTimeline, appendTimelineEvent, updateTimelineEvent, replaceTimeline, dedupeTimeline, queryTimeline, syncTimelineEventsForChapter,
+  normalizeTimelineEvent, listTimeline, appendTimelineEvent, updateTimelineEvent, replaceTimeline, dedupeTimeline, queryTimeline, syncTimelineEventsForChapter,
   // summaries
   appendSummary, readSummary,
   // style
@@ -2515,7 +2639,7 @@ module.exports = {
   // chapters
   listChapters, listChapterMetas, readChapter, readChapterRaw, readChapterWithMeta, readChapterMeta, resolveChapterTitle,
   writeChapter, writeChapterWithMeta, replaceChapterText, applyChapterPatch, computeNextInsertNameForNovel,
-  createChapterRevision, listChapterRevisions, readChapterRevision, restoreChapterRevision,
+  createChapterRevision, listChapterRevisions, readChapterRevision, restoreChapterRevision, deleteChapter,
   // outlines
   readOutlineNodes, writeOutlineNodes, writeOutlineNodesToHierarchy,
   writeHierarchicalOutline,

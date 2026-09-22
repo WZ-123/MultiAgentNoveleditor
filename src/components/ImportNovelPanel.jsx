@@ -13,6 +13,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [importResult, setImportResult] = useState(null);
+  const [importRun, setImportRun] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisTasks, setAnalysisTasks] = useState([]); // [{ id, label, status }, ...]
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -41,6 +42,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
     setLoading(false);
     setError('');
     setImportResult(null);
+    setImportRun(null);
     setAnalyzing(false);
     setAnalysisTasks([]);
     setAnalysisResult(null);
@@ -111,21 +113,25 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
   }
 
   async function handleCreateStaging() {
-    if (!mana?.import?.createStaging) return;
+    if (!mana?.import?.start) return;
     setLoading(true);
     setError('');
     try {
-      const result = await mana.import.createStaging({
-        sourceFiles: filePaths,
-        chapters: parsed.chapters,
-        metadata: { ...parsed.metadata, fanwork: fanworkMeta },
+      const snapshot = await mana.import.start({
+        filePaths,
+        parsed,
+        metadata: { fanwork: fanworkMeta },
         targetNovelId: targetMode === 'existing' ? targetNovelId : null,
+        target: targetMode === 'new' ? { title: projectName.trim(), dir: getComputedProjectDir() } : null,
       });
+      if (snapshot.state === 'failed' || snapshot.state === 'interrupted') throw new Error(snapshot.error?.message || '导入 staging 失败');
+      const result = { importId: snapshot.importId, runId: snapshot.runId, chapterCount: parsed.chapters.length, runSnapshot: snapshot };
+      setImportRun(snapshot);
       setImportResult(result);
       if (onImportComplete) onImportComplete({ ...result, chapters: chaptersRef.current });
       setStep('analysis');
       setLoading(false);
-      handleStartAnalysis(result.importId);
+      handleStartAnalysis(snapshot.runId);
     } catch (err) {
       setError(err?.message || String(err));
       setLoading(false);
@@ -152,12 +158,16 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
   }
 
   async function handlePromoteToNovel(importId) {
-    if (!mana?.import?.promoteToNovel || !mana?.novel?.open || !importId) return null;
+    if (!mana?.import?.finalize || !mana?.novel?.open || !importId) return null;
     const computedDir = getComputedProjectDir();
     if (!computedDir) { setError('请先选择保存目录'); return null; }
     try {
       const title = projectName.trim() || parsed?.metadata?.title || filePaths[0]?.split('/').pop()?.replace(/\.[^.]+$/, '') || '导入的小说';
-      const result = await mana.import.promoteToNovel(importId, title, computedDir);
+      const runId = importRun?.runId || importResult?.runId || (await mana.import.get(importId)).runId;
+      const snapshot = await mana.import.finalize(runId, { title, dir: computedDir });
+      setImportRun(snapshot);
+      if (snapshot.state !== 'completed') throw new Error(snapshot.error?.message || '项目 promotion 未完成');
+      const result = snapshot.result;
       if (result?.id) {
         await mana.novel.open(result.id);
         if (mana.config?.setApp) {
@@ -171,8 +181,8 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
     }
   }
 
-  async function handleStartAnalysis(importId) {
-    if (!mana?.import?.analyze || !importId) return;
+  async function handleStartAnalysis(runId) {
+    if (!mana?.import?.resume || !runId) return;
     setAnalyzing(true);
     setError('');
 
@@ -189,26 +199,27 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
 
     try {
       // Step 1: start all subagents, get runIds
-      const analysisResult = await mana.import.analyze(importId);
-      const { runIds, taskIds, chunkMode, chunkCount } = analysisResult;
+      let snapshot = await mana.import.resume(runId);
+      setImportRun(snapshot);
+      if (snapshot.state === 'interrupted' || snapshot.state === 'failed') throw new Error(snapshot.error?.message || '分析启动失败');
+      const { runIds, taskIds, chunkMode, chunkCount } = snapshot.analysis || {};
+      const effectiveRunIds = runIds || [];
+      const effectiveTaskIds = taskIds || [];
       if (chunkMode && chunkCount > 1) {
         setChunkProgress({ current: 0, total: chunkCount, chunkMode: true });
       }
 
-      if (!runIds || runIds.length === 0) {
+      if (effectiveRunIds.length === 0) {
         setAnalysisTasks(taskDefs.map((t) => ({ ...t, status: 'done' })));
-        setAnalyzing(false);
-        setStep('analysis-done');
-        return;
       }
 
-      const runIdSet = new Set(runIds);
+      const runIdSet = new Set(effectiveRunIds);
       runIdSetRef.current = runIdSet;
 
       // Track per-task runId mapping (for single-chunk mode; chunk mode has multiple runIds per task)
       const taskRunIds = {};
-      for (let i = 0; i < taskIds.length; i++) {
-        taskRunIds[runIds[i]] = taskIds[i];
+      for (let i = 0; i < effectiveTaskIds.length; i++) {
+        taskRunIds[effectiveRunIds[i]] = effectiveTaskIds[i];
       }
 
       // Track which tasks are done (deduped by taskId across chunks)
@@ -257,7 +268,12 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
       }
 
       // Step 3: wait for finalize (blocks until all subagents finish writing results)
-      const result = await mana.import.finalizeAnalysis(importId);
+      snapshot = await mana.import.resume(runId);
+      setImportRun(snapshot);
+      if (snapshot.state !== 'review') throw new Error(snapshot.error?.message || '分析未形成可审阅检查点');
+      const result = snapshot.checkpoints?.findLast?.((item) => item.phase === 'review')?.analysis
+        || [...(snapshot.checkpoints || [])].reverse().find((item) => item.phase === 'review')?.analysis
+        || {};
       setAnalysisResult(result);
 
       // Mark any stragglers as done
@@ -275,7 +291,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
       if (fanworkMeta.hasFanwork === true) {
         // Load AI-suggested fanwork info from world/meta.json as defaults
         try {
-          const staging = await mana.import.getStaging(importId);
+          const staging = await mana.import.getStaging(snapshot.importId);
           if (staging?.novelMeta?.fanwork) {
             const saved = staging.novelMeta.fanwork;
             if (saved.hasFanwork !== null) {
@@ -292,12 +308,12 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
           }
         } catch { /* ignore */ }
         // Load characters for review
-        await loadCharactersForReview(importId);
+        await loadCharactersForReview(snapshot.importId);
         setStep('character-review');
       } else {
         // Original novel or user chose to skip: auto-promote as before
         if (targetMode === 'new' && projectParentDir && projectName.trim()) {
-          const promoted = await handlePromoteToNovel(importId);
+          const promoted = await handlePromoteToNovel(snapshot.importId);
           if (promoted) {
             setImportResult((prev) => ({ ...prev, promotedId: promoted.id }));
             if (onImportComplete) {
@@ -487,7 +503,11 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
   }
 
   async function handleSkipAnalysis() {
-    setStep('done');
+    if (!importRun?.runId || !mana?.import?.cancel) return;
+    const snapshot = await mana.import.cancel(importRun.runId);
+    setImportRun(snapshot);
+    setAnalyzing(false);
+    setError('导入已取消；staging 检查点仍保留，可从导入记录恢复。');
   }
 
   async function handleDetectConflicts() {
@@ -540,6 +560,18 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
             <div className="mb-3 p-2 bg-rose-500/10 border border-rose-500/30 rounded text-rose-300 flex items-center gap-1.5">
               <AlertTriangle size={12} />
               <span>{error}</span>
+            </div>
+          )}
+
+          {importRun && (
+            <div data-testid="import-run-snapshot" data-import-state={importRun.state} className="mb-3 p-2 bg-vscode-sidebar border border-vscode-panel-border rounded text-gray-400">
+              <div className="flex items-center justify-between gap-2">
+                <span>导入阶段：{importRun.state} · 检查点 {importRun.checkpoints?.length || 0}</span>
+                {importRun.state === 'interrupted' && importRun.allowedActions?.includes('resume') && (
+                  <button type="button" data-testid="import-run-resume" onClick={() => handleStartAnalysis(importRun.runId)} className="text-blue-400 hover:text-blue-300">从检查点恢复</button>
+                )}
+              </div>
+              {importRun.error?.message && <div className="mt-1 text-rose-300">{importRun.error.message}</div>}
             </div>
           )}
 
@@ -877,7 +909,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
                 })}
               </div>
               <div className="flex justify-between">
-                <button type="button" onClick={handleSkipAnalysis} className="px-3 py-1.5 text-gray-500 hover:text-gray-300">跳过分析</button>
+                <button type="button" onClick={handleSkipAnalysis} className="px-3 py-1.5 text-gray-500 hover:text-gray-300">取消导入</button>
               </div>
             </div>
           )}
