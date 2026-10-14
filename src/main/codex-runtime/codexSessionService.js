@@ -12,13 +12,15 @@ const chatRuns = require('../store/chatRuns');
 const skillsStore = require('../store/skills');
 const novels = require('../store/novels');
 const { paths } = require('../store/paths');
-const { bodyChineseCharacterCount, chineseCharacterCount, listResourceDescriptors, proseRepetitionEvidence, readResource } = require('../mcp/novelResources');
+const { bodyChineseCharacterCount, chineseCharacterCount, listResourceDescriptors, readResource } = require('../mcp/novelResources');
 const { applyPrepared, prepareChanges } = require('../mcp/mutationService');
 const { CodexProcessManager } = require('./processManager');
 const { createDeepSeekNoReasoningBridge } = require('./deepseekNoReasoningBridge');
 const { collectNativeNovelChanges, resourceRefFromRelativePath, resourceRelativePath, syncNativeNovelWorkspace } = require('./nativeNovelWorkspace');
 const { developmentCacheRoot } = require('./runtimeManifest');
 const { TaskLedger, normalizeTaskConstraints } = require('./taskLedger');
+const { evaluateTaskResult } = require('./taskCompletion');
+const { prepareTaskContinuation } = require('./taskContinuation');
 const { invalidateForResources, recordReview } = require('./reviewLedger');
 const { contractError, hash: contentHash } = require('./contracts');
 const { getAuthorization, revokeAuthorization, setAuthorization, withAuthorization } = require('./writingAuthorization');
@@ -65,6 +67,10 @@ function additionalContext(payload, editorSnapshot, workspaceRoot = '') {
     nativeWorkspace: { kind: 'application', value: String(workspaceRoot || '') },
     resourcePath: { kind: 'application', value: editorSnapshot.resourceRef ? resourceRelativePath(editorSnapshot.resourceRef) : '' },
     taskConstraints: { kind: 'application', value: JSON.stringify(constraints) },
+    ...(payload.continuation ? { taskContinuation: { kind: 'application', value: JSON.stringify({
+      sourceRunId: payload.continuation.sourceRunId, savedResources: payload.continuation.savedResources,
+      instruction: '继续原任务的未完成部分。先读取正式资源并核对保存哈希；保留已完成内容，字数在容差内无需为凑字重写。所有新修改仍按当前批准规则提交。',
+    }) } } : {}),
   };
 }
 function modelCatalogForRoute(route) {
@@ -451,7 +457,7 @@ class CodexSessionService extends EventEmitter {
 
   async _startReserved(payload, record) {
     const { runId, conversationId } = record;
-    const taskId = String(payload.taskId || payload.userMessageId || runId);
+    let taskId = String(payload.taskId || payload.userMessageId || runId);
     const attemptId = String(payload.attemptId || `attempt-${crypto.randomUUID()}`);
     try {
       await this._recoverRuns();
@@ -463,6 +469,10 @@ class CodexSessionService extends EventEmitter {
         return clone(durable);
       }
       if (!String(payload.text || '').trim()) throw new Error('消息不能为空');
+      payload = await prepareTaskContinuation(payload);
+      taskId = String(payload.taskId || payload.userMessageId || runId);
+      Object.assign(record, { taskId, attemptId, taskConstraints: normalizeTaskConstraints(payload.taskConstraints),
+        continuedFromRunId: payload.continuation?.sourceRunId || null, editScope: clone(payload.editScope || { mode: 'unrestricted' }) });
       if (payload.persistence === 'chat') {
         await chatHistory.ensureUserMessage(conversationId, payload.novelId, { id: payload.userMessageId, text: String(payload.text).trim() });
         record.messageStored = true;
@@ -573,6 +583,7 @@ class CodexSessionService extends EventEmitter {
     const run = {
       runId, conversationId, threadId, turnId: '', userMessageId: String(payload.userMessageId || ''), text: '', items: [],
       taskId, attemptId, taskConstraints, skillName: String(payload.skillName || ''), persistence: payload.persistence || 'chat', entry, workspace,
+      continuedFromRunId: payload.continuation?.sourceRunId || null, reusedSavedResources: payload.continuation?.savedResources || [],
       nativeFileItems: new Map(), approvedFileItems: new Map(), userRejectedFileItems: new Set(), completedFileItems: new Set(), committedResources: [], interruptionRequested: false,
       selectionState: editor.selection ? { resourceRef, content: editorContent, range: editor.selection } : null,
       progress: writingOperation ? {
@@ -580,7 +591,7 @@ class CodexSessionService extends EventEmitter {
         totalSavedBodyCjk: initialBodyCjk, initialTotalBodyCjk: initialBodyCjk, runNetBodyCjk: 0, lastSavedAt: priorProgress?.lastSavedAt || null, startedAtMs, elapsedMs: 0,
         target: taskConstraints.minBodyCjk != null || taskConstraints.maxBodyCjk != null
           ? { minimum: taskConstraints.minBodyCjk, maximum: taskConstraints.maxBodyCjk }
-          : priorProgress?.target || { minimum: null, maximum: null },
+          : { minimum: null, maximum: null },
         goalStatus: 'in-progress', updatedAt: new Date(startedAtMs).toISOString(),
       } : null,
     };
@@ -607,7 +618,7 @@ class CodexSessionService extends EventEmitter {
         model: route.model.id,
         ...(route.reasoningEffort ? { effort: route.reasoningEffort } : {}),
         approvalPolicy: workspace ? 'on-request' : 'never',
-        additionalContext: additionalContext(payload, editor, workspace?.root || ''),
+        additionalContext: additionalContext({ ...payload, taskConstraints }, editor, workspace?.root || ''),
         ...(payload.outputSchema ? { outputSchema: payload.outputSchema } : {}),
       });
       run.turnId = resultId(result, 'turn');
@@ -1176,8 +1187,9 @@ class CodexSessionService extends EventEmitter {
       }
     }
     if (['turn_completed', 'turn_failed', 'turn_interrupted'].includes(event.type)) {
-      if (event.type === 'turn_completed' && run.skillName === 'mana-consistency-review' && run.entry) {
-        event = { ...event, reviewRecord: await recordReview(run.entry, run) };
+      if (event.type === 'turn_completed' && (run.skillName === 'mana-consistency-review' || run.taskConstraints?.operation === 'review') && run.entry) {
+        run.reviewRecord = await recordReview(run.entry, run);
+        event = { ...event, reviewRecord: run.reviewRecord };
       }
       await this._finalizeRun(run, event);
     } else {
@@ -1188,49 +1200,7 @@ class CodexSessionService extends EventEmitter {
   }
 
   async _evaluateTaskResult(run, modelTurnCompleted) {
-    const result = {
-      modelTurnCompleted,
-      goalVerified: false,
-      constraints: run.taskConstraints,
-      savedResources: run.committedResources,
-      contentReview: {
-        ending: { status: 'not_evaluated' },
-        plotProgression: { status: 'not_evaluated' },
-        characterConsistency: { status: 'not_evaluated' },
-      },
-    };
-    if (!modelTurnCompleted || !run.entry) return result;
-    let refs = run.taskConstraints.targetResourceRefs;
-    if (!refs.length && (run.taskConstraints.minBodyCjk != null || run.taskConstraints.maxBodyCjk != null)) {
-      refs = (await listResourceDescriptors(run.entry)).filter((item) => item.kind === 'chapter').map((item) => item.resourceRef);
-    }
-    if (refs.length) {
-      const resources = await Promise.all(refs.map((resourceRef) => readResource(run.entry, resourceRef).catch(() => null)));
-      const bodyCjk = resources.filter(Boolean).reduce((sum, resource) => sum + bodyChineseCharacterCount(resource.content), 0);
-      const readable = resources.filter(Boolean);
-      result.evidence = { targetResourceRefs: refs, readableResources: readable.length, bodyChineseCharacterCount: bodyCjk, hashes: readable.map((resource) => ({ resourceRef: resource.resourceRef, hash: resource.sourceHash })) };
-      const hasWordTarget = run.taskConstraints.minBodyCjk != null || run.taskConstraints.maxBodyCjk != null;
-      const wordStatus = run.taskConstraints.minBodyCjk != null && bodyCjk < run.taskConstraints.minBodyCjk
-        ? 'in_progress'
-        : run.taskConstraints.maxBodyCjk != null && bodyCjk > run.taskConstraints.maxBodyCjk
-          ? 'over_target'
-          : hasWordTarget ? 'met' : 'not_requested';
-      result.checks = {
-        wordCount: { status: wordStatus, blocking: false, actual: bodyCjk, minimum: run.taskConstraints.minBodyCjk, maximum: run.taskConstraints.maxBodyCjk, belowBy: Math.max(0, (run.taskConstraints.minBodyCjk ?? bodyCjk) - bodyCjk), aboveBy: Math.max(0, bodyCjk - (run.taskConstraints.maxBodyCjk ?? bodyCjk)) },
-      };
-      if (run.taskConstraints.prohibitRepetition) {
-        const repetition = proseRepetitionEvidence(readable.map((resource) => ({ resourceRef: resource.resourceRef, hash: resource.sourceHash, content: resource.content })));
-        result.evidence.repetition = repetition;
-        result.checks.repetition = { status: 'evidence_only', qualityConclusion: 'not_evaluated', actual: repetition.repeatedOccurrenceRatio };
-      }
-      if (run.taskConstraints.requiresCompleteEnding) result.contentReview.ending = { status: 'required_not_evaluated', reason: '需要独立内容审查证据' };
-      const contentRequirementsMet = !run.taskConstraints.requiresCompleteEnding;
-      const mutationSatisfied = !['write', 'edit'].includes(run.taskConstraints.operation) || run.committedResources.length > 0;
-      result.goalVerified = readable.length === refs.length && contentRequirementsMet && mutationSatisfied;
-    } else if (run.taskConstraints.operation !== 'unspecified') {
-      result.goalVerified = run.committedResources.length > 0 || ['review', 'roleplay', 'read'].includes(run.taskConstraints.operation);
-    }
-    return result;
+    return evaluateTaskResult(run, modelTurnCompleted);
   }
 
   _finishRun(runId) {

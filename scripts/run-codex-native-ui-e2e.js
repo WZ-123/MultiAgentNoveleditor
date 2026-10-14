@@ -45,8 +45,18 @@ async function run() {
       const inputs = Array.isArray(body.input) ? body.input : [];
       const commands = ['连续创作三个完整场景', '重启后继续刚才的对话', '拒绝测试：', '去 AI 味：', '普通问答：', '乙项目问答', '缓慢回答停止测试', '资料页世界观修改', '世界观脏稿冲突', '保存后停止', '重写选中文本', '在光标处续写小说正文', '人物卡修改'];
       commands.push('人物卡更新');
+      commands.push('任务状态验收', '继续未完成任务', '任务状态重启', '任务阅读验收', '任务审校验收');
       const lastUser = inputs.findLastIndex(item => item.role === 'user' && commands.some(command => JSON.stringify(item.content).includes(command)));
       const wire = requestInputText(lastUser >= 0 ? inputs.slice(lastUser) : inputs, 50000);
+      if (wire.includes('任务阅读验收') || wire.includes('任务审校验收')) {
+        if (!wire.includes('function_call_output')) return { namespace: 'mcp__novel_tools', toolName: 'read_novel_resource', arguments: { resourceRef: 'chapter:chapter-007.md' } };
+        return { text: wire.includes('任务审校验收') ? '审校报告已生成。\n```json\n{"coveredResourceRefs":["chapter:chapter-007.md"],"issues":[]}\n```' : '读取章节已完成。' };
+      }
+      if (wire.includes('任务状态重启')) return { text: '重启前保留未完成目标。' };
+      if (wire.includes('继续未完成任务')) return wire.includes('custom_tool_call_output') ? { text: '继续任务已补足，原有内容保留。' }
+        : { customToolName: 'apply_patch', input: `*** Begin Patch\n*** Update File: chapters/chapter-007.md\n@@\n 灯亮在雨中的小院。\n+${'山'.repeat(950)}\n*** End Patch` };
+      if (wire.includes('任务状态验收')) return wire.includes('custom_tool_call_output') ? { text: '本回合已保存短稿，目标仍未完成。' }
+        : { customToolName: 'apply_patch', input: addChapterPatch({ fileName: 'chapter-007.md', content: '灯亮在雨中的小院。' }) };
       if (wire.includes('人物卡更新')) return wire.includes('custom_tool_call_output') ? { text: '已有人物卡更新完成。' }
         : { customToolName: 'apply_patch', input: '*** Begin Patch\n*** Update File: characters/qa-person.json\n@@\n-  "personality": "谨慎",\n+  "personality": "果断",\n*** End Patch' };
       if (wire.includes('人物卡修改')) return wire.includes('custom_tool_call_output') ? { text: '人物卡已保存。' }

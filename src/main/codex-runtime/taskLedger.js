@@ -22,6 +22,7 @@ function normalizeTaskConstraints(value = {}) {
     allowedWriteResourceRefs: strings(source.allowedWriteResourceRefs),
     minBodyCjk: integer(source.minBodyCjk),
     maxBodyCjk: integer(source.maxBodyCjk),
+    wordCountToleranceRatio: Number.isFinite(source.wordCountToleranceRatio) && source.wordCountToleranceRatio >= 0 && source.wordCountToleranceRatio <= 0.2 ? source.wordCountToleranceRatio : 0.05,
     completionEvidence: strings(source.completionEvidence),
     prohibitRepetition: source.prohibitRepetition === true,
     requiresCompleteEnding: source.requiresCompleteEnding === true,

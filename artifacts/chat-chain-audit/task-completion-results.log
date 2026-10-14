@@ -1,0 +1,25 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:task-completion
+
+PASS task-completion 5 percent tolerance and exact boundaries
+PASS task-completion large shortfall and excess change acceptance without rollback
+PASS task-completion partial target commits remain incomplete
+PASS task-completion normal model ending without a write is not a completed writing task
+PASS task-completion formal version changes invalidate commit evidence
+PASS task-completion interruption preserves saved evidence and marks partial persistence
+PASS task-completion complete ending requires independent review after objective checks pass
+PASS task-completion reading requires actual successful resource reads
+PASS task-completion review requires covered report while quality remains unevaluated
+PASS task-completion roleplay and plain text do not invent objective acceptance
+PASS task-completion persisted task result and progress agree after incomplete turn
+PASS task-completion explicit continuation inherits target and stable task identity
+PASS task-completion valid prior commits allow completion without rewriting finished content
+PASS task-completion continuation rejects completed goals and other conversations
+PASS task-completion ordinary new messages do not inherit an unrelated target
+PASS task-completion restricted selection continuation requires a fresh user selection
+PASS task-completion continued evidence is invalidated when saved content changes
+PASS task-completion crash recovery retains partial saves and accurate progress
+task-completion-state: ok (18 scenarios)
+writing-authorization-policy: ok
+task-ledger-resource-contract: ok

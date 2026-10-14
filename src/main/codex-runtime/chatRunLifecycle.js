@@ -1,6 +1,8 @@
 'use strict';
 const chatRuns = require('../store/chatRuns');
 const chatHistory = require('../store/chatHistory');
+const novels = require('../store/novels');
+const { saveProgress } = require('./writingProgress');
 const { clone } = require('./contracts');
 const TERMINAL = new Set(['completed', 'failed', 'interrupted']);
 
@@ -18,7 +20,15 @@ module.exports = {
           record.version++;
           record.updatedAt = new Date().toISOString();
           // Retain host commit evidence, never replay an old approval or patch.
-          if (record.taskResult) record.taskResult.modelTurnCompleted = false;
+          const entry = record.novelId ? await novels.getNovelById(record.novelId).catch(() => null) : null;
+          record.taskResult = await this._evaluateTaskResult({ entry, taskConstraints: record.taskConstraints || record.taskResult?.constraints,
+            committedResources: record.savedResources || [], items: record.items || [], interruptionRequested: true,
+            continuedFromRunId: record.continuedFromRunId, reusedSavedResources: record.reusedSavedResources || record.taskResult?.reusedSavedResources || [] }, false);
+          record.taskResult.execution.status = 'interrupted';
+          if (record.progress) {
+            record.progress = { ...record.progress, phase: 'interrupted', goalStatus: 'interrupted', updatedAt: record.updatedAt };
+            await saveProgress(record.progress);
+          }
           await this._persistRecord(record);
         } else if (record.messageStored) {
           // The journal may have reached disk just before the history write failed.
@@ -38,6 +48,7 @@ module.exports = {
     if (run) Object.assign(record, {
       threadId: run.threadId, turnId: run.turnId, text: run.text || '', items: clone(run.items || []),
       savedResources: clone(run.committedResources || []), progress: clone(run.progress || null),
+      reusedSavedResources: clone(run.reusedSavedResources || []),
     });
     record.updatedAt = new Date().toISOString();
     return record;
@@ -104,12 +115,13 @@ module.exports = {
       const record = this._captureRun(run.runId);
       const terminal = event.type === 'turn_completed' ? 'completed' : event.type === 'turn_interrupted' ? 'interrupted' : 'failed';
       const taskResult = await this._evaluateTaskResult(run, terminal === 'completed');
+      taskResult.execution.status = terminal;
       if (record) {
         record.status = 'finalizing'; record.confirmation = null; record.error = event.error || null;
         record.taskResult = taskResult; record.version++;
       }
-      await this._updateProgress(run, { phase: terminal === 'completed' ? (taskResult.goalVerified ? 'completed' : 'goal-incomplete') : terminal,
-        goalStatus: terminal === 'completed' ? (taskResult.goalVerified ? 'completed' : 'incomplete') : terminal });
+      await this._updateProgress(run, { phase: terminal === 'completed' ? ({ completed: 'completed', 'awaiting-review': 'awaiting-review', unverified: 'goal-unverified', incomplete: 'goal-incomplete' })[taskResult.goalStatus] : terminal,
+        goalStatus: terminal === 'completed' ? taskResult.goalStatus : terminal });
       await this.ledger.finish(run.runId, terminal === 'completed' ? 'model_turn_completed' : terminal, {
         threadId: run.threadId, turnId: run.turnId, taskResult, failure: event.failure || null, usage: event.usage || null,
       });

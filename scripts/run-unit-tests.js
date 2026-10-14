@@ -5,6 +5,8 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const tests = [
+  'test/feedback-sync.test.js',
+  'test/feedback-path-security.test.js',
   'test/chat-chain-contract.test.js',
   'test/chat-chain-lan.test.js',
   'test/model-metadata.test.js',
@@ -21,6 +23,7 @@ const tests = [
   'test/native-existing-resource-update.test.js',
   'test/task-ledger-resource-contract.test.js',
   'test/writing-authorization-policy.test.js',
+  'test/task-completion-state.test.js',
   'test/codex-native-apply-patch.test.js',
   'test/codex-continuous-writing.test.js',
   'test/codex-native-mutation-loop.test.js',

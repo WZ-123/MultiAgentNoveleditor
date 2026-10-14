@@ -18,6 +18,9 @@ function computeNextRetryAt(retryCount) {
 }
 
 function classifyError(err) {
+  if (['feedback_path_invalid', 'feedback_id_invalid', 'ELOOP'].includes(err?.code)) {
+    return { type: 'terminal', retryable: false, code: 'feedback_path_invalid', message: err.message, userAction: 'none' };
+  }
   const normalized = err?.appError || err?.relayError || err?.feishuError || normalizeAppError(err, { domain: 'relay', phase: 'feedback_sync' });
   return { ...normalized, type: normalized.retryable === false ? 'terminal' : 'retryable' };
 }
@@ -153,7 +156,8 @@ class FeedbackSyncWorker {
 
       if (screenshotAttachment && attachmentTokens.length === 0) {
         try {
-          const uploadResult = await relayClient.uploadAttachment(screenshotAttachment.localPath, feedbackId);
+          const buffer = await feedbackOutbox.readAttachment(feedbackId, screenshotAttachment);
+          const uploadResult = await relayClient.uploadAttachment(screenshotAttachment.localPath, feedbackId, buffer);
           attachmentTokens.push(uploadResult.fileToken);
           // Save tokens immediately so we don't re-upload on retry
           await feedbackOutbox.updateSyncMeta(feedbackId, {

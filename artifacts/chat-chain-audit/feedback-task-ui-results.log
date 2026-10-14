@@ -1,0 +1,37 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:ui-e2e
+
+vite v8.2.2 building client environment for production...
+transforming...
+✓ 3728 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                  1.29 kB │ gzip:   0.55 kB
+dist/assets/index-5kvKxToi.css                 462.29 kB │ gzip:  47.34 kB
+dist/assets/rolldown-runtime-hePW80VL.js         0.71 kB │ gzip:   0.42 kB
+dist/assets/LanguageSettings-CBtYz7PY.js         1.39 kB │ gzip:   0.66 kB
+dist/assets/AppSettingsPanel-CMbKTS0p.js         1.52 kB │ gzip:   0.96 kB
+dist/assets/SearchSettings-BGiR-_7D.js           3.68 kB │ gzip:   1.82 kB
+dist/assets/StorageSettings-CGrPn0-O.js          4.44 kB │ gzip:   1.50 kB
+dist/assets/SkillSettings-BrwZSGud.js            4.56 kB │ gzip:   1.67 kB
+dist/assets/OfflineSyncDialog-Bc9yIPbx.js        4.77 kB │ gzip:   1.93 kB
+dist/assets/SearchPanel-CoE00SLe.js              4.91 kB │ gzip:   1.93 kB
+dist/assets/NovelDataBrowser-BoGdrF7K.js         7.49 kB │ gzip:   2.41 kB
+dist/assets/LanRemoteSettings-DrhO_-jq.js        9.31 kB │ gzip:   2.97 kB
+dist/assets/ImportMergePanel-BgaXCSje.js        13.62 kB │ gzip:   3.96 kB
+dist/assets/vendor-diff-BflPwFzc.js             19.01 kB │ gzip:   6.31 kB
+dist/assets/ProviderSettingsPanel-gpZb032H.js   27.46 kB │ gzip:   8.64 kB
+dist/assets/ImportNovelPanel-D-SRvTzo.js        35.16 kB │ gzip:   9.22 kB
+dist/assets/DataTabContent-BGPcgyWq.js          51.24 kB │ gzip:  13.04 kB
+dist/assets/vendor-misc-B2dMrqYV.js             91.01 kB │ gzip:  30.47 kB
+dist/assets/index-BsUCqyRs.js                  133.55 kB │ gzip:  43.57 kB
+dist/assets/vendor-markdown-Og84yWAm.js        161.49 kB │ gzip:  48.51 kB
+dist/assets/vendor-react-BH0rCosz.js           179.43 kB │ gzip:  56.81 kB
+dist/assets/vendor-editor-CINcjdpy.js          537.28 kB │ gzip: 185.62 kB
+
+✓ built in 795ms
+[codex] selection_stale 编辑目标或选区版本已经变化，请重新选择
+codex-native-ui-e2e: phase 1 complete
+codex-native-ui-e2e: phase 2 complete
+codex-native-ui-e2e: ok

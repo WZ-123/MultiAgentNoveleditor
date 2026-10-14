@@ -17,7 +17,7 @@ function displayItemStatus(status) {
 function progressPhaseLabel(phase) {
   return ({
     'waiting-model': '等待模型响应', reasoning: '推理中', 'tool-running': '工具执行中', 'waiting-approval': '等待批准',
-    completed: '本回合已结束', 'goal-incomplete': '本回合已结束', failed: '执行失败', interrupted: '已停止',
+    completed: '客观检查通过', 'goal-incomplete': '目标尚未完成', 'goal-unverified': '目标缺少验收证据', 'awaiting-review': '客观达标，内容待评阅', failed: '执行失败', interrupted: '已停止',
   })[phase] || '准备中';
 }
 
@@ -97,7 +97,16 @@ function ExecutionResult({ execution }) {
     {resources.map((r, i) => <div key={`${r.resourceRef}-${i}`} className="text-emerald-300">{r.resourceRef} · {r.mode || '已提交'}</div>)}
     {execution.error && <div className="text-rose-300">{execution.error}</div>}
     {execution.status !== 'completed' && resources.length > 0 && <div>此前保存已保留，后续内容未完成。</div>}
-    {execution.taskResult && <div>目标验证：{execution.taskResult.goalVerified ? '宿主检查通过（不代表内容质量全部通过）' : '尚未验证完整目标'}</div>}
+    {execution.taskResult?.schemaVersion === 2 ? <>
+      <div data-testid="task-objective-status">客观验收：{({ met: '检查通过', incomplete: '目标尚未完成', not_evaluated: '缺少可验证的目标或执行证据' })[execution.taskResult.objective?.status]}</div>
+      {execution.taskResult.checks?.wordCount?.status !== 'not_requested' && execution.taskResult.checks?.wordCount && <div data-testid="task-word-count">
+        正文字数：{execution.taskResult.checks.wordCount.actual} · 目标 {execution.taskResult.checks.wordCount.minimum ?? '不限'}–{execution.taskResult.checks.wordCount.maximum ?? '不限'} · 容差 {Math.round(execution.taskResult.checks.wordCount.toleranceRatio * 100)}%
+        {execution.taskResult.checks.wordCount.status === 'met' ? ' · 达标' : ' · 超出容差，已保存内容保留'}
+      </div>}
+      {execution.taskResult.objective?.unmet?.some(reason => ['targets_not_saved', 'no_current_commit', 'saved_version_changed'].includes(reason)) && <div>部分目标缺少当前有效的提交证据。</div>}
+      {execution.taskResult.reusedSavedResources?.length > 0 && <div>继续原任务 · 核对此前 {execution.taskResult.reusedSavedResources.length} 项保存证据</div>}
+      <div data-testid="task-content-review">内容评阅：{execution.taskResult.constraints.requiresCompleteEnding ? '完整结局待独立评阅；' : ''}人物一致性、情节和文风待评阅。</div>
+    </> : execution.taskResult && <div>历史目标判定：{execution.taskResult.goalVerified ? '宿主检查通过；字数与内容质量未分别验收' : '尚未验证完整目标'}</div>}
   </div>;
 }
 
@@ -232,6 +241,7 @@ export function AiChatPanel({ editorContext, onBeforeSendMessage, onOpenModelSet
         if (activeRef.current === activeId) { activeRef.current = conversationId; setActiveId(conversationId); }
       }
       attempt ||= { runId: id('run'), userMessageId: id('msg'), conversationId, novelId, persistence: 'chat', text,
+        continueFromRunId: draft.continueFromRunId,
         skillName: draft.skillName, editorContext: target, editScope: draft.editScope || { mode: 'unrestricted' },
         taskConstraints: taskConstraintsFor(text, draft.skillName, { ...target, editScope: draft.editScope }) };
       setLastAttempt(attempt);
@@ -313,6 +323,8 @@ export function AiChatPanel({ editorContext, onBeforeSendMessage, onOpenModelSet
         <div ref={endRef} />
       </div>
       <div className="shrink-0 border-t border-white/10 p-2">
+        {!run && snapshot?.taskResult?.goalStatus === 'incomplete' && (!snapshot.editScope?.mode || snapshot.editScope.mode === 'unrestricted') && <button data-testid="continue-task" className="mb-2 text-xs text-amber-200 underline" onClick={() => changeDraft({ text: '继续未完成任务，保留已保存内容，只处理尚未完成的部分。', continueFromRunId: snapshot.runId })}>继续未完成任务</button>}
+        {draft.continueFromRunId && <div className="mb-2 flex justify-between gap-2 text-xs text-amber-200"><span>继续当前对话的未完成目标</span><button onClick={() => changeDraft({ text: draft.text })}>清除任务关联</button></div>}
         {draft.editScope && <div data-testid="chat-edit-scope" className="mb-2 flex items-center justify-between gap-2 text-xs text-amber-200"><span className="min-w-0 break-all">目标：{draft.editScope.resourceRef} · {draft.editScope.mode === 'insertion' ? '在光标插入' : '仅修改选区'} {draft.editScope.start}–{draft.editScope.end}</span><button className="shrink-0 whitespace-nowrap" onClick={() => changeDraft({ text: draft.text })}>清除范围</button></div>}
         {!status.ready && <button onClick={onOpenModelSettings} className="mb-2 text-xs text-amber-200">配置模型连接</button>}
         <div className="flex items-end gap-2 rounded-xl border border-white/10 bg-black/20 p-2">

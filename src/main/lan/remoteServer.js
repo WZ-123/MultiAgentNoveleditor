@@ -545,6 +545,9 @@ function bridgeScript() {
     offlineLog,
     feedback: {
       submit: (payload, options) => invoke('mana:feedback:submit', { payload: payload || {}, options: options || {} }),
+      getRecord: (feedbackId) => invoke('mana:feedback:getRecord', { feedbackId }),
+      listOutbox: () => invoke('mana:feedback:listOutbox'),
+      retrySync: (feedbackId) => invoke('mana:feedback:retrySync', { feedbackId }),
     },
     networkStatus: {
       set: (status) => invoke('mana:networkStatus:set', { status }),
@@ -813,7 +816,7 @@ async function start(options = {}) {
   try {
     await new Promise((resolve, reject) => {
       server.once('error', reject);
-      server.listen(serverPort, '0.0.0.0', () => {
+      server.listen(serverPort, options.host || '0.0.0.0', () => {
         server.off('error', reject);
         const address = server.address();
         if (address && typeof address === 'object' && address.port) {
@@ -826,7 +829,7 @@ async function start(options = {}) {
     server = null;
     throw err;
   }
-  console.log(`[lanRemote] listening on http://0.0.0.0:${serverPort}`);
+  console.log(`[lanRemote] listening on http://${options.host || '0.0.0.0'}:${serverPort}`);
   return getStatus();
 }
 

@@ -113,8 +113,8 @@ class RelayClient {
     throw Object.assign(appError(normalized, normalized), { relayError: normalized, feishuError: normalized });
   }
 
-  async uploadAttachment(filePath, feedbackId) {
-    const buffer = await fs.readFile(filePath);
+  async uploadAttachment(filePath, feedbackId, verifiedBuffer = null) {
+    const buffer = Buffer.isBuffer(verifiedBuffer) ? verifiedBuffer : await fs.readFile(filePath);
     if (buffer.length > 10 * 1024 * 1024) throw Object.assign(new Error('反馈附件超过 10 MiB 限制'), { code: 'request_too_large' });
     const fileName = path.basename(filePath);
     const attachmentHash = crypto.createHash('sha256').update(buffer).digest('hex');

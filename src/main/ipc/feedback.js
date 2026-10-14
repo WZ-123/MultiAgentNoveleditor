@@ -105,6 +105,7 @@ function safeIpc(handler) {
 function registerFeedbackIpc() {
   ipcMain.handle('mana:feedback:submit', safeIpc(async (event, { payload, options }) => {
     const nextPayload = payload && typeof payload === 'object' ? { ...payload } : {};
+    if (nextPayload.feedbackId != null && nextPayload.feedbackId !== '') feedbackOutbox.validateFeedbackId(nextPayload.feedbackId);
     const includeLogs = nextPayload?.userInput?.feedbackMode === 'context-with-logs';
     const mainLogs = recentLogBuffer.getFeedbackLogSnapshot();
 

@@ -1,0 +1,31 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:feedback
+
+PASS FS1_submitFeedback_has_sync_metadata
+PASS FS2_updateSyncMeta_updates_status_and_index
+PASS FS3_listPendingForSync_filters_correctly
+PASS FS4_recoverStuckSyncing_resets_to_pending
+PASS FS5_computeNextRetryAt_exponential_backoff
+PASS FS6_classifyError_network_errors
+PASS FS7_classifyError_feishu_errors
+PASS FS8_fieldMapper_maps_payload_correctly
+PASS FS9_syncLock_acquire_release
+PASS FS10_fieldMapper_attachment_field
+PASS feedback-security invalid IDs rejected across storage and IPC
+PASS feedback-security duplicate concurrent submissions retain first record and attachment
+PASS feedback-security parallel records retained in index
+PASS feedback-security failed publication leaves no partial record and can be retried
+[feedbackSync] Sent feedback fb-mabc1234-abc123 to Feishu record fixture-record
+PASS feedback-security safe legacy records remain readable and syncable
+PASS feedback-security attachment names cannot escape or silently replace each other
+PASS feedback-security record and index symlinks rejected without touching targets
+PASS feedback-security forged attachment paths and symlinks never uploaded
+PASS feedback-security mismatched and malformed records isolated from valid records
+[feedbackSync] Sent feedback fb-ipc to Feishu record fixture-record
+PASS feedback-security IPC screenshot submission query retry and duplicate failure
+[lanRemote] listening on http://127.0.0.1:52311
+[feedbackSync] Sent feedback fb-lan to Feishu record fixture-record
+PASS feedback-security authenticated LAN uses production feedback IPC handlers
+PASS feedback-security outbox directory symlink rejected
+feedback-path-security: ok (12 scenarios)

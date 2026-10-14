@@ -46,6 +46,8 @@ async function runCodexNativeUiE2E(win) {
   await waitFor(win, `document.querySelector('[data-testid="codex-chat-panel"]')`);
   await waitFor(win, `document.querySelector('[data-testid="codex-input"]') && !document.querySelector('[data-testid="codex-input"]').disabled`);
   if (phase === '2') {
+    await waitFor(win, `document.querySelector('[data-testid="continue-task"]') && document.body.innerText.includes('重启前保留未完成目标。') && [...document.querySelectorAll('[data-testid="task-word-count"]')].at(-1)?.innerText.includes('5000')`);
+    await screenshot(win, 'task-completion-restart-incomplete.png');
     await send(win, '重启后继续刚才的对话');
     await waitText(win, '重启后已从原生 thread 继续对话。');
     await screenshot(win, 'codex-native-restart-resume.png');
@@ -216,6 +218,52 @@ async function runCodexNativeUiE2E(win) {
   await win.webContents.executeJavaScript(`document.querySelector('button[aria-label="发送"]').click()`);
   await waitFor(win, `document.querySelector('[data-testid="codex-error"]')?.innerText.includes('版本')`);
   await screenshot(win, 'chat-chain-stale-selection.png');
+
+  // Real renderer -> preload -> feedback IPC -> formal outbox, with real capturePage.
+  const feedbackState = await win.webContents.executeJavaScript(`(async () => {
+    const result = await window.mana.feedback.submit({feedbackId:'fb-ui-security',userInput:{issueTitle:'隔离反馈验收',feedbackMode:'opinion-only'}},{includeScreenshot:true});
+    const record = await window.mana.feedback.getRecord(result.feedbackId);
+    const records = await window.mana.feedback.listOutbox();
+    let illegalRejected = false, duplicateRejected = false;
+    try { await window.mana.feedback.submit({feedbackId:'../outside'}); } catch { illegalRejected = true; }
+    try { await window.mana.feedback.submit({feedbackId:result.feedbackId}); } catch { duplicateRejected = true; }
+    return {id:result.feedbackId,attachmentCount:record.payload.attachments.length,syncStatus:record.syncStatus,listed:records.some(item=>item.feedbackId===result.feedbackId),illegalRejected,duplicateRejected};
+  })()`);
+  if (feedbackState.attachmentCount !== 1 || feedbackState.syncStatus !== 'pending' || !feedbackState.listed || !feedbackState.illegalRejected || !feedbackState.duplicateRejected) throw new Error('renderer feedback security flow failed: ' + JSON.stringify(feedbackState));
+  const outbox = require('../src/main/store/feedbackOutbox');
+  const feedbackRecord = await outbox.getRecord(feedbackState.id);
+  if (!(await outbox.readAttachment(feedbackState.id, feedbackRecord.payload.attachments[0])).length) throw new Error('real screenshot attachment missing');
+
+  await sendWithSkill(win, '任务状态验收：创作到1000—1200字，先保存短稿。', 'mana-fiction-writing');
+  await waitFor(win, `document.querySelector('[data-testid="codex-confirmation-card"]')`);
+  await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes('确认写入')).click()`);
+  await waitText(win, '本回合已保存短稿，目标仍未完成。');
+  await waitFor(win, `document.querySelector('[data-testid="continue-task"]') && [...document.querySelectorAll('[data-testid="task-word-count"]')].at(-1)?.innerText.includes('容差 5%') && [...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('目标尚未完成')`);
+  if (await novelData.readChapter(novel.dir, 'chapter-007.md') !== '灯亮在雨中的小院。\n') throw new Error('shortfall rolled back a legal save');
+  await screenshot(win, 'task-completion-shortfall-saved.png');
+  await win.webContents.reload();
+  await waitFor(win, `document.querySelector('[data-testid="continue-task"]')`);
+  const preserved = await Promise.all(['chapter-001.md','chapter-002.md','chapter-003.md','chapter-004.md','chapter-005.md','chapter-006.md'].map(async name => [name, await novelData.readChapter(novel.dir, name)]));
+  await win.webContents.executeJavaScript(`document.querySelector('[data-testid="continue-task"]').click()`);
+  await waitFor(win, `document.querySelector('[data-testid="codex-input"]')?.value.includes('继续未完成任务')`);
+  await win.webContents.executeJavaScript(`document.querySelector('button[aria-label="发送"]').click()`);
+  await waitFor(win, `document.querySelector('[data-testid="codex-confirmation-card"]')`);
+  await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes('确认写入')).click()`);
+  await waitText(win, '继续任务已补足，原有内容保留。');
+  await waitFor(win, `!document.querySelector('[data-testid="continue-task"]') && [...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('检查通过')`);
+  const continuedContent = await novelData.readChapter(novel.dir, 'chapter-007.md');
+  if (!continuedContent.startsWith('灯亮在雨中的小院。\n') || continuedContent.length < 950) throw new Error('continuation overwrote the prior saved content');
+  for (const [name, content] of preserved) if (await novelData.readChapter(novel.dir, name) !== content) throw new Error('continuation changed already finished chapter ' + name);
+  await screenshot(win, 'task-completion-continued.png');
+  await sendWithSkill(win, '读取当前章节：任务阅读验收', '');
+  await waitText(win, '读取章节已完成。');
+  await waitFor(win, `[...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('检查通过')`);
+  await sendWithSkill(win, '审校：任务审校验收', 'mana-consistency-review');
+  await waitText(win, '审校报告已生成。');
+  await waitFor(win, `[...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('检查通过') && [...document.querySelectorAll('[data-testid="task-content-review"]')].at(-1)?.innerText.includes('待评阅')`);
+  await sendWithSkill(win, '任务状态重启：最终目标5000字', 'mana-fiction-writing');
+  await waitText(win, '重启前保留未完成目标。');
+  await waitFor(win, `document.querySelector('[data-testid="continue-task"]')`);
 
   return { failed: 0 };
 }

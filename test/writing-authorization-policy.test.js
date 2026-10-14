@@ -58,12 +58,12 @@ async function run() {
     assert.equal(overTarget.checks.wordCount.status, 'over_target');
     assert.equal(overTarget.checks.wordCount.blocking, false);
     assert.equal(overTarget.checks.wordCount.aboveBy, 1);
-    assert.equal(overTarget.goalVerified, true, 'length is informational and must not block task completion');
+    assert.equal(overTarget.goalVerified, false, 'length outside tolerance changes acceptance, never the legal save');
     active.taskConstraints.minBodyCjk = 10;
     active.taskConstraints.maxBodyCjk = 20;
     const belowTarget = await service._evaluateTaskResult(active, true);
     assert.equal(belowTarget.checks.wordCount.belowBy, 5);
-    assert.equal(belowTarget.goalVerified, true, 'shortfall is reported without inventing a hard completion gate');
+    assert.equal(belowTarget.goalVerified, false, 'a large shortfall must not be reported as a completed goal');
     assert.equal(await novelData.readChapter(novel.dir, 'chapter-001.md'), '雨落在门外。\n', 'crossing a final length target must not roll back a valid save');
 
     const before = '雨落在门外。\n';

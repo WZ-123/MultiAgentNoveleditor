@@ -2,6 +2,8 @@
   "$schema": "https://json.schemastore.org/package.json",
   "description": "Codex 原生宿主与产品测试入口。",
   "scripts": {
+    "test:feedback": "node test/feedback-sync.test.js && node test/feedback-path-security.test.js",
+    "test:task-completion": "node test/task-completion-state.test.js && node test/writing-authorization-policy.test.js && node test/task-ledger-resource-contract.test.js",
     "prepare:codex-runtime": "node scripts/prepare-codex-runtime.js",
     "test:codex-native": "node test/codex-native-cutover.test.js",
     "test:mcp-mutations": "node test/novel-mcp-mutation.test.js",

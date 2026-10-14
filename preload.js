@@ -186,6 +186,9 @@ const networkStatus = {
 
 const feedback = {
   submit: (payload, options) => invoke('mana:feedback:submit', { payload: payload || {}, options: options || {} }),
+  getRecord: (feedbackId) => invoke('mana:feedback:getRecord', { feedbackId }),
+  listOutbox: () => invoke('mana:feedback:listOutbox'),
+  retrySync: (feedbackId) => invoke('mana:feedback:retrySync', { feedbackId }),
 };
 
 const lanRemote = {

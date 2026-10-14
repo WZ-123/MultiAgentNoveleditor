@@ -35,6 +35,7 @@ function registerFeedbackSyncIpc() {
   }));
 
   ipcMain.handle('mana:feedback:retrySync', safeIpc(async (_event, { feedbackId }) => {
+    feedbackOutbox.validateFeedbackId(feedbackId);
     const worker = getFeedbackSyncWorker();
     if (!worker) throw new Error('Sync worker not initialized');
     return worker.retryRecord(feedbackId);

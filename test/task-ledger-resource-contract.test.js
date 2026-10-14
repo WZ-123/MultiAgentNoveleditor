@@ -19,6 +19,9 @@ async function run() {
     assert.equal(exactTarget.maxBodyCjk, null, 'a single word target must not create an implicit 110% hard maximum');
     const rangeTarget = taskConstraintsFor('最终目标50，000—55,000字', 'mana-fiction-writing', {});
     assert.deepEqual([rangeTarget.minBodyCjk, rangeTarget.maxBodyCjk], [50_000, 55_000]);
+    assert.equal(taskConstraintsFor('请读取当前章节', '', { resourceRef: 'chapter:chapter-001.md' }).operation, 'read');
+    assert.equal(taskConstraintsFor('请审校本章', '', {}).operation, 'review');
+    assert.deepEqual(taskConstraintsFor('写本章到1000字', '', { resourceRef: 'chapter:chapter-001.md' }).targetResourceRefs, ['chapter:chapter-001.md']);
     assert.equal(plainText([{ type: 'text', text: '前' }, { type: 'image', data: 'x' }, { type: 'text', text: '后' }]), '前\n后');
     assert.deepEqual(
       [normalizeTaskConstraints({ minBodyCjk: null, maxBodyCjk: null }).minBodyCjk, normalizeTaskConstraints({ minBodyCjk: null, maxBodyCjk: null }).maxBodyCjk],
