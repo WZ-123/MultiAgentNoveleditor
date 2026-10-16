@@ -70,13 +70,31 @@ async function evaluateTaskResult(run, modelTurnCompleted) {
   if (!run.entry) return result;
   const wordTarget = constraints.minBodyCjk != null || constraints.maxBodyCjk != null;
   const explicitRefs = constraints.targetResourceRefs;
-  const commitByRef = new Map([...reusedSavedResources, ...savedResources].map(resource => [resource.resourceRef, resource]));
+  const allCommits = [...reusedSavedResources, ...savedResources];
+  const commitByRef = new Map(allCommits.map(resource => [resource.resourceRef, resource]));
   const readItems = (run.items || []).filter(item => item.status === 'completed' && !item.error && item.result?.isError !== true && /read_novel_resource/u.test(String(item.tool || item.toolName || item.name || '')));
   const observed = observedReadRefs(readItems.map(item => ({ name: item.tool || item.toolName || item.name, arguments: item.arguments || item.args || item.input, status: item.status })));
   let refs = explicitRefs;
-  if (!refs.length) refs = wordTarget
-    ? (await listResourceDescriptors(run.entry)).filter(item => item.kind === 'chapter').map(item => item.resourceRef)
-    : ['read', 'review'].includes(constraints.operation) ? [...observed] : [...commitByRef.keys()].filter(ref => commitByRef.get(ref).mode !== 'delete');
+  if (wordTarget) {
+    if (constraints.wordCountScope === 'whole_novel') {
+      refs = (await listResourceDescriptors(run.entry)).filter(item => item.kind === 'chapter').map(item => item.resourceRef);
+    } else if (constraints.wordCountScope === 'target_resources') {
+      refs = explicitRefs;
+    } else if (constraints.wordCountScope === 'new_writing' && constraints.wordCountResourceRefs.length) {
+      // Continuations retain the original writing target, not arbitrary later edits.
+      refs = constraints.wordCountResourceRefs;
+    } else {
+      const created = new Set(allCommits.filter(item => item.mode === 'create').map(item => item.resourceRef));
+      refs = [...commitByRef.keys()].filter(ref => ref.startsWith('chapter:')
+        && commitByRef.get(ref).mode !== 'delete'
+        && (constraints.wordCountScope !== 'new_writing' || created.has(ref)));
+      // Persist the binding in the task result, including after an interrupted turn.
+      if (constraints.wordCountScope === 'new_writing') constraints.wordCountResourceRefs = refs;
+    }
+  } else if (!refs.length) {
+    refs = ['read', 'review'].includes(constraints.operation) ? [...observed]
+      : [...commitByRef.keys()].filter(ref => commitByRef.get(ref).mode !== 'delete');
+  }
   const states = new Map(await Promise.all([...new Set([...refs, ...commitByRef.keys()])].map(async ref => [ref, await currentResource(run.entry, ref)])));
   const resources = refs.map(ref => states.get(ref).resource);
   const readable = resources.filter(Boolean);
@@ -88,8 +106,10 @@ async function evaluateTaskResult(run, modelTurnCompleted) {
   }
   const currentSaved = new Set(currentCommits.map(resource => resource.resourceRef));
   const fullyRead = completeReadRefs(readItems, readable);
-  result.evidence = { targetResourceRefs: refs, readableResources: readable.length,
-    bodyChineseCharacterCount: readable.reduce((sum, resource) => sum + bodyChineseCharacterCount(resource.content), 0),
+  const countResources = wordTarget && ['new_writing', 'saved_resources'].includes(constraints.wordCountScope)
+    ? readable.filter(resource => currentSaved.has(resource.resourceRef)) : readable;
+  result.evidence = { wordCountScope: constraints.wordCountScope, targetResourceRefs: refs, readableResources: readable.length,
+    bodyChineseCharacterCount: countResources.reduce((sum, resource) => sum + bodyChineseCharacterCount(resource.content), 0),
     hashes: readable.map(resource => ({ resourceRef: resource.resourceRef, hash: resource.sourceHash })),
     currentSavedResourceRefs: [...currentSaved], observedReadResourceRefs: [...observed], fullyReadResourceRefs: [...fullyRead] };
   result.checks = { wordCount: wordCountCheck(result.evidence.bodyChineseCharacterCount, constraints) };
@@ -99,12 +119,13 @@ async function evaluateTaskResult(run, modelTurnCompleted) {
   }
   const unmet = result.objective.unmet;
   if (resources.some((resource, index) => !resource && !(commitByRef.get(refs[index])?.mode === 'delete' && currentSaved.has(refs[index])))) unmet.push('target_unreadable');
+  if (wordTarget && !refs.length) unmet.push('word_count_target_missing');
   if (wordTarget && result.checks.wordCount.status !== 'met') unmet.push('word_count');
   const mutationRequested = ['write', 'edit', 'outline'].includes(constraints.operation) || (constraints.operation === 'unspecified' && (wordTarget || commitByRef.size > 0));
   const verifiable = mutationRequested || wordTarget || ['read', 'review'].includes(constraints.operation);
   if (mutationRequested) {
     if (!currentCommits.length) unmet.push('no_current_commit');
-    if (explicitRefs.some(ref => !currentSaved.has(ref))) unmet.push('targets_not_saved');
+    if ([...explicitRefs, ...constraints.wordCountResourceRefs].some(ref => !currentSaved.has(ref))) unmet.push('targets_not_saved');
     if (currentCommits.length !== commitByRef.size) unmet.push('saved_version_changed');
   }
   if (constraints.operation === 'read' || constraints.operation === 'review') {

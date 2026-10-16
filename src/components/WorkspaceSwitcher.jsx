@@ -4,7 +4,7 @@ import { BookOpen } from 'lucide-react';
 import { useI18n } from '@/i18n/LanguageContext.jsx';
 import { useNovel } from '@/hooks/useNovel.js';
 
-export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged }) {
+export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged, onBeforeActiveNovelChange }) {
   const { t } = useI18n();
   const mana = typeof window !== 'undefined' ? window.mana : null;
   const { novels, active, open, close, create, importExisting, remove } = useNovel();
@@ -57,6 +57,7 @@ export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged }) {
     try {
       const dir = await mana.fs.pickDirectory({ title: t('novel.pickDir') });
       if (!dir) return;
+      await onBeforeActiveNovelChange?.();
       const title = createTitle.trim() || dir.split(/[/\\]/).pop() || 'Untitled';
       const r = await create({ title, dir });
       if (r?.id) {
@@ -72,14 +73,16 @@ export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged }) {
     } finally {
       setBusy(false);
     }
-  }, [mana, t, createTitle, createAuthorizationMode, create, open, onActiveNovelChanged]);
+  }, [mana, t, createTitle, createAuthorizationMode, create, open, onActiveNovelChanged, onBeforeActiveNovelChange]);
 
   const onImport = useCallback(async () => {
     if (!mana?.fs) return;
     setBusy(true);
+    setError('');
     try {
       const dir = await mana.fs.pickDirectory({ title: t('novel.pickDir') });
       if (!dir) return;
+      await onBeforeActiveNovelChange?.();
       try {
         const r = await importExisting(dir);
         if (r?.id) {
@@ -96,32 +99,42 @@ export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged }) {
         }
       }
       setOpened(false);
+    } catch (err) {
+      setError(err?.message || String(err));
     } finally {
       setBusy(false);
     }
-  }, [mana, t, importExisting, create, open, onActiveNovelChanged]);
+  }, [mana, t, importExisting, create, open, onActiveNovelChanged, onBeforeActiveNovelChange]);
 
   const onSwitch = useCallback(async (id) => {
     setBusy(true);
+    setError('');
     try {
+      await onBeforeActiveNovelChange?.();
       await open(id);
       await onActiveNovelChanged?.();
       setOpened(false);
+    } catch (err) {
+      setError(err?.message || String(err));
     } finally {
       setBusy(false);
     }
-  }, [open, onActiveNovelChanged]);
+  }, [open, onActiveNovelChanged, onBeforeActiveNovelChange]);
 
   const onClose = useCallback(async () => {
     setBusy(true);
+    setError('');
     try {
+      await onBeforeActiveNovelChange?.();
       await close();
       await onActiveNovelChanged?.();
       setOpened(false);
+    } catch (err) {
+      setError(err?.message || String(err));
     } finally {
       setBusy(false);
     }
-  }, [close, onActiveNovelChanged]);
+  }, [close, onActiveNovelChanged, onBeforeActiveNovelChange]);
 
   const onRemove = useCallback(async (id) => {
     setBusy(true);
@@ -250,7 +263,14 @@ export function WorkspaceSwitcher({ onImportExternal, onActiveNovelChanged }) {
                   type="button"
                   className="w-full px-2 py-1 rounded bg-green-800/90 hover:bg-green-700/90 text-white text-[11px] disabled:opacity-50 flex items-center justify-center gap-1"
                   disabled={busy}
-                  onClick={() => { setOpened(false); onImportExternal(); }}
+                  onClick={async () => {
+                    setBusy(true); setError('');
+                    try {
+                      await onBeforeActiveNovelChange?.();
+                      setOpened(false); onImportExternal();
+                    } catch (err) { setError(err?.message || String(err)); }
+                    finally { setBusy(false); }
+                  }}
                 >
                   导入外部小说文件
                 </button>

@@ -6,6 +6,8 @@ import { RuntimeStatusIndicator } from '@/components/RuntimeStatusIndicator.jsx'
 import { saveNovelTree } from '@/services/chapterStore.js';
 import { AiChatPanel } from '@/components/AiChatPanel.jsx';
 import { ChapterEditor } from '@/components/ChapterEditor.jsx';
+import { serializeNovelStructure, restoreNovelStructure, chapterLocationMetadata } from '@/components/novelStructure.mjs';
+import { createChapterSaveQueue } from '@/components/chapterSaveQueue.mjs';
 import { mergeChapterIntoNovelTree } from '@/components/chapterTreeSync.mjs';
 import { countMeaningfulCharacters } from '@/domain/text.js';
 import { collectPreferredTextMatches } from '@/domain/textMatch.js';
@@ -197,6 +199,11 @@ function App() {
   const [activeNovelId, setActiveNovelId] = useState('');
   const currentProjectRef = useRef(activeNovelId);
   const currentNovelRef = useRef(novel);
+  const chapterSaveQueueRef = useRef(createChapterSaveQueue());
+  const chapterSaveTimersRef = useRef(new Map());
+  const inFlightChapterSavesRef = useRef(new Map());
+  const structureSaveQueuesRef = useRef(new Map());
+  const flushProjectSavesRef = useRef(async () => {});
   const treeRefreshVersionRef = useRef(0);
   const activeRefreshVersionRef = useRef(0);
   currentProjectRef.current = activeNovelId;
@@ -217,33 +224,41 @@ function App() {
 
   const applySavedChapterSnapshot = useCallback((chapterId, snapshot, options = {}) => {
     if (!chapterId || !snapshot) return;
-    const { content, isContentLoaded, isDirty = false } = options;
-    setNovel((currentNovel) => ({
-      ...currentNovel,
-      volumes: currentNovel.volumes.map((volume) => ({
-        ...volume,
-        sections: volume.sections.map((section) => ({
-          ...section,
-          chapters: section.chapters.map((chapter) => {
-            if (chapter.id !== chapterId) return chapter;
-            const next = {
-              ...chapter,
-              isDirty,
-              _title: snapshot.title || '',
-              displayName: snapshot.displayName || chapter.displayName || chapter.fileName,
-              volume: snapshot.volume ?? chapter.volume ?? null,
-              section: snapshot.section ?? chapter.section ?? null,
-            };
-            if (typeof content === 'string') {
-              next.content = content;
-              next.lastSavedContent = content;
-            }
-            if (typeof isContentLoaded === 'boolean') next.isContentLoaded = isContentLoaded;
-            return next;
-          }),
+    const { content, expectedContent = content, novelId, isContentLoaded, isDirty = false } = options;
+    if (novelId && currentProjectRef.current !== novelId) return;
+    const reconcile = (currentNovel) => {
+      if (novelId && currentProjectRef.current !== novelId) return currentNovel;
+      return ({
+        ...currentNovel,
+        volumes: currentNovel.volumes.map((volume) => ({
+          ...volume,
+          sections: volume.sections.map((section) => ({
+            ...section,
+            chapters: section.chapters.map((chapter) => {
+              if (chapter.id !== chapterId) return chapter;
+              const next = {
+                ...chapter,
+                isDirty,
+                _title: snapshot.title || '',
+                displayName: snapshot.displayName || chapter.displayName || chapter.fileName,
+                volume: snapshot.volume ?? chapter.volume ?? null,
+                section: snapshot.section ?? chapter.section ?? null,
+              };
+              if (typeof content === 'string') {
+                // A save acknowledges the submitted draft, not any later typing.
+                if (chapter.content === expectedContent) next.content = content;
+                next.lastSavedContent = content;
+                next.isDirty = next.content !== content;
+              }
+              if (typeof isContentLoaded === 'boolean') next.isContentLoaded = isContentLoaded;
+              return next;
+            }),
+          })),
         })),
-      })),
-    }));
+      });
+    };
+    currentNovelRef.current = reconcile(currentNovelRef.current);
+    setNovel(reconcile);
   }, []);
 
   const refreshAllChapterDisplayNames = useCallback(async (novelId, baseNovel) => {
@@ -321,8 +336,8 @@ function App() {
         }
       }
 
-      if (chapters.length > 0) {
-        // Restore volume/section structure from novel.json
+      {
+        // Restore volume/section structure even when the project is empty.
         let structure = null;
         try {
           if (novelEntry?.dir) {
@@ -331,23 +346,7 @@ function App() {
             if (parsed?.structure?.volumes) structure = parsed.structure;
           }
         } catch {}
-        let volumes;
-        if (structure?.volumes?.length > 0) {
-          const allCh = chapters.slice();
-          let chIdx = 0;
-          volumes = structure.volumes.map((v, vi) => ({
-            id: `vol-${vi}-${Date.now()}`,
-            name: v.name || '卷' + (vi + 1),
-            sections: (v.sections || []).map((s, si) => {
-              const matched = allCh.filter(c => c.volume === vi + 1 && c.section === si + 1);
-              const assigned = matched.length > 0 ? matched : allCh.slice(chIdx, chIdx + Math.ceil(allCh.length / structure.volumes.length));
-              chIdx += assigned.length || Math.ceil(allCh.length / structure.volumes.length);
-              return { id: `sec-${vi}-${si}`, name: s.name || '节' + (si + 1), chapters: assigned };
-            }),
-          }));
-        } else {
-          volumes = [{ id: `vol-${Date.now()}`, name: '卷1', sections: [{ id: `sec-${Date.now()}`, name: '节1', chapters }] }];
-        }
+        const volumes = restoreNovelStructure(structure, chapters);
         if (currentProjectRef.current !== novelEntry.id || refreshVersion !== treeRefreshVersionRef.current) return;
         setNovel(previous => {
           if (currentProjectRef.current !== novelEntry.id || refreshVersion !== treeRefreshVersionRef.current) return previous;
@@ -384,6 +383,11 @@ function App() {
         return activeEntry || null;
       }
 
+      if (nextId !== currentProjectRef.current) {
+        // Do not discard a project draft while its debounce/write is pending.
+        await flushProjectSavesRef.current();
+        if (requestVersion !== activeRefreshVersionRef.current) return null;
+      }
       currentProjectRef.current = nextId;
       setActiveNovelId(nextId);
       if (!nextId) {
@@ -397,6 +401,8 @@ function App() {
       await syncNovelTreeFromDisk(activeEntry);
       return activeEntry;
     } catch (err) {
+      setSaveStatus('save-failed');
+      setSaveToast({ type: 'error', message: `切换项目失败，当前草稿已保留：${err?.message || String(err)}` });
       console.error('[App] refresh active novel failed', err);
       return null;
     }
@@ -588,7 +594,14 @@ function App() {
         const dirty = currentNovelRef.current.volumes.flatMap(v => v.sections.flatMap(section => section.chapters)).find(ch => ch.fileName === data.name && ch.isDirty);
         if (dirty) {
           const diskContent = data.action === 'delete' ? '' : await mana.novel.readChapter(activeEntry.id, data.name);
-          setSaveConflict({ chapterId: dirty.id, name: data.name, localContent: dirty.content, diskContent, baseContent: dirty.lastSavedContent || '', message: 'AI 已更新磁盘内容；你的未保存草稿已保留，请处理冲突。' });
+          if (currentProjectRef.current !== activeEntry.id) return;
+          const saveKey = JSON.stringify([activeEntry.id, data.name]);
+          const latest = currentNovelRef.current.volumes.flatMap(v => v.sections.flatMap(s => s.chapters)).find(ch => ch.fileName === data.name);
+          // Our own IPC notification can arrive before the save receipt. It is
+          // not an external conflict when disk matches an acknowledged/in-flight write.
+          if (data.action !== 'delete' && (diskContent === latest?.lastSavedContent
+            || (inFlightChapterSavesRef.current.has(saveKey) && diskContent === inFlightChapterSavesRef.current.get(saveKey)))) return;
+          setSaveConflict({ chapterId: dirty.id, name: data.name, localContent: latest?.content ?? dirty.content, diskContent, baseContent: latest?.lastSavedContent ?? dirty.lastSavedContent ?? '', message: 'AI 已更新磁盘内容；你的未保存草稿已保留，请处理冲突。' });
           return;
         }
         if (data.action === 'delete') {
@@ -638,11 +651,19 @@ function App() {
   // Persist volume/section tree structure to novel.json
   const syncStructureToMeta = (novelData) => {
     if (!activeNovelId || !window.mana?.novel?.saveMeta) return;
-    const volumes = (novelData || novel).volumes.map(v => ({
-      name: v.name,
-      sections: v.sections.map(s => ({ name: s.name })),
-    }));
-    window.mana.novel.saveMeta(activeNovelId, { structure: { volumes } }).catch(() => {});
+    const novelId = activeNovelId;
+    const structure = serializeNovelStructure(novelData || novel);
+    const previous = structureSaveQueuesRef.current.get(novelId) || Promise.resolve();
+    const save = previous.catch(() => {}).then(() => window.mana.novel.saveMeta(novelId, { structure }));
+    structureSaveQueuesRef.current.set(novelId, save);
+    save.then(() => {
+      if (structureSaveQueuesRef.current.get(novelId) === save) structureSaveQueuesRef.current.delete(novelId);
+    }, (err) => {
+      // Retain failed metadata writes so a later project switch cannot discard
+      // an unsaved empty volume/section. The next flush retries the current tree.
+      setSaveToast({ type: 'error', message: `章节结构保存失败：${err?.message || String(err)}` });
+    });
+    return save;
   };
 
   const dataTabLabel = (dataType) => {
@@ -773,6 +794,7 @@ function App() {
   };
 
   const createChapter = (volumeId, sectionId) => {
+    const location = chapterLocationMetadata(novel, volumeId, sectionId);
     let next = chapterEntries.length + 1;
     let fileName = `chapter-${String(next).padStart(3, '0')}.md`;
     const exists = (name) =>
@@ -786,6 +808,7 @@ function App() {
 
     const chapter = {
       id: makeId('chapter'),
+      ...location,
       fileName,
       content: '',
       lastSavedContent: '',
@@ -809,12 +832,18 @@ function App() {
     };
 
     setNovel(() => nextNovel);
+    syncStructureToMeta(nextNovel);
     refreshAllChapterDisplayNames(activeNovelId, nextNovel).catch(() => {});
     setOpenChapterIds((ids) => (ids.includes(chapter.id) ? ids : [...ids, chapter.id]));
     setActiveEditorTab(`${TAB_PREFIX}${chapter.id}`);
     // Persist: write empty file to disk
     if (activeNovelId && window.mana?.novel?.saveChapter) {
-      window.mana.novel.saveChapter(activeNovelId, fileName, '', {}, { createRevision: false }).catch(() => {});
+      chapterSaveQueueRef.current(JSON.stringify([activeNovelId, fileName]), async () => ({
+        snapshot: await window.mana.novel.saveChapter(activeNovelId, fileName, '', location, { createRevision: false }),
+        content: '',
+      })).catch((err) => {
+        setSaveToast({ type: 'error', message: `新章节保存失败：${err?.message || String(err)}` });
+      });
     }
   };
   
@@ -826,14 +855,13 @@ function App() {
       if (chapterEntry?.chapter?.fileName && activeNovelId && window.mana?.novel?.saveChapter) {
         const ch = chapterEntry.chapter;
         if (ch.isContentLoaded && ch.isDirty) {
-          const chapTitle = getChapterSaveTitle(ch, ch.content);
-          window.mana.novel.saveChapter(activeNovelId, ch.fileName, ch.content, { title: chapTitle }, {
-            baseContent: ch.lastSavedContent ?? '',
+          const key = JSON.stringify([activeNovelId, ch.fileName]);
+          clearTimeout(chapterSaveTimersRef.current.get(key));
+          chapterSaveTimersRef.current.delete(key);
+          saveChapterContentToDisk(chapterId, ch.content, {
             source: 'manual',
             revisionLabel: '关闭标签页前保存',
-            createRevision: true,
           })
-            .then((saved) => applySavedChapterSnapshot(chapterId, saved, { content: ch.content, isContentLoaded: true, isDirty: false }))
             .catch(() => {});
         }
       }
@@ -990,13 +1018,12 @@ function App() {
     if (activeNovelId) {
       try {
         const content = await ensureChapterContentLoaded(chapterId);
-        window.mana?.novel?.saveChapter(activeNovelId, chapter.fileName, content, { title: raw }, {
-          baseContent: chapter.lastSavedContent ?? content,
+        saveChapterContentToDisk(chapterId, content, {
+          title: raw,
           source: 'manual',
           revisionLabel: '更新章节标题',
           createRevision: true,
         })
-          .then((saved) => applySavedChapterSnapshot(chapterId, saved, { content, isContentLoaded: true, isDirty: false }))
           .catch(() => {});
       } catch {
         // ignore eager title persistence failures
@@ -1028,6 +1055,7 @@ function App() {
         })),
       };
       setNovel(updated);
+      await syncStructureToMeta(updated);
       await refreshAllChapterDisplayNames(activeNovelId, updated);
       removeDeletedChapterIdsFromTabs([chapterId]);
     } catch (err) {
@@ -1139,48 +1167,85 @@ function App() {
     const entry = chapterMap.get(chapterId);
     if (!entry?.chapter?.fileName || !window.mana?.novel?.saveChapter) return null;
     const name = entry.chapter.fileName;
-    const chapTitle = getChapterSaveTitle(entry.chapter, content);
+    const novelId = activeNovelId;
     const source = options.source || 'manual';
-    const baseContent = Object.prototype.hasOwnProperty.call(options, 'baseContent')
-      ? options.baseContent
-      : (entry.chapter.lastSavedContent ?? '');
-    try {
-      const saved = await window.mana.novel.saveChapter(
-        activeNovelId,
-        name,
-        content,
-        { title: chapTitle },
-        {
-          baseContent,
-          source,
-          revisionLabel: options.revisionLabel || (source === 'autosave' ? '自动保存' : '手动保存'),
-          createRevision: options.createRevision !== false,
-          verifiedContentHash: options.verifiedContentHash || undefined,
-        }
-      );
-      applySavedChapterSnapshot(chapterId, saved, { content, isContentLoaded: true, isDirty: false });
-      return saved;
-    } catch (err) {
-      const reason = err?.message || String(err);
-      if (/snapshot mismatch/i.test(reason)) {
-        let diskContent = '';
-        try {
-          diskContent = await window.mana.novel.readChapter(activeNovelId, name);
-        } catch {
-          diskContent = '';
-        }
-        setSaveConflict({
-          chapterId,
+    const key = JSON.stringify([novelId, name]);
+    const expectedContent = source.startsWith('ai') ? entry.chapter.content : content;
+    return chapterSaveQueueRef.current(key, async (previousSavedContent) => {
+      const currentChapter = currentProjectRef.current === novelId
+        ? currentNovelRef.current.volumes.flatMap(v => v.sections.flatMap(s => s.chapters)).find(c => c.id === chapterId)
+        : null;
+      const baseContent = Object.prototype.hasOwnProperty.call(options, 'baseContent')
+        ? options.baseContent
+        : (previousSavedContent ?? currentChapter?.lastSavedContent ?? entry.chapter.lastSavedContent ?? '');
+      const chapTitle = Object.prototype.hasOwnProperty.call(options, 'title')
+        ? options.title : getChapterSaveTitle(currentChapter || entry.chapter, content);
+      try {
+        inFlightChapterSavesRef.current.set(key, content);
+        const saved = await window.mana.novel.saveChapter(
+          novelId,
           name,
-          localContent: content,
-          diskContent,
-          baseContent,
-          message: '磁盘上的章节已变化，请选择如何处理。',
+          content,
+          { title: chapTitle },
+          {
+            baseContent,
+            source,
+            revisionLabel: options.revisionLabel || (source === 'autosave' ? '自动保存' : '手动保存'),
+            createRevision: options.createRevision !== false,
+            verifiedContentHash: options.verifiedContentHash || undefined,
+          }
+        );
+        applySavedChapterSnapshot(chapterId, saved, {
+          content, expectedContent, novelId, isContentLoaded: true, isDirty: false,
         });
+        return { snapshot: saved, content };
+      } catch (err) {
+        const reason = err?.message || String(err);
+        if (/snapshot mismatch/i.test(reason) && currentProjectRef.current === novelId) {
+          let diskContent = '';
+          try {
+            diskContent = await window.mana.novel.readChapter(novelId, name);
+          } catch {
+            diskContent = '';
+          }
+          if (currentProjectRef.current === novelId) setSaveConflict({
+            chapterId,
+            name,
+            localContent: currentNovelRef.current.volumes.flatMap(v => v.sections.flatMap(s => s.chapters)).find(c => c.id === chapterId)?.content ?? content,
+            diskContent,
+            baseContent,
+            message: '磁盘上的章节已变化，请选择如何处理。',
+          });
+        }
+        throw err;
+      } finally {
+        inFlightChapterSavesRef.current.delete(key);
       }
-      throw err;
-    }
+    });
   }, [activeNovelId, chapterMap, applySavedChapterSnapshot]);
+
+  flushProjectSavesRef.current = async () => {
+    // Re-read after each await: typing can continue while a save is in flight.
+    while (true) {
+      const chapter = currentNovelRef.current.volumes.flatMap(v => v.sections.flatMap(s => s.chapters))
+        .find(ch => ch.isContentLoaded && ch.isDirty && ch.fileName);
+      if (!chapter) {
+        const pendingStructure = structureSaveQueuesRef.current.get(activeNovelId);
+        if (!pendingStructure) return;
+        try { await pendingStructure; }
+        catch { await syncStructureToMeta(currentNovelRef.current); }
+        // A user may type while metadata is being saved; check drafts again.
+        continue;
+      }
+      const key = JSON.stringify([activeNovelId, chapter.fileName]);
+      clearTimeout(chapterSaveTimersRef.current.get(key));
+      chapterSaveTimersRef.current.delete(key);
+      const saved = await saveChapterContentToDisk(chapter.id, chapter.content || '', {
+        source: 'manual', revisionLabel: '切换项目前保存',
+      });
+      if (!saved) throw new Error('章节保存接口不可用，无法安全切换项目');
+    }
+  };
 
   const flushActiveChapterToDisk = useCallback(async ({ silent = false, resourceRef, novelId } = {}) => {
     if (novelId && novelId !== activeNovelId) throw new Error('编辑目标已切换，请返回原项目发送');
@@ -1197,8 +1262,9 @@ function App() {
     const name = entry.chapter.fileName;
     const content = targetChapterId === activeChapterId ? (activeChapter?.content || '') : (entry.chapter.content || '');
     if (!window.mana?.novel?.saveChapter) return;
-    const key = `_save_${name}`;
-    clearTimeout(window[key]);
+    const key = JSON.stringify([activeNovelId, name]);
+    clearTimeout(chapterSaveTimersRef.current.get(key));
+    chapterSaveTimersRef.current.delete(key);
     if (!silent) setSaveStatus('saving');
     try {
       await saveChapterContentToDisk(targetChapterId, content, {
@@ -1231,7 +1297,7 @@ function App() {
 
   const updateActiveChapterContent = (content, { scheduleSave = true } = {}) => {
     if (!activeChapterId) return;
-    setNovel((n) => ({
+    const updateDraft = (n) => ({
       ...n,
       volumes: n.volumes.map((v) => ({
         ...v,
@@ -1242,27 +1308,29 @@ function App() {
           ),
         })),
       })),
-    }));
+    });
+    currentNovelRef.current = updateDraft(currentNovelRef.current);
+    setNovel(updateDraft);
     // Save to project file on disk (debounced per chapter)
     const chapterEntry = chapterMap.get(activeChapterId);
     if (scheduleSave && chapterEntry?.chapter?.fileName && activeNovelId) {
       const name = chapterEntry.chapter.fileName;
-      const key = `_save_${name}`;
-      clearTimeout(window[key]);
-      window[key] = setTimeout(async () => {
+      const key = JSON.stringify([activeNovelId, name]);
+      clearTimeout(chapterSaveTimersRef.current.get(key));
+      chapterSaveTimersRef.current.set(key, setTimeout(async () => {
+        chapterSaveTimersRef.current.delete(key);
         if (window.mana?.novel?.saveChapter) {
           try {
             await saveChapterContentToDisk(activeChapterId, content, {
               source: 'autosave',
               revisionLabel: '自动保存',
-              baseContent: chapterEntry.chapter.lastSavedContent ?? '',
             });
-            setSaveStatus(null);
+            if (currentProjectRef.current === activeNovelId) setSaveStatus(null);
           } catch {
-            setSaveStatus('save-failed');
+            if (currentProjectRef.current === activeNovelId) setSaveStatus('save-failed');
           }
         }
-      }, 2000);
+      }, 2000));
     }
   };
 
@@ -1278,16 +1346,19 @@ function App() {
       if (!chapterEntry.chapter.isContentLoaded || !chapterEntry.chapter.isDirty) return;
       const name = chapterEntry.chapter.fileName;
       const content = saveContentRef.current;
-      if (!content) return;
+      const key = JSON.stringify([activeNovelId, name]);
+      clearTimeout(chapterSaveTimersRef.current.get(key));
+      chapterSaveTimersRef.current.delete(key);
       saveChapterContentToDisk(activeChapterId, content, {
         source: 'autosave',
         revisionLabel: '自动保存',
-        baseContent: chapterEntry.chapter.lastSavedContent ?? '',
       })
         .then(() => {
-          setSaveStatus(null);
+          if (currentProjectRef.current === activeNovelId) setSaveStatus(null);
         })
-        .catch(() => setSaveStatus('save-failed'));
+        .catch(() => {
+          if (currentProjectRef.current === activeNovelId) setSaveStatus('save-failed');
+        });
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
@@ -1462,8 +1533,11 @@ function App() {
 
   const persistChatEditorMutation = async (currentContent, nextContent, rangeOverride, revisionLabel) => {
     if (!activeChapterId || !activeChapter) throw new Error('当前没有打开的章节');
-    const saveKey = activeChapter.fileName ? `_save_${activeChapter.fileName}` : '';
-    if (saveKey) clearTimeout(window[saveKey]);
+    const saveKey = activeChapter.fileName ? JSON.stringify([activeNovelId, activeChapter.fileName]) : '';
+    if (saveKey) {
+      clearTimeout(chapterSaveTimersRef.current.get(saveKey));
+      chapterSaveTimersRef.current.delete(saveKey);
+    }
     updateActiveChapterContent(nextContent, { scheduleSave: false });
     setSaveStatus('saving');
     try {
@@ -1859,13 +1933,24 @@ function App() {
   const restoreSelectedRevision = useCallback(async () => {
     if (!activeNovelId || !activeChapterId || !activeChapter?.fileName || !selectedRevision?.id) return;
     setHistoryStatus('恢复中...');
+    const novelId = activeNovelId;
+    const chapterId = activeChapterId;
+    const fileName = activeChapter.fileName;
+    const key = JSON.stringify([novelId, fileName]);
+    const expectedContent = currentNovelRef.current.volumes.flatMap(v => v.sections.flatMap(s => s.chapters))
+      .find(ch => ch.id === chapterId)?.content;
+    clearTimeout(chapterSaveTimersRef.current.get(key));
+    chapterSaveTimersRef.current.delete(key);
     try {
-      const restored = await window.mana.novel.restoreChapterRevision(activeNovelId, activeChapter.fileName, selectedRevision.id);
-      applySavedChapterSnapshot(activeChapterId, restored, {
-        content: restored.content || '',
-        isContentLoaded: true,
-        isDirty: false,
+      await chapterSaveQueueRef.current(key, async () => {
+        const restored = await window.mana.novel.restoreChapterRevision(novelId, fileName, selectedRevision.id);
+        applySavedChapterSnapshot(chapterId, restored, {
+          content: restored.content || '', expectedContent, novelId,
+          isContentLoaded: true, isDirty: false,
+        });
+        return { snapshot: restored, content: restored.content || '' };
       });
+      if (currentProjectRef.current !== novelId) return;
       setHistoryStatus('已恢复并保存');
       showSaveToast('success', '已恢复历史版本');
       await openChapterHistory();
@@ -2072,7 +2157,7 @@ function App() {
                   </div>
                 ) : (
                   novel.volumes.map((volume) => (
-                    <div key={volume.id} className="mb-1">
+                    <div key={volume.id} data-volume-id={volume.id} className="mb-1">
                       <div className="group flex items-center gap-1 pl-2 pr-1 py-1 hover:bg-vscode-active-item">
                         <span className="flex-1 text-left pl-2 pr-1 py-0.5 text-gray-300">{volume.name}</span>
                         <button
@@ -2098,7 +2183,7 @@ function App() {
                         <div className="pl-8 py-1 text-xs text-gray-500">{t('app.noSections')}</div>
                       ) : (
                         volume.sections.map((section) => (
-                          <div key={section.id}>
+                          <div key={section.id} data-section-id={section.id}>
                             <div className="group flex items-center gap-1 pl-6 pr-1 py-1 hover:bg-vscode-active-item">
                               <span className="flex-1 text-left pl-2 pr-1 py-0.5 text-gray-400">{section.name}</span>
                               <button
@@ -2255,7 +2340,7 @@ function App() {
           <div className="flex shrink-0 border-l border-vscode-panel-border bg-vscode-sidebar" data-testid="editor-fixed-actions">
             <div className="px-2 flex items-center gap-3 text-xs shrink-0">
               <div className="shrink-0">
-                <WorkspaceSwitcher onImportExternal={() => { loadExistingNovels(); setShowImportPanel(true); }} onActiveNovelChanged={refreshActiveNovelState} />
+                <WorkspaceSwitcher onBeforeActiveNovelChange={() => flushProjectSavesRef.current()} onImportExternal={() => { loadExistingNovels(); setShowImportPanel(true); }} onActiveNovelChanged={refreshActiveNovelState} />
               </div>
               <div className="shrink-0 whitespace-nowrap">
                 <RuntimeStatusIndicator />

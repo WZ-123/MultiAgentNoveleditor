@@ -14,6 +14,7 @@
 | 主测试集合 | `npm test -- test:unit` |
 | 反馈构造、存储安全与同步 | `npm test -- test:feedback` |
 | 反馈表单与同步状态 UI | `npm test -- test:feedback:ui` |
+| 编辑保存、切项目、卷节恢复 UI | `npm test -- test:editor-workflow:ui` |
 | 任务完成状态与容差 | `npm test -- test:task-completion` |
 | 原生模型链测试 | `npm test -- test:codex-native` |
 | 资源事务测试 | `npm test -- test:mcp-mutations` |

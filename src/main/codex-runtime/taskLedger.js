@@ -19,6 +19,10 @@ function normalizeTaskConstraints(value = {}) {
   return {
     operation: source.operation ? String(source.operation) : 'unspecified',
     targetResourceRefs: strings(source.targetResourceRefs),
+    // Missing/legacy scope must never imply permission to count the whole novel.
+    wordCountScope: ['whole_novel', 'target_resources', 'new_writing', 'saved_resources'].includes(source.wordCountScope)
+      ? source.wordCountScope : strings(source.targetResourceRefs).length ? 'target_resources' : 'saved_resources',
+    wordCountResourceRefs: strings(source.wordCountResourceRefs),
     allowedWriteResourceRefs: strings(source.allowedWriteResourceRefs),
     minBodyCjk: integer(source.minBodyCjk),
     maxBodyCjk: integer(source.maxBodyCjk),

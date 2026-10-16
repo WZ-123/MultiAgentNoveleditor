@@ -46,8 +46,16 @@ async function run() {
       const commands = ['连续创作三个完整场景', '重启后继续刚才的对话', '拒绝测试：', '去 AI 味：', '普通问答：', '乙项目问答', '缓慢回答停止测试', '资料页世界观修改', '世界观脏稿冲突', '保存后停止', '重写选中文本', '在光标处续写小说正文', '人物卡修改'];
       commands.push('人物卡更新');
       commands.push('任务状态验收', '继续未完成任务', '任务状态重启', '任务阅读验收', '任务审校验收');
+      commands.push('任务新章范围验收');
       const lastUser = inputs.findLastIndex(item => item.role === 'user' && commands.some(command => JSON.stringify(item.content).includes(command)));
       const wire = requestInputText(lastUser >= 0 ? inputs.slice(lastUser) : inputs, 50000);
+      if (wire.includes('任务新章范围验收')) {
+        const continuing = wire.includes('继续未完成任务');
+        if (wire.includes('custom_tool_call_output')) return { text: continuing ? '新章继续已补足1000字。' : '新章仅保存100字，仍需继续。' };
+        return { customToolName: 'apply_patch', input: continuing
+          ? `*** Begin Patch\n*** Update File: chapters/chapter-008.md\n@@\n ${'新'.repeat(100)}\n+${'续'.repeat(900)}\n*** End Patch`
+          : addChapterPatch({ fileName: 'chapter-008.md', content: '新'.repeat(100) }) };
+      }
       if (wire.includes('任务阅读验收') || wire.includes('任务审校验收')) {
         if (!wire.includes('function_call_output')) return { namespace: 'mcp__novel_tools', toolName: 'read_novel_resource', arguments: { resourceRef: 'chapter:chapter-007.md' } };
         return { text: wire.includes('任务审校验收') ? '审校报告已生成。\n```json\n{"coveredResourceRefs":["chapter:chapter-007.md"],"issues":[]}\n```' : '读取章节已完成。' };

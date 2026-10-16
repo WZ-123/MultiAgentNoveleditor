@@ -9,7 +9,11 @@ export function taskConstraintsFor(text, skillName, editorContext) {
         : /^(?:请)?(?:写|创作|续写|补写)/u.test(source) ? 'write' : 'unspecified');
   const resourceRef = String(editorContext?.resourceRef || (editorContext?.chapterFileName ? `chapter:${editorContext.chapterFileName}` : ''));
   const hasSelection = ['selection', 'insertion'].includes(editorContext?.editScope?.mode);
-  const targetsCurrent = hasSelection || /(?:当前章(?:节)?|本章|这一章|选中(?:的)?(?:段落|正文|文本))/u.test(source);
+  const targetsNewChapter = source.split(/[，,。；;\n]/u).some(clause =>
+    !/(?:不要|不必|不用|禁止|别)[^，,。；;\n]*(?:下一章|下章|新章)/u.test(clause)
+    && /(?:(?:写|创作|生成|新建|创建)\s*(?:出|一)?(?:个)?(?:下一章|下章|新章(?:节)?)|^\s*(?:下一章|下章))/u.test(clause));
+  const targetsWholeNovel = /(?:全书|整本(?:小说)?|整部(?:小说)?|全文|全篇)/u.test(source);
+  const targetsCurrent = hasSelection || (!targetsNewChapter && /(?:当前章(?:节)?|本章|这一章|选中(?:的)?(?:段落|正文|文本))/u.test(source));
   const digits = String.raw`\d[\d,，]*`;
   const range = source.match(new RegExp(`(${digits})\\s*(?:[—–－-]|至|到|~|～)\\s*(${digits})\\s*(?:个)?(?:净正文)?(?:汉)?字`, 'u'));
   const match = source.match(new RegExp(`(?:(\\d+(?:\\.\\d+)?|[一二三四五六七八九十])\\s*万\\s*字)|(${digits})\\s*(?:个)?(?:净正文)?(?:汉)?字`, 'u'));
@@ -18,6 +22,7 @@ export function taskConstraintsFor(text, skillName, editorContext) {
   const requested = range ? integer(range[1]) : match ? (match[2] ? integer(match[2]) : Math.round((Number(match[1]) || chinese[match[1]] || 0) * 10000)) : null;
   return {
     operation,
+    wordCountScope: targetsCurrent ? 'target_resources' : targetsNewChapter ? 'new_writing' : targetsWholeNovel ? 'whole_novel' : 'saved_resources',
     targetResourceRefs: targetsCurrent && resourceRef ? [resourceRef] : [],
     allowedWriteResourceRefs: hasSelection && resourceRef ? [resourceRef] : [],
     minBodyCjk: requested,

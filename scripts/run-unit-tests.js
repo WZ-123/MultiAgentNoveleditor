@@ -5,6 +5,10 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const tests = [
+  'test/editor-save-race-regression.test.js',
+  'test/chapter-save-snapshot-regression.test.js',
+  'test/novel-structure-persistence.test.js',
+  'test/next-chapter-wordcount.test.js',
   'test/chat-feedback-payload.test.js',
   'test/feedback-sync.test.js',
   'test/feedback-path-security.test.js',

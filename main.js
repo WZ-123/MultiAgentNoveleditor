@@ -86,6 +86,15 @@ async function createWindow() {
       app.exit(1);
     }
   }
+  if (process.argv.includes('--test-editor-workflow-ui')) {
+    try {
+      const result = await require('./test/editor-workflow-ui-e2e.js').runEditorWorkflowUiE2E(win);
+      app.exit(result.failed ? 1 : 0);
+    } catch (error) {
+      console.error('TEST_FAIL editor_workflow_ui:', error.stack || String(error));
+      app.exit(1);
+    }
+  }
   if (isNativeUiTest) {
     try {
       const result = await require('./test/codex-native-ui-e2e.js').runCodexNativeUiE2E(win);
