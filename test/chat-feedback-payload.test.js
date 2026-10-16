@@ -104,3 +104,26 @@ test('CFP2_opinion_mode_omits_logs_and_sensitive_context', () => {
   assert.equal(payload.recentLogs.renderer.length, 0);
   assert.equal(payload.attachments.length, 0);
 });
+test('CFP3_default_omits_tool_inputs_results_and_body_even_with_screenshot', () => {
+  const payload = buildQuickFeedbackPayload({
+    messages: [{ role: 'tool', input: { content: 'PRIVATE_TOOL' }, result: 'PRIVATE_RESULT' },
+      { role: 'assistant', text: 'PRIVATE_CHAT', toolCalls: [{ type: 'fileChange', diff: 'PRIVATE_DIFF' }] }],
+    editorContext: { content: 'PRIVATE_BODY', selectedText: 'PRIVATE_SELECTION' },
+    includeScreenshot: true,
+  });
+  assert.ok(!JSON.stringify(payload).includes('PRIVATE_'));
+  assert.deepEqual(payload.chatContext.recentToolCalls, []);
+  assert.equal(payload.attachments.length, 1);
+  assert.equal(payload.userInput.feedbackMode, 'opinion-only');
+});
+
+test('CFP4_context_mode_bounds_messages_and_includes_native_tool_records', () => {
+  const payload = buildQuickFeedbackPayload({ includeLogs: true,
+    messages: Array.from({ length: 20 }, (_, index) => ({ role: 'assistant', text: 'x'.repeat(900), id: `m${index}`,
+      toolCalls: [{ type: 'fileChange', diff: 'patch', id: `t${index}` }] })),
+  });
+  assert.equal(payload.chatContext.recentMessages.length, 8);
+  assert.equal(payload.chatContext.recentToolCalls.length, 6);
+  assert.equal(payload.chatContext.recentToolCalls[5].name, 'fileChange');
+  assert.ok(payload.chatContext.recentMessages.every(message => message.text.length <= 503));
+});

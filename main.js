@@ -77,6 +77,15 @@ async function createWindow() {
   } else {
     await win.loadFile(path.join(__dirname, 'dist', 'index.html'));
   }
+  if (process.argv.includes('--test-chat-feedback-ui-regression')) {
+    try {
+      const result = await require('./test/chat-feedback-ui-e2e.js').runChatFeedbackUiRegressionTest(win);
+      app.exit(result.failed ? 1 : 0);
+    } catch (error) {
+      console.error('TEST_FAIL feedback_ui:', error.stack || String(error));
+      app.exit(1);
+    }
+  }
   if (isNativeUiTest) {
     try {
       const result = await require('./test/codex-native-ui-e2e.js').runCodexNativeUiE2E(win);

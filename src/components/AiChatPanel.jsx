@@ -110,7 +110,7 @@ function ExecutionResult({ execution }) {
   </div>;
 }
 
-export function AiChatPanel({ editorContext, onBeforeSendMessage, onOpenModelSettings }) {
+export function AiChatPanel({ editorContext, onBeforeSendMessage, onOpenModelSettings, onOpenFeedback }) {
   const mana = window.mana;
   const novelId = editorContext?.novelId || null;
   const projectKey = `mana-chat:${novelId || 'none'}`;
@@ -294,6 +294,11 @@ export function AiChatPanel({ editorContext, onBeforeSendMessage, onOpenModelSet
         <span data-testid="codex-status" data-capability={run?.capability || 'idle'} className="text-[10px] text-emerald-300">{status.ready ? `${status.modelId} · ${capability}` : '连接未就绪'}</span>
         <div className="flex shrink-0 items-center gap-2 text-[10px]">
           {novelId && <button data-testid="writing-authorization-toggle" disabled={authorizationBusy} onClick={toggleAuthorization} title="仅新章和章末追加可自动保存" className="flex items-center gap-1"><ShieldCheck size={11} />{authorization?.granted ? '新增正文已允许' : '逐次确认'}</button>}
+          <button data-testid="chat-feedback-open" onClick={() => onOpenFeedback?.({
+            currentNovelId: novelId, editorContext, activeThread: threads.find(t => t.id === activeId),
+            sessionId: snapshot?.sessionId, messages, status: snapshot?.status || 'idle', uiError: error,
+            runtimeDriver: 'codex-native', model: status.modelId,
+          })}>反馈</button>
           <button onClick={onOpenModelSettings}>模型</button>
         </div>
       </div>

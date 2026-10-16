@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FileText, Settings, Search, MessageSquare, Cpu } from 'lucide-react';
+import { FeedbackDialog } from '@/components/FeedbackDialog.jsx';
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher.jsx';
 import { RuntimeStatusIndicator } from '@/components/RuntimeStatusIndicator.jsx';
 import { saveNovelTree } from '@/services/chapterStore.js';
@@ -1039,6 +1040,7 @@ function App() {
   const [editorHasFocus, setEditorHasFocus] = useState(false);
   const [editorScroll, setEditorScroll] = useState({ top: 0, left: 0 });
   const [editorContextMenu, setEditorContextMenu] = useState(null);
+  const [feedbackContext, setFeedbackContext] = useState(null);
   const [editorAiStatus, setEditorAiStatus] = useState(null);
   const [editorAiPreview, setEditorAiPreview] = useState(null);
   const [saveConflict, setSaveConflict] = useState(null);
@@ -1960,6 +1962,7 @@ function App() {
       }}
     >
       
+      {feedbackContext && <FeedbackDialog context={feedbackContext} onClose={() => setFeedbackContext(null)} />}
       {/* Activity Bar (Leftmost narrow sidebar) */}
       <div className="w-12 bg-vscode-activity-bar flex flex-col items-center py-2 justify-between border-r border-vscode-panel-border z-10">
         <div className="flex flex-col gap-2 w-full">
@@ -1984,6 +1987,7 @@ function App() {
           /> */}
         </div>
         <div className="flex flex-col gap-2 w-full mb-2">
+          <button type="button" data-testid="feedback-open" onClick={() => setFeedbackContext({ currentNovelId: activeNovelId, editorContext })} className="py-3 text-xs text-gray-400 hover:text-white" title="反馈问题与查看同步状态">反馈</button>
           <ActivityBarItem
             icon={<Cpu size={24} />}
             active={activeEditorTab.startsWith(SETTINGS_PREFIX)}
@@ -2449,6 +2453,7 @@ function App() {
                 onReplaceTextNearCursor={replaceTextNearCursor}
                 onInsertTextAtCursor={insertTextAtCursor}
                 onBeforeSendMessage={(target) => flushActiveChapterToDisk({ silent: true, novelId: target?.novelId, resourceRef: target?.resourceRef || (target?.chapterFileName ? `chapter:${target.chapterFileName}` : undefined) })}
+                onOpenFeedback={setFeedbackContext}
                 onOpenModelSettings={() => openSettingsInEditor('models')}
               />
             </div>

@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/package.json",
   "description": "Codex 原生宿主与产品测试入口。",
   "scripts": {
-    "test:feedback": "node test/feedback-sync.test.js && node test/feedback-path-security.test.js",
+    "test:feedback": "node test/chat-feedback-payload.test.js && node test/feedback-sync.test.js && node test/feedback-path-security.test.js",
     "test:task-completion": "node test/task-completion-state.test.js && node test/writing-authorization-policy.test.js && node test/task-ledger-resource-contract.test.js",
     "prepare:codex-runtime": "node scripts/prepare-codex-runtime.js",
     "test:codex-native": "node test/codex-native-cutover.test.js",
@@ -14,6 +14,7 @@
     "test:deepseek-live-novel:ui": "npx vite build && node scripts/run-deepseek-live-novel-ui-e2e.js",
     "test:import-saga:ui": "npx vite build && node scripts/run-import-saga-ui-e2e.js",
     "test:chat-chain": "node test/chat-chain-contract.test.js && node test/chat-chain-lan.test.js",
-    "test:chat-chain:live": "node scripts/check-chat-chain-live.js"
+    "test:chat-chain:live": "node scripts/check-chat-chain-live.js",
+    "test:feedback:ui": "npx vite build && node scripts/run-chat-feedback-ui-e2e.js"
   }
 }

@@ -12,7 +12,8 @@
 | 开发认证 | `npm run dev:auth` |
 | 前端构建 | `npx vite build` |
 | 主测试集合 | `npm test -- test:unit` |
-| 反馈存储安全与同步 | `npm test -- test:feedback` |
+| 反馈构造、存储安全与同步 | `npm test -- test:feedback` |
+| 反馈表单与同步状态 UI | `npm test -- test:feedback:ui` |
 | 任务完成状态与容差 | `npm test -- test:task-completion` |
 | 原生模型链测试 | `npm test -- test:codex-native` |
 | 资源事务测试 | `npm test -- test:mcp-mutations` |

@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const tests = [
+  'test/chat-feedback-payload.test.js',
   'test/feedback-sync.test.js',
   'test/feedback-path-security.test.js',
   'test/chat-chain-contract.test.js',

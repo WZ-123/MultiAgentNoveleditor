@@ -1,0 +1,89 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:unit
+
+(node:43033) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///private/tmp/mana-dot-recovered/test/chat-feedback-payload.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /private/tmp/mana-dot-recovered/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS CFP1_context_mode_includes_recent_tool_calls_and_checkpoint
+PASS CFP2_opinion_mode_omits_logs_and_sensitive_context
+PASS CFP3_default_omits_tool_inputs_results_and_body_even_with_screenshot
+PASS CFP4_context_mode_bounds_messages_and_includes_native_tool_records
+PASS FS1_submitFeedback_has_sync_metadata
+PASS FS2_updateSyncMeta_updates_status_and_index
+PASS FS3_listPendingForSync_filters_correctly
+PASS FS4_recoverStuckSyncing_resets_to_pending
+PASS FS5_computeNextRetryAt_exponential_backoff
+PASS FS6_classifyError_network_errors
+PASS FS7_classifyError_feishu_errors
+PASS FS8_fieldMapper_maps_payload_correctly
+PASS FS9_syncLock_acquire_release
+PASS FS10_fieldMapper_attachment_field
+PASS feedback-security invalid IDs rejected across storage and IPC
+PASS feedback-security duplicate concurrent submissions retain first record and attachment
+PASS feedback-security parallel records retained in index
+PASS feedback-security failed publication leaves no partial record and can be retried
+[feedbackSync] Sent feedback fb-mabc1234-abc123 to Feishu record fixture-record
+PASS feedback-security safe legacy records remain readable and syncable
+PASS feedback-security attachment names cannot escape or silently replace each other
+PASS feedback-security record and index symlinks rejected without touching targets
+PASS feedback-security forged attachment paths and symlinks never uploaded
+PASS feedback-security mismatched and malformed records isolated from valid records
+[feedbackSync] Sent feedback fb-ipc to Feishu record fixture-record
+PASS feedback-security IPC screenshot submission query retry and duplicate failure
+[lanRemote] listening on http://127.0.0.1:56082
+[feedbackSync] Sent feedback fb-lan to Feishu record fixture-record
+PASS feedback-security authenticated LAN uses production feedback IPC handlers
+PASS feedback-security outbox directory symlink rejected
+feedback-path-security: ok (12 scenarios)
+chat-chain-contract: ok
+[lanRemote] listening on http://0.0.0.0:56094
+chat-chain-lan: ok
+model-metadata: ok (14 checks)
+model-config-v6: ok
+model-config-v8-setup: ok (30 checks)
+responses-verification-lifecycle: ok
+codex-native-cutover: ok
+deepseek-no-reasoning-bridge: ok
+deepseek-novella-consistency-cache: ok
+exact-duplicate-cleanup: ok
+narrative-pov-cleanup: ok
+native-novel-workspace: ok
+native-patch-read-after-write: ok
+native-existing-resource-update: ok
+task-ledger-resource-contract: ok
+writing-authorization-policy: ok
+PASS task-completion 5 percent tolerance and exact boundaries
+PASS task-completion large shortfall and excess change acceptance without rollback
+PASS task-completion partial target commits remain incomplete
+PASS task-completion normal model ending without a write is not a completed writing task
+PASS task-completion formal version changes invalidate commit evidence
+PASS task-completion interruption preserves saved evidence and marks partial persistence
+PASS task-completion complete ending requires independent review after objective checks pass
+PASS task-completion reading requires actual successful resource reads
+PASS task-completion review requires covered report while quality remains unevaluated
+PASS task-completion roleplay and plain text do not invent objective acceptance
+PASS task-completion persisted task result and progress agree after incomplete turn
+PASS task-completion explicit continuation inherits target and stable task identity
+PASS task-completion valid prior commits allow completion without rewriting finished content
+PASS task-completion continuation rejects completed goals and other conversations
+PASS task-completion ordinary new messages do not inherit an unrelated target
+PASS task-completion restricted selection continuation requires a fresh user selection
+PASS task-completion continued evidence is invalidated when saved content changes
+PASS task-completion crash recovery retains partial saves and accurate progress
+task-completion-state: ok (18 scenarios)
+codex-native-apply-patch: ok (deepseek-v4-flash)
+codex-native-apply-patch: ok (deepseek-flash)
+codex-native-apply-patch: ok (deepseek-v4-pro)
+codex-continuous-writing: ok
+codex-native-mutation-loop: ok
+novel-mcp-mutation: ok
+TEST_PASS DAIM1_minimal_rewrite_passes: a shorter direct rewrite is accepted
+TEST_PASS DAIM2_new_decorations_are_rejected: new dialogue, metaphor, atmosphere, and psychology are rejected
+TEST_PASS DAIM3_irregular_rhythm_is_preserved_unless_merge_is_explicit: paragraph flattening requires explicit paragraph-function guidance
+TEST_PASS DAIM4_not_but_target_must_be_removed: the candidate must remove the targeted skeleton across punctuation, whitespace, sentence and paragraph variants
+TEST_PASS DAIM5_not_but_target_cannot_be_introduced: a de-ai candidate cannot introduce a new not-but skeleton into clean source text
+TEST_SUMMARY 5/5 passed, 0 failed
+TEST_DONE
+unit suite: ok (25 files)

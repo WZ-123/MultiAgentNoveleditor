@@ -31,7 +31,13 @@ function buildRecentMessages(messages, limit = 8) {
 
 function buildRecentToolCalls(messages, limit = 5) {
   return (Array.isArray(messages) ? messages : [])
-    .filter((message) => message && typeof message === 'object' && message.role === 'tool')
+    .flatMap((message) => {
+      if (!message || typeof message !== 'object') return [];
+      if (message.role === 'tool') return [message];
+      return (Array.isArray(message.toolCalls) ? message.toolCalls : [])
+        .filter(item => item && !['userMessage', 'agentMessage', 'reasoning'].includes(item.type))
+        .map(item => ({ ...item, name: item.name || item.tool || item.type, input: item.input || item.arguments, result: item.result || item.output || item.diff || '' }));
+    })
     .slice(-limit)
     .map((message) => {
       const meta = parseToolResultMeta(message.result || '');
@@ -95,7 +101,7 @@ export function buildQuickFeedbackPayload({
   recentRendererLogs,
   includeScreenshot,
 }) {
-  const toolCalls = buildRecentToolCalls(messages, includeLogs ? 6 : 3);
+  const toolCalls = includeLogs ? buildRecentToolCalls(messages, 6) : [];
   const recentMessages = includeLogs ? buildRecentMessages(messages, 8) : [];
   const latestCheckpoint = includeLogs ? pickLatestCheckpoint(toolCalls) : null;
   const latestChangedFiles = includeLogs ? buildLatestChangedFiles(toolCalls) : [];

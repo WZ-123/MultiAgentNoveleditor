@@ -12,7 +12,9 @@
 
 新反馈先写完整临时 JSON，再原子发布且不替换已有 ID；附件采用排他创建。重复 ID 返回失败并保留原内容，同一进程内存储变更串行执行以防索引更新丢失。失败发布清理本次附件和暂存文件，不留下半写入记录。清洗后重名的附件另取唯一名称。同步读取根据 feedbackId/fileName 重新计算路径并核对 localPath，通过不跟随符号链接的文件句柄读取；把已验证字节交给 Relay，避免再按不可信路径读取。路径安全错误为终止失败，不自动反复重试。桌面 preload 与 LAN bridge 均提供提交、列出、查询及手动重试，LAN 身份认证保持现有规则。
 
-可重复回归入口为 `npm test -- test:feedback`；实际验证、替身同步服务及桌面 API 的范围见 [实施记录](../artifacts/chat-chain-audit/report.md#反馈安全与任务完成状态实施2026-10-14)。当前 React 界面未找到可见反馈表单入口，历史 chat-feedback-ui 脚本所依赖的按钮也不存在；本轮桌面反馈验证覆盖真实渲染层 API/IPC/截图和正式存储，不冒称完成表单点击体验。
+可重复回归入口为 `npm test -- test:feedback`（构造、同步与安全）和 `npm test -- test:feedback:ui`（构建与隔离 Electron 表单）。活动栏及聊天栏的“反馈”按钮打开同一表单，复用既有构造函数、IPC、outbox 和同步 worker。描述必填，日志与截图默认关闭、独立选择；选择日志前说明会附带最近对话、工具参数、正文及选区片段，关闭日志时不附带工具记录。日志模式兼容原生 assistant.toolCalls。打开时固定报告上下文，取消和 Escape 不提交，保存失败保留输入。
+
+本地回执只表示本地保存。记录列表区分 pending、syncing、retryable_failed、failed_terminal；只有 sent 且有 remoteRecordId 才显示远端已收到。支持重开查看及手动重试，截图失败明确提示未附加，状态查询失败与保存结果分别显示。2026-10-17 在 macOS 上重新验证按钮、表单、四种附件组合、失败恢复与本机替身 HTTP 回执，当前结果及限制见 [合入记录](../artifacts/chat-chain-audit/report.md#dot-反馈入口修复检查与合入2026-10-17)。生产飞书、多设备 LAN 界面与安装包未验收。
 
 Relay 的 Cloudflare / SCF 入口位于 [relay-worker](../relay-worker)，共享 relay-core 和 feishu-handlers。服务端配置与客户端公共配置分离；客户端不能携带飞书服务端 Secret 或旧共享认证密钥。具体 endpoint 和认证细节以共享核心及 contract tests 为准，不把密钥写进本页。
 
