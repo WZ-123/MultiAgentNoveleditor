@@ -96,6 +96,33 @@ class ModelSetupService {
     if (active) { active.abort(); await active.promise; return this.query(id); }
     return this.update(id, { status: 'cancelled', error: '配置已取消，可继续。' });
   }
+  async discard(id) {
+    if (this.running.has(id) || this.starting.has(id)) throw fault('配置仍在进行，请先取消', 'setup_running');
+    const operation = await this.query(id);
+    if (!operation) return false;
+    if (operation.status === 'running' || operation.status === 'cancelling') throw fault('配置仍在进行，请先取消', 'setup_running');
+    if (operation.status === 'complete') throw fault('已完成的配置不能作为未完成记录删除', 'setup_complete');
+    await config.mutateState((state) => {
+      const current = state.setupOperations.find((item) => item.id === id);
+      if (!current || current.status === 'complete') throw fault('配置状态已改变，请刷新后重试', 'model_config_stale');
+      if (this.running.has(id) || this.starting.has(id)) throw fault('配置仍在进行，请先取消', 'setup_running');
+      state.setupOperations = state.setupOperations.filter((item) => item.id !== id);
+    });
+    if (operation.credentialId === `setup-key-${id}`) {
+      const state = await config.load();
+      const referenced = state.connections.some((item) => item.credentialId === operation.credentialId)
+        || state.setupOperations.some((item) => item.credentialId === operation.credentialId && item.status !== 'complete');
+      if (!referenced) {
+        try { await config.deleteCredential(operation.credentialId, state.revision); }
+        catch (error) {
+          // The attempt is already removed. A concurrent edit may reuse its key;
+          // preserve that newer configuration rather than overwrite or reject it.
+          if (!['credential_in_use', 'model_config_stale'].includes(error.code)) throw error;
+        }
+      }
+    }
+    return true;
+  }
   async ensureCurrent(operation) {
     const secret = await config.credentialSecret(operation.credentialId);
     if (secret.revision !== operation.credentialRevision) throw fault('Key 已更新，请重新检测；输入已保留。', 'model_config_stale');

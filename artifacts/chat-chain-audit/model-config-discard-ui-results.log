@@ -1,0 +1,70 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:responses-config:ui
+
+vite v8.2.2 building client environment for production...
+transforming...
+✓ 3734 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                  1.29 kB │ gzip:   0.55 kB
+dist/assets/index-BircTcvu.css                 463.37 kB │ gzip:  47.47 kB
+dist/assets/rolldown-runtime-hePW80VL.js         0.71 kB │ gzip:   0.42 kB
+dist/assets/LanguageSettings-CA1ZYudZ.js         1.39 kB │ gzip:   0.66 kB
+dist/assets/AppSettingsPanel-DMuzKQWd.js         1.52 kB │ gzip:   0.96 kB
+dist/assets/SearchSettings-BGiR-_7D.js           3.68 kB │ gzip:   1.82 kB
+dist/assets/StorageSettings-Dv0RsaUU.js          4.44 kB │ gzip:   1.50 kB
+dist/assets/SkillSettings-BrwZSGud.js            4.56 kB │ gzip:   1.67 kB
+dist/assets/OfflineSyncDialog-Bc9yIPbx.js        4.77 kB │ gzip:   1.93 kB
+dist/assets/SearchPanel-q0bptYuf.js              4.91 kB │ gzip:   1.93 kB
+dist/assets/NovelDataBrowser-xn5nBWqm.js         7.49 kB │ gzip:   2.41 kB
+dist/assets/LanRemoteSettings-DrhO_-jq.js        9.31 kB │ gzip:   2.97 kB
+dist/assets/ImportMergePanel-BgaXCSje.js        13.62 kB │ gzip:   3.96 kB
+dist/assets/vendor-diff-BflPwFzc.js             19.01 kB │ gzip:   6.31 kB
+dist/assets/ProviderSettingsPanel-D2PuXTmw.js   27.48 kB │ gzip:   8.65 kB
+dist/assets/ImportNovelPanel-D-SRvTzo.js        35.16 kB │ gzip:   9.22 kB
+dist/assets/DataTabContent--ENRvs_v.js          51.24 kB │ gzip:  13.04 kB
+dist/assets/vendor-misc-B2dMrqYV.js             91.01 kB │ gzip:  30.47 kB
+dist/assets/index-COKbIj1c.js                  150.39 kB │ gzip:  49.23 kB
+dist/assets/vendor-markdown-Og84yWAm.js        161.49 kB │ gzip:  48.51 kB
+dist/assets/vendor-react-BH0rCosz.js           179.43 kB │ gzip:  56.81 kB
+dist/assets/vendor-editor-CINcjdpy.js          537.28 kB │ gzip: 185.62 kB
+
+✓ built in 453ms
+sandbox_extension_issue_file_to_process failed for /private/tmp/mana-model-config-review/node_modules/electron/dist/Electron.app: 1 (Operation not permitted)
+TEST_PASS empty state
+TEST_PASS 500 models paginated to 20
+TEST_PASS 500-model count
+TEST_PASS pagination works
+TEST_PASS model search
+TEST_PASS text failure shown inline
+TEST_PASS unfinished attempt explains failure and impact
+TEST_PASS tools failure offers chat-only
+TEST_PASS tool failure does not auto-activate
+TEST_PASS retries reuse one credential
+TEST_PASS retries reuse one connection
+TEST_PASS retry only tools and enable novel operations
+TEST_PASS parameter draft preserves active settings
+TEST_PASS completed setup edits persist after verification
+TEST_PASS manual parameter provenance persists
+TEST_PASS reopened editor retains manual parameters
+TEST_PASS editing URL preserves active route before verification
+TEST_PASS stale-save button removed
+TEST_PASS login automatically loads subscription models once
+TEST_PASS login leaves API model active until selected
+TEST_PASS refresh leaves current model unchanged
+TEST_PASS manual ID available when listing fails
+TEST_PASS manual model completes native tool verification
+TEST_PASS manual connection reuses existing credential
+TEST_PASS pending saved-model attempt is understandable and dismissible
+TEST_PASS the selected pending attempt is removed from disk
+TEST_PASS deleting one attempt preserves all other attempts
+TEST_PASS discard leaves the closed configuration editor closed
+TEST_PASS discarding attempt keeps active model
+TEST_PASS discarding attempt keeps saved connections
+TEST_PASS narrow settings have no horizontal overflow
+TEST_PASS narrow primary action is not covered by chat drawer
+TEST_PASS public snapshot redacts key
+TEST_PASS no renderer errors
+responses-config-v8-ui: ok (34 checks)
+responses-config-v6-runner: ok

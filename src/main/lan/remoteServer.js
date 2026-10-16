@@ -466,6 +466,7 @@ function bridgeScript() {
   querySetup: (id) => invoke('mana:modelConfig:querySetup', { id }),
   retrySetup: (payload) => invoke('mana:modelConfig:retrySetup', payload),
   cancelSetup: (id) => invoke('mana:modelConfig:cancelSetup', { id }),
+  discardSetup: (id) => invoke('mana:modelConfig:discardSetup', { id }),
   onSetupProgress: (handler) => onChannel('mana:modelConfig:setupProgress', handler),
   onChanged: (handler) => onChannel('mana:modelConfig:changed', handler),
 

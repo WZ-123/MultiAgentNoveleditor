@@ -31,10 +31,19 @@ const setup = new ModelSetupService({ session: getCodexSessionService, notify: (
   notifyChanged('setup_progress');
 } });
 function registerModelConfigIpc() {
-  ipcMain.handle('mana:modelConfig:startSetup', safe((payload) => setup.start(payload)));
+  ipcMain.handle('mana:modelConfig:startSetup', safe(async (payload) => {
+    const operation = await setup.start(payload);
+    notifyChanged('setup_started');
+    return operation;
+  }));
   ipcMain.handle('mana:modelConfig:querySetup', safe(({ id }) => setup.query(id)));
   ipcMain.handle('mana:modelConfig:retrySetup', safe(({ id, ...input }) => setup.retry(id, input)));
   ipcMain.handle('mana:modelConfig:cancelSetup', safe(({ id }) => setup.cancel(id)));
+  ipcMain.handle('mana:modelConfig:discardSetup', safe(async ({ id }) => {
+    const discarded = await setup.discard(id);
+    if (discarded) notifyChanged('setup_discarded');
+    return discarded;
+  }));
   ipcMain.handle('mana:modelConfig:snapshot', safe(snapshot));
   ipcMain.handle('mana:modelConfig:saveCredential', safe(async ({ credential, expectedRevision }) => {
     await modelConfig.saveCredential(credential, expectedRevision);

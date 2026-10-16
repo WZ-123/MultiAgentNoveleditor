@@ -4,6 +4,7 @@ import { Check, ChevronDown, Plus, RefreshCw, X } from 'lucide-react';
 const fieldClass = 'mt-1 w-full min-w-0 rounded-lg border border-white/10 bg-[#181b22] px-3 py-2 text-sm text-gray-100';
 const cardClass = 'rounded-xl border border-white/10 bg-white/[0.025] p-4';
 const stages = { discover: '检测模型列表', select: '选择模型', responses: '验证文本', tools: '验证小说工具', activate: '启用模型', complete: '配置完成' };
+const setupStateText = (item) => ({ failed: '失败', cancelled: '已取消', paused: '已中断', awaiting_model: '等待选择模型', awaiting_chat: '等待决定是否仅用于聊天', running: '进行中', cancelling: '取消中' }[item.status] || '待继续');
 const statusFor = (model, effort = '') => model?.verification?.byEffort?.[effort || 'default'] || { responses: 'unknown', tools: 'unknown' };
 const modeLabel = (result) => result.responses !== 'ok' ? '需验证' : result.tools === 'ok' ? '可操作小说' : result.tools === 'failed' ? '仅聊天' : '工具需验证';
 const newDraft = () => ({ id: crypto.randomUUID(), name: '', templateId: 'deepseek', inputUrl: '', apiKey: '', credentialId: '', authMode: 'auto', customHeaderName: '', connectionId: '' });
@@ -118,6 +119,7 @@ export function ProviderSettingsPanel() {
   }, [draft?.inputUrl, draft?.templateId, draft?.authMode, draft?.customHeaderName, draft?.credentialId]);
   const running = ['running', 'cancelling'].includes(operation?.status);
   const locked = busy || running;
+  const pendingOperations = operations.filter((item) => item.status !== 'complete' && !(adding && item.id === operation?.id));
   const activeConnection = state.connections.find((item) => item.id === state.activeSelection?.connectionId);
   const activeModel = activeConnection?.models.find((item) => item.id === state.activeSelection?.modelId);
   const activeStatus = activeConnection?.kind === 'codexSubscription' ? { responses: account?.type === 'chatgpt' ? 'ok' : 'unknown', tools: 'ok' } : statusFor(activeModel, state.activeSelection?.reasoningEffort);
@@ -145,6 +147,13 @@ export function ProviderSettingsPanel() {
     setAdding(true); setMethod('api'); setError('');
     setDraft({ ...newDraft(), ...next, apiKey: '' }); useOperation(next);
   };
+  const discard = (item) => act(async () => {
+    await mana.modelConfig.discardSetup(item.id);
+    if (operationRef.current === item.id) { useOperation(null); setAdding(false); }
+    setOperations(await mana.modelConfig.querySetup());
+    await refresh();
+    setMessage(`已删除“${item.name}”的配置尝试，当前使用的模型未改变。`);
+  });
   const editAgain = () => {
     setDraft({ ...draft, id: crypto.randomUUID(), credentialId: operation?.credentialId || draft.credentialId, apiKey: '' });
     useOperation(null); setError('');
@@ -194,7 +203,7 @@ export function ProviderSettingsPanel() {
       </>}
     </section>}
     <section className="space-y-3"><h3 className="text-sm font-medium">已保存的服务 <span className="text-gray-500">{state.connections.length}</span></h3>{!state.connections.length && <p className={`${cardClass} text-xs text-gray-500`}>还没有保存的服务。添加后可以随时切换模型。</p>}{state.connections.map((connection) => <details key={connection.id} className={cardClass}><summary className="flex cursor-pointer list-none items-center gap-2"><ChevronDown size={14} className="shrink-0 text-gray-500" /><span className="min-w-0 flex-1 break-all text-sm">{connection.name}<span className="mt-1 block text-[10px] text-gray-500">{connection.models.length} 个模型{activeConnection?.id === connection.id ? ` · 当前：${activeModel?.name}` : ''}</span></span>{activeConnection?.id === connection.id && <Check size={14} className="shrink-0 text-emerald-400" />}</summary><div className="mt-3 space-y-3"><ModelList models={connection.models} selected={activeConnection?.id === connection.id ? activeModel?.id : ''} subscription={connection.kind === 'codexSubscription'} onSelect={(model) => { if (connection.kind === 'codexSubscription') { setAdding(true); setMethod('subscription'); useOperation(null); setSelected(model.id); setEffort(model.capabilities.reasoningEfforts.includes('medium') ? 'medium' : ''); } else { chooseSaved(connection, model); } }} /><div className="flex gap-2"><Button disabled={locked} onClick={() => connection.kind === 'api' ? begin(connection) : (setAdding(true), setMethod('subscription'), useOperation(null))}>编辑 / 刷新模型</Button><Button disabled={locked} onClick={() => { if (window.confirm(`删除服务“${connection.name}”？`)) act(async () => { await mana.modelConfig.deleteConnection(connection.id, state.revision); await refresh(); }); }}>删除服务</Button></div></div></details>)}</section>
-    {operations.some((item) => item.status !== 'complete') && <details className={cardClass}><summary className="cursor-pointer text-sm">未完成的配置</summary><div className="mt-3 space-y-2">{operations.filter((item) => item.status !== 'complete').map((item) => <div key={item.id} className="flex items-center justify-between gap-2 text-xs"><span className="min-w-0 break-all">{item.name} · {stages[item.stage]}</span><Button disabled={locked} onClick={() => resume(item)}>继续配置</Button></div>)}</div></details>}
+    {pendingOperations.length > 0 && <details data-testid="pending-setups" className={cardClass}><summary className="cursor-pointer text-sm">配置尝试（{pendingOperations.length}）</summary><p className="mt-3 text-xs text-gray-400">这些是上次未完成的检测或验证记录，不影响当前使用的模型。不需要时可以删除；本次新建且未被使用的 Key 也会一并清理。</p><div className="mt-3 space-y-3">{pendingOperations.map((item) => <div key={item.id} data-setup-id={item.id} className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-3 text-xs"><div className="min-w-0 flex-1"><p className="break-all text-gray-200">{item.name}{item.modelId ? ` · ${item.modelId}` : ''}</p><p className="mt-1 text-gray-400">{setupStateText(item)} · {stages[item.stage] || item.stage}</p>{item.error && item.status !== 'cancelled' && <p className="mt-1 break-words text-amber-300">{item.error}</p>}</div><Button disabled={locked} onClick={() => resume(item)}>继续配置</Button><Button disabled={locked || ['running', 'cancelling'].includes(item.status)} onClick={() => discard(item)}>删除记录</Button></div>)}</div></details>}
     <details className={cardClass}><summary className="cursor-pointer text-sm">高级：API 凭据管理</summary><p className="mt-2 text-xs text-gray-500">Key 可供多个连接复用。轮换后需重新验证；引用中的凭据不可删除。</p><div className="mt-3 space-y-2">{state.credentials.map((item) => <div key={item.id} className="flex flex-wrap items-center gap-2 text-xs"><span className="min-w-0 flex-1 break-all">{item.name} · {item.connectionCount} 个连接</span><Button disabled={locked || !item.secretStatus?.readable} onClick={() => begin(null, item.id)}>复用 Key</Button><Button disabled={locked} onClick={() => setCredential({ id: item.id, name: item.name, apiKey: '' })}>改名 / 轮换</Button><Button disabled={locked || item.connectionCount > 0} onClick={() => act(async () => { await mana.modelConfig.deleteCredential(item.id, state.revision); await refresh(); })}>删除</Button></div>)}</div>{credential && <div className="mt-3 space-y-2"><input aria-label="凭据名称" value={credential.name} onChange={(event) => setCredential({ ...credential, name: event.target.value })} className={fieldClass} /><input aria-label="新 API Key" type="password" placeholder="留空保持原 Key" value={credential.apiKey} onChange={(event) => setCredential({ ...credential, apiKey: event.target.value })} className={fieldClass} /><Button disabled={busy} onClick={() => act(async () => { await mana.modelConfig.saveCredential(credential, state.revision); setCredential(null); await refresh(); })}>保存凭据</Button></div>}</details>
   </div></div>;
 }

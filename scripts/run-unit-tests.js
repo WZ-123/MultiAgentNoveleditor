@@ -17,6 +17,7 @@ const tests = [
   'test/model-metadata.test.js',
   'test/model-config-v6.test.js',
   'test/model-config-v8-setup.test.js',
+  'test/model-config-discard-ipc.test.js',
   'test/responses-verification-lifecycle.test.js',
   'test/codex-native-cutover.test.js',
   'test/deepseek-no-reasoning-bridge.test.js',

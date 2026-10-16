@@ -110,6 +110,7 @@ const modelConfig = {
   querySetup: (id) => invoke('mana:modelConfig:querySetup', { id }),
   retrySetup: (payload) => invoke('mana:modelConfig:retrySetup', payload),
   cancelSetup: (id) => invoke('mana:modelConfig:cancelSetup', { id }),
+  discardSetup: (id) => invoke('mana:modelConfig:discardSetup', { id }),
   onSetupProgress: (handler) => {
     const wrapped = (_event, payload) => handler(payload);
     ipcRenderer.on('mana:modelConfig:setupProgress', wrapped);

@@ -76,6 +76,7 @@ async function main() {
     // Wait until the mock probe has installed its abort listener.
     while (!calls.at(-1).startsWith('a-model:default:responses')) await new Promise((resolve) => setTimeout(resolve, 2));
     await new Promise((resolve) => setTimeout(resolve, 5));
+    await assert.rejects(service.discard('cancel'), { code: 'setup_running' }); checks++;
     await service.cancel('cancel'); op = await settle('cancel'); hold = false;
     ok(op.status === 'cancelled' && config.verificationFor(op.candidate.models[0], '').responses === 'unknown', 'cancellation does not mark model failed');
     blocked = true; await service.retry('cancel'); op = await settle('cancel'); blocked = false;
@@ -87,6 +88,35 @@ async function main() {
     await config.saveCredential({ id: op.credentialId, apiKey: 'rotated' });
     await service.retry('cancel'); op = await settle('cancel');
     ok(op.errorCode === 'model_config_stale', 'key rotation invalidates pending candidate');
+    const selectedBeforeDiscard = (await config.load()).activeSelection;
+    ok(await service.discard('cancel') && !(await service.query('cancel')), 'discard removes the unfinished attempt');
+    ok(!(await config.load()).credentials.some((item) => item.id === 'setup-key-cancel'), 'discard cleans up an unused setup key');
+    ok(JSON.stringify((await config.load()).activeSelection) === JSON.stringify(selectedBeforeDiscard), 'discard preserves the active model');
+    await assert.rejects(service.discard('first'), { code: 'setup_complete' }); checks++;
+    const beforeSavedDiscard = await config.load();
+    await start('saved-attempt', { connectionId: original.id, credentialId: original.credentialId, apiKey: '', useSaved: true, modelId: 'a-model', inputUrl: 'https://new.invalid/v1', approvedCandidateUrls: ['https://new.invalid/v1/models'] });
+    ok(await service.discard('saved-attempt'), 'saved-connection attempt can be discarded');
+    ok((await config.load()).credentials.some((item) => item.id === original.credentialId) && JSON.stringify((await config.load()).connections) === JSON.stringify(beforeSavedDiscard.connections), 'discard keeps shared key and saved connections');
+    ok(await service.discard('missing-attempt') === false, 'discarding missing attempt is idempotent');
+    await start('shared-attempt'); await settle('shared-attempt');
+    await start('other-attempt', { apiKey: '', credentialId: 'setup-key-shared-attempt' }); await settle('other-attempt');
+    ok(await service.discard('shared-attempt') && (await config.credentialSecret('setup-key-shared-attempt')).value, 'discard preserves setup key used by another pending attempt');
+    ok((await service.query('other-attempt')).credentialId === 'setup-key-shared-attempt', 'other pending attempt is unchanged');
+    await start('linked-attempt'); await settle('linked-attempt');
+    const linked = await service.query('linked-attempt');
+    await config.saveConnection(linked.candidate);
+    ok(await service.discard('linked-attempt') && (await config.load()).connections.some(item => item.id === linked.connectionId), 'discard preserves saved connection referencing an owned setup key');
+    ok(!!(await config.credentialSecret(linked.credentialId)).value, 'referenced owned setup key remains readable');
+    await start('cleanup-race'); await settle('cleanup-race');
+    const deleteCredential = config.deleteCredential;
+    config.deleteCredential = async (id, expectedRevision) => {
+      ok(Number.isInteger(expectedRevision), 'automatic key cleanup carries its configuration revision');
+      await config.mutateState(state => { state.selectionNotice = 'concurrent configuration preserved'; });
+      return deleteCredential(id, expectedRevision);
+    };
+    try { ok(await service.discard('cleanup-race'), 'concurrent cleanup does not report an already discarded attempt as failed'); }
+    finally { config.deleteCredential = deleteCredential; }
+    ok((await config.load()).selectionNotice === 'concurrent configuration preserved' && !!(await config.credentialSecret('setup-key-cleanup-race')).value, 'concurrent configuration survives and uncollected key is retained');
     await start('conflict'); await settle('conflict');
     await config.setActive({ connectionId: 'codex-subscription', modelId: 'gpt-5.6-luna', reasoningEffort: 'medium' });
     await service.retry('conflict'); op = await settle('conflict');

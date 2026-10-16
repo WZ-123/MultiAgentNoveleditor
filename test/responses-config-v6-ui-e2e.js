@@ -62,6 +62,10 @@ async function runResponsesConfigV6UiE2E(win) {
     await evaluate(`qa.op('failed')`);
     assert(await evaluate(`document.querySelector('[data-testid="setup-progress"]').innerText.includes('Fixture text verification rejected')`), 'text failure shown inline');
     const first = (await config.load()).setupOperations[0];
+    await evaluate(`(async()=>{document.querySelector('[aria-label="关闭配置"]').click();await qa.wait(()=>document.querySelector('[data-testid="pending-setups"]'));})()`);
+    assert(await evaluate(`(()=>{const section=document.querySelector('[data-testid="pending-setups"]');section.open=true;return section.innerText.includes('失败 · 验证文本') && section.innerText.includes('Fixture text verification rejected') && section.innerText.includes('不影响当前使用的模型');})()`), 'unfinished attempt explains failure and impact');
+    await shot('model-config-v8-pending-attempt.png', '[data-testid="pending-setups"]');
+    await evaluate(`(async()=>{qa.click('继续配置',document.querySelector('[data-testid="pending-setups"]'));await qa.wait(()=>document.querySelector('[data-testid="setup-progress"]'));})()`);
     await evaluate(`qa.click('验证并使用');`);
     await evaluate(`qa.op('awaiting_chat')`);
     assert(await evaluate(`document.querySelector('[data-testid="setup-progress"]').innerText.includes('仅用于聊天')`), 'tools failure offers chat-only');
@@ -128,6 +132,33 @@ async function runResponsesConfigV6UiE2E(win) {
     assert((await config.activeRoute()).model.verification.tools === 'ok', 'manual model completes native tool verification');
     assert((await config.load()).credentials.length === 1, 'manual connection reuses existing credential');
     await evaluate(`document.querySelector('[aria-label="关闭配置"]').click()`);
+    const selectionBeforeDiscard = (await config.load()).activeSelection;
+    const connectionsBeforeDiscard = (await config.load()).connections;
+    const operationIdsBeforeDiscard = (await config.load()).setupOperations.map(item => item.id);
+    const discardedId = await evaluate(`(async()=>{
+      const card=[...document.querySelectorAll('details')].find(item=>item.textContent.includes('500 个模型'));
+      card.open=true;await qa.sleep(100);card.querySelector('[data-testid="select-model-a-fixture-model"]').click();
+      const next=await qa.wait(async()=>(await mana.modelConfig.querySetup()).find(item=>!${JSON.stringify(operationIdsBeforeDiscard)}.includes(item.id)));
+      await qa.wait(()=>{const close=document.querySelector('[aria-label="关闭配置"]');return close && !close.disabled;});
+      document.querySelector('[aria-label="关闭配置"]').click();
+      await qa.wait(()=>!document.querySelector('[data-testid="setup-editor"]'));
+      await qa.wait(()=>document.querySelector('[data-setup-id="'+next.id+'"]'));
+      return next.id;
+    })()`);
+    assert(await evaluate(`(()=>{const section=document.querySelector('[data-testid="pending-setups"]');section.open=true;const row=section.querySelector('[data-setup-id="'+${JSON.stringify(discardedId)}+'"]');return row.innerText.includes('等待选择模型') && row.innerText.includes('删除记录');})()`), 'pending saved-model attempt is understandable and dismissible');
+    await evaluate(`(async()=>{
+      const row=document.querySelector('[data-setup-id="'+${JSON.stringify(discardedId)}+'"]');
+      await qa.wait(()=>[...row.querySelectorAll('button')].some(button=>button.textContent==='删除记录' && !button.disabled));
+      qa.click('删除记录',row);
+      await qa.wait(()=>!document.querySelector('[data-setup-id="'+${JSON.stringify(discardedId)}+'"]'));
+    })()`);
+    assert(!(await config.load()).setupOperations.some(item => item.id === discardedId), 'the selected pending attempt is removed from disk');
+    const operationsAfterDiscard = (await config.load()).setupOperations;
+    assert(operationIdsBeforeDiscard.every(id => operationsAfterDiscard.some(item => item.id === id)), 'deleting one attempt preserves all other attempts');
+    assert(await evaluate(`!document.querySelector('[data-testid="setup-editor"]')`), 'discard leaves the closed configuration editor closed');
+    assert(JSON.stringify((await config.load()).activeSelection) === JSON.stringify(selectionBeforeDiscard), 'discarding attempt keeps active model');
+    assert(JSON.stringify((await config.load()).connections) === JSON.stringify(connectionsBeforeDiscard), 'discarding attempt keeps saved connections');
+    await shot('model-config-v8-discarded-attempt.png', '[data-testid="responses-config-v8"]');
     win.setSize(900, 760); await delay(600);
     await shot('model-config-v8-narrow.png', '[data-testid="responses-config-v8"]');
     assert(await evaluate(`(()=>{const panel=document.querySelector('[data-testid="responses-config-v8"]');return panel.scrollWidth<=panel.clientWidth+1;})()`), 'narrow settings have no horizontal overflow');
