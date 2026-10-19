@@ -117,9 +117,8 @@ async function execute(c) {
   if (c.action==='turn') {
     await wait(`document.querySelector('[data-testid="codex-input"]')&&!document.querySelector('[data-testid="codex-input"]').disabled&&!document.querySelector('button[aria-label="停止"]')`);
     await input(c.text);current.events=[];current.confirmations=[];
-    // Opt-in protocol probe only. Ordinary chat is unchanged: this installs the
-    // production handoff adapter before its first native author dispatch, then
-    // uses the actual renderer, native tools and approval UI. No output stubs.
+    // Historical opt-in protocol probe. Current ordinary-writing studies omit
+    // preparationHandoff and use the production entrance without host routing.
     const nativeStart=service._startNativeTurn.bind(service);
     let handoffUsed=false;
     if(c.preparationHandoff)service._startNativeTurn=async params=>{
@@ -146,6 +145,10 @@ async function execute(c) {
     const approved=new Set();let last=0;
     while(Date.now()-at<(c.timeoutMs||600000)) {
       const state=await evaluate(`({running:!!document.querySelector('button[aria-label="停止"]'),error:document.querySelector('[data-testid="codex-error"]')?.innerText,preview:document.querySelector('[data-testid="codex-confirmation-card"]')?.innerText})`);
+      if(c.stopWhenPhase&&!current.stopSent&&[...service.activeRuns.values()].some(run=>run.entry&&run.preparationStage?.phase===c.stopWhenPhase)) {
+        current.stopSent=true;await shot(c.id+'-before-stop');
+        await evaluate(`document.querySelector('button[aria-label="停止"]')?.click()`);
+      }
       if(state.preview&&Date.now()-last>1000) {
         const key=[...service.pendingConfirmations.keys()].at(-1);
         if(key&&!approved.has(key)) {
@@ -155,6 +158,11 @@ async function execute(c) {
           const decline=c.decline||unexpectedDelete||outsideScope;
           approved.add(key);current.confirmations.push({key,preview:state.preview,decision:decline?'decline':'accept'});
           await evaluate(`document.querySelector('[data-testid="codex-confirmation-card"]').scrollIntoView({block:'center'})`);await shot(c.id+'-approval-'+approved.size);
+          if(c.conflictAtApproval) {
+            const data=require('../src/main/store/novelData');
+            const world=await data.readWorld(novel.dir);await data.writeWorld(novel.dir,{...world,lore:world.lore+'\n并发用户编辑：保留这条设定。'});
+            await save(c.id+'-concurrent-world.json',await data.readWorld(novel.dir));
+          }
           await evaluate(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes(${JSON.stringify(decline?'拒绝':'确认写入')})&&!b.disabled)?.click()`);last=Date.now();
         }
       }
@@ -163,7 +171,12 @@ async function execute(c) {
     }
     await evaluate(`document.querySelector('button[aria-label="停止"]')?.click()`);throw new Error('Observation limit '+(Date.now()-at));
   }
-  if(c.action==='shutdown'){await service.dispose();app.exit(0);return {}}
+  if(c.action==='shutdown'){
+    await save('host-task-results.json',await require('../src/main/store/chatRuns').list());
+    const ledger=path.join(process.env.MANA_USER_DATA_ROOT,'codex-task-ledger.jsonl');
+    if(sync.existsSync(ledger))await fs.copyFile(ledger,path.join(OUT,'host-ledger.jsonl'));
+    await service.dispose();app.exit(0);return {};
+  }
   throw new Error('Unknown command');
 }
 app.whenReady().then(async()=>{

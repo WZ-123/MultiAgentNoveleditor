@@ -2,14 +2,17 @@
 const {readResource,listResourceDescriptors,parseResourceRef}=require('../mcp/novelResources');
 
 const contextResources=value=>value?.mode==='writing_context'?[...(value.sharedSources||[]),...(value.actors||[]).flatMap(actor=>[actor.card,actor.subjectiveMemory].filter(Boolean))]:[];
-async function buildWritingContext(entry,run) {
+async function buildWritingContext(entry,run,{includeDefaults=false}={}) {
   const c=run.taskConstraints||{};
   const refs=new Set([...(c.requiredReadResourceRefs||[]),...(c.reviewTargetResourceRefs||[]),...(c.targetResourceRefs||[])]);
+  for(const ref of c.allowedWriteResourceRefs||[])refs.add(ref);
+  if(run.selectionState?.resourceRef)refs.add(run.selectionState.resourceRef);
   for(const ref of c.participantCharacterRefs||[]){refs.add(ref);refs.add('character-memory:'+ref.slice('character:'.length));}
-  if(!refs.size) {
+  if(includeDefaults||!refs.size) {
     const descriptors=await listResourceDescriptors(entry);
     for(const r of descriptors.filter(r=>['world','outline','style'].includes(r.kind)))refs.add(r.resourceRef);
     const previous=descriptors.filter(r=>r.kind==='chapter').at(-1);if(previous)refs.add(previous.resourceRef);
+    if(includeDefaults&&!c.participantCharacterRefs?.length)for(const r of descriptors.filter(r=>['character','character-memory'].includes(r.kind)))refs.add(r.resourceRef);
   }
   const sources=await Promise.all([...refs].map(async ref=>{
     let r;

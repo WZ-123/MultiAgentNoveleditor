@@ -337,6 +337,7 @@ export function AiChatPanel({ editorContext, onBeforeSendMessage, onOpenModelSet
       </div>
       {run?.narrativeReview?.status==='running' && <div data-testid="narrative-review-running" className="border-b border-white/10 px-3 py-2 text-xs text-amber-200">自查工具正在对冻结资料执行一次只读分析。</div>}
       {run?.taskConstraints?.intentBinding?.status==='resolving' && <div data-testid="task-intent-running" className="border-b border-white/10 px-3 py-2 text-xs text-amber-200">正在核对本次任务的角色、视角与必读资料。</div>}
+      {run?.preparationStage && <div data-testid="writing-stage-status" className="border-b border-white/10 px-3 py-2 text-xs text-amber-200">{({preparing:'正在根据本次资料准备写作候选，尚未保存。',reviewing:'正在独立审查当前候选，尚未保存。',revising:'正在根据具体缺项进行一次定向修订，尚未保存。',prepared:'候选已准备，正在核对提交依据。',native_commit:'候选已冻结，正在提交；是否保存以正式回执为准。',readback_complete:'候选已正式保存并读回。',rejected:'已拒绝候选，未保存。',interrupted:'写作阶段已停止。',failed:'候选准备失败，未保存。',incomplete:'候选未完成，请查看缺项。'})[run.preparationStage.phase] || '正在处理写作候选。'}</div>}
       {progress && <div data-testid="writing-progress" className="border-b border-white/10 px-3 py-2 text-[10px] text-gray-400">
         {progressPhaseLabel(confirmation ? 'waiting-approval' : progress.phase)} · {chapterLabel(progress.currentResourceRef)} · 已保存 {progress.totalSavedBodyCjk || 0} 字 · 本次 {progress.runNetBodyCjk || 0} 字
         {run && <span> · {Math.max(0, Math.floor((clock - progress.startedAtMs) / 1000))}s</span>}

@@ -108,7 +108,9 @@ async function main() {
     service.runOneShot=async options=>{assert.equal(options.purpose,'task_intent');return {...require('./fixtures/fake-responses-server').taskIntentFixture([{text:options.text}]),modelId:'fixture'};};
     let inputs;
     service._startNativeTurn = async value => { inputs = value; return { turn: { id: 'fixture-turn' } }; };
-    const first = { runId: 'first', conversationId: thread.id, novelId: novel.id, text: '写作目标200字', taskConstraints: { operation: 'write', targetResourceRefs: [ref], minBodyCjk: 200 } };
+    // This fixture isolates the native lifecycle; the staged ordinary writing
+    // entrance has its own storage and dispatch tests.
+    const first = { runId: 'first', conversationId: thread.id, novelId: novel.id, skillName:'mana-novel-workspace', text: '写作目标200字', taskConstraints: { operation: 'write', targetResourceRefs: [ref], minBodyCjk: 200 } };
     await service.startTurn(first);
     service.activeRuns.get(first.runId).committedResources = [commit];
     await service._finalizeRun(service.activeRuns.get(first.runId), { type: 'turn_completed', runId: first.runId, conversationId: thread.id });
@@ -121,7 +123,7 @@ async function main() {
       assert.equal(message.execution.taskResult.goalStatus, 'incomplete');
     });
     await test('explicit continuation inherits target and stable task identity', async () => {
-      await service.startTurn({ runId: 'continue', conversationId: thread.id, novelId: novel.id, text: '继续未完成任务，保留已保存内容', continueFromRunId: first.runId });
+      await service.startTurn({ runId: 'continue', conversationId: thread.id, novelId: novel.id,skillName:'mana-novel-workspace', text: '继续未完成任务，保留已保存内容', continueFromRunId: first.runId });
       const continuing = service.activeRuns.get('continue');
       assert.equal(continuing.taskConstraints.minBodyCjk, 200);
       assert.equal(continuing.taskId, service.runRecords.get('first').taskId);
@@ -131,7 +133,7 @@ async function main() {
       assert.equal((await service.getRunState({ runId: 'continue' })).taskResult.goalVerified, false);
     });
     await test('valid prior commits allow completion without rewriting finished content', async () => {
-      await service.startTurn({ runId: 'tolerated', conversationId: thread.id, novelId: novel.id, text: '继续未完成任务，目标95字', continueFromRunId: 'continue', taskConstraints: { minBodyCjk: 95 } });
+      await service.startTurn({ runId: 'tolerated', conversationId: thread.id, novelId: novel.id,skillName:'mana-novel-workspace', text: '继续未完成任务，目标95字', continueFromRunId: 'continue', taskConstraints: { minBodyCjk: 95 } });
       await service._finalizeRun(service.activeRuns.get('tolerated'), { type: 'turn_completed', runId: 'tolerated', conversationId: thread.id });
       const result = (await service.getRunState({ runId: 'tolerated' })).taskResult;
       assert.equal(result.goalVerified, true);

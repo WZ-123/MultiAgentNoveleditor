@@ -654,6 +654,7 @@ class CodexSessionService extends EventEmitter {
     if (conversationId) this.threadRuns.set(conversationId, runId);
     if (run.progress) await this._updateProgress(run);
     const input = [{ type: 'text', text }];
+    const skillTexts = [];
     const selectedSkills = [...new Set([payload.skillName,
       ...(['write', 'edit'].includes(taskConstraints.operation) ? ['mana-fiction-writing'] : []),
       ...(taskConstraints.reviewRequired ? ['mana-consistency-review'] : [])].filter(Boolean))];
@@ -666,6 +667,7 @@ class CodexSessionService extends EventEmitter {
       const skillPath = roots.map((root) => path.join(root, name, 'SKILL.md')).find((file) => fs.existsSync(file));
       if (!skillPath) throw new Error(`Skill 文件不存在：${name}`);
       input.push({ type: 'skill', name, path: skillPath });
+      skillTexts.push({ name, text: fs.readFileSync(skillPath, 'utf8') });
     }
     try {
       if(runRecord?.cancelRequested||run.interruptionRequested)throw contractError('启动已取消','turn_interrupted');
@@ -677,7 +679,14 @@ class CodexSessionService extends EventEmitter {
         additionalContext: additionalContext({ ...payload, taskConstraints }, editor, workspace?.root || ''),
         ...(payload.outputSchema ? { outputSchema: payload.outputSchema } : {}),
       };
-      const result = await this._startNativeTurn({...nativeTurnParams,input});
+      const ordinaryWriting = require('./ordinaryWriting');
+      let turnInput = input;
+      if (workspace && ordinaryWriting.shouldPrepare(payload, taskConstraints)) {
+        const branch = history ? chatHistory.getBranch(history).map(message => ({ role: message.role, text: message.text })) : [];
+        await require('./writingPreparationStage').prepareStage(this, run, ordinaryWriting.preparationInput(payload, run, branch, skillTexts));
+        turnInput = await require('./writingPreparationStage').commitInput(this, run);
+      }
+      const result = await this._startNativeTurn({...nativeTurnParams,input:turnInput});
       run.turnId = resultId(result, 'turn');
       if (!run.turnId) throw new Error('Codex App Server 未返回 turnId');
       if (run.interruptionRequested) await this.interrupt({ runId });
@@ -1205,6 +1214,7 @@ class CodexSessionService extends EventEmitter {
     }
     const commit = async () => {
       const prepared = await prepareChanges(run.entry, { reason: 'Codex 原生 apply_patch（宿主已批准 fileChange）', changes });
+      prepared.dependencies=run.preparationStage?.dependencies || [];
       return applyPrepared(run.entry, prepared);
     };
     let committed;

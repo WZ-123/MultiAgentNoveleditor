@@ -1,0 +1,62 @@
+{
+  "verifiedAt": "2026-10-19T10:39:28.604Z",
+  "checks": [
+    "real-a original target and honest formal count",
+    "real-b original target and honest formal count",
+    "real-c original target and honest formal count",
+    "real-d original target and honest formal count",
+    "real-e original target and honest formal count",
+    "final original traditional task has a real approval, canonical save, review and goal acceptance",
+    "exact four literal escape fragments are removed without rewriting prose",
+    "ordinary-decline keeps formal prose and has no commit",
+    "ordinary-dependency-conflict keeps formal prose and has no commit",
+    "ordinary-stop keeps formal prose and has no commit",
+    "concurrent world edit survives the dependency conflict",
+    "chapter and exactly two selected memories share one native approved transaction",
+    "explicit continuation preserves original memories and independently reassesses known issues",
+    "latest native handoff preserves original user instructions for subsequent conversation",
+    "all live executions retain the actual chosen model and bounded revision count"
+  ],
+  "rounds": {
+    "a": {
+      "actual": 1406,
+      "goalVerified": false,
+      "unmet": [
+        "word_count",
+        "hard_issues_unresolved"
+      ]
+    },
+    "b": {
+      "actual": 2056,
+      "goalVerified": false,
+      "unmet": [
+        "word_count"
+      ]
+    },
+    "c": {
+      "actual": 1560,
+      "goalVerified": true,
+      "unmet": []
+    },
+    "d": {
+      "actual": 1457,
+      "goalVerified": false,
+      "unmet": [
+        "word_count"
+      ]
+    },
+    "e": {
+      "actual": 1546,
+      "goalVerified": true,
+      "unmet": []
+    }
+  },
+  "sourceChangesAfterInitialManifest": [
+    "src/main/codex-runtime/writingPreparationStage.js"
+  ],
+  "limitations": [
+    "Model review is an opinion, not proof of semantic correctness.",
+    "The original role-driven six-character workflow and historical semantic controls were not rerun.",
+    "Late preparation checkpoint/context and missing-memory-version fixes have current focused regressions; the final live follow-up exercises current native handoff."
+  ]
+}

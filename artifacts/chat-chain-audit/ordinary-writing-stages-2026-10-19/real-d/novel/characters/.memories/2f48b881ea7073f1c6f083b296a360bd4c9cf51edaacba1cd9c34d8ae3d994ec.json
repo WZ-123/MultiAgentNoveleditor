@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lin",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lin-initial",
+      "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "在旧渡口与何芷当面逐项核对药单；数目与箱侧标签相符，铅封封线完整，何芷确认封条未动。",
+      "id": "c1925ec8-5aaa-4251-b048-911a5313605e"
+    }
+  ],
+  "emotionalMemory": [],
+  "relationshipDeltas": [
+    {
+      "summary": "何芷与她当面核对药单和封条，并明确药箱不拆；林岚没有追问箱内情况。",
+      "id": "e1d56a1e-754d-488f-accc-d44245de00e6"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lin-goal",
+      "summary": "查出潮钟误差，保护弟弟"
+    }
+  ],
+  "privateMisbeliefs": []
+}

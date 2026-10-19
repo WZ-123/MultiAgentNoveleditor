@@ -39,6 +39,9 @@ app.whenReady().then(async () => {
   await fs.mkdir(evidenceDir, { recursive: true });
   const { createFakeResponsesServer } = require(path.join(ROOT, 'test/fixtures/fake-responses-server'));
   let plan = [];
+  let preparationResponse;
+  let lastPreparation;
+  const findText=(value,prefix)=>{if(typeof value==='string'&&value.startsWith(prefix))return value;if(value&&typeof value==='object')for(const child of Object.values(value).reverse()){const found=findText(child,prefix);if(found)return found;}return null;};
   let reviewIssues=[],reviewCalls=0,reviewFailure=false;
   let intentGate=null,reviewGate=null,perCharacterIntent=false;
   function reviewPrompt(value) {
@@ -47,15 +50,25 @@ app.whenReady().then(async () => {
     return null;
   }
   fake = await createFakeResponsesServer({respondTaskIntent:async(_body,intent)=>{if(intentGate)await intentGate;if(perCharacterIntent){const raw=JSON.parse(intent.text);raw.perspective={mode:'per_character',focusCharacterRef:null,requestQuote:raw.participants.requestQuote};raw.requiredReadResourceRefs=['character-memory:lin','character-memory:he'];return {text:JSON.stringify(raw)};}return intent;}, respond: async body => {
+    if(findText(body.input,'针对候选的具体缺项执行一次定向修订'))return {text:JSON.stringify(lastPreparation)};
+    if(findText(body.input,'生成本次写作候选（writing_preparation）')) {
+      assert.ok(preparationResponse,'ordinary writing must have a scripted candidate response');
+      const prompt=findText(body.input,'生成本次写作候选（writing_preparation）');
+      const context=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1));
+      const scripted=preparationResponse;
+      const response=typeof scripted==='string'?scripted:{participantCharacterRefs:context.taskScope.participantCharacterRefs,narrativePerspective:context.taskScope.narrativePerspective,...scripted};
+      preparationResponse=null;lastPreparation=response;
+      return {text:typeof response==='string'?response:JSON.stringify(response)};
+    }
     const prompt=reviewPrompt(body.input);
     if(prompt) {
       if(reviewGate)await reviewGate;
       reviewCalls++;const bundle=JSON.parse(prompt.slice(prompt.indexOf('\n')+1));
       const catalogue=bundle.sources.flatMap(source=>source.lines.filter(line=>line.citationId).map(line=>({resourceRef:source.resourceRef,citationId:line.citationId,quote:line.text})));
       if(reviewFailure)return {text:'invalid structured review'};
-      const result=structuredClone({reviews:bundle.targets.map(resourceRef=>({resourceRef,aspects:['timeline','viewpoint','character','world','style','format'],conclusion:'确定性审查接口夹具，不代表实际语义检测。',limitations:[]})),issues:reviewIssues.filter(issue=>issue.status!=='closed').map(issue=>({category:issue.category,severity:issue.severity,contradiction:issue.contradiction,evidence:issue.evidence,affectedResourceRefs:issue.affectedResourceRefs||bundle.targets})),resolutions:reviewIssues.filter(issue=>issue.status==='closed').map(issue=>{
+      const result=structuredClone({reviews:bundle.targets.map(resourceRef=>({resourceRef,aspects:['timeline','viewpoint','character','world','style','format'],conclusion:'确定性审查接口夹具，不代表实际语义检测。',limitations:[]})),issues:reviewIssues.filter(issue=>issue.status!=='closed'&&!(bundle.priorFindings||[]).some(previous=>previous.contradiction===issue.contradiction)).map(issue=>({category:issue.category,severity:issue.severity,contradiction:issue.contradiction,evidence:issue.evidence,affectedResourceRefs:issue.affectedResourceRefs||bundle.targets})),resolutions:reviewIssues.filter(issue=>issue.status==='closed'||(bundle.priorFindings||[]).some(previous=>previous.contradiction===issue.contradiction)).map(issue=>{
         const known=(bundle.priorFindings||[]).find(previous=>previous.contradiction===issue.contradiction);
-        assert.ok(known,'fixture must select an actual prior issue');return {issueId:known.issueId,kind:issue.resolution.kind,explanation:issue.resolution.explanation,evidence:issue.evidence,changes:issue.resolution.changes||[{beforeEvidenceIndex:0,after:issue.evidence[0]}]};
+        assert.ok(known,'fixture must select an actual prior issue');return {issueId:known.issueId,kind:issue.status==='closed'?issue.resolution.kind:'unresolved',explanation:issue.status==='closed'?issue.resolution.explanation:'夹具问题仍未修复',evidence:issue.evidence,changes:issue.status==='closed'?issue.resolution.changes||[{beforeEvidenceIndex:0,after:issue.evidence[0]}]:[]};
       })});
       function cite(value) {
         if(Array.isArray(value))return value.map(cite);
@@ -119,6 +132,11 @@ app.whenReady().then(async () => {
     return Object.values(value).reverse().map(findPatch).find(Boolean);
   };
   const applyPrepared=body=>{const patch=findPatch(body.input);assert.ok(patch);return {customToolName:'apply_patch',input:patch};};
+  const retrievePrepared=body=>{
+    const prompt=findText(body.input,'提交本任务已冻结的候选');assert.ok(prompt);
+    const ref=JSON.parse(prompt.match(/参数 (\{[^}]+\})/u)[1]);
+    return {namespace:'mcp__novel_tools',toolName:'prepare_novel_patch',arguments:ref};
+  };
   plan = [read('character-memory:lin'),{namespace:'mcp__novel_tools',toolName:'prepare_novel_patch',arguments:{participantCharacterRefs:['character:lin'],changes:[{resourceRef:'character-memory:lin',memoryAppend:{factsKnown:[{summary:'得知钥匙被偷'}]}}]}},applyPrepared,{text:'角色记忆保存完成。'}];
   await send('进入角色驱动模式，保存林岚得知钥匙被偷的角色记忆');
   await wait(`document.querySelector('[data-testid="codex-confirmation-card"]')`);
@@ -150,18 +168,19 @@ app.whenReady().then(async () => {
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('summary')].filter(el=>el.innerText==='工具记录').at(-1)?.click()`);
   await shot('missing-character-recovered.png');
   console.log('TEST_PASS missing character is a normal query result and model recovers in the same turn');
-  plan = [{ customToolName: 'apply_patch', input: '*** Begin Patch\n*** Add File: chapters/chapter-003.md\n+林岚找回钥匙。\n*** End Patch' }, { text: '只保存正文，尚未自查。' }];
+  preparationResponse={changes:[{resourceRef:'chapter:chapter-003.md',content:'林岚找回钥匙。'}]};
+  plan = [retrievePrepared,applyPrepared, { text: '只保存正文，尚未自查。' }];
   await send('写下一章，写完自查人物与世界观冲突');
   await wait(`document.querySelector('[data-testid="codex-confirmation-card"]')`);
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes('确认写入')).click()`);
-  await settled('只保存正文，尚未自查。');
-  await wait(objective('目标尚未完成'));
+  await settled('已保存并读回 1 项资源。');
+  await wait(objective('执行证据齐全'));
   assert.ok((await data.readChapter(novel.dir, 'chapter-003.md')).includes('找回钥匙'));
   await shot('post-write-review-required.png');
-  console.log('TEST_PASS formal chapter save does not satisfy requested post-write review');
+  console.log('TEST_PASS ordinary writing performs candidate review before approval and validates the saved canonical version');
   const writtenRefs = ['chapter:chapter-003.md', 'character:lin', 'world:lore'];
   plan = [...writtenRefs.map(read),{namespace:'mcp__novel_tools',toolName:'check_writing_task',arguments:{}}, { text: '写后自查报告。' }];
-  await send('继续未完成任务');
+  await send('审校 chapter:chapter-003.md 的人物与世界观一致性，只报告不要修改');
   await settled('写后自查报告。');
   await wait(objective('执行证据齐全'));
   await shot('post-write-review-completed.png');
@@ -180,14 +199,15 @@ app.whenReady().then(async () => {
   await shot('unrequested-delete-blocked.png');
   console.log('TEST_PASS editing cannot propose whole-resource deletion as a patch workaround');
   const resource = await require('../src/main/mcp/novelResources').readResource(novel,'chapter:chapter-001.md');
-  plan = [read(resource.resourceRef), {namespace:'mcp__novel_tools',toolName:'prepare_novel_patch',arguments:{changes:[{resourceRef:resource.resourceRef,replacements:[{oldText:'城门九点关闭。',newText:'城门九点关闭。守卫核对名册。'}]}]}}, body => {
+  preparationResponse={changes:[{resourceRef:resource.resourceRef,replacements:[{oldText:'城门九点关闭。',newText:'城门九点关闭。守卫核对名册。'}]}]};
+  plan = [retrievePrepared, body => {
     const patch=findPatch(body.input);assert.ok(patch,'native patch must come from the actual preparation tool result');return {customToolName:'apply_patch',input:patch};
   },read(resource.resourceRef), {namespace:'mcp__novel_tools',toolName:'check_writing_task',arguments:{report:{coveredResourceRefs:[resource.resourceRef],issues:[]}}},{text:'精确修改及审查已完成。'}];
   const userCount=await win.webContents.executeJavaScript(`document.querySelectorAll('[data-testid="codex-message-user"]').length`);
   await send('修改 chapter:chapter-001.md，将“城门九点关闭。”精确改成“城门九点关闭。守卫核对名册。”，写后自查本章');
   await wait(`document.querySelector('[data-testid="codex-confirmation-card"]')`);
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes('确认写入')).click()`);
-  await settled('精确修改及审查已完成。');await wait(objective('执行证据齐全'));
+  await settled('已保存并读回 1 项资源。');await wait(objective('执行证据齐全'));
   assert.equal(await win.webContents.executeJavaScript(`document.querySelectorAll('[data-testid="codex-message-user"]').length`),userCount+1,'independent review must not require a second human message');
   assert.equal(await data.readChapter(novel.dir,'chapter-001.md'),'城门九点关闭。守卫核对名册。\n');
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="task-review-report"] summary')].at(-1).click()`);
@@ -200,11 +220,12 @@ app.whenReady().then(async () => {
   const issue={issueId:'pov:chapter-004:knowledge',category:'pov',severity:'hard',status:'open',contradiction:'林岚有限视角中直接叙述何芷内心，且林岚并不知道',evidence:[{resourceRef:povRef,location:'L1',quote:'何芷心想船要沉。'},{resourceRef:povRef,location:'L2',quote:'林岚并不知道。'}]};
   const submit=report=>({namespace:'mcp__novel_tools',toolName:'check_writing_task',arguments:{report}});
   reviewIssues=[issue];
-  plan=[{customToolName:'apply_patch',input:'*** Begin Patch\n*** Add File: chapters/chapter-004.md\n+何芷心想船要沉。\n+林岚并不知道。\n*** End Patch'},read(povRef),submit({coveredResourceRefs:[povRef],issues:[issue]}),{text:'正文已保存，实际审查发现硬冲突尚未修复。'}];
+  preparationResponse={changes:[{resourceRef:povRef,content:'何芷心想船要沉。\n林岚并不知道。'}]};
+  plan=[retrievePrepared,applyPrepared,read(povRef),submit({coveredResourceRefs:[povRef],issues:[issue]}),{text:'正文已保存，实际审查发现硬冲突尚未修复。'}];
   await send('使用林岚有限视角写下一章，保存后自查，发现问题修正后交付');
   await wait(`document.querySelector('[data-testid="codex-confirmation-card"]')`);
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes('确认写入')).click()`);
-  await settled('正文已保存，实际审查发现硬冲突尚未修复。');await wait(objective('目标尚未完成'));
+  await settled('已保存并读回 1 项资源。');await wait(objective('目标尚未完成'));
   await wait(`document.querySelector('[data-testid="task-hard-issues"]')`);
   assert.ok((await data.readChapter(novel.dir,'chapter-004.md')).includes('何芷心想'));
   await shot('semantic-hard-issue-open.png');
@@ -245,16 +266,17 @@ app.whenReady().then(async () => {
     {issueId:'knowledge:chapter-006:letter',category:'knowledge',severity:'hard',status:'open',contradiction:'焦点未知的信被正文预设属实。',evidence:[{resourceRef:auditRef,quote:'石匣里的信'},{resourceRef:'character:he',quote:'只有何芷知道石匣里有信。'}]},
   ];
   const beforeReview=reviewCalls;
-  plan=[read('character:lin'),read('character:he'),{namespace:'mcp__novel_tools',toolName:'prepare_novel_patch',arguments:{narrativePerspective:{mode:'limited',focusCharacterRef:'character:lin'},changes:[{resourceRef:auditRef,content:auditContent}]}},applyPrepared,read(auditRef),submit({coveredResourceRefs:[auditRef],issues:[]}),submit({coveredResourceRefs:[auditRef],issues:[]}),{text:'作者空报告不能覆盖独立审查报告中的时间和视角问题。'}];
+  preparationResponse={narrativePerspective:{mode:'limited',focusCharacterRef:'character:lin'},changes:[{resourceRef:auditRef,content:auditContent}]};
+  plan=[retrievePrepared,applyPrepared,read(auditRef),submit({coveredResourceRefs:[auditRef],issues:[]}),submit({coveredResourceRefs:[auditRef],issues:[]}),{text:'作者空报告不能覆盖独立审查报告中的时间和视角问题。'}];
   await send('用林岚第三人称有限视角写下一章，保存后自查时间和人物信息，发现问题修好再交付');
   await wait(`document.querySelector('[data-testid="codex-confirmation-card"]')`);
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes('确认写入')).click()`);
-  await settled('作者空报告不能覆盖独立审查报告中的时间和视角问题。');await wait(objective('目标尚未完成'));
+  await settled('已保存并读回 1 项资源。');await wait(objective('目标尚未完成'));
   await wait(`[...document.querySelectorAll('[data-testid="task-hard-issues"] summary')].at(-1)?.innerText.includes('2 项')`);
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="task-narrative-audit"] summary')].at(-1).click()`);
   await shot('narrative-witness-conflicts.png');
   assert.equal(await data.readChapter(novel.dir,'chapter-006.md'),auditContent+'\n','legal saves remain available while task acceptance fails');
-  assert.equal(reviewCalls,beforeReview+1,'same version is reviewed once; empty writer reports cannot override or repeat it');
+  assert.equal(reviewCalls,beforeReview+2,'initial and one revised candidate are each reviewed once; native checks reuse the final report');
   console.log('TEST_PASS independent review findings retain time and limited-view conflicts despite empty author reports');
   reviewIssues=[];
   reviewFailure=true;
@@ -269,22 +291,12 @@ app.whenReady().then(async () => {
   // Exercise the staged path itself: a real native patch/approval with a
   // deterministic short-draft fixture, not just the legacy author save path.
   const service=require('../src/main/codex-runtime').getCodexSessionService();
-  const nativeStart=service._startNativeTurn.bind(service);
   const shortRef='chapter:chapter-008.md',shortContent='稿'.repeat(1324)+'\n';
-  let shortRun;
-  service._startNativeTurn=async params=>{
-    const parent=[...service.activeRuns.values()].find(r=>r.entry&&!r.purpose&&!r.turnId&&r.threadId===params.threadId);
-    if(!parent||shortRun)return nativeStart(params);
-    shortRun=parent;
-    const adapter=require('../src/main/codex-runtime/writingPreparationStage');
-    try {
-      await adapter.prepareStage(service,parent,{text:'短稿保存协议夹具，仅验证保存和未完成状态。',outputSchema:{type:'object',properties:{changes:{type:'array',items:{type:'object',properties:{resourceRef:{type:'string'},content:{type:'string'}},required:['resourceRef','content'],additionalProperties:false}}},required:['changes'],additionalProperties:false}});
-      return nativeStart({...params,input:await adapter.commitInput(service,parent)});
-    } finally {service._startNativeTurn=nativeStart;}
-  };
-  plan=[{text:JSON.stringify({changes:[{resourceRef:shortRef,content:shortContent}]})},()=>({namespace:'mcp__novel_tools',toolName:'prepare_novel_patch',arguments:{preparationId:shortRun.preparationStage.candidate.preparationId,expectedRevision:shortRun.preparationStage.candidate.revision}}),applyPrepared,{text:'原生提交结束。'}];
-  await send('新写一章，正文1500—2000字，保存已有草稿。');
+  preparationResponse={changes:[{resourceRef:shortRef,content:shortContent}]};
+  plan=[retrievePrepared,applyPrepared,{text:'原生提交结束。'}];
+  await send('写下一章，正文1500—2000字，保存已有草稿。');
   await wait(`document.querySelector('[data-testid="codex-confirmation-card"]')`);
+  const shortRun=[...service.activeRuns.values()].find(run=>run.entry&&!run.purpose);
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes('确认写入')).click()`);
   await settled('正文 1324 字。');await wait(objective('目标尚未完成'));
   await wait(`[...document.querySelectorAll('[data-testid="task-word-count"]')].at(-1)?.innerText.includes('尚差 176 字')`);
@@ -292,12 +304,12 @@ app.whenReady().then(async () => {
   const shortState=await service.getRunState({runId:shortRun.runId});
   assert.equal(shortState.status,'completed');assert.equal(shortState.taskResult.persistence.status,'saved');assert.equal(shortState.taskResult.goalVerified,false);
   assert.deepEqual(shortState.taskResult.objective.unmet,['word_count']);assert.equal(shortState.taskResult.checks.wordCount.toleranceRatio,0);
-  assert.equal(plan.length,0,'one preparation and one native commit, no automatic rewriting');
+  assert.equal(plan.length,0,'native commit plan is exhausted; preparation and the bounded revision are separate child executions');
   await shot('staged-short-draft-saved.png');
   console.log('TEST_PASS staged 1324-character draft saves through native approval; zero-tolerance 1500–2000 target stays incomplete with 176-character deficit');
   const beforeStopUsers=await win.webContents.executeJavaScript(`document.querySelectorAll('[data-testid="codex-message-user"]').length`);
-  plan=[read('character:lin'),{text:'只读资料，未实际起稿。'}];
-  await send('写下一章并保存，写后自查');await settled('只读资料，未实际起稿。');await wait(objective('目标尚未完成'));
+  preparationResponse='只读资料，未实际起稿。';plan=[];
+  await send('写下一章并保存，写后自查');await wait(`document.querySelector('[data-testid="codex-chat-panel"]')?.dataset.runState === 'failed'`);await wait(objective('目标尚未完成'));
   assert.equal(await win.webContents.executeJavaScript(`document.querySelectorAll('[data-testid="codex-message-user"]').length`),beforeStopUsers+1);
   const stageRows=(await fs.readFile(path.join(process.env.MANA_USER_DATA_ROOT,'codex-task-ledger.jsonl'),'utf8')).trim().split('\n').map(JSON.parse);
   assert.equal(stageRows.some(row=>['writing_review_started','writing_recovery_started','writing_review_context_created'].includes(row.type)),false,'host must never silently add model turns to make a task pass');

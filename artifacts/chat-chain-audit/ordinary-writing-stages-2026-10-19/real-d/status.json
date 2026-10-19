@@ -1,0 +1,24 @@
+{
+  "ready": true,
+  "pid": 56265,
+  "model": "gpt-6-luna",
+  "effort": "medium",
+  "muted": true,
+  "privateRoot": "/var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-real-luna-writing-poy8lm",
+  "current": "ordinary-memory-atomic",
+  "completed": [
+    "traditional-draft",
+    "inspect-traditional-editor",
+    "format-fixture",
+    "format-open",
+    "format-new-conversation",
+    "traditional-format-cleanup",
+    "decline-conversation",
+    "ordinary-decline",
+    "conflict-conversation",
+    "ordinary-dependency-conflict",
+    "stop-conversation",
+    "ordinary-stop",
+    "memory-conversation"
+  ]
+}

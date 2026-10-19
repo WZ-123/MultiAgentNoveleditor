@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "he",
+  "name": "何芷",
+  "role": "医师",
+  "personality": "温和但边界坚定，以具体症状说服人",
+  "attributes": {
+    "欲望": "把冷藏药送到灯塔诊所",
+    "已知信息": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+    "隐瞒事实": "蓝签账页藏在药箱暗格",
+    "关系": "信叶澄的操船，不信岑寂的委托"
+  },
+  "relationships": [
+    {
+      "with": "lin",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "su",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "ye",
+      "type": "信叶澄的操船，不信岑寂的委托"
+    },
+    {
+      "with": "lu",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "cen",
+      "type": "信叶澄的操船，不信岑寂的委托"
+    }
+  ],
+  "aliases": [],
+  "faction": "",
+  "gender": "",
+  "age": "",
+  "sourceWork": "",
+  "originalName": "",
+  "bio": "",
+  "appearance": "",
+  "background": "",
+  "quotes": ""
+}

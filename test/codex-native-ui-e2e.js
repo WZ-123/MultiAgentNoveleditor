@@ -266,7 +266,7 @@ async function runCodexNativeUiE2E(win) {
   await sendWithSkill(win, '写下一章，1000字：任务新章范围验收', 'mana-fiction-writing');
   await waitFor(win, `document.querySelector('[data-testid="codex-confirmation-card"]')`);
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes('确认写入')).click()`);
-  await waitText(win, '新章仅保存100字，仍需继续。');
+  await waitText(win, '已保存并读回 1 项资源。正文 100 字。');
   await waitFor(win, `document.querySelector('[data-testid="continue-task"]') && [...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('目标尚未完成')`);
   if (await novelData.readChapter(novel.dir, 'chapter-008.md') !== '新'.repeat(100) + '\n') throw new Error('new chapter shortfall was not saved correctly');
   await screenshot(win, 'editor-workflow-new-chapter-shortfall.png');
@@ -277,7 +277,7 @@ async function runCodexNativeUiE2E(win) {
   await win.webContents.executeJavaScript(`document.querySelector('button[aria-label="发送"]').click()`);
   await waitFor(win, `document.querySelector('[data-testid="codex-confirmation-card"]')`);
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes('确认写入')).click()`);
-  await waitText(win, '新章继续已补足1000字。');
+  await waitText(win, '已保存并读回 1 项资源。正文 1000 字。');
   await waitFor(win, `!document.querySelector('[data-testid="continue-task"]') && [...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('执行证据齐全')`);
   if (await novelData.readChapter(novel.dir, 'chapter-008.md') !== '新'.repeat(100) + '\n' + '续'.repeat(900) + '\n') throw new Error('continued new chapter is incorrect');
   for (const [name, content] of beforeNextChapter) if (await novelData.readChapter(novel.dir, name) !== content) throw new Error('new chapter task modified an earlier chapter ' + name);

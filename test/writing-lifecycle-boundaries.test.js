@@ -70,7 +70,7 @@ test('stopping during context delivery prevents the preparation model call', asy
   context.buildWritingContext = async (...args) => { const value = await original(...args); entered.resolve(); await release.promise; return value; };
   t.after(() => { context.buildWritingContext = original; });
   let calls = 0;
-  const service = { intentControllers: new Map(), _checkpointRun: async () => {}, runOneShot: async () => { calls++; return { text: '{}' }; } };
+  const service = { intentControllers: new Map(), _emitEvent: () => {}, _checkpointRun: async () => {}, runOneShot: async () => { calls++; return { text: '{}' }; } };
   const run = { runId: 'context-cancel', entry, items: [], taskConstraints: {} };
   const preparing = stage.prepareStage(service, run, { text: '保存草稿' });
   const rejected = assert.rejects(preparing, error => error.code === 'turn_interrupted');

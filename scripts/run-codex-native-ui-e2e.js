@@ -40,6 +40,9 @@ async function run() {
   let continuousActive = false;
   let continuousDone = false;
   let continuousPatchIndex = 0;
+  let stagedCandidate;
+  const findText=(value,prefix)=>{if(typeof value==='string'&&value.startsWith(prefix))return value;if(value&&typeof value==='object')for(const child of Object.values(value).reverse()){const found=findText(child,prefix);if(found)return found;}return null;};
+  const findPatch=value=>{if(typeof value==='string'){try{return findPatch(JSON.parse(value))}catch{const first=value.indexOf('{'),last=value.lastIndexOf('}');if(first>=0&&last>first)try{return findPatch(JSON.parse(value.slice(first,last+1)))}catch{}return null}}if(value&&typeof value==='object'){if(value.preparedOnly&&value.patch)return value.patch;for(const child of Object.values(value).reverse()){const found=findPatch(child);if(found)return found;}}return null;};
   const fake = await createFakeResponsesServer({
     respond(body) {
       const inputs = Array.isArray(body.input) ? body.input : [];
@@ -48,6 +51,28 @@ async function run() {
       if(prompt) {
         const bundle=JSON.parse(prompt.slice(prompt.indexOf('\n')+1));
         return {text:JSON.stringify({reviews:bundle.targets.map(resourceRef=>({resourceRef,aspects:['timeline','viewpoint','character','world','style','format'],conclusion:'确定性审查接口夹具。',limitations:[]})),issues:[],resolutions:[]})};
+      }
+      const preparation=findText(inputs,'生成本次写作候选（writing_preparation）');
+      if(preparation) {
+        const request=JSON.parse(preparation.split('\n').at(-2));
+        const wire=request.request+'\n'+request.originalRequest;
+        let change;
+        if(wire.includes('重写选中文本'))change={resourceRef:'chapter:chapter-006.md',content:'甲丁丙。\n'};
+        else if(wire.includes('在光标处续写小说正文'))change={resourceRef:'chapter:chapter-006.md',content:'甲丁新增丙。\n'};
+        else if(wire.includes('任务新章范围验收'))change={resourceRef:'chapter:chapter-008.md',content:request.request.includes('继续未完成任务')?'新'.repeat(100)+'\n'+'续'.repeat(900)+'\n':'新'.repeat(100)+'\n'};
+        else throw new Error('Unscripted ordinary preparation: '+request.request);
+        stagedCandidate={participantCharacterRefs:[],narrativePerspective:null,changes:[change]};
+        return {text:JSON.stringify(stagedCandidate)};
+      }
+      if(findText(inputs,'针对候选的具体缺项执行一次定向修订'))return {text:JSON.stringify(stagedCandidate)};
+      const committing=findText(inputs.findLast(item=>item.role==='user'),'提交本任务已冻结的候选');
+      if(committing) {
+        const boundary=inputs.findLastIndex(item=>item.role==='user'&&findText(item,'提交本任务已冻结的候选'));
+        const current=inputs.slice(Math.max(0,boundary));
+        if(current.some(item=>item.type==='custom_tool_call_output'))return {text:'冻结候选已提交。'};
+        const patch=findPatch(current);
+        if(patch)return {customToolName:'apply_patch',input:patch};
+        return {namespace:'mcp__novel_tools',toolName:'prepare_novel_patch',arguments:JSON.parse(committing.match(/参数 (\{[^}]+\})/u)[1])};
       }
       const commands = ['连续创作三个完整场景', '重启后继续刚才的对话', '拒绝测试：', '去 AI 味：', '普通问答：', '乙项目问答', '缓慢回答停止测试', '资料页世界观修改', '世界观脏稿冲突', '保存后停止', '重写选中文本', '在光标处续写小说正文', '人物卡修改'];
       commands.push('人物卡更新');

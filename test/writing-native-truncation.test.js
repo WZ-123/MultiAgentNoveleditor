@@ -30,10 +30,12 @@ async function main() {
       timer = setTimeout(() => reject(new Error('native truncation timed out')), 40000);
       service.on('event', event => { if (event.runId==='truncated'&&['turn_completed', 'turn_failed', 'turn_interrupted'].includes(event.type)) resolve(event); });
     });
-    await service.startTurn({ novelId: novel.id, conversationId: history.id, runId: 'truncated', text: '写一章小说，保存到正文。' });
+    await assert.rejects(service.startTurn({ novelId: novel.id, conversationId: history.id, runId: 'truncated', text: '写一章小说，保存到正文。' }),/Incomplete response|stream disconnected|截断/u);
     const event = await terminal;
     assert.notEqual(event.type, 'turn_completed', 'truncated provider output must not be a successful model turn');
     assert.equal((await service.getRunState({ runId: 'truncated' })).taskResult.goalVerified, false);
+    assert.equal((await service.getRunState({ runId: 'truncated' })).preparationStage.phase,'failed');
+    assert.equal((await service.getRunState({ runId: 'truncated' })).savedResources.length,0);
     console.log('writing-native-truncation: ok (' + event.type + ')');
   } finally { clearTimeout(timer); await service.dispose(); await new Promise(resolve => server.close(resolve)); await fs.rm(temp, { recursive: true, force: true }); }
 }

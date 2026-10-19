@@ -7,7 +7,7 @@
     "test:model-setup-id": "node test/model-setup-id.test.js",
     "test:feedback": "node test/chat-feedback-payload.test.js && node test/feedback-sync.test.js && node test/feedback-path-security.test.js",
     "test:task-completion": "node test/task-completion-state.test.js && node test/writing-authorization-policy.test.js && node test/task-ledger-resource-contract.test.js",
-    "test:writing-workflow": "node test/writing-preparation-stage.test.js && node test/writing-lifecycle-boundaries.test.js && node test/writing-workflow-safety.test.js && node test/review-ledger-contract.test.js && node test/writing-provider-completion.test.js && node test/writing-native-truncation.test.js",
+    "test:writing-workflow": "node test/ordinary-writing-entry.test.js && node test/writing-preparation-stage.test.js && node test/writing-lifecycle-boundaries.test.js && node test/writing-workflow-safety.test.js && node test/review-ledger-contract.test.js && node test/writing-provider-completion.test.js && node test/writing-native-truncation.test.js",
     "test:writing-workflow:ui": "npx vite build && node scripts/run-writing-workflow-ui-e2e.js",
     "prepare:codex-runtime": "node scripts/prepare-codex-runtime.js",
     "test:codex-native": "node test/codex-native-cutover.test.js",

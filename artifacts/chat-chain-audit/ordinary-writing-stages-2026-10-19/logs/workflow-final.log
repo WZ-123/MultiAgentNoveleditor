@@ -1,0 +1,69 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:writing-workflow
+
+PASS ordinary-entry ordinary new writing dispatches one read-only preparation and one frozen native commit on selected route
+PASS ordinary-entry ordinary exact editing receives real original target and preserves the same preparation identity
+PASS ordinary-entry changing a nonwritten world dependency invalidates the candidate before native approval
+PASS ordinary-entry stopping preparation prevents commit, keeps interrupted task and releases project ownership
+PASS ordinary-entry unstructured early output fails honestly without a second author or native commit
+PASS ordinary-entry stopping during the prepared checkpoint cannot publish preparation completion or dispatch commit
+PASS ordinary-entry one directed revision follows exact count feedback, keeps candidate ID, and reviews each canonical version once
+PASS ordinary-entry still-short revision reaches normal approval without another generation or relaxed target
+PASS ordinary-entry over_target feedback also triggers the one revision instead of silently saving the excessive initial candidate
+PASS ordinary-entry an empty second candidate review cannot erase the initial hard finding
+PASS ordinary-entry one revision can fill an omitted required memory using the delivered original version
+PASS ordinary-entry a dependency changed after preparation is checked again inside the common formal transaction
+PASS ordinary-entry discussion, reading, role simulation and structured inline calls retain their contracts
+ordinary-writing-entry: ok (13 scenarios)
+PASS preparation-stage one native child completes while parent and project ownership stay active; same preparation implementation produces atomic candidate
+PASS preparation-stage durable candidate survives module reload, old timestamp and more than eight other candidates; retrieval never increments revision
+PASS preparation-stage host and MCP processes cannot overwrite each other or drop candidates during concurrent checkpoints
+PASS preparation-stage handoff binds exact revision; changed candidate or invented native bytes cannot enter approval
+PASS preparation-stage ordinary native approval and mutation service commit chapter and canonical memory together, then real readback settles stage
+PASS preparation-stage cancel propagates to a running native preparation child; late output cannot prepare or commit
+PASS preparation-stage a source edited while the model prepares cannot be silently rebound to its newer version
+PASS preparation-stage below and above target drafts can be approved and saved while original zero-tolerance acceptance stays incomplete
+PASS preparation-stage new process recovery retains candidate material but invalidates running stage and approvals
+writing-preparation-stage: ok (9 scenarios)
+✔ a preparation checkpoint failure releases its cancellation controller and preserves the original error (0.668833ms)
+✔ stopping during context delivery prevents the preparation model call (159.241542ms)
+✔ stopping during the handoff checkpoint cannot return native commit input (343.016625ms)
+✔ a review request already aborted before entry does not enqueue an inference (216.732584ms)
+✔ late review success after stop cannot mutate the parent or publish a completed review (433.285ms)
+✔ late review failure after stop cannot mutate the parent or publish a completed review (517.913459ms)
+✔ a canonical source changed during assessment cannot become a successful review (298.4705ms)
+✔ stopping while the task catalogue loads prevents even the intent model request (367.705709ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2343.082292
+PASS writing-safety whole book scope cannot collapse to the single chapter read by the model
+PASS writing-safety report must cover every read target, including implied targets
+PASS writing-safety whole book reading also requires both chapters
+PASS writing-safety post writing review is independent of a valid formal save
+PASS writing-safety real quotes with current hashes and actual reads can be anchored
+PASS writing-safety invented quotes, nonexistent lines and missing reads are not verified
+PASS writing-safety review reads expose exact line numbers without altering original evidence
+PASS writing-safety native approval validation keeps the real reason for UI and continuation
+PASS writing-safety ordinary editing cannot delete a whole resource as a patch workaround
+PASS writing-safety timeline checks handle canonical boat durations and never assume missing data feasible
+PASS writing-safety same evidence repeated with another line notation is not independent
+PASS writing-safety malformed issues cannot silently become a clean report
+PASS writing-safety forged read content with the right hash does not prove coverage
+PASS writing-safety new reviews are not erased by an older invalidation event
+PASS writing-safety all missing addressable resources are normal not-found results
+PASS writing-safety character form preserves object relationships and extended relationship and skin fields
+PASS writing-safety distinct character IDs never share memory, and legacy memory remains readable
+PASS writing-safety negative review clauses and role driven writing preserve user intent
+PASS writing-safety requested character memories require actual current commits independently of prose and review
+PASS writing-safety a fully read source supports local review without claiming whole-source review coverage
+PASS writing-safety corrupt project metadata and world places cannot masquerade as empty canonical context
+writing-workflow-safety: ok (21 scenarios)
+review-ledger-contract: ok
+writing-provider-completion: ok (5 scenarios)
+writing-native-truncation: ok (turn_failed)

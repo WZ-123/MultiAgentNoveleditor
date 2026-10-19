@@ -44,6 +44,7 @@ const tests = [
   'test/writing-workflow-safety.test.js',
   'test/writing-preparation.test.js',
   'test/writing-preparation-stage.test.js',
+  'test/ordinary-writing-entry.test.js',
   'test/writing-lifecycle-boundaries.test.js',
   'test/writing-provider-completion.test.js',
   'test/writing-native-truncation.test.js',

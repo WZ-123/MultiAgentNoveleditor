@@ -194,6 +194,10 @@ async function recoverIncompleteTransactions() {
 async function applyPreparedTransaction(entry, prepared) {
   const refs = prepared.resources.map((item) => item.change.resourceRef);
   return locks.withLocks(refs, async () => {
+    for(const dependency of prepared.dependencies || []) {
+      const snapshot=await current(entry,dependency.resourceRef);
+      if(snapshot.sourceHash!==(dependency.hash || hash(null)))throw Object.assign(new Error('候选依据资料已变化：'+dependency.resourceRef),{code:'preparation_dependency_changed'});
+    }
     for (const item of prepared.resources) {
       const snapshot = await current(entry, item.change.resourceRef);
       if (snapshot.sourceHash !== item.beforeHash) { const error = new Error(`确认后资源再次变化：${item.change.resourceRef}`); error.code = 'stale_hash'; throw error; }
@@ -236,7 +240,7 @@ async function applyPreparedTransaction(entry, prepared) {
 async function applyPrepared(entry, prepared) {
   const operation = mutationQueue.then(async () => {
     await recoverIncompleteTransactions();
-    return applyPreparedTransaction(entry, prepared);
+    return require('../store/projectTransactions').transaction(entry.dir,()=>applyPreparedTransaction(entry, prepared));
   });
   mutationQueue = operation.catch(() => {});
   return operation;

@@ -40,9 +40,50 @@ async function sourcesCurrent(bundle,entry) {
     return actual?.sourceHash===source.hash&&actual.content===source.content;
   }))).every(Boolean);
 }
+// Review the same canonical bytes that the existing mutation service will
+// save. The overlay is host-owned and never exposed as a formal resource read.
+async function reviewCandidate(service,run,material,{signal,assertCurrent,onStarted,priorFindings=[]}) {
+  const {canonicalCandidate}=require('../mcp/mutationService');
+  const overlay=new Map(material.expectedResources.map(expected=>{
+    const content=canonicalCandidate(expected.resourceRef,material.contents[expected.resourceRef]);
+    return [expected.resourceRef,{resourceRef:expected.resourceRef,kind:require('../mcp/novelResources').parseResourceRef(expected.resourceRef).kind,content,sourceHash:expected.hash}];
+  }));
+  const reader=async(entry,ref)=>overlay.get(ref)||readResource(entry,ref);
+  const targets=[...overlay.keys()];
+  const reviewSources=(await require('../mcp/novelResources').listResourceDescriptors(run.entry)).filter(source=>(run.taskConstraints.reviewSourceKinds||[]).includes(source.kind));
+  const refs=[...new Set([...targets,...(run.preparationStage.dependencies||[]).filter(source=>source.hash).map(source=>source.resourceRef),...reviewSources.map(source=>source.resourceRef)])];
+  const resources=await Promise.all(refs.map(ref=>reader(run.entry,ref)));
+  assertCurrent();
+  for(const source of resources)if(!overlay.has(source.resourceRef)&&!run.preparationStage.dependencies.some(prior=>prior.resourceRef===source.resourceRef))run.preparationStage.dependencies.push({resourceRef:source.resourceRef,hash:source.sourceHash});
+  const bundle={protocolVersion:4,taskConstraints:run.taskConstraints,requestText:run.requestText,taskRequestText:run.taskRequestText,targets,
+    sources:resources.map(source=>({resourceRef:source.resourceRef,kind:source.kind,hash:source.sourceHash,content:source.content})),citations:citationCatalogue(resources),priorMemories:run.memoryBaselines||{},priorFindings:priorFindings.map(({sourceSnapshots,...finding})=>finding)};
+  const response=await service.runOneShot({text:reviewInput(bundle),outputSchema:makeReviewSchema(bundle),abortSignal:signal,readOnly:true,purpose:'writing_candidate_review',parentRunId:run.runId,route:run.route,onStarted});
+  assertCurrent();
+  const report=resolveReview(JSON.parse(response.text),bundle);report.coveredResourceRefs=targets;
+  report.issues=report.issues.map(finding=>({...finding,issueId:'content:review:'+crypto.randomUUID(),status:'open',resolution:null}));
+  const assessedIds=new Set();
+  for(const resolution of report.resolutions) {
+    const previous=priorFindings.find(issue=>issue.issueId===resolution.issueId);
+    if(!previous||assessedIds.has(previous.issueId))throw new Error('candidate_review_resolution_unknown_or_duplicate');
+    assessedIds.add(previous.issueId);
+    report.issues.push({...previous,severity:previous.requestedSeverity,status:resolution.kind==='unresolved'?'open':'closed',evidence:resolution.evidence,resolution:resolution.kind==='unresolved'?null:{kind:resolution.kind,explanation:resolution.explanation,changes:resolution.changes}});
+  }
+  const deliveries=bundle.sources.map(source=>({type:'reviewSourceDelivery',origin:'host',id:'candidate:'+material.id+':'+material.revision+':'+source.resourceRef,status:'completed',result:{structuredContent:{...source,mode:'content',offset:0}}}));
+  const assessed=await require('./reviewLedger').assessReview(run.entry,{...run,items:deliveries,reviewFindings:priorFindings,committedResources:material.expectedResources.map(resource=>({resourceRef:resource.resourceRef,newHash:resource.hash})),text:'```json\n'+JSON.stringify(report)+'\n```',resourceReader:reader,resolutionAuthority:'independent_review'});
+  assertCurrent();
+  if(!assessed.evidenceVerified||!assessed.coverageVerified||assessed.narrativeAudit?.status==='incomplete')throw new Error('candidate_review_invalid_evidence');
+  return {report,deliveries,assessed,findings:require('./reviewLedger').mergeReviewFindings(priorFindings,assessed),execution:{threadId:response.threadId,turnId:response.turnId,modelId:response.modelId},preparationId:material.id,revision:material.revision};
+}
 async function requestReview(run,entry,{signal,timeoutMs=190000}={}) {
   const assertLive=()=>{if(signal?.aborted)throw Object.assign(new Error('语义审查已取消'),{code:'narrative_review_cancelled'});};
   assertLive();
+  const prior=run.reviewSubmission;
+  if(prior?.candidate&&run.preparationStage?.phase==='readback_complete'&&digest(prior.candidate)===digest(run.preparationStage.candidate)) {
+    const resources=await Promise.all(prior.coverageHashes.map(source=>readResource(entry,source.resourceRef).catch(()=>null)));
+    assertLive();
+    if(resources.every((actual,index)=>actual?.sourceHash===prior.coverageHashes[index].hash))return {ok:true,key:prior.itemId,report:prior.report,coverageHashes:prior.coverageHashes,sourceDeliveryItems:[],...run.narrativeReview};
+    throw Object.assign(new Error('候选审查依据版本已变化'),{code:'review_sources_changed'});
+  }
   const bundle=await buildBundle(run,entry);
   assertLive();
   if(!bundle.targets.length)return null;
@@ -182,4 +223,4 @@ function attachJobHost(service) {
   },100);timer.unref?.();
   return ()=>{stopped=true;clearInterval(timer);for(const {controller} of running.values())controller.abort();return Promise.allSettled([...running.values()].map(execution=>execution.operation));};
 }
-module.exports={buildBundle,requestReview,attachJobHost,reviewInput,reviewView,removeRunJobs,citationCatalogue,makeReviewSchema,resolveReview};
+module.exports={buildBundle,requestReview,attachJobHost,reviewInput,reviewView,removeRunJobs,citationCatalogue,makeReviewSchema,resolveReview,reviewCandidate};

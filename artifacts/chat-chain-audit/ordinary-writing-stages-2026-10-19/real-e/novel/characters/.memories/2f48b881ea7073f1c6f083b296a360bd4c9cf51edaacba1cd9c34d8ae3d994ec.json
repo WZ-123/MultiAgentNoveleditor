@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lin",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lin-initial",
+      "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "20:21在驶离旧渡口后的近岸水道上与何芷当面复核冷藏药药单及铅封编号；药名数量、收药人签押和封条编号相合，封条未见刮痕。",
+      "id": "6d03b920-13e7-4d1c-a399-9138ed070b31"
+    },
+    {
+      "summary": "林岚记得：药单与封条只能证明纸面项目及铅封状态相符，不能据此断定箱内药品齐全。",
+      "id": "a688fb3d-7d59-4bf8-a780-f5dba144ccf3"
+    }
+  ],
+  "emotionalMemory": [],
+  "relationshipDeltas": [
+    {
+      "summary": "何芷让林岚亲自核对药单与封条，林岚认可她对药物保管和核验的谨慎。",
+      "id": "70364b93-fe99-48f7-b112-8fca54617ef4"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lin-goal",
+      "summary": "查出潮钟误差，保护弟弟"
+    }
+  ],
+  "privateMisbeliefs": []
+}

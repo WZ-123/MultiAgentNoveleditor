@@ -1,0 +1,39 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:ui-e2e
+
+vite v8.2.2 building client environment for production...
+transforming...
+✓ 3737 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                  1.29 kB │ gzip:   0.55 kB
+dist/assets/index-i7xX1cau.css                 464.05 kB │ gzip:  47.64 kB
+dist/assets/rolldown-runtime-hePW80VL.js         0.71 kB │ gzip:   0.42 kB
+dist/assets/LanguageSettings-f2Oe4dkH.js         1.39 kB │ gzip:   0.66 kB
+dist/assets/AppSettingsPanel-B3V2caiG.js         1.52 kB │ gzip:   0.96 kB
+dist/assets/SearchSettings-BGiR-_7D.js           3.68 kB │ gzip:   1.82 kB
+dist/assets/FactReviewDialog-DHCLscNh.js         3.98 kB │ gzip:   1.91 kB
+dist/assets/StorageSettings-BqlLVzQh.js          4.44 kB │ gzip:   1.50 kB
+dist/assets/SkillSettings-BrwZSGud.js            4.56 kB │ gzip:   1.67 kB
+dist/assets/OfflineSyncDialog-WJBkjjvw.js        4.81 kB │ gzip:   2.02 kB
+dist/assets/SearchPanel-B2Ct8k4Z.js              4.91 kB │ gzip:   1.93 kB
+dist/assets/NovelDataBrowser-tPoAvErK.js         7.49 kB │ gzip:   2.41 kB
+dist/assets/LanRemoteSettings-DrhO_-jq.js        9.31 kB │ gzip:   2.97 kB
+dist/assets/ImportMergePanel-93_1OsL7.js        15.17 kB │ gzip:   4.59 kB
+dist/assets/vendor-diff-BflPwFzc.js             19.01 kB │ gzip:   6.31 kB
+dist/assets/ProviderSettingsPanel-1LvH03uo.js   28.01 kB │ gzip:   8.88 kB
+dist/assets/ImportNovelPanel-YG5tybva.js        40.51 kB │ gzip:  11.03 kB
+dist/assets/DataTabContent-CWvHufdm.js          54.54 kB │ gzip:  14.16 kB
+dist/assets/vendor-misc-B2dMrqYV.js             91.01 kB │ gzip:  30.47 kB
+dist/assets/index-0tFleFE9.js                  160.20 kB │ gzip:  52.32 kB
+dist/assets/vendor-markdown-Og84yWAm.js        161.49 kB │ gzip:  48.51 kB
+dist/assets/vendor-react-BH0rCosz.js           179.43 kB │ gzip:  56.81 kB
+dist/assets/vendor-editor-CINcjdpy.js          537.28 kB │ gzip: 185.62 kB
+
+✓ built in 1.96s
+[codex] selection_stale 编辑目标或选区版本已经变化，请重新选择
+TEST_PASS next_chapter_ui shortfall_100_then_continue_1000_without_counting_or_changing_old_chapters
+codex-native-ui-e2e: phase 1 complete
+codex-native-ui-e2e: phase 2 complete
+codex-native-ui-e2e: ok

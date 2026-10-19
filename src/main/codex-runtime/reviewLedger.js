@@ -65,7 +65,7 @@ async function assessReview(entry, context) {
   const resources = new Map();
   const declaredIssues = Array.isArray(parsed?.issues) ? parsed.issues : [];
   for (const ref of new Set([...coverageClaimed, ...observedReadRefs(items), ...declaredIssues.flatMap(issue => (issue.evidence || []).map(item => item.resourceRef)),...(context.reviewFindings||[]).flatMap(issue=>issue.evidence.map(item=>item.resourceRef))])) {
-    resources.set(ref, await readResource(entry, ref).catch(() => null));
+    resources.set(ref, await (context.resourceReader || readResource)(entry, ref).catch(() => null));
   }
   const auditTargets=new Set([...(context.taskConstraints?.reviewTargetResourceRefs||[]),...(context.committedResources||context.savedResources||[]).map(item=>item.resourceRef),...(context.reusedSavedResources||[]).map(item=>item.resourceRef)]);
   if(!auditTargets.size && context.taskConstraints?.reviewScope==='observed_resources')for(const ref of observedReadRefs(items))auditTargets.add(ref);
