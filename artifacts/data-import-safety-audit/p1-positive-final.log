@@ -1,0 +1,12 @@
+PASS existing timeline rejects retain originals by identity, including reordered and unmentioned events
+PASS existing nested entities reject to original identity and fields; rejected new entities are absent
+PASS promotion interrupted after target rename resumes the same operation and receipt
+PASS cancel after commit decision reports the completed project and its receipt
+PASS cancel before commit decision creates no formal project and cannot resume
+PASS each persisted completion boundary recovers before reads and keeps one project/receipt
+PASS interrupted promotion rejects external changes without adopting or overwriting them
+PASS separate service instances serialize finalization and return the same receipt
+PASS rejecting world facts preserves the original Markdown bytes as well as structured data
+PASS cross-process cancellation before decision is durable and repeatable
+PASS interruption during ownership bootstrap recovers its journal before preparing again
+PASS callbacks outliving a lease or transaction cannot inherit expired lock ownership

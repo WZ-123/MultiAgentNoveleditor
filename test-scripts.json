@@ -16,6 +16,8 @@
     "test:chat-chain": "node test/chat-chain-contract.test.js && node test/chat-chain-lan.test.js",
     "test:chat-chain:live": "node scripts/check-chat-chain-live.js",
     "test:feedback:ui": "npx vite build && node scripts/run-chat-feedback-ui-e2e.js",
-    "test:editor-workflow:ui": "npx vite build && node scripts/run-editor-workflow-ui-e2e.js"
+    "test:editor-workflow:ui": "npx vite build && node scripts/run-editor-workflow-ui-e2e.js",
+    "test:data-import-safety": "node test/import-authority-regression.test.js && node test/import-transaction-p1.test.js && node test/project-transactions-review.test.js && node test/data-import-safety.test.js && node test/import-saga-regression.test.js && node test/import-atomic-boundary-regression.test.js && node test/import-duplicate-character-merge-regression.test.js && node test/character-enricher-validate-regression.test.js",
+    "test:import-authority-audit": "node test/import-authority-adversarial.test.js && node test/import-merge-reset-regression.test.js && node test/import-five-hundred-conflicts-regression.test.js"
   }
 }

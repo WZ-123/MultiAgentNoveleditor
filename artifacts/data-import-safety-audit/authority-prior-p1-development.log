@@ -1,0 +1,66 @@
+PASS nested storage scopes keep their own journal when addressed through a parent path alias
+PASS existing timeline rejects retain originals by identity, including reordered and unmentioned events
+PASS existing nested entities reject to original identity and fields; rejected new entities are absent
+PASS promotion interrupted after target rename resumes the same operation and receipt
+PASS cancel after commit decision reports the completed project and its receipt
+PASS cancel before commit decision creates no formal project and cannot resume
+PASS each persisted completion boundary recovers before reads and keeps one project/receipt
+PASS interrupted promotion rejects external changes without adopting or overwriting them
+FAIL separate service instances serialize finalization and return the same receipt
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'failed'
+- 'completed'
+
+    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:160:14
+    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:46:42)
+    at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:157:5)
+PASS rejecting world facts preserves the original Markdown bytes as well as structured data
+PASS cross-process cancellation before decision is durable and repeatable
+PASS interruption during ownership bootstrap recovers its journal before preparing again
+PASS callbacks outliving a lease or transaction cannot inherit expired lock ownership
+PASS recovery never redirects a registry identity that now belongs to a different directory
+PASS a durable promotion decision reserves its target across process death
+FAIL corrupt promotion records stop recovery without replacing the record or creating a project
+AssertionError [ERR_ASSERTION]: Missing expected rejection.
+    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:236:7
+    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:46:42)
+    at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:231:5)
+PASS different promotions preserve both registry entries; committed replay preserves later edits
+PASS SIGKILL after rename recovers durable ownership after stale process locks expire
+PASS recovery after formal registration keeps later user edits and completes the original receipt
+PASS schema 1 pending decisions bind to saved originals after a fresh process restart
+PASS cancellation between target reservation and commit decision wins before publication
+AggregateError: separate service instances serialize finalization and return the same receipt; corrupt promotion records stop recovery without replacing the record or creating a project
+    at run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:302:30) {
+  [errors]: [
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'failed'
+    - 'completed'
+    
+        at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:160:14
+        at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:46:42)
+        at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:157:5) {
+      generatedMessage: true,
+      code: 'ERR_ASSERTION',
+      actual: 'failed',
+      expected: 'completed',
+      operator: 'strictEqual',
+      diff: 'simple'
+    },
+    AssertionError [ERR_ASSERTION]: Missing expected rejection.
+        at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:236:7
+        at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:46:42)
+        at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:231:5) {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: undefined,
+      expected: [Object],
+      operator: 'rejects',
+      diff: 'simple'
+    }
+  ]
+}

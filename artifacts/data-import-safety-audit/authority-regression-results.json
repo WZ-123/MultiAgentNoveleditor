@@ -1,0 +1,154 @@
+{
+  "createdAt": "2026-10-18T21:33:53.979Z",
+  "type": "strict-authority-regression",
+  "cases": [
+    {
+      "id": "PA-01",
+      "title": "A selectable alternative name must not invalidate later fields of an ID-less place",
+      "observed": {
+        "selectedName": "古 城",
+        "error": null,
+        "reviewState": "committed",
+        "places": [
+          {
+            "name": "古 城",
+            "description": "用户旧说明",
+            "custom": "必须保留"
+          }
+        ]
+      },
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "PA-02",
+      "title": "Cancellation acknowledged before a pending compatibility submission enters commit must prevent formal writes",
+      "observed": {
+        "cancelResponse": "cancelled",
+        "formalTextAtCancellation": null,
+        "child": {
+          "exitCode": 2,
+          "signal": null
+        },
+        "childStderr": "Error: merge incomplete\n    at error (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importState.js:13:98)\n    at ImportSagaService.finalizeSession (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importSaga.js:210:47) {\n  code: 'invalid_import_state',\n  retryable: false\n}\n",
+        "receiptReturned": false,
+        "newUserActionAfterCancellation": false,
+        "formalText": null,
+        "durableState": "cancelled"
+      },
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "PA-03",
+      "title": "Cancelling a retryable failed promotion must persist and return cancelled",
+      "observed": {
+        "before": {
+          "state": "failed",
+          "retryable": true,
+          "actions": [
+            "resume",
+            "cancel"
+          ]
+        },
+        "response": {
+          "state": "cancelled",
+          "actions": []
+        },
+        "durableState": "cancelled",
+        "promotionState": "cancelled"
+      },
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "PA-04",
+      "title": "Reading an active analysis from another service must not declare it interrupted",
+      "observed": {
+        "otherServiceState": "analyzing",
+        "error": null,
+        "originalServiceState": "analyzing",
+        "originalResumeState": "review"
+      },
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-05",
+      "title": "A stale snapshot cannot replace cancelled or manufacture a commit decision",
+      "observed": {},
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-06",
+      "title": "All direct compatibility mutation APIs respect the same cancellation",
+      "observed": {},
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-07",
+      "title": "Concurrent adoption of a legacy staging project returns one run identity",
+      "observed": {},
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-08",
+      "title": "A real dead analysis owner is recovered explicitly with a new generation",
+      "observed": {
+        "oldToken": "38139d51-e012-4957-9de4-05eb046ccce6",
+        "newToken": "6c6e5a1a-5ad0-4f55-bcbf-80e57fad8d34"
+      },
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-09",
+      "title": "A legacy irreversible promotion decision wins over its contradictory old cancelled run",
+      "observed": {},
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-10",
+      "title": "A failed authority revision save rolls back the unacknowledged merge choice",
+      "observed": {},
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-11",
+      "title": "A failed authority save rolls back reviewed domain bytes and the review terminal",
+      "observed": {},
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-12",
+      "title": "Unregistered promotion recovery cannot adopt files absent from its manifest",
+      "observed": {},
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-13",
+      "title": "The run decision recovers even when the physical checkpoint was not advanced",
+      "observed": {},
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-14",
+      "title": "A dead source owner resumes its saved preview and metadata before staging exists",
+      "observed": {},
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-15",
+      "title": "A legacy committed merge is adopted from its verified file-transaction receipt",
+      "observed": {},
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-16",
+      "title": "A failed parsed source with no local worker claims a fresh token and stages its saved request",
+      "observed": {},
+      "status": "correct-behavior-confirmed"
+    },
+    {
+      "id": "AUTH-17",
+      "title": "Candidate defaults and omissions are not authorization to erase existing facts",
+      "observed": {},
+      "status": "correct-behavior-confirmed"
+    }
+  ]
+}

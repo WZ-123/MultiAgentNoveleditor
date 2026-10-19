@@ -1,0 +1,4 @@
+TEST_FAIL import-atomic-boundary-regression: Error: 导入状态已变化，请重新读取
+    at error (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importState.js:11:98)
+    at ImportSagaService.finalizeSession (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importSaga.js:140:47)
+    at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-atomic-boundary-regression.test.js:49:21)

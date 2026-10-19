@@ -100,7 +100,12 @@ const novel = {
   readStyleMemory: (id) => invoke('mana:novel:readStyleMemory', { id }),
   writeStyleMemory: (id, text) => invoke('mana:novel:writeStyleMemory', { id, text }),
   enrichCharacters: (id, fanworkName, characterIds, runId) => invoke('mana:novel:enrichCharacters', { id, fanworkName, characterIds, runId }),
-  regenerateCharacters: (id, confirmed) => invoke('mana:novel:regenerateCharacters', { id, confirmed }),
+  cancelEnrichment: (id, runId) => invoke('mana:novel:cancelEnrichment', { id, runId }),
+  listReview: (id) => invoke('mana:novel:listReview', { id }),
+  getReview: (id, reviewId) => invoke('mana:novel:getReview', { id, reviewId }),
+  decideReview: (id, reviewId, decisions) => invoke('mana:novel:decideReview', { id, reviewId, decisions }),
+  finishReview: (id, reviewId, approved) => invoke('mana:novel:finishReview', { id, reviewId, approved }),
+  regenerateCharacters: (id, confirmed, review = {}) => invoke('mana:novel:regenerateCharacters', { id, confirmed, ...review }),
   search: (id, query, options) => invoke('mana:novel:search', { id, query, options }),
 };
 
@@ -175,6 +180,7 @@ const offlineLog = {
   appendEntry: (entry) => invoke("mana:offlineLog:appendEntry", entry || {}),
   listUnsynced: (novelId) => invoke("mana:offlineLog:listUnsynced", { novelId }),
   listUnsyncedByType: (novelId) => invoke("mana:offlineLog:listUnsyncedByType", { novelId }),
+  syncEntry: (novelId, entryId) => invoke('mana:offlineLog:syncEntry', { novelId, entryId }),
   markSynced: (entryIds) => invoke("mana:offlineLog:markSynced", { entryIds }),
   discardUnsynced: (novelId) => invoke("mana:offlineLog:discardUnsynced", { novelId }),
   getStorageStats: () => invoke("mana:offlineLog:getStorageStats"),
@@ -250,6 +256,7 @@ const prompt = {
 const importBridge = {
   start: (payload) => invoke('mana:import:start', payload || {}),
   get: (runId) => invoke('mana:import:get', { runId }),
+  listRuns: () => invoke('mana:import:listRuns'),
   cancel: (runId) => invoke('mana:import:cancel', { runId }),
   resume: (runId) => invoke('mana:import:resume', { runId }),
   finalize: (runId, target) => invoke('mana:import:finalize', { runId, target }),
@@ -275,6 +282,10 @@ const importBridge = {
   finalizeMerge: (sessionId) => invoke("mana:import:finalizeMerge", { sessionId }),
   getStagingCharacters: (importId) => invoke("mana:import:getStagingCharacters", { importId }),
   saveStagingCharacters: (importId, characters) => invoke("mana:import:saveStagingCharacters", { importId, characters }),
+  listReview: (id) => invoke('mana:import:listReview', { id }),
+  getReview: (id, reviewId) => invoke('mana:import:getReview', { id, reviewId }),
+  decideReview: (id, reviewId, decisions) => invoke('mana:import:decideReview', { id, reviewId, decisions }),
+  finishReview: (id, reviewId, approved) => invoke('mana:import:finishReview', { id, reviewId, approved }),
   enrichStagingCharacters: (importId, workAssignments) => invoke("mana:import:enrichStagingCharacters", { importId, workAssignments }),
   aiMerge: (leftContent, rightContent, conflictType, userNote) =>
     invoke("mana:import:aiMerge", { leftContent, rightContent, conflictType, userNote }),

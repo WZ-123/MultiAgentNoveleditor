@@ -1,0 +1,36 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:unit
+
+PASS PA-01 A selectable alternative name must not invalidate later fields of an ID-less place
+PASS PA-02 Cancellation acknowledged before a pending compatibility submission enters commit must prevent formal writes
+PASS PA-03 Cancelling a retryable failed promotion must persist and return cancelled
+PASS PA-04 Reading an active analysis from another service must not declare it interrupted
+PASS AUTH-05 A stale snapshot cannot replace cancelled or manufacture a commit decision
+PASS AUTH-06 All direct compatibility mutation APIs respect the same cancellation
+PASS AUTH-07 Concurrent adoption of a legacy staging project returns one run identity
+PASS AUTH-08 A real dead analysis owner is recovered explicitly with a new generation
+PASS AUTH-09 A legacy irreversible promotion decision wins over its contradictory old cancelled run
+PASS AUTH-10 A failed authority revision save rolls back the unacknowledged merge choice
+PASS AUTH-11 A failed authority save rolls back reviewed domain bytes and the review terminal
+PASS AUTH-12 Unregistered promotion recovery cannot adopt files absent from its manifest
+PASS AUTH-13 The run decision recovers even when the physical checkpoint was not advanced
+PASS AUTH-14 A dead source owner resumes its saved preview and metadata before staging exists
+PASS AUTH-15 A legacy committed merge is adopted from its verified file-transaction receipt
+PASS AUTH-16 A failed parsed source with no local worker claims a fresh token and stages its saved request
+FAIL AUTH-17 Candidate defaults and omissions are not authorization to erase existing facts
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
+    {
+      custom: '地点自定义值',
+      description: '已有地点说明',
+      name: '城镇',
++     relationships: []
+    }
+  ]
+
+    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-authority-regression.test.js:301:14
+    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-authority-regression.test.js:33:11)
+    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-authority-regression.test.js:288:5

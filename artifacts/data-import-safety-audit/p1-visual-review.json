@@ -1,0 +1,134 @@
+{
+  "diagnosticId": "diag-9efc0ab0-d347-4848-818d-25985a74ecea",
+  "method": "Codex opened each current image with view_image and visually inspected the requested state; this is a manual review record, not a screenshot-generation inference.",
+  "result": "pass within listed states",
+  "observations": [
+    "Expected analyzing, pending review and injected interruption states are visible.",
+    "Recovered promotion displays completed, actual project title and receipt.",
+    "Rejection retains original place and event in formal data pages.",
+    "Cancellation before decision displays cancelled; cancellation after decision displays completed with receipt.",
+    "No unexpected blank view, loading obstruction, text overflow or missing tested state observed."
+  ],
+  "screenshots": [
+    {
+      "path": "artifacts/data-import-safety-audit/ui/import-saga-analyzing.png",
+      "sha256": "67bacded9f749435efa0c346e3163017c107777d9ca703faa398a0c7d22b4f28",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/import-saga-completed.png",
+      "sha256": "221c4265cb9a584c89cff8fa924238594ca6243b72401c04481638bd727fadc9",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/offline-saved-records.png",
+      "sha256": "2f0908d80ad1e17b08bf5165bdc90a3911be2516dc06d5af074a8b4ec23a9f50",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/partial-analysis-review.png",
+      "sha256": "b6a1e3e0d810ef661ff06aab437ea661652af7ee53e101820a7d6c8b52b82219",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/merge-complete-plan.png",
+      "sha256": "a062e43d2d89205d2fef8fd9c05c3a7de4f0047828f88d5ac68e54cbc4134318",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/merge-stale-review.png",
+      "sha256": "b52d5016906b6cce5922b706c79dafd14b7111cf4f76bedf2ee332aaabb94bd7",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/regeneration-review.png",
+      "sha256": "d93bbee077f8ee138a97ba24fe3efdd57e0a569abe1fae8576d8d3101d520366",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/regeneration-saved.png",
+      "sha256": "a59fd7d3899ffb68910746259ea87dbce99562b183ac43a11ee1f114d067cf7c",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/fact-review-candidates.png",
+      "sha256": "68d99ea31fd7c040b809505a9bbf147a23e8b50589b94dda609e7df428efa787",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/fact-review-restored.png",
+      "sha256": "84b8702fa03cd2e1e497a54607f8d8face5be940e80d5db4ce876224b0530863",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/fact-review-promoted.png",
+      "sha256": "2161512854b473d404b5f05e91b8e0df46ebe94399074ba361ccf5af6d14de3c",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/web-fact-review.png",
+      "sha256": "00940cedcde3ccda1a847ab5da6ea37788167ddea4c688fd238282f7077b2009",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/web-fact-saved.png",
+      "sha256": "a6397e5fc1c2755eca2423f0570e13b464982cd5bea03dde4a91dbcac7fc3065",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/offline-pending-preview.png",
+      "sha256": "a8dc38261aed7fd4fe7f73d4741b5a5d571beeab2be6e3971ef7e22364b276bd",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/p1-existing-facts-review.png",
+      "sha256": "1e452cc04ee270301d4a3b9c619a03963568809e9df783e271c2cd20874ddcc7",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/p1-existing-facts-saved.png",
+      "sha256": "9cc4d51d184d04bbb27e1175f4008276ea84ca14adb260678133e90882ae0f7f",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/p1-existing-place-visible.png",
+      "sha256": "70123f322fd260ebd982744e1ce6f02a148c8bcba0593954320836a411b47e1e",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/p1-existing-event-visible.png",
+      "sha256": "6b72fe7b7de81eba528f4931c3c18f6aa80f12d91e572807eea71995302df9cc",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/p1-promotion-interrupted.png",
+      "sha256": "3174dffadb0415522cf4c3857c0d6e0d700061da8476370f121fca70fdd9fd0b",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/p1-promotion-recovered.png",
+      "sha256": "f9f0dc6149e6f695d6ce9683b802a8e07720c2762f4af1cdc69ef181f452a74e",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/p1-cancel-after-commit.png",
+      "sha256": "57a8e11589bd3ff4fa61076457cbb9144a54bd95ae40f03177f70f89c3927836",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/p1-cancel-before-commit.png",
+      "sha256": "7830e0d957189543d2c9da0e88a375654d2b812fe7f87040e65d54f3c2a6077d",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/p1-cancel-auto-promotion.png",
+      "sha256": "7830e0d957189543d2c9da0e88a375654d2b812fe7f87040e65d54f3c2a6077d",
+      "visuallyReviewed": true
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/ui/p1-cancel-at-decision.png",
+      "sha256": "7830e0d957189543d2c9da0e88a375654d2b812fe7f87040e65d54f3c2a6077d",
+      "visuallyReviewed": true
+    }
+  ]
+}

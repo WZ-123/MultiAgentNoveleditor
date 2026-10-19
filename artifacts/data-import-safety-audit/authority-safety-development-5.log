@@ -1,0 +1,72 @@
+PASS bounded chunks preserve all bytes, including oversized paragraphs and emoji
+PASS identity rejects traversal/symlinks/collisions and preserves special identities
+PASS production offline IPC acknowledges saved content without replay; legacy/unsupported stay pending
+PASS pending offline writes share the project transaction with normal saves and retain durable receipts
+PASS regeneration failure/empty/invalid retains cards, index and memory; approval binds version
+PASS analysis entry bounds total concurrency, uses previous chunks, preserves world and duplicate IDs through promotion
+PASS long source hints are not truncated; checkpoint identity and reviewed source versions include them
+[analyzer] characters chunk 0 failed: fixture provider failed
+[analyzer] factions chunk 0 failed: fixture provider failed
+[analyzer] timeline chunk 0 failed: fixture provider failed
+[analyzer] world chunk 0 failed: fixture provider failed
+[analyzer] outline chunk 0 failed: fixture provider failed
+[analyzer] style chunk 0 failed: fixture provider failed
+[analyzer] characters chunk 1 failed: fixture provider failed
+[analyzer] factions chunk 1 failed: fixture provider failed
+[analyzer] timeline chunk 1 failed: fixture provider failed
+[analyzer] world chunk 1 failed: fixture provider failed
+[analyzer] outline chunk 1 failed: fixture provider failed
+[analyzer] style chunk 1 failed: fixture provider failed
+[analyzer] characters chunk 2 failed: fixture provider failed
+[analyzer] factions chunk 2 failed: fixture provider failed
+[analyzer] timeline chunk 2 failed: fixture provider failed
+[analyzer] world chunk 2 failed: fixture provider failed
+[analyzer] outline chunk 2 failed: fixture provider failed
+[analyzer] style chunk 2 failed: fixture provider failed
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+PASS all failure never writes empty success; truncated JSON stays partial and keeps original domain
+AssertionError [ERR_ASSERTION]: file:///Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/[eval1]:1
+const merge = require('./src/main/import/mergeEngine'); const session = await merge.getMergeSession("merge-76417b38-4217-4d9a-9d59-a71502f4bae5"); if (!session || session.items.some((item) => item.userNote !== '取舍保留')) process.exit(1); console.log('durable-session-restored');
+              ^
+
+ReferenceError: Cannot determine intended module format because both 'require' and top-level await are present. If the code is intended to be CommonJS, wrap await in an async function. If the code is intended to be an ES module, replace require() with import.
+    at file:///Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/[eval1]:1:15
+    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+    at async node:internal/modules/esm/loader:246:26
+    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:243:20)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  code: 'ERR_AMBIGUOUS_MODULE_SYNTAX'
+}
+
+Node.js v25.8.0
+
+
+1 !== 0
+
+    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/data-import-safety.test.js:258:12
+    at async test (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/data-import-safety.test.js:83:33)
+    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/data-import-safety.test.js:237:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

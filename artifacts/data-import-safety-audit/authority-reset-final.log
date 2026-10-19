@@ -1,0 +1,11 @@
+Error: paths.userDataDir unavailable: set MANA_USER_DATA_ROOT or run in Electron main.
+    at userDataDir (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/store/paths.js:23:9)
+    at paths (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/store/paths.js:32:16)
+    at new ImportRunStore (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importRunStore.js:12:69)
+    at new ImportSagaService (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importSaga.js:12:35)
+    at service (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/mergeEngine.js:229:23)
+    at Object.createMergeSession (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/mergeEngine.js:230:75)
+    at run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-merge-reset-regression.test.js:25:33)
+    at Object.<anonymous> (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-merge-reset-regression.test.js:41:30)
+    at Module._compile (node:internal/modules/cjs/loader:1831:14)
+    at Object..js (node:internal/modules/cjs/loader:1971:10)

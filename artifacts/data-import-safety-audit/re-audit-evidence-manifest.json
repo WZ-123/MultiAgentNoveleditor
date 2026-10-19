@@ -1,0 +1,34 @@
+{
+  "checkedAt": "2026-10-18T19:49:23.983Z",
+  "historicalManifestDifferences": [
+    "artifacts/data-import-safety-audit/report.md",
+    "knowledge-base/edge-cases.md"
+  ],
+  "newEvidence": [
+    {
+      "path": "artifacts/data-import-safety-audit/re-audit-probe.cjs",
+      "sha256": "45cac4e587e6172b17bebfec46e344b8dda1191556db59b84e2f112049758c30"
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/re-audit-probe.log",
+      "sha256": "9e2b584dfbc383784aa21e1fd799d7db09f9f342356ed29d9e8848af0c3752be"
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/re-audit-results.json",
+      "sha256": "9e2b584dfbc383784aa21e1fd799d7db09f9f342356ed29d9e8848af0c3752be"
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/re-audit-existing-transactions.log",
+      "sha256": "a4e0f3b8c7923d2c4425ee02e45ab62a9a5e63954d948202afc8ba99368a5e57"
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/re-audit-existing-import.log",
+      "sha256": "2ec0185af69d8bfbc099a616c5ecc74c3cb929e9f719aca30b3c1c2d31857fc9"
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/re-audit-manifest-check.json",
+      "sha256": "ab0fa89f36b2bd77d28ebcd101068fb844b471f206d6a38104401a2fcf90e715"
+    }
+  ],
+  "productSourceChangedDuringAudit": false
+}

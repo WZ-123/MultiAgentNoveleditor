@@ -1,3 +1,4 @@
+import { FactReviewDialog } from './FactReviewDialog.jsx';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FileText, Upload, AlertTriangle, Check, X, FolderOpen, Loader2, Sparkles, User, Globe, Book, Pen, Shield, Clock } from 'lucide-react';
 import { ConflictReportPanel } from './ConflictReportPanel.jsx';
@@ -5,6 +6,7 @@ import { ConflictReportPanel } from './ConflictReportPanel.jsx';
 export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelId, onImportComplete, onEnterMergeMode }) {
   const mana = typeof window !== 'undefined' ? window.mana : null;
 
+  const [factReviewId, setFactReviewId] = useState(null);
   const [step, setStep] = useState('select'); // select | parse | target | fanwork-check | pick-dir | confirm | done | analysis | analysis-done | character-review | duplicate
   const [filePaths, setFilePaths] = useState([]);
   const [parsed, setParsed] = useState(null);
@@ -14,6 +16,9 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
   const [error, setError] = useState('');
   const [importResult, setImportResult] = useState(null);
   const [importRun, setImportRun] = useState(null);
+  const [recoverableRuns, setRecoverableRuns] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisTasks, setAnalysisTasks] = useState([]); // [{ id, label, status }, ...]
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -34,6 +39,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
   const chaptersRef = useRef([]); // persist chapter data across re-renders
 
   const reset = useCallback(() => {
+    setFactReviewId(null);
     setStep('select');
     setFilePaths([]);
     setParsed(null);
@@ -43,6 +49,9 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
     setError('');
     setImportResult(null);
     setImportRun(null);
+    setSubmitting(false);
+    setCancelling(false);
+    setRecoverableRuns([]);
     setAnalyzing(false);
     setAnalysisTasks([]);
     setAnalysisResult(null);
@@ -65,6 +74,39 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
   useEffect(() => {
     if (isOpen) reset();
   }, [isOpen, reset]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (isOpen && mana?.import?.listRuns) mana.import.listRuns().then((runs) => {
+      if (!cancelled) setRecoverableRuns(runs);
+    }).catch((err) => { if (!cancelled) setError(err.message); });
+    return () => { cancelled = true; };
+  }, [isOpen, mana]);
+
+  async function showCompleted(snapshot) {
+    setImportRun(snapshot); setAnalyzing(false); setError('');
+    const result = snapshot.result;
+    if (result?.id) {
+      await mana.novel.open(result.id);
+      if (mana.config?.setApp) await mana.config.setApp({ lastNovelId: result.id });
+      setImportResult((prev) => ({ ...prev, importId: snapshot.importId, runId: snapshot.runId, promotedId: result.id, title: result.title }));
+      if (onImportComplete) await onImportComplete({ ...result, chapters: chaptersRef.current });
+    }
+    setStep('done');
+  }
+
+  async function handleResumeImport() {
+    if (!importRun.importId) return restoreImport(importRun.runId);
+    if (importRun?.state !== 'promoting' && importRun?.error?.phase !== 'promoting') return handleStartAnalysis(importRun.runId);
+    setSubmitting(true); setError('');
+    try {
+      const snapshot = await mana.import.resume(importRun.runId);
+      setImportRun(snapshot);
+      if (snapshot.state === 'completed') await showCompleted(snapshot);
+      else setError(snapshot.error?.message || '提交尚未完成，请继续从检查点恢复');
+    } catch (err) { setError(err.message); }
+    finally { setSubmitting(false); }
+  }
 
   async function handlePickFiles() {
     if (!mana?.import?.pickFiles) return;
@@ -124,6 +166,8 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
         targetNovelId: targetMode === 'existing' ? targetNovelId : null,
         target: targetMode === 'new' ? { title: projectName.trim(), dir: getComputedProjectDir() } : null,
       });
+      setImportRun(snapshot);
+      if (snapshot.state === 'cancelled') { setStep('cancelled'); setLoading(false); return; }
       if (snapshot.state === 'failed' || snapshot.state === 'interrupted') throw new Error(snapshot.error?.message || '导入 staging 失败');
       const result = { importId: snapshot.importId, runId: snapshot.runId, chapterCount: parsed.chapters.length, runSnapshot: snapshot };
       setImportRun(snapshot);
@@ -160,12 +204,14 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
   async function handlePromoteToNovel(importId) {
     if (!mana?.import?.finalize || !mana?.novel?.open || !importId) return null;
     const computedDir = getComputedProjectDir();
-    if (!computedDir) { setError('请先选择保存目录'); return null; }
+    if (!computedDir) { setError('请先选择保存目录'); setStep('analysis-done'); return null; }
+    setSubmitting(true);
     try {
       const title = projectName.trim() || parsed?.metadata?.title || filePaths[0]?.split('/').pop()?.replace(/\.[^.]+$/, '') || '导入的小说';
       const runId = importRun?.runId || importResult?.runId || (await mana.import.get(importId)).runId;
       const snapshot = await mana.import.finalize(runId, { title, dir: computedDir });
       setImportRun(snapshot);
+      if (snapshot.state === 'cancelled') { setError(''); setStep('cancelled'); return null; }
       if (snapshot.state !== 'completed') throw new Error(snapshot.error?.message || '项目 promotion 未完成');
       const result = snapshot.result;
       if (result?.id) {
@@ -177,8 +223,9 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
       return result;
     } catch (err) {
       setError(err?.message || String(err));
+      setStep('analysis-done');
       return null;
-    }
+    } finally { setSubmitting(false); }
   }
 
   async function handleStartAnalysis(runId) {
@@ -201,6 +248,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
       // Step 1: start all subagents, get runIds
       let snapshot = await mana.import.resume(runId);
       setImportRun(snapshot);
+      if (snapshot.state === 'cancelled') { setStep('cancelled'); return; }
       if (snapshot.state === 'interrupted' || snapshot.state === 'failed') throw new Error(snapshot.error?.message || '分析启动失败');
       const { runIds, taskIds, chunkMode, chunkCount } = snapshot.analysis || {};
       const effectiveRunIds = runIds || [];
@@ -270,11 +318,13 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
       // Step 3: wait for finalize (blocks until all subagents finish writing results)
       snapshot = await mana.import.resume(runId);
       setImportRun(snapshot);
+      if (snapshot.state === 'cancelled') { setStep('cancelled'); return; }
       if (snapshot.state !== 'review') throw new Error(snapshot.error?.message || '分析未形成可审阅检查点');
       const result = snapshot.checkpoints?.findLast?.((item) => item.phase === 'review')?.analysis
         || [...(snapshot.checkpoints || [])].reverse().find((item) => item.phase === 'review')?.analysis
         || {};
       setAnalysisResult(result);
+      if (result.reviewId && result.reviewState !== 'committed') setFactReviewId(result.reviewId);
 
       // Mark any stragglers as done
       setAnalysisTasks((prev) =>
@@ -286,6 +336,8 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
         unsubscribeRef.current();
         unsubscribeRef.current = null;
       }
+
+      if (result.status === 'partial') { setStep('analysis-done'); return; }
 
       // After analysis: if fanwork, go to character-review; else auto-promote as before
       if (fanworkMeta.hasFanwork === true) {
@@ -299,7 +351,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
             }
           }
           // Also read world meta for AI suggestions
-          const worldMeta = await mana.fs.readJson(`${staging?.dir}/world/meta.json`, null);
+          const worldMeta = staging?.worldMeta;
           if (worldMeta?.isFanwork != null) {
             setAiFanworkSuggestion({
               isFanwork: worldMeta.isFanwork,
@@ -323,8 +375,6 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
               });
             }
             setStep('done');
-          } else {
-            setStep('analysis-done');
           }
         } else {
           setStep('analysis-done');
@@ -346,6 +396,11 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
       await handleDetectConflicts();
       return;
     }
+    if (!importResult?.importId) return;
+    const promoted = await handlePromoteToNovel(importResult.importId);
+    if (!promoted?.id) return;
+    setImportResult((previous) => ({ ...previous, promotedId: promoted.id }));
+    if (onImportComplete) await onImportComplete({ ...promoted, chapters: chaptersRef.current });
     setStep('done');
   }
 
@@ -373,7 +428,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
       const marks = (chars || []).map((ch) => ({
         id: ch.id || ch.name || String(Math.random()),
         name: ch.name || ch.id || '?',
-        isOriginal: ch.isOriginal === false ? false : true,
+        isOriginal: typeof ch.isOriginal === 'boolean' ? ch.isOriginal : null,
         selected: true,
         sourceWork: ch.isOriginal === false ? (ch.sourceWork || '') : '',
         data: ch,
@@ -389,7 +444,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
     if (!importResult?.importId || !mana?.import?.enrichStagingCharacters) return;
     const workAssignments = {};
     for (const m of characterMarks) {
-      if (!m.selected || m.isOriginal) continue;
+      if (!m.selected || m.isOriginal !== false) continue;
       const work = m.sourceWork || fanworkMeta.referencedWorks[0] || '';
       if (!work) continue;
       if (!workAssignments[work]) workAssignments[work] = [];
@@ -412,6 +467,8 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
       await mana.import.saveStagingCharacters(importResult.importId, markedCharacters);
       const result = await mana.import.enrichStagingCharacters(importResult.importId, workAssignments);
       setEnrichProgress({ runId: result.runId, status: 'done', results: result.results });
+      const pending = await mana.import.listReview(importResult.importId);
+      if (pending.length) setFactReviewId(pending[0].id);
       // Reload characters after enrichment
       await loadCharactersForReview(importResult.importId);
     } catch (err) {
@@ -435,7 +492,8 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
     try {
       await mana.import.saveStagingCharacters(importResult.importId, toSave);
     } catch (err) {
-      console.error('[import] saveStagingCharacters failed:', err);
+      setError(`保存角色审阅失败: ${err.message || String(err)}`);
+      return;
     }
     if (targetMode === 'existing') {
       await handleDetectConflicts();
@@ -452,23 +510,46 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
         setStep('done');
         return;
       }
+      return;
     }
     setStep('done');
   }
 
-  async function handleReuseExisting() {
-    if (!duplicateInfo?.existingImportId || !mana?.import?.getStaging) return;
+  async function restoreImport(importId) {
+    if (!importId || !mana?.import?.getStaging) return;
     setLoading(true);
     setError('');
     try {
-      const existing = await mana.import.getStaging(duplicateInfo.existingImportId);
+      let snapshot = await mana.import.get(importId);
+      setImportRun(snapshot);
+      if (!snapshot.importId) {
+        setStep('analysis');
+        snapshot = await mana.import.resume(snapshot.runId); setImportRun(snapshot);
+        if (snapshot.state === 'cancelled') { setStep('cancelled'); return; }
+        if (!snapshot.importId) { setError(snapshot.error?.message || '来源处理仍由原任务执行，请稍后从检查点恢复'); return; }
+      }
+      importId = snapshot.importId;
+      const existing = await mana.import.getStaging(importId);
       if (existing) {
-        setImportResult({ importId: duplicateInfo.existingImportId, chapterCount: existing.chapters?.length || 0, title: existing.novelMeta?.title });
+        setImportResult({ importId, chapterCount: existing.chapters?.length || 0, title: existing.novelMeta?.title });
         chaptersRef.current = existing.chapters || [];
-        // Check if already analyzed
-        const check = await mana.import.checkAnalysis(duplicateInfo.existingImportId);
-        if (check?.analyzed) {
-          setAnalysisResult({
+        snapshot = await mana.import.get(snapshot.runId);
+        setImportRun(snapshot);
+        if (snapshot.state === 'completed') { await showCompleted(snapshot); return; }
+        if (snapshot.state === 'cancelled') { setStep('cancelled'); return; }
+        if (snapshot.targetNovelId) { setTargetMode('existing'); setTargetNovelId(snapshot.targetNovelId); }
+        else if (snapshot.target?.dir) {
+          const normalizedDir = snapshot.target.dir.replace(/\\/g, '/').replace(/\/$/, '');
+          setTargetMode('new'); setProjectParentDir(normalizedDir.slice(0, normalizedDir.lastIndexOf('/')));
+          setProjectName(snapshot.target.title || normalizedDir.slice(normalizedDir.lastIndexOf('/') + 1));
+        }
+        if (existing.novelMeta?.fanwork) setFanworkMeta(existing.novelMeta.fanwork);
+        const pendingReviews = await mana.import.listReview(importId);
+        if (pendingReviews.length) setFactReviewId(pendingReviews[0].id);
+        // Recover the persisted analysis result and target, including partial status.
+        const check = await mana.import.checkAnalysis(importId);
+        if (check?.analyzed || snapshot.state === 'promoting' || snapshot.error?.phase === 'promoting') {
+          setAnalysisResult(existing.analysis || snapshot.analysisResult || {
             characters: check.characterCount || 0,
             hasLore: check.hasLore,
             hasOutline: check.hasOutline,
@@ -478,15 +559,17 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
         } else {
           setStep('analysis');
           setLoading(false);
-          handleStartAnalysis(duplicateInfo.existingImportId);
+          handleStartAnalysis(importId);
           return;
         }
       }
     } catch (err) {
       setError(err?.message || String(err));
     }
-    setLoading(false);
+    finally { setLoading(false); }
   }
+
+  const handleReuseExisting = () => restoreImport(duplicateInfo?.existingImportId);
 
   async function handleRecreateImport() {
     if (!duplicateInfo?.existingImportId || !mana?.import?.discardStaging) return;
@@ -504,10 +587,15 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
 
   async function handleSkipAnalysis() {
     if (!importRun?.runId || !mana?.import?.cancel) return;
-    const snapshot = await mana.import.cancel(importRun.runId);
-    setImportRun(snapshot);
-    setAnalyzing(false);
-    setError('导入已取消；staging 检查点仍保留，可从导入记录恢复。');
+    setCancelling(true);
+    try {
+      const snapshot = await mana.import.cancel(importRun.runId);
+      setImportRun(snapshot); setAnalyzing(false);
+      if (snapshot.state === 'completed') await showCompleted(snapshot);
+      else if (snapshot.state === 'cancelled') { setFactReviewId(null); setError(''); setStep('cancelled'); }
+      else setError(snapshot.error?.message || '取消尚未结束，请核对提交状态');
+    } catch (err) { setError(err.message); }
+    finally { setCancelling(false); }
   }
 
   async function handleDetectConflicts() {
@@ -567,16 +655,22 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
             <div data-testid="import-run-snapshot" data-import-state={importRun.state} className="mb-3 p-2 bg-vscode-sidebar border border-vscode-panel-border rounded text-gray-400">
               <div className="flex items-center justify-between gap-2">
                 <span>导入阶段：{importRun.state} · 检查点 {importRun.checkpoints?.length || 0}</span>
-                {importRun.state === 'interrupted' && importRun.allowedActions?.includes('resume') && (
-                  <button type="button" data-testid="import-run-resume" onClick={() => handleStartAnalysis(importRun.runId)} className="text-blue-400 hover:text-blue-300">从检查点恢复</button>
+                {!submitting && !analyzing && importRun.allowedActions?.includes('resume') && ['picked', 'parsed', 'staged', 'analyzing', 'interrupted', 'failed', 'promoting', 'recovery_required'].includes(importRun.state) && (
+                  <button type="button" data-testid="import-run-resume" onClick={handleResumeImport} className="text-blue-400 hover:text-blue-300">从检查点恢复</button>
                 )}
+                {importRun.allowedActions?.includes('cancel') && <button type="button" data-testid="import-run-cancel" disabled={cancelling} onClick={handleSkipAnalysis} className="text-amber-300">取消导入</button>}
               </div>
-              {importRun.error?.message && <div className="mt-1 text-rose-300">{importRun.error.message}</div>}
+              {importRun.state !== 'cancelled' && importRun.error?.message && <div className="mt-1 text-rose-300">{importRun.error.message}</div>}
+              {submitting && <div role="status">正在提交项目，请等待实际保存结果…</div>}
+              {cancelling && <div role="status">正在核对取消与保存结果…</div>}
+              {importRun.cancelOutcome === 'already_committed' && <div className="text-amber-200">取消请求到达时项目已提交；已保留正式项目与保存回执。</div>}
+              {importRun.result?.receipt && <details data-testid="import-promotion-receipt"><summary>查看项目保存回执</summary><pre className="whitespace-pre-wrap break-all">{JSON.stringify(importRun.result.receipt, null, 2)}</pre></details>}
             </div>
           )}
 
           {step === 'select' && (
             <div className="space-y-3">
+              {recoverableRuns.length > 0 && <div className="border border-vscode-panel-border rounded p-2 space-y-2"><p>未完成的导入，可从已保存的状态继续：</p>{recoverableRuns.map((run) => <button key={run.runId} type="button" data-testid={`import-restore-${run.runId}`} className="block text-blue-300 underline" disabled={loading} onClick={() => restoreImport(run.runId)}>恢复导入：{run.target?.title || run.sourceFiles?.[0]?.split(/[/\\]/).pop() || '未命名项目'}（{run.state}）</button>)}</div>}
               <p className="text-gray-500">选择要导入的小说文件。支持 Markdown (.md)、纯文本 (.txt)、EPUB (.epub) 和 Chatbox HTML (.html) 格式，可多选。</p>
               <button
                 type="button"
@@ -953,13 +1047,13 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
                       onChange={() => setCharacterMarks((prev) => prev.map((x) => x.id === m.id ? { ...x, selected: !x.selected } : x))}
                       className="accent-blue-500"
                     />
-                    <span className="flex-1 truncate text-gray-300 font-medium">{m.name}</span>
+                    <span className="flex-1 truncate text-gray-300 font-medium">{m.name}{m.isOriginal === null ? '（归属待确认）' : ''}</span>
                     <div className="flex items-center gap-2 shrink-0">
                       <label className="flex items-center gap-1 cursor-pointer">
                         <input
                           type="radio"
                           name={`type-${m.id}`}
-                          checked={m.isOriginal}
+                          checked={m.isOriginal === true}
                           onChange={() => setCharacterMarks((prev) => prev.map((x) => x.id === m.id ? { ...x, isOriginal: true, sourceWork: '' } : x))}
                         />
                         <span className="text-gray-400">原创</span>
@@ -968,13 +1062,13 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
                         <input
                           type="radio"
                           name={`type-${m.id}`}
-                          checked={!m.isOriginal}
+                          checked={m.isOriginal === false}
                           onChange={() => setCharacterMarks((prev) => prev.map((x) => x.id === m.id ? { ...x, isOriginal: false, sourceWork: x.sourceWork || fanworkMeta.referencedWorks.filter(Boolean)[0] || '' } : x))}
                         />
                         <span className="text-gray-400">二创</span>
                       </label>
                     </div>
-                    {!m.isOriginal && (
+                    {m.isOriginal === false && (
                       <select
                         value={m.sourceWork}
                         onChange={(e) => setCharacterMarks((prev) => prev.map((x) => x.id === m.id ? { ...x, sourceWork: e.target.value } : x))}
@@ -995,7 +1089,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
                 <div className="bg-green-900/20 border border-green-700/40 rounded p-2 text-center">
                   <div className="text-green-400 text-xs font-semibold">
                     联网补全完成
-                    {enrichProgress.results?.map((r) => ` | ${r.workName}: ${r.count} 个角色`).join('')}
+                    {enrichProgress.results?.map((r) => ` | ${r.workName}: 正式保存 ${r.written || 0}/${r.count}，冲突 ${r.conflicts?.length || 0}，失败 ${r.failures?.length || 0}`).join('')}
                   </div>
                 </div>
               )}
@@ -1041,42 +1135,55 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
             </div>
           )}
 
+          {factReviewId && importResult?.importId && <FactReviewDialog api={mana.import} ownerId={importResult.importId} reviewId={factReviewId} onComplete={async (r) => {
+            setFactReviewId(null);
+            if (r.state === 'cancelled') { setError('候选事实已拒绝，继续导入将保留原资料。'); }
+            const pending = await mana.import.listReview(importResult.importId);
+            if (pending.length) setFactReviewId(pending[0].id);
+            else { const staged = await mana.import.getStaging(importResult.importId); setAnalysisResult((prev) => ({ ...prev, ...(staged.analysis || {}), reviewState: r.state })); }
+          }} />}
           {step === 'analysis-done' && importResult && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-green-400">
+              <div className={`flex items-center gap-2 ${analysisResult?.status === 'partial' ? 'text-amber-300' : 'text-green-400'}`}>
                 <Check size={16} />
-                <span className="font-semibold">AI 分析完成</span>
+                <span className="font-semibold">{analysisResult?.reviewState === 'review' ? 'AI 候选已生成，等待逐项审阅' : analysisResult?.status === 'partial' ? 'AI 分析部分完成，等待审阅' : 'AI 分析完成'}</span>
               </div>
+              {analysisResult?.status === 'partial' && (
+                <div className="text-amber-300 text-xs border border-amber-800 p-3 rounded" data-testid="import-partial-analysis">
+                  分析仅部分完成。未完整的类别保留原资料；请审阅后决定是否继续导入。
+                  {analysisResult.reviewState === 'review' && <button type="button" className="underline" onClick={() => setFactReviewId(analysisResult.reviewId)}>继续逐项审阅候选事实</button>}
+                  {(analysisResult.domains || []).filter((d) => d.status !== 'complete').map((d) => (
+                    <div key={d.taskId}>{{ characters: '角色', factions: '势力', timeline: '时间线', world: '世界观', outline: '大纲', style: '文风' }[d.taskId] || d.taskId}: {d.status === 'failed' ? '失败' : '部分结果'} {(d.errors || []).map((e) => e.error).join('；')}</div>
+                  ))}
+                </div>
+              )}
               {analysisResult?.chunkMode && (
                 <div className="text-blue-400 text-xs">
                   分片分析完成：共 {analysisResult?.chunkCount} 片结果已合并
                 </div>
               )}
               <div className="bg-vscode-sidebar rounded p-3 border border-vscode-panel-border space-y-1">
-                <div className="text-green-400 flex items-center gap-2 text-xs">
-                  <Check size={12} /> 角色: {analysisResult?.characters || 0} 个
-                </div>
-                <div className="text-green-400 flex items-center gap-2 text-xs">
-                  <Check size={12} /> 势力: {analysisResult?.factions || 0} 个
-                </div>
-                <div className="text-green-400 flex items-center gap-2 text-xs">
-                  <Check size={12} /> 时间线: {analysisResult?.timeline || 0} 条事件
-                </div>
-                <div className="text-green-400 flex items-center gap-2 text-xs">
-                  <Check size={12} /> 世界观: {analysisResult?.lore > 100 ? '已分析' : '已分析'}
-                </div>
-                <div className="text-green-400 flex items-center gap-2 text-xs">
-                  <Check size={12} /> 大纲: {analysisResult?.outline > 100 ? '已生成' : '未生成'}
-                </div>
-                <div className="text-green-400 flex items-center gap-2 text-xs">
-                  <Check size={12} /> 文风: {analysisResult?.style > 100 ? '已分析' : '已分析'}
-                </div>
+                {[
+                  ['characters', '角色', `${analysisResult?.characters || 0} 个`],
+                  ['factions', '势力', `${analysisResult?.factions || 0} 个`],
+                  ['timeline', '时间线', `${analysisResult?.timeline || 0} 条事件`],
+                  ['world', '世界观', `${analysisResult?.lore || 0} 字符`],
+                  ['outline', '大纲', `${analysisResult?.outline || 0} 字符`],
+                  ['style', '文风', `${analysisResult?.style || 0} 字符`],
+                ].map(([id, label, count]) => {
+                  const status = analysisResult?.domains?.find((domain) => domain.taskId === id)?.status;
+                  const failed = status === 'failed', partial = status === 'partial';
+                  const Icon = failed || partial ? AlertTriangle : Check;
+                  return <div key={id} className={`${failed ? 'text-rose-300' : partial ? 'text-amber-300' : 'text-gray-300'} flex items-center gap-2 text-xs`}>
+                    <Icon size={12} /> {label}: {failed ? '分析失败，保留原资料' : partial ? '部分结果，保留原资料' : count}
+                  </div>;
+                })}
               </div>
               {targetMode === 'existing' ? (
                 <button
                   type="button"
                   onClick={handleContinueAfterAnalysis}
-                  disabled={loading}
+                  disabled={submitting || loading || importRun?.state === 'cancelled'}
                   className="w-full px-3 py-1.5 bg-amber-700 text-white rounded hover:bg-amber-600 disabled:opacity-40"
                 >
                   {fanworkMeta.hasFanwork === true ? '下一步 → 角色归属标记' : (loading ? '检测中...' : '继续 → 冲突检测与合并模式')}
@@ -1085,9 +1192,10 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
                 <button
                   type="button"
                   onClick={handleContinueAfterAnalysis}
+                  disabled={submitting || loading || importRun?.state === 'cancelled'}
                   className="w-full px-3 py-1.5 bg-blue-700 text-white rounded hover:bg-blue-600"
                 >
-                  {fanworkMeta.hasFanwork === true ? '下一步 → 角色归属标记' : '查看导入结果'}
+                  {fanworkMeta.hasFanwork === true ? '下一步 → 角色归属标记' : '审阅后创建项目'}
                 </button>
               )}
             </div>
@@ -1103,7 +1211,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
                 <div>共 <span className="text-white">{importResult.chapterCount}</span> 章已成功导入。</div>
                 {targetMode === 'new' && importResult.promotedId ? (
                   <div>
-                    新项目「<span className="text-white">{parsed?.metadata?.title || '导入的小说'}</span>」已创建并打开，可以直接在编辑器中查看和编辑章节内容。
+                    新项目「<span className="text-white">{importRun?.result?.title || importResult.title || parsed?.metadata?.title || '导入的小说'}</span>」已创建并打开，可以直接在编辑器中查看和编辑章节内容。
                   </div>
                 ) : targetMode === 'existing' ? (
                   <div>
@@ -1120,6 +1228,7 @@ export function ImportNovelPanel({ isOpen, onClose, existingNovels, activeNovelI
               </div>
             </div>
           )}
+          {step === 'cancelled' && <div className="space-y-3" data-testid="import-cancelled"><p>导入已取消，未创建正式项目。暂存资料仍保留，可重新发起一次导入。</p><button type="button" onClick={onClose}>关闭</button></div>}
 
           {step === 'conflict-report' && conflictSummary && (
             <ConflictReportPanel

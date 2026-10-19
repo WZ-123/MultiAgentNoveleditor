@@ -8,6 +8,7 @@
 const path = require('node:path');
 const { createHash } = require('node:crypto');
 const fs = require('node:fs').promises;
+const { assertEntityId, entityFileName, safeEntityPath, assertContainedFile } = require('./entityIdentity');
 const fastGlob = require('fast-glob');
 const lockfile = require('proper-lockfile');
 const { novelPaths, ensureNovelLayout, generateId, outlineVolumePath, outlineSectionPath, outlineChapterPath, outlineVolumeDir, outlineSectionDir } = require('./paths');
@@ -218,7 +219,7 @@ function normalizeCharacter(character) {
   next.aliases = aliasList;
   next.attributes = mergedAttributes;
   next.name = derivedName;
-  next.id = safeId || _slugifyCharacterId(derivedName);
+  next.id = assertEntityId(safeId || _slugifyCharacterId(derivedName));
   next.role = _pickFirstString(next.role, raw?.role, mergedAttributes.定位, mergedAttributes.身份, mergedAttributes.职务, next.faction, raw?.faction);
   next.faction = _pickFirstString(next.faction, raw?.faction);
   next.gender = _pickFirstString(next.gender, raw?.gender, raw?.sex, mergedAttributes.性别);
@@ -304,6 +305,7 @@ async function _buildCharacterIndexSnapshot(novelDir) {
   const files = _characterJsonFiles(await listJsonFiles(np.characters)).sort();
   const characters = [];
   for (const file of files) {
+    await assertContainedFile(np.characters, file);
     const character = normalizeCharacter(await readJson(file, null));
     if (!character) continue;
     characters.push(await _buildCharacterIndexEntry(file, character));
@@ -351,7 +353,7 @@ async function upsertCharacterIndex(novelDir, character) {
   if (!index || !Array.isArray(index.characters)) {
     index = { schemaVersion: 1, generatedAt: Date.now(), characters: [] };
   }
-  const file = path.join(np.characters, `${character.id}.json`);
+  const file = await safeEntityPath(np.characters, character.id);
   const entry = await _buildCharacterIndexEntry(file, character);
   const nextCharacters = index.characters.filter((item) => item?.id !== character.id);
   nextCharacters.push(entry);
@@ -380,43 +382,31 @@ async function listCharacters(novelDir) {
   const files = _characterJsonFiles(await listJsonFiles(np.characters));
   const out = [];
   for (const f of files) {
+    await assertContainedFile(np.characters, f);
     const obj = normalizeCharacter(await readJson(f, null));
-    if (obj) out.push(obj);
+    if (obj) {
+      if (out.some((c) => c.id === obj.id)) throw Object.assign(new Error(`角色身份对应多个文件：${obj.id}`), { code: 'ambiguous_entity_identity' });
+      out.push(obj);
+    }
   }
   return out;
 }
 
-async function resolveCharacterFile(novelDir, id) {
-  const key = _cleanStr(id);
-  if (!key) return null;
-  const np = novelPaths(novelDir);
-  const direct = path.join(np.characters, `${key}.json`);
-  try {
-    await fs.access(direct);
-    const character = normalizeCharacter(await readJson(direct, null));
-    return { file: direct, fileId: key, character };
-  } catch (err) {
-    if (err.code !== 'ENOENT') throw err;
-  }
-
-  const wanted = key.toLowerCase();
-  const files = _characterJsonFiles(await listJsonFiles(np.characters)).sort();
-  for (const file of files) {
-    const fileId = path.basename(file, '.json');
+async function resolveCharacterFile(novelDir, id, options = {}) {
+  const key = assertEntityId(id), np = novelPaths(novelDir);
+  const exact = [], aliases = [];
+  for (const file of _characterJsonFiles(await listJsonFiles(np.characters)).sort()) {
+    await assertContainedFile(np.characters, file);
     const character = normalizeCharacter(await readJson(file, null));
     if (!character) continue;
-    const keys = [
-      fileId,
-      character.id,
-      character.name,
-      character.originalName,
-      ...(Array.isArray(character.aliases) ? character.aliases : []),
-    ].map((value) => _cleanStr(value).toLowerCase()).filter(Boolean);
-    if (keys.includes(wanted)) {
-      return { file, fileId, character };
-    }
+    const entry = { file, fileId: path.basename(file, '.json'), character };
+    if (character.id === key) exact.push(entry);
+    else if (!options.exact && [entry.fileId, character.name, character.originalName, ...(character.aliases || [])]
+      .some((v) => String(v || '').toLowerCase() === key.toLowerCase())) aliases.push(entry);
   }
-  return null;
+  const matches = exact.length ? exact : aliases;
+  if (matches.length > 1) throw Object.assign(new Error(`角色身份对应多个文件，需先审阅：${key}`), { code: 'ambiguous_entity_identity' });
+  return matches[0] || null;
 }
 
 async function readCharacter(novelDir, id) {
@@ -424,14 +414,31 @@ async function readCharacter(novelDir, id) {
   return resolved?.character || null;
 }
 
-async function writeCharacter(novelDir, character) {
+async function writeCharacter(novelDir, character, options = {}) {
   const normalized = normalizeCharacter(character);
   if (!normalized?.id) throw new Error('character.id required');
   const np = ensureNovelLayout(novelDir);
-  const file = path.join(np.characters, `${normalized.id}.json`);
-  await writeJson(file, { schemaVersion: 1, ...normalized });
-  await upsertCharacterIndex(novelDir, normalized);
-  return normalized;
+  const file = await safeEntityPath(np.characters, normalized.id);
+  return withMutex(np.characters, async () => {
+    const wantedName = entityFileName(normalized.id);
+    for (const existing of await listJsonFiles(np.characters)) {
+      const name = path.basename(existing);
+      if (name !== wantedName && name.normalize('NFKC').toLowerCase() === wantedName.normalize('NFKC').toLowerCase()) {
+        throw Object.assign(new Error('character identity collides with an existing file'), { code: 'resource_name_conflict' });
+      }
+    }
+    const targetCharacter = normalizeCharacter(await readJson(file, null));
+    if (targetCharacter && targetCharacter.id !== normalized.id) throw Object.assign(new Error('character file belongs to a different identity'), { code: 'resource_name_conflict' });
+    if (options.expectedCharacter) {
+      const current = (await resolveCharacterFile(novelDir, normalized.id, { exact: true }))?.character || null;
+      if (JSON.stringify(current) !== JSON.stringify(options.expectedCharacter)) throw Object.assign(new Error('character changed during update'), { code: 'stale_character' });
+    }
+    const legacy = await resolveCharacterFile(novelDir, normalized.id, { exact: true });
+    await writeJson(file, { schemaVersion: 1, ...normalized });
+    if (legacy && path.resolve(legacy.file) !== path.resolve(file)) await deleteFile(legacy.file);
+    await upsertCharacterIndex(novelDir, normalized);
+    return normalized;
+  });
 }
 
 async function patchCharacter(novelDir, id, patch) {
@@ -442,7 +449,7 @@ async function patchCharacter(novelDir, id, patch) {
   // Names and aliases are valid lookup keys, but never new identities.
   next.id = canonicalId;
   const written = await writeCharacter(novelDir, next);
-  const canonicalFile = path.join(ensureNovelLayout(novelDir).characters, `${canonicalId}.json`);
+  const canonicalFile = await safeEntityPath(ensureNovelLayout(novelDir).characters, canonicalId);
   if (path.resolve(resolved.file) !== path.resolve(canonicalFile)) {
     await deleteFile(resolved.file);
   }
@@ -450,11 +457,13 @@ async function patchCharacter(novelDir, id, patch) {
 }
 
 async function deleteCharacter(novelDir, id) {
-  const resolved = await resolveCharacterFile(novelDir, id);
-  if (!resolved) return null;
-  await deleteFile(resolved.file);
-  await removeCharacterFromIndex(novelDir, resolved.character?.id || resolved.fileId);
-  return resolved.character || null;
+  return withMutex(novelPaths(novelDir).characters, async () => {
+    const resolved = await resolveCharacterFile(novelDir, id);
+    if (!resolved) return null;
+    await deleteFile(resolved.file);
+    await removeCharacterFromIndex(novelDir, resolved.character?.id || resolved.fileId);
+    return resolved.character || null;
+  });
 }
 
 function emptyCharacterMemory(characterId) {
@@ -675,7 +684,7 @@ async function writeAssetsFile(novelDir, data) {
   const np = ensureNovelLayout(novelDir);
   const assets = Array.isArray(data?.assets) ? data.assets.map(normalizeAsset).filter(Boolean) : [];
   await withMutex(np.assetsMain, async () => {
-    await fs.rm(np.assetItems, { recursive: true, force: true });
+    for (const file of await listJsonFiles(np.assetItems)) await deleteFile(file);
     await fs.mkdir(np.assetItems, { recursive: true });
     for (const asset of assets) {
       await writeJson(_assetFilePath(novelDir, asset.id), asset);
@@ -1040,7 +1049,7 @@ async function updateTimelineEvent(novelDir, id, patch) {
     events[index] = next;
     const content = events.map((event) => JSON.stringify(event)).join('\n');
     await fs.mkdir(path.dirname(np.timelineEvents), { recursive: true });
-    await fs.writeFile(np.timelineEvents, content ? `${content}\n` : '', 'utf8');
+    await atomicWriteFile(np.timelineEvents, content ? `${content}\n` : '', 'utf8');
     return next;
   });
 }
@@ -1053,7 +1062,7 @@ async function replaceTimeline(novelDir, events) {
   return withMutex(np.timelineEvents, async () => {
     await fs.mkdir(path.dirname(np.timelineEvents), { recursive: true });
     const content = normalized.map((event) => JSON.stringify(event)).join('\n');
-    await fs.writeFile(np.timelineEvents, content ? `${content}\n` : '', 'utf8');
+    await atomicWriteFile(np.timelineEvents, content ? `${content}\n` : '', 'utf8');
     return normalized;
   });
 }
@@ -1088,7 +1097,7 @@ async function dedupeTimeline(novelDir, options = {}) {
     const deduped = keep === 'last' ? kept.reverse() : kept;
     const content = deduped.map((event) => JSON.stringify(event)).join('\n');
     await fs.mkdir(path.dirname(np.timelineEvents), { recursive: true });
-    await fs.writeFile(np.timelineEvents, content ? `${content}\n` : '', 'utf8');
+    await atomicWriteFile(np.timelineEvents, content ? `${content}\n` : '', 'utf8');
     return {
       before: existing.length,
       after: deduped.length,
@@ -1176,7 +1185,7 @@ async function syncTimelineEventsForChapter(novelDir, chapterRef, events) {
     const nextEvents = withOrder.map((entry) => entry.event);
     const content = nextEvents.map((event) => JSON.stringify(event)).join('\n');
     await fs.mkdir(path.dirname(np.timelineEvents), { recursive: true });
-    await fs.writeFile(np.timelineEvents, content ? `${content}\n` : '', 'utf8');
+    await atomicWriteFile(np.timelineEvents, content ? `${content}\n` : '', 'utf8');
     const validation = await validateTimelineCoverage(novelDir, nextEvents);
     return {
       before: beforeEvents.length,
@@ -1204,7 +1213,7 @@ async function appendSummary(novelDir, { chapterRef, summary, supplementMarkdown
     .filter(Boolean)
     .join('\n');
   await fs.mkdir(path.dirname(file), { recursive: true });
-  await fs.writeFile(file, block, 'utf8');
+  await atomicWriteFile(file, block, 'utf8');
   return { file, chapterRef };
 }
 
@@ -1237,7 +1246,7 @@ async function appendStyleMemory(novelDir, { delta }) {
     const stamp = new Date().toISOString();
     const next = `${prev}${prev && !prev.endsWith('\n') ? '\n' : ''}\n<!-- ${stamp} -->\n${delta || ''}\n`;
     await fs.mkdir(path.dirname(np.styleMemory), { recursive: true });
-    await fs.writeFile(np.styleMemory, next, 'utf8');
+    await atomicWriteFile(np.styleMemory, next, 'utf8');
     return { length: next.length };
   });
 }
@@ -1246,7 +1255,7 @@ async function writeStyleMemory(novelDir, text) {
   const np = ensureNovelLayout(novelDir);
   return withMutex(np.styleMemory, async () => {
     await fs.mkdir(path.dirname(np.styleMemory), { recursive: true });
-    await fs.writeFile(np.styleMemory, String(text || ''), 'utf8');
+    await atomicWriteFile(np.styleMemory, String(text || ''), 'utf8');
     return { length: (text || '').length };
   });
 }
@@ -1289,7 +1298,7 @@ async function writeOutlineNodes(novelDir, nodes) {
     mdLines.push(`${heading} ${title}${chars}${setting}${location}${pov}${summary}`);
   }
   const mdContent = `# 总大纲\n\n${mdLines.join('\n\n')}\n`;
-  await fs.writeFile(np.outlineMain, mdContent, 'utf8');
+  await atomicWriteFile(np.outlineMain, mdContent, 'utf8');
   return { ok: true };
 }
 
@@ -1543,8 +1552,8 @@ async function writeHierarchicalOutline(novelDir, hierarchy) {
 
   if (!hierarchy || !Array.isArray(hierarchy.volumes)) {
     // Write empty master outline
-    await fs.writeFile(np.outlineMaster, '# 总大纲\n', 'utf8');
-    await fs.writeFile(np.outlineMain, '# 总大纲\n', 'utf8');
+    await atomicWriteFile(np.outlineMaster, '# 总大纲\n', 'utf8');
+    await atomicWriteFile(np.outlineMain, '# 总大纲\n', 'utf8');
     await writeJson(np.outlineNodes, { schemaVersion: 1, nodes: [] });
     return { ok: true, nodeCount: 0 };
   }
@@ -1554,7 +1563,7 @@ async function writeHierarchicalOutline(novelDir, hierarchy) {
     const volDir = outlineVolumeDir(novelDir, volIdx);
     await fs.mkdir(volDir, { recursive: true });
 
-    await fs.writeFile(
+    await atomicWriteFile(
       outlineVolumePath(novelDir, volIdx),
       _volumeOutlineToMd(vol, volIdx),
       'utf8'
@@ -1571,7 +1580,7 @@ async function writeHierarchicalOutline(novelDir, hierarchy) {
       const secDir = outlineSectionDir(novelDir, volIdx, secIdx);
       await fs.mkdir(secDir, { recursive: true });
 
-      await fs.writeFile(
+      await atomicWriteFile(
         outlineSectionPath(novelDir, volIdx, secIdx),
         _sectionOutlineToMd(sec, secIdx),
         'utf8'
@@ -1586,7 +1595,7 @@ async function writeHierarchicalOutline(novelDir, hierarchy) {
       for (const ch of sec.chapterOutlines) {
         const chIdx = ch.chapterIndex;
 
-        await fs.writeFile(
+        await atomicWriteFile(
           outlineChapterPath(novelDir, volIdx, secIdx, chIdx),
           _chapterOutlineToMd(ch, chIdx),
           'utf8'
@@ -1608,13 +1617,13 @@ async function writeHierarchicalOutline(novelDir, hierarchy) {
 
   // Write master outline
   const masterMd = _masterToMd(hierarchy.master || []);
-  await fs.writeFile(np.outlineMaster, masterMd, 'utf8');
+  await atomicWriteFile(np.outlineMaster, masterMd, 'utf8');
 
   // Write aggregated nodes.json (MCP backward compat)
   await writeJson(np.outlineNodes, { schemaVersion: 1, nodes: allNodes });
 
   // Write main.md (legacy UI compat)
-  await fs.writeFile(np.outlineMain, masterMd, 'utf8');
+  await atomicWriteFile(np.outlineMain, masterMd, 'utf8');
 
   return { ok: true, nodeCount: allNodes.length };
 }
@@ -2032,7 +2041,7 @@ async function deleteChapter(novelDir, name, options = {}) {
       { source: 'delete', revisionLabel: '删除前快照' },
     );
     const beforeHash = contentHashExact(raw);
-    await fs.unlink(file);
+    await deleteFile(file);
     try {
       await fs.access(file);
       const error = new Error('chapter still exists after deletion');
@@ -2412,7 +2421,7 @@ async function writeWorld(novelDir, { lore, places }) {
   }
   const np = ensureNovelLayout(novelDir);
   if (typeof lore === 'string') {
-    await fs.writeFile(np.worldLore, lore, 'utf8');
+    await atomicWriteFile(np.worldLore, lore, 'utf8');
   }
   if (Array.isArray(places)) {
     await writeJson(np.worldPlaces, { schemaVersion: 1, places });
@@ -2651,3 +2660,13 @@ module.exports = {
   // world
   readWorld, writeWorld, applyWorldPatch, readWorldMeta,
 };
+
+// One storage boundary for manual saves, imports, and callers such as MCP/LAN.
+// Internal calls inherit this context, so read/modify/write and identity migration
+// are indivisible with respect to the other cooperative project writers.
+for (const [name, operation] of Object.entries(module.exports)) {
+  if (operation.constructor.name !== 'AsyncFunction') continue;
+  module.exports[name] = async function (novelDir, ...args) {
+    return require('./projectTransactions').transaction(novelDir, () => operation(novelDir, ...args));
+  };
+}

@@ -1,0 +1,23 @@
+{
+  "sourceSyntaxFiles": 34,
+  "knowledgeAndReportFileLinks": "passed",
+  "gitDiffCheck": "passed",
+  "excludedWritingChainDiff": "empty",
+  "screenshotsViewedIndividually": [
+    "artifacts/data-import-safety-audit/ui/import-saga-analyzing.png",
+    "artifacts/data-import-safety-audit/ui/import-saga-completed.png",
+    "artifacts/data-import-safety-audit/ui/offline-saved-records.png",
+    "artifacts/data-import-safety-audit/ui/partial-analysis-review.png",
+    "artifacts/data-import-safety-audit/ui/merge-complete-plan.png",
+    "artifacts/data-import-safety-audit/ui/merge-stale-review.png",
+    "artifacts/data-import-safety-audit/ui/regeneration-review.png",
+    "artifacts/data-import-safety-audit/ui/regeneration-saved.png",
+    "artifacts/data-import-safety-audit/ui/fact-review-candidates.png",
+    "artifacts/data-import-safety-audit/ui/fact-review-restored.png",
+    "artifacts/data-import-safety-audit/ui/fact-review-promoted.png",
+    "artifacts/data-import-safety-audit/ui/web-fact-review.png",
+    "artifacts/data-import-safety-audit/ui/web-fact-saved.png",
+    "artifacts/data-import-safety-audit/ui/offline-pending-preview.png"
+  ],
+  "screenshotReview": "目标状态可见，未发现意外加载遮罩、错误弹层、关键按钮遮挡或明显溢出。预期冲突提示与部分结果保留。"
+}

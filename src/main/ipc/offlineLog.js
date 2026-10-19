@@ -16,7 +16,7 @@ function safeIpc(handler) {
 
 function registerOfflineLogIpc() {
   ipcMain.handle('mana:offlineLog:appendEntry', safeIpc(async (_e, entry) => {
-    return offlineLog.appendEntry(entry);
+    return offlineLog.appendEntry({ ...entry, persistence: 'pending' });
   }));
 
   ipcMain.handle('mana:offlineLog:listUnsynced', safeIpc(async (_e, { novelId }) => {
@@ -26,6 +26,8 @@ function registerOfflineLogIpc() {
   ipcMain.handle('mana:offlineLog:listUnsyncedByType', safeIpc(async (_e, { novelId }) => {
     return offlineLog.listUnsyncedByType(novelId);
   }));
+
+  ipcMain.handle('mana:offlineLog:syncEntry', safeIpc(async (_e, { novelId, entryId }) => offlineLog.syncEntry(novelId, entryId)));
 
   ipcMain.handle('mana:offlineLog:markSynced', safeIpc(async (_e, { entryIds }) => {
     return offlineLog.markSynced(entryIds);

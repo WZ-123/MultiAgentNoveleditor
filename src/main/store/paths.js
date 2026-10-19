@@ -57,6 +57,7 @@ function paths() {
  * @param {string} novelDir
  */
 function novelPaths(novelDir) {
+  require('./projectTransactions').registerRoot(novelDir);
   return {
     root: novelDir,
     novelMeta: path.join(novelDir, 'novel.json'),

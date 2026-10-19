@@ -30,8 +30,8 @@ async function run() {
       personality: '魔女会成员',
       hairColor: '银发',
     };
-    assert.equal(_validateWebInfo('尼可·莱恩', '原神', okPayload, { title: '尼可·莱恩' }), true);
-    pass('CEVR2_accepts_plausible_nico_payload');
+    assert.equal(_validateWebInfo('尼可·莱恩', '原神', okPayload, { title: '尼可·莱恩', text: '原神 尼可·莱恩的官方角色页' }), true);
+    pass('CEVR2_requires_character_and_work_in_fetched_evidence');
   } catch (err) {
     failed += 1;
     fail('CEVR_harness', err?.stack || String(err));

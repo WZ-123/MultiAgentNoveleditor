@@ -7,7 +7,8 @@ const { runElectronCase } = require('./electron-test-runner');
 const root = path.resolve(__dirname, '..');
 runElectronCase({
   appRoot: root,
-  label: 'import-saga-ui',
+  label: 'data-import-safety-ui',
+  artifactRoot: path.join(root, 'artifacts', 'data-import-safety-audit', 'test-runs'),
   flag: '--test-import-saga-ui-regression',
   startupTimeoutMs: 60_000,
   testTimeoutMs: 120_000,

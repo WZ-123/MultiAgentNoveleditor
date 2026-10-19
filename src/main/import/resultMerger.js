@@ -14,57 +14,24 @@ const MAX_CHUNK_CHARS = 40000;
  * Returns array of { index, title, text } where title is a chapter range description.
  */
 function splitIntoChunks(text, maxChars = MAX_CHUNK_CHARS) {
-  if (!text || text.length <= maxChars) return [{ index: 0, title: '全文', text }];
-
-  // Split at chapter markers first
-  const chapterPattern = /(?=\n#{1,3}\s*(?:第[一二三四五六七八九十百千零\d]+章|Chapter\s+\d+|\d+\s*[、.．]|\[第\d+章\]))/gi;
-  let chapters = text.split(chapterPattern).filter((s) => s.trim().length > 0);
-
-  // If no chapters found, split at paragraph boundaries
-  if (chapters.length <= 1) {
-    chapters = text.split(/\n\n+/).filter((s) => s.trim().length > 0);
-  }
-
+  if (!Number.isInteger(maxChars) || maxChars < 2) throw new Error('chunk budget must be at least 2');
+  const source = String(text || '');
   const chunks = [];
-  let current = '';
-  let startTitle = '';
-  let endTitle = '';
-  let chunkIndex = 0;
-
-  function extractTitle(piece) {
-    const m = piece.match(/^#{1,3}\s*(.+)/m);
-    return m ? m[1].trim().slice(0, 30) : piece.trim().slice(0, 30);
-  }
-
-  for (let i = 0; i < chapters.length; i++) {
-    const piece = chapters[i];
-    const title = extractTitle(piece);
-    if (!startTitle) startTitle = title;
-    endTitle = title;
-
-    if (current.length + piece.length > maxChars && current.length > 0) {
-      chunks.push({
-        index: chunkIndex++,
-        title: startTitle === endTitle ? startTitle : `${startTitle} ~ ${endTitle}`,
-        text: current.trim(),
-      });
-      current = piece;
-      startTitle = title;
-      endTitle = title;
-    } else {
-      current += '\n\n' + piece;
+  let offset = 0;
+  while (offset < source.length) {
+    let end = Math.min(source.length, offset + maxChars);
+    if (end < source.length) {
+      const boundary = source.lastIndexOf('\n', end - 1);
+      if (boundary > offset + Math.floor(maxChars / 2)) end = boundary + 1;
+      // Do not split a UTF-16 surrogate pair.
+      if (/[\uD800-\uDBFF]/u.test(source[end - 1])) end--;
     }
+    const piece = source.slice(offset, end);
+    chunks.push({ index: chunks.length, title: piece.match(/^#{1,3}\s*(.+)/m)?.[1]?.slice(0, 30) || `片段 ${chunks.length + 1}`,
+      text: piece, sourceStart: offset, sourceEnd: end });
+    offset = end;
   }
-
-  if (current.trim().length > 0) {
-    chunks.push({
-      index: chunkIndex,
-      title: startTitle === endTitle ? startTitle : `${startTitle} ~ ${endTitle}`,
-      text: current.trim(),
-    });
-  }
-
-  return chunks;
+  return chunks.length ? chunks : [{ index: 0, title: '全文', text: '', sourceStart: 0, sourceEnd: 0 }];
 }
 
 // ---------- Merge helpers ----------
@@ -74,142 +41,90 @@ function _normalizeName(name) {
 }
 
 function _pickRicher(a, b) {
-  if (!a) return b;
-  if (!b) return a;
-  // Prefer longer / more detailed string; if same length, prefer newer (b)
-  if (typeof a === 'string' && typeof b === 'string') {
-    if (b.length > a.length) return b;
-    if (a.length > b.length) return a;
-    return b || a;
+  if (a == null || a === '' || (Array.isArray(a) && !a.length)) return b;
+  if (b == null || b === '') return a;
+  if (Array.isArray(a) && Array.isArray(b)) return [...new Map([...a, ...b].map((item) => [JSON.stringify(item), item])).values()];
+  // The first assertion stays visible; all contradictory assertions are stored below.
+  return a;
+}
+function recordField(target, field, value, source) {
+  if (value == null || value === '') return;
+  target._analysisCandidates ||= {};
+  const candidates = target._analysisCandidates[field] ||= [];
+  const existing = candidates.find((candidate) => JSON.stringify(candidate.value) === JSON.stringify(value));
+  if (existing) existing.sources.push(source);
+  else candidates.push({ value, sources: [source] });
+  if (candidates.length > 1 && !Array.isArray(value) && !['id', 'name', 'evidence'].includes(field)) {
+    target._analysisConflicts ||= {};
+    target._analysisConflicts[field] = candidates;
   }
-  if (Array.isArray(a) && Array.isArray(b)) {
-    const merged = [...a];
-    for (const item of b) {
-      if (!merged.includes(item)) merged.push(item);
-    }
-    return merged;
-  }
-  return b || a;
+  target[field] = target._analysisConflicts?.[field] ? null : _pickRicher(target[field], value);
 }
 
-function mergeCharacters(chunkResults) {
+function mergeEntities(chunkResults, field) {
   const byName = new Map();
   for (const cr of chunkResults) {
-    const chars = cr.characters || [];
-    for (const ch of chars) {
-      const key = _normalizeName(ch.name || ch.id);
+    for (const item of cr[field] || []) {
+      const key = _normalizeName(item.name || item.id);
       if (!key) continue;
-      if (!byName.has(key)) {
-        byName.set(key, { ...ch });
-      } else {
-        const existing = byName.get(key);
-        // Merge fields: prefer non-empty, longer descriptions
-        for (const field of ['aliases', 'gender', 'age', 'role', 'appearance', 'personality', 'background', 'storyArc']) {
-          existing[field] = _pickRicher(existing[field], ch[field]);
-        }
-        // Merge relationships
-        const rels = [...(existing.relationships || []), ...(ch.relationships || [])];
-        const relMap = new Map();
-        for (const r of rels) {
-          const rk = _normalizeName(r.with);
-          if (rk) {
-            if (!relMap.has(rk)) relMap.set(rk, r);
-            else relMap.get(rk).type = relMap.get(rk).type || r.type;
-          }
-        }
-        existing.relationships = Array.from(relMap.values());
+      if (!byName.has(key)) byName.set(key, { ...item, _analysisCandidates: {}, _analysisConflicts: {} });
+      const target = byName.get(key);
+      const quote = typeof item.evidence === 'string' ? item.evidence : String(item.evidence?.quote || '');
+      const quoteOffset = quote ? String(cr.sourceText || '').indexOf(quote) : -1;
+      const source = { chunkIndex: cr.chunkIndex, chunkTitle: cr.chunkTitle, evidence: item.evidence || null,
+        sourceFile: cr.sourceFile, sourceStart: cr.sourceStart, quoteFound: quoteOffset >= 0,
+        sourceExcerpt: String(cr.sourceText || '').slice(Math.max(0, quoteOffset - 200), Math.max(0, quoteOffset) + Math.min(1000, quote.length + 400)) };
+      for (const [name, value] of Object.entries(item)) {
+        if (name.startsWith('_analysis') || ['__proto__', 'constructor', 'prototype'].includes(name)) continue;
+        recordField(target, name, value, source);
+      }
+      // Relationship assertions retain their complete payload and source, including disagreements.
+      const relationshipCandidates = target._analysisCandidates.relationships || [];
+      target.relationships = [...new Map(relationshipCandidates.flatMap((c) => c.value || []).map((r) => [JSON.stringify(r), r])).values()];
+      const byPerson = new Map();
+      for (const relation of target.relationships) {
+        const list = byPerson.get(_normalizeName(relation.with)) || [];
+        list.push(relation); byPerson.set(_normalizeName(relation.with), list);
+      }
+      if ([...byPerson.values()].some((values) => values.length > 1)) {
+        target._analysisConflicts.relationships = relationshipCandidates; target.relationships = [];
       }
     }
   }
-  return Array.from(byName.values());
+  return [...byName.values()];
 }
-
-function mergeFactions(chunkResults) {
-  const byName = new Map();
-  for (const cr of chunkResults) {
-    const factions = cr.factions || [];
-    for (const f of factions) {
-      const key = _normalizeName(f.name);
-      if (!key) continue;
-      if (!byName.has(key)) {
-        byName.set(key, { ...f });
-      } else {
-        const existing = byName.get(key);
-        for (const field of ['aliases', 'type', 'description', 'goals']) {
-          existing[field] = _pickRicher(existing[field], f[field]);
-        }
-        existing.members = _pickRicher(existing.members || [], f.members || []);
-        existing.conflicts = _pickRicher(existing.conflicts || [], f.conflicts || []);
-      }
-    }
-  }
-  return Array.from(byName.values());
-}
-
-function _eventSimilarity(a, b) {
-  const aTitle = (a.title || a.event || '').toLowerCase();
-  const bTitle = (b.title || b.event || '').toLowerCase();
-  if (aTitle === bTitle) return 1;
-  // Simple Jaccard on words
-  const aWords = new Set(aTitle.split(/\s+/));
-  const bWords = new Set(bTitle.split(/\s+/));
-  const intersection = new Set([...aWords].filter((x) => bWords.has(x)));
-  const union = new Set([...aWords, ...bWords]);
-  return union.size > 0 ? intersection.size / union.size : 0;
-}
+function mergeCharacters(chunks) { return mergeEntities(chunks, 'characters'); }
+function mergeFactions(chunks) { return mergeEntities(chunks, 'factions'); }
 
 function mergeTimeline(chunkResults) {
-  const allEvents = [];
-  for (const cr of chunkResults) {
-    const events = cr.timeline || [];
-    for (const e of events) {
-      allEvents.push(e);
+  const unique = new Map();
+  for (const chunk of chunkResults) {
+    for (const event of chunk.timeline || []) {
+      const key = JSON.stringify(event);
+      if (!unique.has(key)) unique.set(key, { ...event, _analysisSources: [] });
+      unique.get(key)._analysisSources.push({ chunkIndex: chunk.chunkIndex, chunkTitle: chunk.chunkTitle });
     }
   }
-  // Deduplicate by similarity
-  const unique = [];
-  for (const e of allEvents) {
-    let found = false;
-    for (const u of unique) {
-      if (_eventSimilarity(e, u) > 0.7) {
-        found = true;
-        // Prefer more detailed event
-        if ((e.event || '').length > (u.event || '').length) u.event = e.event;
-        if ((e.involvedCharacters || []).length > (u.involvedCharacters || []).length) {
-          u.involvedCharacters = Array.from(new Set([...(u.involvedCharacters || []), ...(e.involvedCharacters || [])]));
-        }
-        break;
-      }
-    }
-    if (!found) unique.push({ ...e });
-  }
-  // Sort by some heuristic order (numeric timestamp if available, else by order of appearance)
-  return unique;
+  return [...unique.values()];
 }
 
 function mergeWorld(chunkResults) {
-  const lore = [];
-  const placesByName = new Map();
-  for (const cr of chunkResults) {
-    const world = cr.world || {};
-    if (world.lore) lore.push(world.lore);
-    const places = world.places || [];
-    for (const p of places) {
-      const key = _normalizeName(p.name);
-      if (!key) continue;
-      if (!placesByName.has(key)) {
-        placesByName.set(key, { ...p });
-      } else {
-        const existing = placesByName.get(key);
-        existing.description = _pickRicher(existing.description, p.description);
-        existing.type = existing.type || p.type;
-      }
-    }
+  const { normalizeWorld, FIELDS } = require('./worldSchema');
+  const result = normalizeWorld();
+  const places = [];
+  for (const chunk of chunkResults) {
+    if (!chunk.world) continue;
+    const world = normalizeWorld(chunk.world);
+    result._analysisSources ||= [];
+    result._analysisSources.push({ chunkIndex: chunk.chunkIndex, world });
+    for (const field of [...FIELDS, 'isFanwork', 'possibleFanworkOf']) recordField(result, field, world[field], { chunkIndex: chunk.chunkIndex, chunkTitle: chunk.chunkTitle });
+    recordField(result, 'referencedWorks', world.referencedWorks, { chunkIndex: chunk.chunkIndex, chunkTitle: chunk.chunkTitle });
+    places.push({ chunkIndex: chunk.chunkIndex, chunkTitle: chunk.chunkTitle, characters: world.places });
   }
-  return {
-    lore: lore.join('\n\n---\n\n'),
-    places: Array.from(placesByName.values()),
-  };
+  // Keep text from every chunk; candidates document provenance and conflicts.
+  for (const field of FIELDS) if (result._analysisConflicts?.[field]) result[field] = '';
+  result.places = mergeCharacters(places);
+  return result;
 }
 
 function mergeOutline(chunkResults) {

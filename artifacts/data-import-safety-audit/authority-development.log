@@ -1,0 +1,4 @@
+PASS PA-01 A selectable alternative name must not invalidate later fields of an ID-less place
+PASS PA-02 Cancellation acknowledged before a pending compatibility submission enters commit must prevent formal writes
+PASS PA-03 Cancelling a retryable failed promotion must persist and return cancelled
+PASS PA-04 Reading an active analysis from another service must not declare it interrupted

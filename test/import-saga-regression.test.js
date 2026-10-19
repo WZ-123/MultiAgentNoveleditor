@@ -41,7 +41,7 @@ async function run() {
     },
     resolveConflict: (id, itemId) => { conflicts.get(id).find((item) => item.id === itemId).status = 'resolved'; },
     finalizeMerge: async (id) => {
-      const summary = merge.getMergeSummary(id);
+      const summary = await merge.getMergeSummary(id);
       if (summary.pending || summary.disputed) throw Object.assign(new Error('unresolved'), { code: 'unresolved_conflicts' });
       return { written: 2 };
     },
@@ -90,11 +90,11 @@ async function run() {
     assert.equal(recoveryRun.state, 'analyzing');
     const resumedService = makeService();
     recoveryRun = await resumedService.get(recoveryRun.runId);
-    assert.equal(recoveryRun.state, 'interrupted');
-    assert.equal(recoveryRun.error.code, 'provider_state_lost');
+    assert.equal(recoveryRun.state, 'analyzing', 'another service reading cannot declare the active owner dead');
+    const startsBeforeJoin = analysisStarts;
     recoveryRun = await resumedService.resume(recoveryRun.runId);
-    assert.equal(recoveryRun.state, 'analyzing');
-    assert.deepEqual(recoveryRun.phases.slice(-3).map((item) => item.phase), ['interrupted', 'staged', 'analyzing']);
+    assert.equal(recoveryRun.state, 'review', 'same-process services join the original analysis');
+    assert.equal(analysisStarts, startsBeforeJoin, 'joining a live analysis cannot start another generation');
     recoveryRun = await resumedService.cancel(recoveryRun.runId);
     await service.cancel(recoveryRun.runId);
     assert.equal((await resumedService.resume(recoveryRun.runId)).state, 'cancelled', 'cancelled imports cannot silently restart');

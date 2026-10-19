@@ -5,6 +5,7 @@ export function OfflineSyncDialog({ novelId, onClose }) {
   const mana = typeof window !== 'undefined' ? window.mana : null;
   const [unsynced, setUnsynced] = useState([]);
   const [byType, setByType] = useState({});
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
@@ -15,12 +16,14 @@ export function OfflineSyncDialog({ novelId, onClose }) {
   async function loadUnsynced() {
     if (!mana?.offlineLog) return;
     setLoading(true);
+    setError('');
     try {
       const entries = await mana.offlineLog.listUnsynced(novelId);
       setUnsynced(entries || []);
       const grouped = await mana.offlineLog.listUnsyncedByType(novelId);
       setByType(grouped || {});
     } catch (err) {
+      setError(err?.message || String(err));
       console.error('[OfflineSyncDialog] load failed', err);
     }
     setLoading(false);
@@ -44,65 +47,17 @@ export function OfflineSyncDialog({ novelId, onClose }) {
     if (!mana?.offlineLog || unsynced.length === 0) return;
     setProcessing(true);
     try {
-      // Apply each entry to the novel store
       for (const entry of unsynced) {
-        await applyEntry(entry);
+        await mana.offlineLog.syncEntry(novelId, entry.id);
       }
-      // Mark all as synced
-      const ids = unsynced.map((e) => e.id);
-      await mana.offlineLog.markSynced(ids);
       onClose();
     } catch (err) {
       console.error('[OfflineSyncDialog] sync failed', err);
-      alert('同步失败: ' + (err?.message || String(err)));
+      const message = '同步失败: ' + (err?.message || String(err));
+      await loadUnsynced();
+      setError(message);
     }
     setProcessing(false);
-  }
-
-  async function applyEntry(entry) {
-    const { type, action, targetId, payload } = entry;
-    if (!mana?.novel) return;
-
-    switch (type) {
-      case 'character': {
-        if (action === 'create' || action === 'update') {
-          await mana.novel.writeCharacter(novelId, { id: targetId, ...payload });
-        }
-        break;
-      }
-      case 'world': {
-        if (action === 'update') {
-          await mana.novel.writeWorld(novelId, payload);
-        }
-        break;
-      }
-      case 'chapter': {
-        if (action === 'update' && payload?.name && payload?.content !== undefined) {
-          await mana.novel.saveChapter(novelId, payload.name, payload.content);
-        }
-        break;
-      }
-      case 'style': {
-        if (action === 'update' && payload?.text) {
-          await mana.novel.writeStyleMemory(novelId, payload.text);
-        }
-        break;
-      }
-      case 'timeline': {
-        if (action === 'create' && payload?.event) {
-          await mana.novel.appendTimeline(novelId, payload.event);
-        }
-        break;
-      }
-      case 'asset': {
-        if (action === 'create' || action === 'update') {
-          await mana.novel.upsertAsset(novelId, { id: targetId, ...payload });
-        }
-        break;
-      }
-      default:
-        console.warn('[OfflineSyncDialog] unhandled entry type', type);
-    }
   }
 
   async function handleDiscard() {
@@ -118,6 +73,7 @@ export function OfflineSyncDialog({ novelId, onClose }) {
   }
 
   const totalCount = unsynced.length;
+  const hasPendingWrites = unsynced.some((entry) => entry.persistence !== 'local_committed');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
@@ -139,6 +95,7 @@ export function OfflineSyncDialog({ novelId, onClose }) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-4 text-xs">
+          {error && <div role="alert" className="text-rose-300 mb-2">{error}</div>}
           {loading ? (
             <div className="text-gray-500 text-center py-4">加载中...</div>
           ) : totalCount === 0 ? (
@@ -147,7 +104,7 @@ export function OfflineSyncDialog({ novelId, onClose }) {
             <>
               <p className="text-gray-400 mb-3">
                 你在离线期间共有 <span className="text-white font-bold">{totalCount}</span> 条编辑记录，
-                是否将这些修改同步到设定集中？
+                本机已保存的操作仅确认记录；待提交操作需完整数据及版本凭证。
               </p>
               <div className="space-y-2">
                 {Object.entries(byType).map(([type, entries]) => (
@@ -172,6 +129,10 @@ export function OfflineSyncDialog({ novelId, onClose }) {
                   </div>
                 ))}
               </div>
+              {unsynced.map((entry) => <details key={entry.id} className="mt-3 border border-vscode-panel-border rounded p-2">
+                <summary>{entry.persistence === 'local_committed' ? '已保存，仅确认' : entry.schemaVersion === 2 && entry.change ? '待写入，需提交' : '旧记录，需人工核对'}：{entry.targetName || entry.targetId || entry.type}</summary>
+                <pre className="whitespace-pre-wrap break-words max-h-52 overflow-y-auto mt-2">{JSON.stringify(entry.change || entry.payload, null, 2)}</pre>
+              </details>)}
             </>
           )}
         </div>
@@ -203,7 +164,7 @@ export function OfflineSyncDialog({ novelId, onClose }) {
             disabled={processing || loading || totalCount === 0}
           >
             <Save size={12} />
-            {processing ? '同步中...' : '同步到设定集'}
+            {processing ? '处理中...' : hasPendingWrites ? '确认并提交待保存变更' : '确认保存记录'}
           </button>
         </div>
       </div>

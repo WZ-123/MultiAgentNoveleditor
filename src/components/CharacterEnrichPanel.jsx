@@ -1,3 +1,4 @@
+import { FactReviewDialog } from './FactReviewDialog.jsx';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Globe, X, Search, CheckCircle, AlertCircle, Loader2, Clock, Sparkles } from 'lucide-react';
 
@@ -16,7 +17,7 @@ const STATUS_LABEL = {
   searching: '搜索中',
   fetching: '获取页面',
   extracting: 'AI提取',
-  success: '成功',
+  success: '候选已提取',
   failed: '失败',
   skipped: '跳过',
 };
@@ -48,6 +49,7 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
     const initialCharacter = (characters || []).find((ch) => initialIds.has(ch.id || ch.name) && ch.isOriginal === false);
     return initialCharacter?.sourceWork || '';
   });
+  const [reviewId, setReviewId] = useState(null);
   const [running, setRunning] = useState(false);
   const [runId, setRunId] = useState('');
   const [logs, setLogs] = useState([]);
@@ -180,6 +182,9 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
       const expectedRunId = `enrich-${novelId || ''}-${Date.now()}`;
       setRunId(expectedRunId);
       const result = await mana.novel.enrichCharacters(novelId, fanworkName.trim() || undefined, selectedArray, expectedRunId);
+      setRunning(false);
+      if (result.reviewId) setReviewId(result.reviewId);
+      setCompletionNotice({ successCount: result.written || 0, failCount: result.failures?.length || 0, message: result.needReview ? '已准备候选事实，逐项审阅后保存。' : `正式保存 ${result.written || 0}/${result.total || 0} 个角色；字段冲突 ${result.conflicts?.length || 0}，保存失败 ${result.failures?.length || 0}${result.cancelled ? '（已取消）' : ''}` });
       // Use result.runId in case backend chose a different one
       if (result.runId && result.runId !== expectedRunId) setRunId(result.runId);
       if (result.fanworkName) {
@@ -206,6 +211,7 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      {reviewId && <FactReviewDialog api={mana.novel} ownerId={novelId} reviewId={reviewId} onComplete={(r) => { setReviewId(null); setCompletionNotice({ message: r.state === 'committed' ? '已保存审阅后的候选事实' : '已拒绝本次候选' }); onComplete?.(); }} />}
       <div className="bg-vscode-panel-bg border border-vscode-panel-border rounded-lg shadow-xl w-[560px] max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-vscode-panel-border">
@@ -368,6 +374,7 @@ export function CharacterEnrichPanel({ novelId, characters, onClose, onComplete,
             )}
           </div>
           <div className="flex gap-2">
+            {running && <button className="text-xs text-amber-300" onClick={async () => { try { await mana.novel.cancelEnrichment(novelId, runId); setLogs((prev) => [...prev, '正在取消，已保存内容保留']); } catch (error) { setLogs((prev) => [...prev, error.message]); } }}>停止补全</button>}
             <button
               onClick={onClose}
               className="px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 rounded border border-vscode-panel-border"

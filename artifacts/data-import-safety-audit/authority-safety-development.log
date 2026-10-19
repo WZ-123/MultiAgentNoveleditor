@@ -1,0 +1,66 @@
+PASS bounded chunks preserve all bytes, including oversized paragraphs and emoji
+PASS identity rejects traversal/symlinks/collisions and preserves special identities
+PASS production offline IPC acknowledges saved content without replay; legacy/unsupported stay pending
+PASS pending offline writes share the project transaction with normal saves and retain durable receipts
+PASS regeneration failure/empty/invalid retains cards, index and memory; approval binds version
+PASS analysis entry bounds total concurrency, uses previous chunks, preserves world and duplicate IDs through promotion
+PASS long source hints are not truncated; checkpoint identity and reviewed source versions include them
+[analyzer] characters chunk 0 failed: fixture provider failed
+[analyzer] factions chunk 0 failed: fixture provider failed
+[analyzer] timeline chunk 0 failed: fixture provider failed
+[analyzer] world chunk 0 failed: fixture provider failed
+[analyzer] outline chunk 0 failed: fixture provider failed
+[analyzer] style chunk 0 failed: fixture provider failed
+[analyzer] characters chunk 1 failed: fixture provider failed
+[analyzer] factions chunk 1 failed: fixture provider failed
+[analyzer] timeline chunk 1 failed: fixture provider failed
+[analyzer] world chunk 1 failed: fixture provider failed
+[analyzer] outline chunk 1 failed: fixture provider failed
+[analyzer] style chunk 1 failed: fixture provider failed
+[analyzer] characters chunk 2 failed: fixture provider failed
+[analyzer] factions chunk 2 failed: fixture provider failed
+[analyzer] timeline chunk 2 failed: fixture provider failed
+[analyzer] world chunk 2 failed: fixture provider failed
+[analyzer] outline chunk 2 failed: fixture provider failed
+[analyzer] style chunk 2 failed: fixture provider failed
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+PASS all failure never writes empty success; truncated JSON stays partial and keeps original domain
+Error: 导入状态已变化，请重新读取
+    at error (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importState.js:11:98)
+    at ImportSagaService.finalizeSession (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importSaga.js:140:47)
+    at async Promise.all (index 0)
+    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/data-import-safety.test.js:267:24
+    at async test (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/data-import-safety.test.js:83:33)
+    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/data-import-safety.test.js:237:3 {
+  code: 'stale_import_operation',
+  retryable: true
+}
+node:internal/process/promises:332
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+[Error: ENOTEMPTY: directory not empty, rmdir '/var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-data-import-safety-sAP24w/user-data'] {
+  errno: -66,
+  code: 'ENOTEMPTY',
+  syscall: 'rmdir',
+  path: '/var/folders/br/44srhwzs2dg61r7fgk_g2drc0000gp/T/mana-data-import-safety-sAP24w/user-data'
+}
+
+Node.js v25.8.0

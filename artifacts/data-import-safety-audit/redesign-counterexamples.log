@@ -1,0 +1,14 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:data-import-safety
+
+PASS legacy identity migration and CAS use one logical character and preserve memory
+PASS ordinary save queues behind batch commit and the later user edit wins
+PASS rollback owns attempted writes only, even when an untouched file equals proposed bytes
+PASS quote contradiction and related-page mention cannot become accepted facts
+PASS persisted decisions survive a fresh process; unresolved and stale reviews cannot commit
+PASS real process death after rename recovers before any ordinary save and exact-plan retry is idempotent
+PASS binary resources roll back byte-for-byte and concurrent processes serialize domain updates
+PASS rejecting a new entity does not create an unnamed authoritative card; timeline rejections preserve positions
+PASS recovery stops at third-party bytes and never overwrites them or accepts a later save
+PROJECT_TRANSACTION_REVIEW 9/9 passed

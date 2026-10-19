@@ -25,7 +25,7 @@ function registerFsIpc() {
   }));
   ipcMain.handle('mana:fs:writeFile', safeIpc(async (_e, { filePath, content, encoding = 'utf8' }) => {
     await fsp.mkdir(path.dirname(filePath), { recursive: true });
-    return fsp.writeFile(filePath, content, encoding);
+    return require('../store/projectTransactions').writeFile(filePath, content, { encoding });
   }));
   ipcMain.handle('mana:fs:readJson', safeIpc(async (_e, { filePath, fallback = null }) => {
     try {
@@ -38,11 +38,11 @@ function registerFsIpc() {
   }));
   ipcMain.handle('mana:fs:writeJson', safeIpc(async (_e, { filePath, data }) => {
     await fsp.mkdir(path.dirname(filePath), { recursive: true });
-    await fsp.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
+    await require('../store/jsonStore').writeJson(filePath, data);
   }));
   ipcMain.handle('mana:fs:appendJsonl', safeIpc(async (_e, { filePath, line }) => {
     await fsp.mkdir(path.dirname(filePath), { recursive: true });
-    return fsp.appendFile(filePath, JSON.stringify(line) + '\n', 'utf8');
+    return require('../store/projectTransactions').appendFile(filePath, JSON.stringify(line) + '\n');
   }));
   ipcMain.handle('mana:fs:listDir', safeIpc(async (_e, { dir }) => {
     try {
@@ -60,7 +60,7 @@ function registerFsIpc() {
     try { await fsp.access(p); return true; } catch { return false; }
   }));
   ipcMain.handle('mana:fs:deleteFile', safeIpc(async (_e, { filePath }) => {
-    await fsp.unlink(filePath);
+    await require('../store/projectTransactions').writeFile(filePath, null);
     return { deleted: true };
   }));
   ipcMain.handle('mana:fs:pickDirectory', safeIpc(async (event, { title } = {}) => {

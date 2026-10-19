@@ -1,0 +1,18 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:import-authority-audit
+
+PASS snapshot compatibility cannot change error, retry policy, schema, source or state authority
+PASS source creation finishing after cancellation retains its canonical cancelled owner
+PASS late createMerge cannot bind a session or submit after cancellation
+PASS completed merge retries and cancellations preserve later formal edits and the original receipt
+PASS overlapping source targets are rejected before copying and can be retargeted safely
+PASS a direct host AbortSignal is arbitrated as cancellation during preparation
+FAIL formal execution cannot read an unacknowledged choice that will roll back
+AssertionError [ERR_ASSERTION]: the executor must recover/serialize choice material before reading it
+
+3 !== 0
+
+    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-authority-adversarial.test.js:106:16
+    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-authority-adversarial.test.js:21:45)
+    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-authority-adversarial.test.js:87:5

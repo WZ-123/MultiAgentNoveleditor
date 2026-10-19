@@ -1,0 +1,11 @@
+TEST_PASS IMPORT_UI1_file_to_durable_analyzing_snapshot
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/import-saga-analyzing.png
+TEST_PASS IMPORT_UI2_review_promote_and_open_reaches_completed
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/import-saga-completed.png
+TEST_PASS IMPORT_UI3_disk_manifest_and_registry_readback
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/offline-saved-records.png
+TEST_PASS IMPORT_UI4_offline_confirmation_preserves_2000_char_body_and_style
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/partial-analysis-review.png
+TEST_PASS IMPORT_UI5_partial_analysis_is_visible_and_requires_review
+TEST_FAIL IMPORT_UI_FLOW: Cannot read properties of null (reading 'click')
+TEST_SUMMARY 5/6 passed, 1 failed

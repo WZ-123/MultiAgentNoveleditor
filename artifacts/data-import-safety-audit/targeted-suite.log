@@ -1,0 +1,71 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:data-import-safety
+
+PASS bounded chunks preserve all bytes, including oversized paragraphs and emoji
+PASS identity rejects traversal/symlinks/collisions and preserves special identities
+PASS production offline IPC acknowledges saved content without replay; legacy/unsupported stay pending
+PASS regeneration failure/empty/invalid retains cards, index and memory; approval binds version
+PASS analysis entry bounds total concurrency, uses previous chunks, preserves world and duplicate IDs through promotion
+[analyzer] characters chunk 0 failed: fixture provider failed
+[analyzer] factions chunk 0 failed: fixture provider failed
+[analyzer] timeline chunk 0 failed: fixture provider failed
+[analyzer] world chunk 0 failed: fixture provider failed
+[analyzer] outline chunk 0 failed: fixture provider failed
+[analyzer] style chunk 0 failed: fixture provider failed
+[analyzer] characters chunk 1 failed: fixture provider failed
+[analyzer] factions chunk 1 failed: fixture provider failed
+[analyzer] timeline chunk 1 failed: fixture provider failed
+[analyzer] world chunk 1 failed: fixture provider failed
+[analyzer] outline chunk 1 failed: fixture provider failed
+[analyzer] style chunk 1 failed: fixture provider failed
+[analyzer] characters chunk 2 failed: fixture provider failed
+[analyzer] factions chunk 2 failed: fixture provider failed
+[analyzer] timeline chunk 2 failed: fixture provider failed
+[analyzer] world chunk 2 failed: fixture provider failed
+[analyzer] outline chunk 2 failed: fixture provider failed
+[analyzer] style chunk 2 failed: fixture provider failed
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+PASS all failure never writes empty success; truncated JSON stays partial and keeps original domain
+PASS merge complete plan survives restart, rejects stale review, records each actual resource and idempotent receipt
+PASS interrupted file plan resumes only exact committed bytes and stops on external edits
+PASS fact conflicts preserve values, relationships and chunk provenance instead of choosing longer
+[enricher] fanwork="测试原作" sphere="global" (fixture, fixture)
+[enricher] processing 2 characters with concurrency=6
+[enricher] 2 个角色 → 1 补全成功, 1 失败/跳过
+[enricher] fanwork="测试原作" sphere="global" (fixture, fixture)
+[enricher] processing 1 characters with concurrency=6
+[enricher] 1 个角色 → 1 补全成功, 0 失败/跳过
+[enricher] fanwork="测试原作" sphere="global" (fixture, fixture)
+[enricher] processing 2 characters with concurrency=6
+PASS real enrichment entry executes helpers, isolates failures, validates identity and supports cancellation
+PASS enrichment three-way save preserves concurrent user edits, new fields, deletions and task ownership
+[analyzer] world chunk 0 failed: world task failed
+PASS Saga records partial analysis, binds compatibility merge and completed retry never re-promotes
+PASS cancelled analysis cannot be resurrected by a late completion or failure
+DATA_IMPORT_SAFETY 13/13 passed (production storage/IPC with fake model and web transport)
+TEST_PASS import-saga-regression
+TEST_PASS import-atomic-boundary-regression
+IMPORT-B05 passed: duplicate normalized character names merge to one canonical record with conflicting assertions, provenance and deduplicated relationships.
+TEST_PASS CEVR1_rejects_lycaon_contamination_for_nico
+TEST_PASS CEVR2_requires_character_and_work_in_fetched_evidence
+
+TEST_SUMMARY 1/1 passed, 0 failed
+TEST_DONE

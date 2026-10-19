@@ -30,6 +30,7 @@ function stagingRoot() {
 }
 
 function projectDir(importId) {
+  require('../store/entityIdentity').assertEntityId(importId);
   return path.join(stagingRoot(), importId);
 }
 
@@ -51,6 +52,7 @@ async function _writeRegistry(registry) {
 }
 
 function _novelPaths(projectDir) {
+  require('../store/projectTransactions').registerRoot(projectDir);
   return {
     root: projectDir,
     novelJson: path.join(projectDir, 'novel.json'),
@@ -113,8 +115,7 @@ async function checkDuplicateImport(filePaths) {
   const fingerprint = await _computeFingerprint(filePaths);
   if (!fingerprint) return { isDuplicate: false };
 
-  const registry = await _readRegistry();
-  const active = (registry.projects || []).filter((p) => p.status === 'active');
+  const active = await listStagingProjects();
   const match = active.find((p) => p.sourceFingerprint === fingerprint);
   if (match) {
     return {
@@ -130,7 +131,7 @@ async function checkDuplicateImport(filePaths) {
 
 // ---------- CRUD ----------
 
-async function createStagingProject({ sourceFiles, chapters, metadata, targetNovelId }) {
+async function createStagingProject({ sourceFiles, chapters, metadata, targetNovelId, runId }) {
   const fingerprint = await _computeFingerprint(sourceFiles || []);
   await _ensureStagingDir();
   const importId = generateId('import');
@@ -156,6 +157,7 @@ async function createStagingProject({ sourceFiles, chapters, metadata, targetNov
       targetNovelId: targetNovelId || null,
       status: 'active', // 'active' | 'discarded' | 'merged' | 'promoted'
       ...(metadata?.importMeta || {}),
+      ...(runId ? { runId } : {}),
     },
     fanwork: metadata?.fanwork || { hasFanwork: null, referencedWorks: [] },
   };
@@ -206,6 +208,8 @@ async function getStagingProject(importId) {
   const np = _novelPaths(projectDir(importId));
   const novelMeta = await readJson(np.novelJson, null);
   if (!novelMeta) return null;
+  const run = await new (require('./importRunStore').ImportRunStore)().findByImportId(importId);
+  if (novelMeta.importMeta && run) novelMeta.importMeta.status = projectedStatus(run, novelMeta.importMeta.status);
 
   // Read chapters
   const chapterFiles = [];
@@ -266,6 +270,8 @@ async function getStagingProject(importId) {
   return {
     importId,
     novelMeta,
+    worldMeta: await readJson(path.join(np.world, 'meta.json'), null),
+    analysis: await readJson(path.join(np.root, '.mana', 'analysis-summary.json'), null),
     chapters: chapterFiles,
     characters,
     world,
@@ -276,9 +282,14 @@ async function getStagingProject(importId) {
 
 async function listStagingProjects() {
   const registry = await _readRegistry();
-  return (registry.projects || [])
+  const store = new (require('./importRunStore').ImportRunStore)();
+  const projects = await Promise.all((registry.projects || []).map(async (p) => ({ ...p, status: projectedStatus(await store.findByImportId(p.id), p.status) })));
+  return projects
     .filter((p) => p.status === 'active')
     .sort((a, b) => new Date(b.importedAt) - new Date(a.importedAt));
+}
+function projectedStatus(run, fallback) {
+  return run?.state === 'cancelled' ? 'cancelled' : run?.state === 'completed' ? run.targetNovelId ? 'merged' : 'promoted' : fallback;
 }
 
 async function discardStagingProject(importId) {
@@ -309,65 +320,53 @@ async function updateStagingStatus(importId, status) {
   await _writeRegistry(registry);
 
   const np = _novelPaths(projectDir(importId));
-  try {
-    const novelMeta = await readJson(np.novelJson, null);
-    if (novelMeta?.importMeta) {
-      novelMeta.importMeta.status = status;
-      await writeJson(np.novelJson, novelMeta);
-    }
-  } catch { /* ignore */ }
+  const novelMeta = await readJson(np.novelJson, null);
+  if (!novelMeta?.importMeta) throw new Error('staging metadata is missing');
+  novelMeta.importMeta.status = status;
+  await writeJson(np.novelJson, novelMeta);
 
   return true;
 }
 
+async function discardImport(importId) {
+  const run = await new (require('./importSaga').ImportSagaService)().cancel(importId);
+  if (!['cancelled', 'completed'].includes(run.state)) throw Object.assign(new Error('请先恢复未完成的提交'), { code: 'recovery_required' });
+  return require('../store/projectTransactions').exclusive(paths().root, () => require('../store/projectTransactions').transaction(projectDir(importId), () => discardStagingProject(importId)));
+}
 async function cleanupExpiredProjects() {
-  const registry = await _readRegistry();
-  const now = Date.now();
-  const toDelete = [];
-  const remaining = [];
-
-  for (const p of registry.projects || []) {
-    const expired = new Date(p.expiresAt).getTime() < now;
-    const discarded = p.status === 'discarded';
-    if (expired || discarded) {
-      toDelete.push(p.id);
-    } else {
-      remaining.push(p);
-    }
+  const storage = require('../store/projectTransactions');
+  const registry = await storage.exclusive(paths().root, _readRegistry);
+  const deleted = [];
+  for (const entry of registry.projects || []) {
+    if (new Date(entry.expiresAt).getTime() >= Date.now() && entry.status !== 'discarded') continue;
+    const run = await new (require('./importSaga').ImportSagaService)().cancel(entry.id);
+    if (!['cancelled', 'completed'].includes(run.state)) continue;
+    await storage.exclusive(projectDir(entry.id), async () => {
+      // Keep the lease directory while held; remove it after the owner releases.
+      for (const name of await fs.readdir(projectDir(entry.id))) if (name !== '.mana') await fs.rm(path.join(projectDir(entry.id), name), { recursive: true, force: true });
+    });
+    await fs.rm(projectDir(entry.id), { recursive: true, force: true }); deleted.push(entry.id);
   }
-
-  for (const id of toDelete) {
-    try {
-      const dir = projectDir(id);
-      await fs.rm(dir, { recursive: true, force: true });
-    } catch (err) {
-      console.error(`[staging] cleanup failed for ${id}`, err);
-    }
-  }
-
-  registry.projects = remaining;
-  await _writeRegistry(registry);
-  return { deleted: toDelete.length };
+  await storage.exclusive(paths().root, async () => { const current = await _readRegistry(); current.projects = current.projects.filter((p) => !deleted.includes(p.id)); await _writeRegistry(current); });
+  return { deleted: deleted.length };
 }
 
-async function promoteToNovel(importId, { title, dir, abortSignal }) {
+async function preparePromotion(importId, operation, abortSignal) {
   const assertNotAborted = () => { if (abortSignal?.aborted) throw abortSignal.reason || new DOMException('aborted', 'AbortError'); };
   assertNotAborted();
   const staging = await getStagingProject(importId);
   if (!staging) { const error = new Error('Staging project not found'); error.code = 'staging_missing'; throw error; }
-  if (!dir || typeof dir !== 'string') throw new Error('promotion target directory is required');
-  const novelsStore = require('../store/novels');
   const sourceDir = projectDir(importId);
-  const targetDir = path.resolve(dir);
+  if ((await require('./reviewStore').list(sourceDir)).length) throw Object.assign(new Error('请完成候选事实审阅后再创建项目'), { code: 'unresolved_facts' });
+  const targetDir = operation.targetDir;
+  const canonical = require('../store/projectTransactions').canonicalRoot;
+  const source = canonical(sourceDir), target = canonical(targetDir);
+  if (source === target || target.startsWith(source + path.sep) || source.startsWith(target + path.sep)) throw Object.assign(new Error('正式目标目录不能与暂存来源重叠'), { code: 'invalid_import_target', retryable: true });
   const parentDir = path.dirname(targetDir);
-  const tempDir = path.join(parentDir, `.${path.basename(targetDir)}.import-${crypto.randomUUID()}`);
-  const existingRegistry = await novelsStore.listNovels();
-  if (existingRegistry.some((entry) => path.resolve(entry.dir) === targetDir)) {
-    const error = new Error('promotion target conflicts with a registered project'); error.code = 'resource_name_conflict'; throw error;
-  }
-  try { await fs.access(targetDir); const error = new Error('promotion target already exists'); error.code = 'resource_name_conflict'; throw error; }
-  catch (error) { if (error?.code !== 'ENOENT') throw error; }
+  const tempDir = operation.tempDir;
   await fs.mkdir(parentDir, { recursive: true });
+  require('../store/projectTransactions').registerRoot(tempDir);
+  await atomicWriteFile(path.join(tempDir, '.mana', 'promotion-owner.json'), JSON.stringify(require('./promotionTransactions').owner(operation)));
 
   async function copyDir(src, dst) {
     assertNotAborted();
@@ -375,8 +374,10 @@ async function promoteToNovel(importId, { title, dir, abortSignal }) {
     const entries = await fs.readdir(src, { withFileTypes: true });
     for (const entry of entries) {
       assertNotAborted();
+      if (src === path.join(sourceDir, '.mana') && ['transactions', 'storage.lock', 'character-reviews', 'analysis-commit.json', 'promotion-owner.json', 'import-manifest.json'].includes(entry.name)) continue;
       const srcPath = path.join(src, entry.name);
       const dstPath = path.join(dst, entry.name);
+      await require('../store/entityIdentity').assertContainedFile(sourceDir, srcPath);
       if (entry.isDirectory()) {
         await copyDir(srcPath, dstPath);
       } else {
@@ -384,11 +385,19 @@ async function promoteToNovel(importId, { title, dir, abortSignal }) {
       }
     }
   }
-  let renamed = false;
-  try {
     await copyDir(sourceDir, tempDir);
+    // Keep closed fact ledgers as provenance, rebound to the promoted project.
+    const reviewDir = path.join(tempDir, '.mana', 'reviews');
+    let reviewNames = []; try { reviewNames = await fs.readdir(reviewDir); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+    for (const name of reviewNames.filter((n) => n.endsWith('.json'))) {
+      const review = await readJson(path.join(reviewDir, name), null);
+      if (!review || review.state === 'review') throw new Error('promotion contains an unresolved fact review');
+      review.sourceRoot = review.root; review.root = targetDir;
+      await require('../store/atomicFile').rawAtomicWriteFile(path.join(reviewDir, name), JSON.stringify(review, null, 2));
+    }
     assertNotAborted();
-    const result = { id: generateId('novel'), title: title || staging.novelMeta.title || '导入的小说', dir: targetDir };
+    const result = operation.result;
+    result.title ||= staging.novelMeta.title || '导入的小说';
     const novelJsonPath = path.join(tempDir, 'novel.json');
     const novelMeta = await readJson(novelJsonPath, {});
     const sourceImportMeta = staging.novelMeta?.importMeta || {};
@@ -407,6 +416,7 @@ async function promoteToNovel(importId, { title, dir, abortSignal }) {
     async function scan(dirPath, prefix = '') {
       for (const entry of (await fs.readdir(dirPath, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
         const relative = prefix ? path.join(prefix, entry.name) : entry.name;
+        if (relative === path.join('.mana', 'transactions') || relative === path.join('.mana', 'storage.lock')) continue;
         if (entry.isDirectory()) await scan(path.join(dirPath, entry.name), relative);
         else {
           const data = await fs.readFile(path.join(dirPath, entry.name));
@@ -417,27 +427,46 @@ async function promoteToNovel(importId, { title, dir, abortSignal }) {
     await scan(tempDir);
     assertNotAborted();
     if (!manifest.some((item) => item.path === 'novel.json') || !manifest.some((item) => item.path === '.mana-project')) throw new Error('promotion manifest is incomplete');
-    await atomicWriteFile(path.join(tempDir, '.mana', 'import-manifest.json'), JSON.stringify({ schemaVersion: 1, resources: manifest }, null, 2));
+    await atomicWriteFile(path.join(tempDir, '.mana', 'import-manifest.json'), JSON.stringify({ schemaVersion: 2, operationId: operation.operationId, resources: manifest }, null, 2));
     assertNotAborted();
-    await fs.rename(tempDir, targetDir);
-    renamed = true;
-    try { await novelsStore.importExistingNovel(targetDir); }
-    catch (error) { await fs.rename(targetDir, tempDir); renamed = false; throw error; }
-    await updateStagingStatus(importId, 'promoted');
-    return result;
-  } catch (error) {
-    if (!renamed) await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
-    throw error;
-  }
+    await require('../store/projectTransactions').transaction(tempDir, async () => {});
+    await fs.rm(path.join(tempDir, '.mana', 'transactions'), { recursive: true, force: true });
+    return manifest;
 }
+
+const completePromotion = (importId) => require('../store/projectTransactions').exclusive(paths().root, () =>
+  require('../store/projectTransactions').transaction(projectDir(importId), () => updateStagingStatus(importId, 'promoted')));
+async function executePromotion(importId, options, authority) {
+  return require('./promotionTransactions').commit(importId, options,
+    (id, operation, signal) => require('../store/projectTransactions').transaction(projectDir(id), () => preparePromotion(id, operation, signal)), completePromotion, authority);
+}
+async function promoteToNovel(importId, options = {}) { return new (require('./importSaga').ImportSagaService)().promoteImport(importId, options); }
+async function cleanupPromotion(importId) {
+  const store = new (require('./importRunStore').ImportRunStore)();
+  return require('./promotionTransactions').cleanup(importId, { read: () => store.findByImportId(importId) });
+}
+async function cancelPromotion(importId) {
+  const run = await new (require('./importSaga').ImportSagaService)().cancel(importId);
+  return { committed: run.state === 'completed', result: run.result };
+}
+const recordCancelRequest = (id) => require('./promotionTransactions').requestCancel(id);
 
 module.exports = {
   createStagingProject,
   getStagingProject,
   listStagingProjects,
-  discardStagingProject,
+  discardStagingProject: discardImport,
   updateStagingStatus,
   cleanupExpiredProjects,
   promoteToNovel,
+  executePromotion, cleanupPromotion, recordCancelRequest,
+  cancelPromotion,
+  requestPromotionCancel: async (id) => new (require('./importSaga').ImportSagaService)().cancel(id),
+  getPromotion: require('./promotionTransactions').get,
   checkDuplicateImport,
 };
+
+for (const name of ['createStagingProject', 'updateStagingStatus']) {
+  const operation = module.exports[name];
+  module.exports[name] = (...args) => require('../store/projectTransactions').exclusive(paths().root, () => operation(...args));
+}

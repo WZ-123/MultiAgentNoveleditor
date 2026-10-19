@@ -1,0 +1,6 @@
+TEST_PASS IMPORT_UI1_file_to_durable_analyzing_snapshot
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/import-saga-analyzing.png
+TEST_PASS IMPORT_UI2_review_promote_and_open_reaches_completed
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/import-saga-completed.png
+TEST_PASS IMPORT_UI3_disk_manifest_and_registry_readback
+TEST_SUMMARY 3/3 passed, 0 failed

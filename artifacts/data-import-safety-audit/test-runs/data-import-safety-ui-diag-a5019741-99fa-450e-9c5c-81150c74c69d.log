@@ -1,0 +1,26 @@
+TEST_PASS IMPORT_UI1_file_to_durable_analyzing_snapshot
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/import-saga-analyzing.png
+TEST_PASS IMPORT_UI2_review_promote_and_open_reaches_completed
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/import-saga-completed.png
+TEST_PASS IMPORT_UI3_disk_manifest_and_registry_readback
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/offline-saved-records.png
+TEST_PASS IMPORT_UI4_offline_confirmation_preserves_2000_char_body_and_style
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/partial-analysis-review.png
+TEST_PASS IMPORT_UI5_partial_analysis_is_visible_and_requires_review
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/merge-complete-plan.png
+[import ipc] Error: 审阅后资源已变化，请重新审阅：world/lore.md
+    at errorWithCode (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importSaga.js:11:17)
+    at ImportSagaService.finalizeSession (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importSaga.js:219:47)
+    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/ipc/import.js:27:33
+    at async Session.<anonymous> (node:electron/js2c/browser_init:2:118313) {
+  code: 'stale_import_review',
+  retryable: true
+}
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/merge-stale-review.png
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/failure.png
+TEST_FAIL IMPORT_UI_FLOW: compatibility merge receipt missing in Saga
+Error: compatibility merge receipt missing in Saga
+    at Object.runImportSagaUiRegressionTest (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-saga-ui-e2e.js:221:106)
+    at async createWindow (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/main.js:82:22)
+    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/main.js:186:3
+TEST_SUMMARY 5/6 passed, 1 failed

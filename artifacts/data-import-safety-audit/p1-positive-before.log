@@ -1,0 +1,144 @@
+FAIL existing timeline rejects retain originals by identity, including reordered and unmentioned events
+AssertionError [ERR_ASSERTION]: rejection must preserve the full existing event
++ actual - expected
+
++ undefined
+- {
+-   chapterRef: null,
+-   communication: null,
+-   description: '原值甲',
+-   id: 'a',
+-   participants: [],
+-   physical: null,
+-   schemaVersion: 1,
+-   ts: '2026-10-18T19:59:06.850Z',
+-   when: null,
+-   where: null
+- }
+
+    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:50:45
+    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:39:42)
+    at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:41:5)
+FAIL existing nested entities reject to original identity and fields; rejected new entities are absent
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  {
+-   custom: '保留甲',
+-   description: '甲原值',
+    id: 'a',
+    name: '旧甲'
+  }
+
+    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:65:48
+    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:39:42)
+    at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:54:5)
+FAIL promotion interrupted after target rename resumes the same operation and receipt
+AssertionError [ERR_ASSERTION]: {"code":"resource_name_conflict","message":"promotion target already exists","phase":"promoting"}
++ actual - expected
+
++ 'failed'
+- 'completed'
+
+    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:79:14
+    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:39:42)
+    at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:69:5)
+FAIL cancel after commit decision reports the completed project and its receipt
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'cancelled'
+- 'completed'
+
+    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:93:16
+    at async pauseOperation (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:32:16)
+    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:89:7
+    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:39:42)
+    at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:87:5)
+PASS cancel before commit decision creates no formal project and cannot resume
+AggregateError: existing timeline rejects retain originals by identity, including reordered and unmentioned events; existing nested entities reject to original identity and fields; rejected new entities are absent; promotion interrupted after target rename resumes the same operation and receipt; cancel after commit decision reports the completed project and its receipt
+    at run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:116:30) {
+  [errors]: [
+    AssertionError [ERR_ASSERTION]: rejection must preserve the full existing event
+    + actual - expected
+    
+    + undefined
+    - {
+    -   chapterRef: null,
+    -   communication: null,
+    -   description: '原值甲',
+    -   id: 'a',
+    -   participants: [],
+    -   physical: null,
+    -   schemaVersion: 1,
+    -   ts: '2026-10-18T19:59:06.850Z',
+    -   when: null,
+    -   where: null
+    - }
+    
+        at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:50:45
+        at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:39:42)
+        at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:41:5) {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: undefined,
+      expected: [Object],
+      operator: 'deepStrictEqual',
+      diff: 'simple'
+    },
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    -   custom: '保留甲',
+    -   description: '甲原值',
+        id: 'a',
+        name: '旧甲'
+      }
+    
+        at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:65:48
+        at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:39:42)
+        at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:54:5) {
+      generatedMessage: true,
+      code: 'ERR_ASSERTION',
+      actual: [Object],
+      expected: [Object],
+      operator: 'deepStrictEqual',
+      diff: 'simple'
+    },
+    AssertionError [ERR_ASSERTION]: {"code":"resource_name_conflict","message":"promotion target already exists","phase":"promoting"}
+    + actual - expected
+    
+    + 'failed'
+    - 'completed'
+    
+        at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:79:14
+        at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:39:42)
+        at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:69:5) {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: 'failed',
+      expected: 'completed',
+      operator: 'strictEqual',
+      diff: 'simple'
+    },
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    + actual - expected
+    
+    + 'cancelled'
+    - 'completed'
+    
+        at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:93:16
+        at async pauseOperation (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:32:16)
+        at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:89:7
+        at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:39:42)
+        at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:87:5) {
+      generatedMessage: true,
+      code: 'ERR_ASSERTION',
+      actual: 'cancelled',
+      expected: 'completed',
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  ]
+}

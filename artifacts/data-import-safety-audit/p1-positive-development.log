@@ -1,0 +1,5 @@
+PASS existing timeline rejects retain originals by identity, including reordered and unmentioned events
+PASS existing nested entities reject to original identity and fields; rejected new entities are absent
+PASS promotion interrupted after target rename resumes the same operation and receipt
+PASS cancel after commit decision reports the completed project and its receipt
+PASS cancel before commit decision creates no formal project and cannot resume

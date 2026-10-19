@@ -1,0 +1,45 @@
+{
+  "timestamp": "2026-10-18T21:34:04.969Z",
+  "cases": [
+    {
+      "name": "snapshot compatibility cannot change error, retry policy, schema, source or state authority",
+      "passed": true
+    },
+    {
+      "name": "source creation finishing after cancellation retains its canonical cancelled owner",
+      "passed": true
+    },
+    {
+      "name": "late createMerge cannot bind a session or submit after cancellation",
+      "passed": true
+    },
+    {
+      "name": "completed merge retries and cancellations preserve later formal edits and the original receipt",
+      "passed": true
+    },
+    {
+      "name": "overlapping source targets are rejected before copying and can be retargeted safely",
+      "passed": true
+    },
+    {
+      "name": "a direct host AbortSignal is arbitrated as cancellation during preparation",
+      "passed": true
+    },
+    {
+      "name": "formal execution cannot read an unacknowledged choice that will roll back",
+      "passed": true
+    },
+    {
+      "name": "recovery executes the full authoritative merge plan instead of changed checkpoint choices",
+      "passed": true
+    },
+    {
+      "name": "a registry relocation after review stops the old target instead of redirecting it",
+      "passed": true
+    },
+    {
+      "name": "project identity relocation and ordinary metadata saving serialize without inverting commit locks",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+PASS existing timeline rejects retain originals by identity, including reordered and unmentioned events
+PASS existing nested entities reject to original identity and fields; rejected new entities are absent
+PASS promotion interrupted after target rename resumes the same operation and receipt
+PASS cancel after commit decision reports the completed project and its receipt
+PASS cancel before commit decision creates no formal project and cannot resume
+PASS each persisted completion boundary recovers before reads and keeps one project/receipt
+PASS interrupted promotion rejects external changes without adopting or overwriting them
+PASS separate service instances serialize finalization and return the same receipt
+PASS rejecting world facts preserves the original Markdown bytes as well as structured data
+PASS cross-process cancellation before decision is durable and repeatable
+PASS interruption during ownership bootstrap recovers its journal before preparing again
+PASS callbacks outliving a lease or transaction cannot inherit expired lock ownership
+FAIL recovery never redirects a registry identity that now belongs to a different directory
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ undefined
+- 'recovery_required'
+
+    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:205:14
+    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:44:42)
+    at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:197:5)
+FAIL a durable promotion decision reserves its target across process death
+AssertionError [ERR_ASSERTION]: another import cannot take the committed target
++ actual - expected
+
++ undefined
+- 'resource_name_conflict'
+
+    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:213:14
+    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:44:42)
+    at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:208:5)
+AggregateError: recovery never redirects a registry identity that now belongs to a different directory; a durable promotion decision reserves its target across process death
+    at run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:222:30) {
+  [errors]: [
+    AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'recovery_required'
+    
+        at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:205:14
+        at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:44:42)
+        at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:197:5) {
+      generatedMessage: true,
+      code: 'ERR_ASSERTION',
+      actual: undefined,
+      expected: 'recovery_required',
+      operator: 'strictEqual',
+      diff: 'simple'
+    },
+    AssertionError [ERR_ASSERTION]: another import cannot take the committed target
+    + actual - expected
+    
+    + undefined
+    - 'resource_name_conflict'
+    
+        at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:213:14
+        at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:44:42)
+        at async run (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/test/import-transaction-p1.test.js:208:5) {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: undefined,
+      expected: 'resource_name_conflict',
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+  ]
+}

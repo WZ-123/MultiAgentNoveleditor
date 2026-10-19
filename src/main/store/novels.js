@@ -117,12 +117,17 @@ async function removeFromRegistry(id) {
 /**
  * Recover registry entry from a directory containing a novel.json (e.g. user picks a folder again).
  */
-async function importExistingNovel(dir) {
+async function importExistingNovel(dir, { allowMove = true, promotionReceipt = null, expectedIdentity = null } = {}) {
   const np = novelPaths(dir);
   const meta = await readJson(np.novelMeta, null);
   if (!meta?.id) throw new Error('no novel.json or invalid id');
+  if (expectedIdentity && meta.id !== expectedIdentity) throw Object.assign(new Error('项目身份在登记前改变'), { code: 'recovery_required', retryable: true });
+  if (promotionReceipt && (promotionReceipt.projectId !== meta.id || path.resolve(promotionReceipt.targetDir) !== path.resolve(dir))) throw new Error('promotion receipt target mismatch');
+  const receiptFields = promotionReceipt ? { importPromotionReceipt: promotionReceipt } : {};
   const reg = await loadRegistry();
   const list = Array.isArray(reg.novels) ? reg.novels : [];
+  if (list.some((n) => path.resolve(n.dir) === path.resolve(dir) && n.id !== meta.id)) throw Object.assign(new Error('project directory is registered to another identity'), { code: 'resource_name_conflict' });
+  if (!allowMove && list.some((n) => n.id === meta.id && path.resolve(n.dir) !== path.resolve(dir))) throw Object.assign(new Error('项目身份已登记到其他目录，请核对后恢复'), { code: 'recovery_required', retryable: true });
   if (!list.find((n) => n.id === meta.id)) {
     list.push({
       id: meta.id,
@@ -130,11 +135,12 @@ async function importExistingNovel(dir) {
       dir,
       addedAt: new Date().toISOString(),
       lastOpenedAt: null,
+      ...receiptFields,
     });
     await saveRegistry({ novels: list });
   } else {
     // update dir if path moved
-    const next = list.map((n) => (n.id === meta.id ? { ...n, dir } : n));
+    const next = list.map((n) => (n.id === meta.id ? { ...n, dir, ...receiptFields } : n));
     await saveRegistry({ novels: next });
   }
   return { id: meta.id, title: meta.title, dir };
@@ -195,4 +201,27 @@ module.exports = {
   pathsFor,
   getChapterNamingRule,
   setChapterNamingRule,
+};
+
+// Registry read/modify/write shares the storage lease across processes. Project
+// promotion releases its source-project lock before acquiring this registry lease.
+for (const name of ['listNovels', 'getNovelById', 'pathsFor', 'getChapterNamingRule', 'openNovel', 'saveNovelMeta', 'setChapterNamingRule']) {
+  const operation = module.exports[name];
+  module.exports[name] = (...args) => require('./projectTransactions').exclusive(paths().root, () => operation(...args));
+}
+function withProjectIdentity(id, fn) {
+  const storage = require('./projectTransactions');
+  return storage.exclusive(path.join(paths().root, 'novel-identity-leases', storage.hash(String(id))), fn);
+}
+module.exports.withProjectIdentity = withProjectIdentity;
+module.exports.importExistingNovel = async (dir, options = {}) => {
+  const meta = await readJson(path.join(dir, 'novel.json'), null);
+  if (!meta?.id) throw new Error('no novel.json or invalid id');
+  return withProjectIdentity(meta.id, () => require('./projectTransactions').exclusive(paths().root, () => importExistingNovel(dir, { ...options, expectedIdentity: meta.id })));
+};
+module.exports.removeFromRegistry = (id) => withProjectIdentity(id, () => require('./projectTransactions').exclusive(paths().root, () => removeFromRegistry(id)));
+module.exports.createNovel = async (input) => {
+  const existing = input?.dir ? await readJson(path.join(input.dir, 'novel.json'), null) : null;
+  const create = () => require('./projectTransactions').exclusive(paths().root, () => createNovel(input));
+  return existing?.id ? withProjectIdentity(existing.id, create) : create();
 };

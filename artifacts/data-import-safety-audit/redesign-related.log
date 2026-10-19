@@ -1,0 +1,30 @@
+IMPORT-B01 passed: zero-byte TXT creates one explicitly empty recoverable staging chapter.
+IMPORT-B07 passed: CJK, space, emoji, and Korean/Japanese source filename survives parse, staging, and readback.
+IMPORT-T10 passed: resetAll clears all resolutions and leaves the target novel unchanged before finalization.
+IMPORT-B06 passed: a 501-conflict merge session retains every target/staging resource and complete conflict accounting.
+[searchEngine] sources: 萌娘百科: 0条 | DuckDuckGo: 0条 → total 0 results
+IMPORT-B08 passed: an empty network search produces explicit zero-result source state without synthetic matches or data loss.
+✔ manual enrichment only accepts user-confirmed fanwork characters (0.512459ms)
+✔ manual enrichment reports misclassified and unconfirmed characters instead of silently skipping (0.173333ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3.268083
+  PASS cleans model preface and malformed headings
+  PASS extracts concrete names without descriptive placeholder
+  PASS rejects sentence fragments when extracting fallback names
+  PASS normalizes only plausible Chinese person names
+  PASS rejects structural and phrase-like garbage without blocking Japanese kanji names
+  PASS extracts AI-confirmed Japanese kanji names from Chatbox hints
+  PASS extracts trusted Japanese kana and Russian Cyrillic names from hints
+  PASS merges repeated candidate names and filters AI garbage across chunks
+  PASS builds timeline fallback from outline chapter summaries
+  PASS sanitizes generic roles and synthetic ids from character cards
+  PASS builds focused Chatbox character material instead of full-text role soup
+
+11/11 passed
+RELATED_SUITE 7/7 passed

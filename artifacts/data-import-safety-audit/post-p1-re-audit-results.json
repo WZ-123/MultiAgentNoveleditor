@@ -1,0 +1,85 @@
+{
+  "createdAt": "2026-10-18T20:41:25.835Z",
+  "type": "strict-correctness-counterexample-audit",
+  "productEdits": false,
+  "cases": [
+    {
+      "id": "PA-01",
+      "title": "A selectable alternative name must not invalidate later fields of an ID-less place",
+      "observed": {
+        "selectedName": "古 城",
+        "error": "bound review entity missing",
+        "reviewState": "review",
+        "places": [
+          {
+            "name": "古城",
+            "description": "用户旧说明",
+            "custom": "必须保留"
+          }
+        ]
+      },
+      "status": "correctness-assertion-failed",
+      "error": "AssertionError [ERR_ASSERTION]: a valid alternative name must complete instead of losing its own entity binding\n+ actual - expected\n\n+ Error: bound review entity missing\n+     at Object.apply (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/reviewOperations.js:95:30)\n+     at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/reviewStore.js:69:35\n+     at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/store/projectTransactions.js:104:24\n+     at async locked (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/store/projectTransactions.js:84:12)\n+     at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:56:24\n+     at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:33:11)\n+     at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:37:5\n- undefined\n\n    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:60:14\n    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:33:11)\n    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:37:5"
+    },
+    {
+      "id": "PA-02",
+      "title": "Cancellation acknowledged before a pending compatibility submission enters commit must prevent formal writes",
+      "observed": {
+        "cancelResponse": "cancelled",
+        "formalTextAtCancellation": null,
+        "child": {
+          "exitCode": 0,
+          "signal": null
+        },
+        "childStderr": "",
+        "receiptReturned": true,
+        "newUserActionAfterCancellation": false,
+        "formalText": "# 审计章节\n\n本次导入的完整新正文",
+        "durableState": "completed"
+      },
+      "status": "correctness-assertion-failed",
+      "error": "AssertionError [ERR_ASSERTION]: a cancelled run must not later write its imported chapter into the formal project\n+ actual - expected\n\n+ '# 审计章节\\n\\n本次导入的完整新正文'\n- null\n\n    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:92:14\n    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:33:11)\n    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:64:5"
+    },
+    {
+      "id": "PA-03",
+      "title": "Cancelling a retryable failed promotion must persist and return cancelled",
+      "observed": {
+        "before": {
+          "state": "failed",
+          "retryable": true,
+          "actions": [
+            "resume",
+            "cancel"
+          ]
+        },
+        "response": {
+          "state": "failed",
+          "actions": [
+            "resume",
+            "cancel"
+          ]
+        },
+        "durableState": "failed",
+        "promotionState": "cancelled"
+      },
+      "status": "correctness-assertion-failed",
+      "error": "AssertionError [ERR_ASSERTION]: the advertised cancel action must terminate the run as well as its promotion ledger\n+ actual - expected\n\n+ 'failed'\n- 'cancelled'\n\n    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:107:14\n    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:33:11)\n    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:96:5"
+    },
+    {
+      "id": "PA-04",
+      "title": "Reading an active analysis from another service must not declare it interrupted",
+      "observed": {
+        "otherServiceState": "interrupted",
+        "error": {
+          "code": "provider_state_lost",
+          "message": "analysis was interrupted before a durable completion checkpoint",
+          "phase": "analyzing"
+        },
+        "originalServiceState": "interrupted",
+        "originalResumeState": "analyzing"
+      },
+      "status": "correctness-assertion-failed",
+      "error": "AssertionError [ERR_ASSERTION]: a process-local controller map cannot establish that another owner has stopped\n+ actual - expected\n\n+ 'interrupted'\n- 'analyzing'\n\n    at /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:121:14\n    at async check (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:33:11)\n    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/post-p1-re-audit.cjs:111:5"
+    }
+  ]
+}

@@ -45,7 +45,7 @@ async function run() {
     assert.equal((await novelData.readWorld(targetDir)).lore, beforeLore, 'unresolved merge cannot write any target resource');
     assert.equal((await staging.getStagingProject(mergeStaging.importId)).novelMeta.importMeta.status, 'active');
 
-    for (const item of session.items) merge.resolveConflict(session.sessionId, item.id, 'left');
+    for (const item of session.items) await merge.resolveConflict(session.sessionId, item.id, 'left');
     const receipt = await merge.finalizeMerge(session.sessionId);
     assert.ok(receipt.written >= 1);
     assert.equal((await novelData.readWorld(targetDir)).lore, '导入新世界观');
@@ -60,23 +60,23 @@ async function run() {
     await fsp.writeFile(path.join(failingRoot, 'characters', 'rollback-char.json'), JSON.stringify({ id: 'rollback-char', name: '回滚角色', personality: '新值' }), 'utf8');
     await fsp.writeFile(path.join(failingRoot, 'world', 'lore.md'), '不应落盘的世界观', 'utf8');
     const failingSession = await merge.createMergeSession(failingRoot, target.id, targetDir);
-    for (const item of failingSession.items) merge.resolveConflict(failingSession.sessionId, item.id, 'left');
+    for (const item of failingSession.items) await merge.resolveConflict(failingSession.sessionId, item.id, 'left');
     const characterFile = path.join(targetDir, 'characters', 'rollback-char.json');
     const characterBefore = await fsp.readFile(characterFile, 'utf8');
     // chmod is not a reliable failure injector for privileged test runners.
-    const writeFile = fsp.writeFile;
+    const rename = fsp.rename;
     let injected = false;
-    fsp.writeFile = async (to, ...args) => {
-      if (!injected && path.resolve(to) === path.join(targetDir, 'world', 'lore.md')) {
+    fsp.rename = async (from, to, ...args) => {
+      if (!injected && path.resolve(to) === path.join(fs.realpathSync(targetDir), 'world', 'lore.md')) {
         injected = true;
         throw Object.assign(new Error('simulated world write denied'), { code: 'EACCES' });
       }
-      return writeFile(to, ...args);
+      return rename(from, to, ...args);
     };
     try {
       await assert.rejects(() => merge.finalizeMerge(failingSession.sessionId), (error) => ['EACCES', 'EPERM', 'EROFS'].includes(error?.code));
     } finally {
-      fsp.writeFile = writeFile;
+      fsp.rename = rename;
     }
     assert.equal(await fsp.readFile(characterFile, 'utf8'), characterBefore, 'a later merge write failure rolls back earlier resources');
     assert.equal((await staging.getStagingProject(failingStaging.importId)).novelMeta.importMeta.status, 'active', 'failed merge cannot mark staging as merged');

@@ -1,0 +1,43 @@
+{
+  "evidenceType": "production functions + isolated storage, controlled I/O scheduling",
+  "evidence": {
+    "legacyIdentityMigration": {
+      "id": "a:b",
+      "idsAfterOneUpdate": [
+        "a:b",
+        "a:b"
+      ],
+      "files": [
+        "a:b.json",
+        "entity-6783a31eabf68ccc0660f935c0826282bdd2241f3a80a9f2d10d59aea9ebb5d8.json"
+      ]
+    },
+    "unsharedWriteLocks": {
+      "userWriteExecuted": true,
+      "finalPersonality": "导入值",
+      "receiptWritten": 1
+    },
+    "quoteExistenceIsNotSupport": {
+      "page": "目标角色来自目标作品。她一直保持蓝色短发，从未担任国王。",
+      "acceptedAppearance": "她留着红色长发。",
+      "acceptedBackground": "她是世袭国王。"
+    },
+    "pageMentionIsNotIdentity": {
+      "accepted": true
+    },
+    "legacyEnrichmentCas": {
+      "written": 0,
+      "failures": [
+        {
+          "characterId": "a:b",
+          "error": "character changed during update"
+        }
+      ]
+    },
+    "rollbackUnwrittenUserSave": {
+      "planWroteB": false,
+      "userSavedB": "new-b",
+      "actualB": "old-b"
+    }
+  }
+}

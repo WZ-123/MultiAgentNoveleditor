@@ -21,6 +21,7 @@
 const fs = require('node:fs').promises;
 const path = require('node:path');
 const { paths, generateId } = require('./paths');
+const { contentHashExact } = require('./resourceIdentity');
 const { readJson, writeJson } = require('./jsonStore');
 
 const LOGS_DIR = 'offline-logs';
@@ -31,6 +32,7 @@ function logsDir() {
 }
 
 function logFilePath(novelId, dateStr) {
+  if (novelId) require('./entityIdentity').assertEntityId(novelId);
   return path.join(logsDir(), `${novelId || 'global'}-${dateStr}.jsonl`);
 }
 
@@ -65,28 +67,31 @@ function getNetworkStatus() {
 
 // ---------- log entry CRUD ----------
 
-async function appendEntry({ type, action, targetId, targetName, payload, networkStatus, novelId }) {
+async function appendEntry({ type, action, targetId, targetName, payload, networkStatus, novelId, persistence = 'pending', change }) {
   await _ensureLogsDir();
   const entry = {
     id: generateId('offline'),
+    schemaVersion: 2, persistence, change,
     timestamp: new Date().toISOString(),
     type: type || 'unknown',
     action: action || 'update',
     targetId: targetId || '',
     targetName: targetName || '',
     payload: payload || {},
+    payloadHash: contentHashExact(JSON.stringify(payload || {})),
     networkStatus: networkStatus || 'offline',
     synced: false,
     novelId: novelId || null,
   };
-  const file = logFilePath(novelId, _todayStr());
+  const date = _todayStr();
+  const file = logFilePath(novelId, date);
   const line = JSON.stringify(entry) + '\n';
   await fs.appendFile(file, line, 'utf8');
 
   // Update index
   const idx = await _readIndex();
   idx.entries = idx.entries || [];
-  idx.entries.push({ id: entry.id, novelId, timestamp: entry.timestamp, synced: false, date: _todayStr() });
+  idx.entries.push({ id: entry.id, novelId, timestamp: entry.timestamp, synced: false, date });
   await _writeIndex(idx);
   return entry;
 }
@@ -98,16 +103,19 @@ async function listUnsyncedEntries(novelId) {
   const result = [];
   for (const e of entries) {
     const file = logFilePath(e.novelId, e.date);
+    let found = false;
     try {
       const lines = (await fs.readFile(file, 'utf8')).split('\n').filter(Boolean);
       for (const line of lines) {
         const obj = JSON.parse(line);
         if (obj.id === e.id) {
-          result.push(obj);
+          result.push({ ...obj, synced: e.synced, receipt: e.receipt });
+          found = true;
           break;
         }
       }
-    } catch { /* ignore missing file */ }
+    } catch (error) { throw new Error(`离线记录无法读取 (${e.id}): ${error.message}`); }
+    if (!found) throw new Error(`离线记录载荷缺失 (${e.id})，请保留日志并恢复`);
   }
   return result;
 }
@@ -122,12 +130,16 @@ async function listUnsyncedByType(novelId) {
   return byType;
 }
 
-async function markSynced(entryIds) {
+async function markSynced(entryIds, receipts = {}) {
   if (!Array.isArray(entryIds) || entryIds.length === 0) return;
   const idx = await _readIndex();
   const idSet = new Set(entryIds);
   for (const e of idx.entries || []) {
-    if (idSet.has(e.id)) e.synced = true;
+    if (idSet.has(e.id)) {
+      const receipt = receipts[e.id] || e.receipt;
+      if (!receipt) throw new Error('each offline entry requires a host commit receipt');
+      e.synced = true; e.receipt = receipt;
+    }
   }
   await _writeIndex(idx);
 }
@@ -182,7 +194,10 @@ async function enforceQuota(maxBytes) {
   }
   jsonlFiles.sort((a, b) => a.mtime - b.mtime);
 
+  const index = await _readIndex();
+  const pendingFiles = new Set((index.entries || []).filter((entry) => !entry.synced).map((entry) => path.basename(logFilePath(entry.novelId, entry.date))));
   for (const f of jsonlFiles) {
+    if (pendingFiles.has(f.name)) continue;
     if (stats.totalBytes <= targetBytes) break;
     try {
       await fs.unlink(path.join(dir, f.name));
@@ -193,12 +208,99 @@ async function enforceQuota(maxBytes) {
   return { deleted };
 }
 
+
+// Local IPC logs describe operations already committed to this same disk. They
+// are acknowledged without executing them a second time. Legacy summaries lack
+// that proof and must never become overwrite payloads.
+const { ResourceLockService } = require('../mcp/resourceLockService');
+const syncLocks = new ResourceLockService();
+async function applyOfflineResource(root, change, content) {
+  const data = require('./novelData');
+  const { parseResourceRef } = require('../mcp/novelResources');
+  const { outlineChapterPath } = require('./paths');
+  const ref = parseResourceRef(change.resourceRef);
+  const text = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+  if (change.mode === 'delete') {
+    if (ref.kind === 'character') return data.deleteCharacter(root, ref.key);
+    if (ref.kind === 'chapter') return data.deleteChapter(root, ref.key, { confirmed: true });
+    if (ref.kind === 'asset') return data.deleteAsset(root, ref.key);
+    if (ref.kind === 'timeline-event') return data.replaceTimeline(root, (await data.listTimeline(root)).filter((e) => String(e.id) !== ref.key));
+    if (ref.kind === 'outline' && ref.key === 'chapter') return require('./projectTransactions').writeFile(outlineChapterPath(root, ref.volumeIndex, ref.sectionIndex, ref.chapterIndex), null);
+    throw new Error(`unsupported offline deletion: ${change.resourceRef}`);
+  }
+  if (ref.kind === 'character') return data.writeCharacter(root, JSON.parse(text));
+  if (ref.kind === 'chapter') {
+    let previous = { content: '', metadata: {} };
+    try { previous = await data.readChapterWithMeta(root, ref.key); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+    return data.writeChapterWithMeta(root, ref.key, text, previous.metadata || {}, { baseContent: previous.content });
+  }
+  if (ref.kind === 'style') return data.writeStyleMemory(root, text);
+  if (ref.kind === 'world') return data.writeWorld(root, ref.key === 'lore' ? { lore: text } : { places: JSON.parse(text) });
+  if (ref.kind === 'asset') return data.upsertAsset(root, JSON.parse(text));
+  if (ref.kind === 'timeline') return data.replaceTimeline(root, JSON.parse(text));
+  if (ref.kind === 'timeline-event') {
+    const events = await data.listTimeline(root), index = events.findIndex((e) => String(e.id) === ref.key);
+    if (index < 0) events.push(JSON.parse(text)); else events[index] = JSON.parse(text);
+    return data.replaceTimeline(root, events);
+  }
+  if (ref.kind === 'outline' && ref.key === 'nodes') return data.writeOutlineNodes(root, JSON.parse(text));
+  if (ref.kind === 'outline' && ref.key === 'hierarchy') return data.writeHierarchicalOutline(root, JSON.parse(text));
+  if (ref.kind === 'outline' && ref.key === 'master') return require('./projectTransactions').writeFile(path.join(root, 'outlines', 'outline.md'), text);
+  if (ref.kind === 'outline' && ref.key === 'chapter') return require('./projectTransactions').writeFile(outlineChapterPath(root, ref.volumeIndex, ref.sectionIndex, ref.chapterIndex), text);
+  throw new Error(`unsupported offline resource: ${change.resourceRef}`);
+}
+async function syncEntry(novelId, entryId) {
+  if (!novelId) throw new Error('offline sync requires a bound novel');
+  return syncLocks.withLocks(['offline-index'], async () => {
+    const index = await _readIndex();
+    const indexed = (index.entries || []).find((entry) => entry.id === entryId);
+    if (!indexed || indexed.novelId !== novelId) throw new Error('offline entry belongs to another novel');
+    if (indexed.synced) return indexed.receipt;
+    const entry = (await listUnsyncedEntries(novelId)).find((entry) => entry.id === entryId);
+    if (!entry || entry.schemaVersion !== 2) throw new Error('旧离线记录缺少完整数据或保存凭证，请审阅，禁止自动覆盖');
+    let receipt;
+    if (entry.persistence === 'local_committed') {
+      receipt = { entryId, novelId, status: 'already_saved_locally', payloadHash: entry.payloadHash, acknowledgedAt: new Date().toISOString() };
+    } else {
+      const change = entry.change;
+      if (!change || !['create', 'replace', 'delete', 'patch'].includes(change.mode) || !change.resourceRef || !change.baseHash) {
+        throw new Error(`unsupported or incomplete offline operation: ${entry.type}/${entry.action}`);
+      }
+      const prefix = { character: 'character:', chapter: 'chapter:', world: 'world:', style: 'style:', timeline: 'timeline:', outline: 'outline:', asset: 'asset:' }[entry.type];
+      if (!prefix || !change.resourceRef.startsWith(prefix)) throw new Error('offline operation target/type mismatch');
+      const novels = require('./novels');
+      const target = await novels.getNovelById(novelId);
+      if (!target) throw new Error('offline target novel is missing');
+      // Logical offline changes use the same domain stores inside the shared
+      // project transaction. They do not enter the independent writing queue.
+      const { hash } = require('../codex-runtime/contracts');
+      const { prepareChanges } = require('../mcp/mutationService');
+      receipt = await require('./projectTransactions').transaction(target.dir, async () => {
+        const prepared = await prepareChanges(target, { reason: `offline ${entryId}`, changes: [change] });
+        const candidate = prepared.resources[0];
+        indexed.expectedHash = candidate.afterHash;
+        await _writeIndex(index);
+        await applyOfflineResource(target.dir, change, candidate.after);
+        const current = await require('../mcp/novelResources').readResource(target, change.resourceRef).catch((error) => {
+          if (change.mode === 'delete' && ['ENOENT', 'context_incomplete'].includes(error.code)) return { sourceHash: hash(null) };
+          throw error;
+        });
+        if (current.sourceHash !== candidate.afterHash) throw new Error('offline storage readback mismatch');
+        return { entryId, novelId, status: 'committed', resourceRef: change.resourceRef, afterHash: candidate.afterHash };
+      }, { id: `offline-${entryId}`, fingerprint: hash(change) });
+    }
+    await markSynced([entryId], { [entryId]: receipt });
+    return receipt;
+  });
+}
+
 module.exports = {
-  appendEntry,
+  syncEntry,
+  appendEntry: (entry) => syncLocks.withLocks(['offline-index'], () => appendEntry(entry)),
   listUnsyncedEntries,
   listUnsyncedByType,
-  markSynced,
-  discardUnsynced,
+  markSynced: (ids) => syncLocks.withLocks(['offline-index'], () => markSynced(ids)),
+  discardUnsynced: (id) => syncLocks.withLocks(['offline-index'], () => discardUnsynced(id)),
   getStorageStats,
-  enforceQuota,
+  enforceQuota: (quota) => syncLocks.withLocks(['offline-index'], () => enforceQuota(quota)),
 };

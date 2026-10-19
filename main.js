@@ -77,6 +77,15 @@ async function createWindow() {
   } else {
     await win.loadFile(path.join(__dirname, 'dist', 'index.html'));
   }
+  if (process.argv.includes('--test-import-saga-ui-regression')) {
+    try {
+      const result = await require('./test/import-saga-ui-e2e.js').runImportSagaUiRegressionTest(win);
+      app.exit(result.failed ? 1 : 0);
+    } catch (error) {
+      console.error('TEST_FAIL import_saga_ui:', error.stack || String(error));
+      app.exit(1);
+    }
+  }
   if (process.argv.includes('--test-chat-feedback-ui-regression')) {
     try {
       const result = await require('./test/chat-feedback-ui-e2e.js').runChatFeedbackUiRegressionTest(win);

@@ -14,6 +14,9 @@ export function ImportMergePanel({ importId, novelId, onClose }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [outcome, setOutcome] = useState(null);
+  const cancelRequested = useRef(false);
   const [aiMerging, setAiMerging] = useState(false);
 
   // Create merge session on mount
@@ -69,12 +72,29 @@ export function ImportMergePanel({ importId, novelId, onClose }) {
     setSaving(true);
     try {
       await mana.import.finalizeMerge(sessionId);
-      onClose();
+      if (cancelRequested.current) setOutcome(await mana.import.get(importId));
+      else onClose();
     } catch (err) {
+      if (cancelRequested.current) {
+        const current = await mana.import.get(importId);
+        if (['cancelled', 'completed'].includes(current.state)) { setOutcome(current); setSaving(false); return; }
+      }
       setError(err?.message || String(err));
+      const current = await mana.import.getMerge(sessionId);
+      if (current) { setItems(current.items); setSummary(await mana.import.getMergeSummary(sessionId)); }
     }
     setSaving(false);
-  }, [sessionId, mana, onClose]);
+  }, [sessionId, mana, onClose, importId]);
+
+  const handleCancel = useCallback(async () => {
+    cancelRequested.current = true; setCancelling(true); setError('');
+    try {
+      const current = await mana.import.cancel(importId);
+      if (['cancelled', 'completed'].includes(current.state)) setOutcome(current);
+      else setError(current.error?.message || '提交需要恢复，请核对保存结果');
+    } catch (err) { setError(err.message); }
+    finally { setCancelling(false); }
+  }, [mana, importId]);
 
   const handleAiMerge = useCallback(async (itemId, userNote) => {
     if (!mana?.import?.resolveConflict || !mana?.import?.aiMerge || !sessionId) return;
@@ -106,19 +126,16 @@ export function ImportMergePanel({ importId, novelId, onClose }) {
     );
   }
 
-  if (error) {
-    return (
-      <div className="fixed inset-0 z-[100] bg-vscode-bg flex items-center justify-center">
-        <div className="text-rose-400 text-sm flex items-center gap-2">
-          <AlertTriangle size={16} />
-          {error}
-        </div>
-      </div>
-    );
-  }
+
+  if (outcome) return <div className="h-full flex flex-col items-center justify-center gap-4 p-8 text-sm text-gray-300" data-testid="merge-import-outcome" data-import-state={outcome.state}>
+    <p>{outcome.state === 'cancelled' ? '导入已取消，目标项目未写入本次变更。' : '项目已保存；取消请求到达提交决定之后，已保留保存回执。'}</p>
+    {outcome.result?.receipt && <details className="max-w-full"><summary>查看保存回执</summary><pre className="whitespace-pre-wrap break-all">{JSON.stringify(outcome.result.receipt, null, 2)}</pre></details>}
+    <button onClick={onClose}>关闭合并结果</button>
+  </div>;
 
   return (
     <div className="fixed inset-0 z-[100] bg-vscode-bg flex flex-col">
+      {error && <div role="alert" className="absolute top-2 left-1/4 right-1/4 z-50 bg-red-950 border border-red-500 p-3 text-sm text-red-200">{error}<button className="ml-3 underline" onClick={() => setError('')}>继续审阅</button><button className="ml-3 underline" onClick={onClose}>关闭</button></div>}
       {/* Top bar */}
       <div className="h-10 border-b border-vscode-panel-border flex items-center px-3 shrink-0 bg-vscode-sidebar">
         <div className="flex items-center gap-2 text-sm text-gray-200 font-semibold flex-1">
@@ -130,9 +147,13 @@ export function ImportMergePanel({ importId, novelId, onClose }) {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <button type="button" data-testid="merge-import-cancel" disabled={cancelling} onClick={handleCancel} className="text-amber-300 text-xs">
+            {cancelling ? '正在核对取消与保存结果…' : '取消本次导入'}
+          </button>
           <button
             type="button"
             onClick={() => handleReset()}
+            disabled={saving || cancelling}
             className="px-2 py-1 text-gray-400 hover:text-gray-200 text-xs flex items-center gap-1"
           >
             <RotateCcw size={12} />

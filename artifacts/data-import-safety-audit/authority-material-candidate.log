@@ -1,0 +1,13 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:import-authority-audit
+
+PASS snapshot compatibility cannot change error, retry policy, schema, source or state authority
+PASS source creation finishing after cancellation retains its canonical cancelled owner
+PASS late createMerge cannot bind a session or submit after cancellation
+PASS completed merge retries and cancellations preserve later formal edits and the original receipt
+PASS overlapping source targets are rejected before copying and can be retargeted safely
+PASS a direct host AbortSignal is arbitrated as cancellation during preparation
+PASS formal execution cannot read an unacknowledged choice that will roll back
+IMPORT-T10 passed: resetAll clears all resolutions and leaves the target novel unchanged before finalization.
+IMPORT-B06 passed: a 501-conflict merge session retains every target/staging resource and complete conflict accounting.

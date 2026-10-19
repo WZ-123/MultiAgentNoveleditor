@@ -1,0 +1,31 @@
+import-analyzer-cleanup-regression.test.js
+  PASS cleans model preface and malformed headings
+  PASS extracts concrete names without descriptive placeholder
+  PASS rejects sentence fragments when extracting fallback names
+  PASS normalizes only plausible Chinese person names
+  PASS rejects structural and phrase-like garbage without blocking Japanese kanji names
+  PASS extracts AI-confirmed Japanese kanji names from Chatbox hints
+  PASS extracts trusted Japanese kana and Russian Cyrillic names from hints
+  PASS merges repeated candidate names and filters AI garbage across chunks
+  PASS builds timeline fallback from outline chapter summaries
+  PASS sanitizes generic roles and synthetic ids from character cards
+  PASS builds focused Chatbox character material instead of full-text role soup
+
+11/11 passed
+
+import-zero-byte-boundary-regression.test.js
+IMPORT-B01 passed: zero-byte TXT creates one explicitly empty recoverable staging chapter.
+
+import-unicode-filename-boundary-regression.test.js
+IMPORT-B07 passed: CJK, space, emoji, and Korean/Japanese source filename survives parse, staging, and readback.
+
+import-empty-network-results-regression.test.js
+IMPORT-B08 passed: an empty network search produces explicit zero-result source state without synthetic matches or data loss.
+[searchEngine] sources: 萌娘百科: 0条 | DuckDuckGo: 0条 → total 0 results
+
+import-merge-reset-regression.test.js
+IMPORT-T10 passed: resetAll clears all resolutions and leaves the target novel unchanged before finalization.
+
+import-five-hundred-conflicts-regression.test.js
+IMPORT-B06 passed: a 501-conflict merge session retains every target/staging resource and complete conflict accounting.
+

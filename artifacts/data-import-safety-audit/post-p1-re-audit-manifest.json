@@ -1,0 +1,299 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-18T20:43:03.440470+00:00",
+  "workspace": "/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant",
+  "head": "60efc03e9c68486baafc39fd0577a345f6433131",
+  "conclusion": "Not deliverable: independent correct-behavior assertions fail. No product repair in this audit.",
+  "files": [
+    {
+      "path": "artifacts/data-import-safety-audit/post-p1-existing-regression.log",
+      "sha256": "19ddb0c2f57f6fe9d6c4a9239c9940cf81e0c089ec4e71a127b32da054a81ac7",
+      "bytes": 1869
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/post-p1-re-audit-checks.json",
+      "sha256": "c704e1bc83354728f2207d03bf2196ac2e6cb2889d7143dd3c5930c1068fadcc",
+      "bytes": 757
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/post-p1-re-audit-initial-results.json",
+      "sha256": "06e2b2504294c13db56ad27eef9a68a08c13c0b6c3c7da11d96f5465a56c8207",
+      "bytes": 5710
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/post-p1-re-audit-initial.log",
+      "sha256": "6d6d40a45330e6391c49772c1e8fd4a4c453a4aff9095f6aafc17e41ec734a9d",
+      "bytes": 3738
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/post-p1-re-audit-results.json",
+      "sha256": "b4bf81ddff63ee01e29ad582349003d2dbb15b80eb8a47132f6bbc8e59333961",
+      "bytes": 5841
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/post-p1-re-audit-scheduled-results.json",
+      "sha256": "fe9a2675d2ce2283c525663ee46e8b7bd95ec05306234433a481042040fff538",
+      "bytes": 5767
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/post-p1-re-audit-scheduled.log",
+      "sha256": "fe0a77056e7c37c66d532c5005ac2d416a5b05e166684c4c04906bbae0a715b0",
+      "bytes": 3753
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/post-p1-re-audit.cjs",
+      "sha256": "dcad6e829795d22c58530db62d923833fdfa934636fc54a59302db40a1ca067d",
+      "bytes": 10001
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/post-p1-re-audit.log",
+      "sha256": "19fe6d4061f77a7fb62adf9c1ced22c529d5883999f303be3c27713091346037",
+      "bytes": 3753
+    },
+    {
+      "path": "artifacts/data-import-safety-audit/report.md",
+      "sha256": "7b5e3462bee093739b0cdf59ac493c09d06f7c9e614a94246a06ef0f6105a3d4",
+      "bytes": 49270
+    },
+    {
+      "path": "knowledge-base/edge-cases.md",
+      "sha256": "8085e5fa95a40183720fb27f06ed2de081cfc0d34fd51c78ae8ae5f58fb4f8b1",
+      "bytes": 13455
+    },
+    {
+      "path": "main.js",
+      "sha256": "936ff93d47c86a5db5864b814dc28ad2eddbdbb14948fa38387d5691767eccb3",
+      "bytes": 9041
+    },
+    {
+      "path": "preload.js",
+      "sha256": "7537f51facbbb66c700b720719d0bed0c5721c8db6092957102dfdf6e62fa34f",
+      "bytes": 18695
+    },
+    {
+      "path": "scripts/run-import-saga-ui-e2e.js",
+      "sha256": "924b0951733a76b06a72f82e20cd72eeb07c7ab58b0116a3af3c096b1c60b98d",
+      "bytes": 824
+    },
+    {
+      "path": "scripts/run-unit-tests.js",
+      "sha256": "0d749d01720d78e4597b986c07de8c78b382c318583b9f9744f85c4a64e9e99a",
+      "bytes": 2073
+    },
+    {
+      "path": "src/components/CharacterEnrichPanel.jsx",
+      "sha256": "04d96c167f79f70d3be63a98da5c7209fdb40636a1b24d01cbe5a670d51d9f39",
+      "bytes": 18524
+    },
+    {
+      "path": "src/components/DataTabContent.jsx",
+      "sha256": "54f0031aa753779a5c71f5183021736262ea047e1e5594d94d4d997a03ac5105",
+      "bytes": 43900
+    },
+    {
+      "path": "src/components/FactReviewDialog.jsx",
+      "sha256": "6b9e4ccb1e183f17b9284366371e50a47b9b2bdfbcc663f670bc9a5bddeff059",
+      "bytes": 4626
+    },
+    {
+      "path": "src/components/ImportMergePanel.jsx",
+      "sha256": "5495bf911590e3cff04eba2b8cf2d22f0adeb3ab32b875fddf953d7d966191c3",
+      "bytes": 7848
+    },
+    {
+      "path": "src/components/ImportNovelPanel.jsx",
+      "sha256": "17733fc9c97b6afc6a50b3c33d2fd4a7ab367bab6f6b1370f979a4eb6dffe0d5",
+      "bytes": 59978
+    },
+    {
+      "path": "src/components/OfflineSyncDialog.jsx",
+      "sha256": "41c443f2ae29dc29ff78a04f898e0bae485a3d703218efa7d489d766b759cda2",
+      "bytes": 6851
+    },
+    {
+      "path": "src/main/import/analyzer.js",
+      "sha256": "16b38d5d53dd86c2dba68a4846d76b09609a698665ef9124b0bb442d1a55c48f",
+      "bytes": 53351
+    },
+    {
+      "path": "src/main/import/asyncTasks.js",
+      "sha256": "ba8836e65f732bb1448c386cab6532e19d16a2fbd39c3a51703d5cbbf8217be2",
+      "bytes": 950
+    },
+    {
+      "path": "src/main/import/characterEnricher.js",
+      "sha256": "188294d59474f1d2fda1f4d64bcd4fa60cb939fc652c31ebe18ee82b008bac08",
+      "bytes": 38379
+    },
+    {
+      "path": "src/main/import/characterUpdates.js",
+      "sha256": "6a84f7c6adaafb63fda92399fea71c14904dd1212b72f07f8f7f0f727d6469ac",
+      "bytes": 7899
+    },
+    {
+      "path": "src/main/import/importRunStore.js",
+      "sha256": "658812ec76eae2aad47f97ef145f4241652ac05a0b24404af025bc65f06e0f21",
+      "bytes": 3246
+    },
+    {
+      "path": "src/main/import/importSaga.js",
+      "sha256": "2a6d7700af1519a6e0cf3e2c58b0a49f03ae011800789cf527e7c676b74ea6f4",
+      "bytes": 17444
+    },
+    {
+      "path": "src/main/import/mergeEngine.js",
+      "sha256": "53689af7c52dbfbcb82435ced5b6b8137f6aa04ddfb196013459e4568a6ff0b7",
+      "bytes": 11811
+    },
+    {
+      "path": "src/main/import/promotionTransactions.js",
+      "sha256": "06990d9d0b5d6e233ceeb73a974cc17eb2cd084c36eafda1e49f27f7619fa38e",
+      "bytes": 13758
+    },
+    {
+      "path": "src/main/import/resourcePlan.js",
+      "sha256": "101af819dba946c6374eea3129307fc5bece3823fcba6534facf2ccf6805e821",
+      "bytes": 1641
+    },
+    {
+      "path": "src/main/import/resultMerger.js",
+      "sha256": "ddc8ffadf897347d966a82582a4a6390bf32bfbb149d48812108fa7adac6982a",
+      "bytes": 7672
+    },
+    {
+      "path": "src/main/import/reviewOperations.js",
+      "sha256": "e19a2ebe9929de3a459863c3507150e0628ff1bd52f37210bae20df176228f10",
+      "bytes": 6346
+    },
+    {
+      "path": "src/main/import/reviewStore.js",
+      "sha256": "7871d462e205967e7ab6a8629ad0a2f490b8817403afbefb38be1762ce3f83db",
+      "bytes": 11089
+    },
+    {
+      "path": "src/main/import/stagingProject.js",
+      "sha256": "0e54d955db1e415b17f26c6cb2507f7ffc0485ab72f6e2fe61e006e6113bbc82",
+      "bytes": 17665
+    },
+    {
+      "path": "src/main/import/worldSchema.js",
+      "sha256": "1ceb8dd373b2655dc44fa2b5aedfb618c531ff37ab1ebd7cd8f27089cbd3b660",
+      "bytes": 1350
+    },
+    {
+      "path": "src/main/ipc/fs.js",
+      "sha256": "bf20c227fe92518b817a3aa0334b184c40b24fe1daaafd8be0d4c9844e54dab7",
+      "bytes": 3370
+    },
+    {
+      "path": "src/main/ipc/import.js",
+      "sha256": "493086fff4b411f00e52d38f6559eebfea6b6c8977c59bfa82c1bea7a55f299e",
+      "bytes": 12651
+    },
+    {
+      "path": "src/main/ipc/novel.js",
+      "sha256": "ba2b178db8aa9ece90013d44a177a176b8dfd7127590488f0517006a307a228b",
+      "bytes": 22578
+    },
+    {
+      "path": "src/main/ipc/offlineLog.js",
+      "sha256": "2a1dda33a60bcbb0e8c2ae550858b6a2c6ecef08b615bc744b474a4add3e3032",
+      "bytes": 1590
+    },
+    {
+      "path": "src/main/lan/remoteServer.js",
+      "sha256": "d4d6435d8a680b437643d10793cf9286eccaec836357583d7b78e326f1c35f63",
+      "bytes": 36021
+    },
+    {
+      "path": "src/main/store/atomicFile.js",
+      "sha256": "2c2186db5b5648f075022cf643f0a9fc6f7d621d864970545925e67d867d5eaf",
+      "bytes": 1797
+    },
+    {
+      "path": "src/main/store/entityIdentity.js",
+      "sha256": "17aa2e7d3c20f9b12195f9da3fd57ecb23ca59c6613bf13403a180173ed3228a",
+      "bytes": 2426
+    },
+    {
+      "path": "src/main/store/jsonStore.js",
+      "sha256": "1e97e9524f6340c368d273e9003e4b202b92405f5bbf68b970096caf07200009",
+      "bytes": 2054
+    },
+    {
+      "path": "src/main/store/novelData.js",
+      "sha256": "b24fa049dff03cbea1e7413e3ae3451d3082a814dc1253d3394c7d2b3af53315",
+      "bytes": 101473
+    },
+    {
+      "path": "src/main/store/novels.js",
+      "sha256": "72339e63e6f816de13b6e1e57a90f141b9d6c805a1f2c8f3527fc5d6dc78830e",
+      "bytes": 7811
+    },
+    {
+      "path": "src/main/store/offlineLog.js",
+      "sha256": "0cf9f32753e7e412bd3c01ad62a725db35d74342e93623f7fdb211d5c3e5a49b",
+      "bytes": 13081
+    },
+    {
+      "path": "src/main/store/paths.js",
+      "sha256": "b1913a113c5d1094324fa3eab3dae2133923e2e5a1f5f8c08743aeea645c53ea",
+      "bytes": 6127
+    },
+    {
+      "path": "src/main/store/projectTransactions.js",
+      "sha256": "84ee674362b3dc045e4e4c5eda23ebd2f9835e87fa2df448eb4c64ca8f7e3a37",
+      "bytes": 10747
+    },
+    {
+      "path": "src/main/store/resourceIdentity.js",
+      "sha256": "7265e6e001b14249f9e4cae6de4e8dc2a23dac69fa58db73f6a3ed648cdeb01b",
+      "bytes": 2869
+    },
+    {
+      "path": "test-scripts.json",
+      "sha256": "626414cc2a33a6740252d8a4c30877f291585f1d56eab0dcaaafdc029e89fcfa",
+      "bytes": 1928
+    },
+    {
+      "path": "test/character-enricher-validate-regression.test.js",
+      "sha256": "9856ee9939bf31e33026a514e245021548f006ccccb55873bea771a711488b7e",
+      "bytes": 1502
+    },
+    {
+      "path": "test/data-import-safety.test.js",
+      "sha256": "6d7eeaabee60a8dd744ca8091e4bf6a382c90e750c7ae31f118520da7967ff80",
+      "bytes": 32697
+    },
+    {
+      "path": "test/import-atomic-boundary-regression.test.js",
+      "sha256": "2c755b8e7616f97966d3355e7af29035e2a1e53f02c72df1a9b2cc7fa401eef2",
+      "bytes": 6060
+    },
+    {
+      "path": "test/import-duplicate-character-merge-regression.test.js",
+      "sha256": "5bd63676f244110dff1ed8c776eae08b3388514421a91e6d0d76d926545e6009",
+      "bytes": 1660
+    },
+    {
+      "path": "test/import-promotion-crash-child.js",
+      "sha256": "1d3dac166379ed609fdbe17713d37edbc30a42ce8a365dbe89a88aae84e1647e",
+      "bytes": 1873
+    },
+    {
+      "path": "test/import-saga-ui-e2e.js",
+      "sha256": "d8571387dbb5851f421625da8d59aae56ac5fa30a4e114897c7aeffae6ae7254",
+      "bytes": 42942
+    },
+    {
+      "path": "test/import-transaction-p1.test.js",
+      "sha256": "e8d1c92f8543ce4fa93493fa173bf629c3fb196aa68de3562ee9eef14d9df070",
+      "bytes": 24970
+    },
+    {
+      "path": "test/project-transactions-review.test.js",
+      "sha256": "a74f959aebb769827cbb12ea0611dc75ba2ced131466d64a0a18a2efb71c957a",
+      "bytes": 14725
+    }
+  ]
+}

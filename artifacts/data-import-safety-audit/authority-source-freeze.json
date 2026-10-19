@@ -1,0 +1,221 @@
+{
+  "timestamp": "2026-10-18T21:33:53.849283+00:00",
+  "files": [
+    {
+      "path": "main.js",
+      "sha256": "936ff93d47c86a5db5864b814dc28ad2eddbdbb14948fa38387d5691767eccb3"
+    },
+    {
+      "path": "preload.js",
+      "sha256": "7537f51facbbb66c700b720719d0bed0c5721c8db6092957102dfdf6e62fa34f"
+    },
+    {
+      "path": "scripts/run-import-saga-ui-e2e.js",
+      "sha256": "924b0951733a76b06a72f82e20cd72eeb07c7ab58b0116a3af3c096b1c60b98d"
+    },
+    {
+      "path": "scripts/run-unit-tests.js",
+      "sha256": "56d3822e7acf4c6621076aef0ac61d7085f107a2df3d69ced862d40988ecd0ff"
+    },
+    {
+      "path": "src/components/CharacterEnrichPanel.jsx",
+      "sha256": "04d96c167f79f70d3be63a98da5c7209fdb40636a1b24d01cbe5a670d51d9f39"
+    },
+    {
+      "path": "src/components/DataTabContent.jsx",
+      "sha256": "54f0031aa753779a5c71f5183021736262ea047e1e5594d94d4d997a03ac5105"
+    },
+    {
+      "path": "src/components/FactReviewDialog.jsx",
+      "sha256": "6b9e4ccb1e183f17b9284366371e50a47b9b2bdfbcc663f670bc9a5bddeff059"
+    },
+    {
+      "path": "src/components/ImportMergePanel.jsx",
+      "sha256": "0e18e3b8499aa0d9e64a7721722d079579b260a510e862b6209e5d4b5e877584"
+    },
+    {
+      "path": "src/components/ImportNovelPanel.jsx",
+      "sha256": "2e3c048f352a5f77bcf2785a051ec5a78803934fd56e1eecf5652bddfe1eaf98"
+    },
+    {
+      "path": "src/components/OfflineSyncDialog.jsx",
+      "sha256": "41c443f2ae29dc29ff78a04f898e0bae485a3d703218efa7d489d766b759cda2"
+    },
+    {
+      "path": "src/main/import/analyzer.js",
+      "sha256": "07abe2d84bcd15a0063eaf8d6c287062253677773237e56547e7f1b1943da67a"
+    },
+    {
+      "path": "src/main/import/asyncTasks.js",
+      "sha256": "ba8836e65f732bb1448c386cab6532e19d16a2fbd39c3a51703d5cbbf8217be2"
+    },
+    {
+      "path": "src/main/import/characterEnricher.js",
+      "sha256": "188294d59474f1d2fda1f4d64bcd4fa60cb939fc652c31ebe18ee82b008bac08"
+    },
+    {
+      "path": "src/main/import/characterUpdates.js",
+      "sha256": "6a84f7c6adaafb63fda92399fea71c14904dd1212b72f07f8f7f0f727d6469ac"
+    },
+    {
+      "path": "src/main/import/importRunStore.js",
+      "sha256": "235ca9c46beed45cbdceaa64d5a65f5072f5b995a2889aef7e0022866be72594"
+    },
+    {
+      "path": "src/main/import/importSaga.js",
+      "sha256": "7425306cdf98e5217ef50b556fa1ca0b475b36539e5619b8230913bae26d2213"
+    },
+    {
+      "path": "src/main/import/importState.js",
+      "sha256": "5110f25df6a921300cd9198f313eec26d49d4eb6280bcf0856637f7328055198"
+    },
+    {
+      "path": "src/main/import/importWork.js",
+      "sha256": "6b3b5c9c516c70368b97aa52a92f430e916291cabf56539b85b233ba0d1ed6dd"
+    },
+    {
+      "path": "src/main/import/mergeEngine.js",
+      "sha256": "be683749d83225e60c507ac292e9565e1a9827a9d2039a37d8f35b06c7c29e92"
+    },
+    {
+      "path": "src/main/import/promotionTransactions.js",
+      "sha256": "dcb45e530ccd1b998d852d7b661ad66beb141b0d77687099a5c3356e24995442"
+    },
+    {
+      "path": "src/main/import/resourcePlan.js",
+      "sha256": "101af819dba946c6374eea3129307fc5bece3823fcba6534facf2ccf6805e821"
+    },
+    {
+      "path": "src/main/import/resultMerger.js",
+      "sha256": "ddc8ffadf897347d966a82582a4a6390bf32bfbb149d48812108fa7adac6982a"
+    },
+    {
+      "path": "src/main/import/reviewOperations.js",
+      "sha256": "eb0c49a0bed79b5c21a407c1abf607c943e8f79c86fde4220cdf54bc467ddd89"
+    },
+    {
+      "path": "src/main/import/reviewStore.js",
+      "sha256": "7506ec6db6c66c6e4b8cee002eebfc5141134bf3e35bf563fda5d5ee4a180472"
+    },
+    {
+      "path": "src/main/import/stagingProject.js",
+      "sha256": "728fea02183f2721c5c85a0a1b99e5109731ec2282d2ceec1205a52cbcf9e366"
+    },
+    {
+      "path": "src/main/import/worldSchema.js",
+      "sha256": "1ceb8dd373b2655dc44fa2b5aedfb618c531ff37ab1ebd7cd8f27089cbd3b660"
+    },
+    {
+      "path": "src/main/ipc/fs.js",
+      "sha256": "bf20c227fe92518b817a3aa0334b184c40b24fe1daaafd8be0d4c9844e54dab7"
+    },
+    {
+      "path": "src/main/ipc/import.js",
+      "sha256": "ac6de8117201c107aadef784eb110b1d76cd10e5ddd5e90d3892b2742173e5d8"
+    },
+    {
+      "path": "src/main/ipc/novel.js",
+      "sha256": "ba2b178db8aa9ece90013d44a177a176b8dfd7127590488f0517006a307a228b"
+    },
+    {
+      "path": "src/main/ipc/offlineLog.js",
+      "sha256": "2a1dda33a60bcbb0e8c2ae550858b6a2c6ecef08b615bc744b474a4add3e3032"
+    },
+    {
+      "path": "src/main/lan/remoteServer.js",
+      "sha256": "d4d6435d8a680b437643d10793cf9286eccaec836357583d7b78e326f1c35f63"
+    },
+    {
+      "path": "src/main/store/atomicFile.js",
+      "sha256": "2c2186db5b5648f075022cf643f0a9fc6f7d621d864970545925e67d867d5eaf"
+    },
+    {
+      "path": "src/main/store/entityIdentity.js",
+      "sha256": "17aa2e7d3c20f9b12195f9da3fd57ecb23ca59c6613bf13403a180173ed3228a"
+    },
+    {
+      "path": "src/main/store/jsonStore.js",
+      "sha256": "1e97e9524f6340c368d273e9003e4b202b92405f5bbf68b970096caf07200009"
+    },
+    {
+      "path": "src/main/store/novelData.js",
+      "sha256": "b24fa049dff03cbea1e7413e3ae3451d3082a814dc1253d3394c7d2b3af53315"
+    },
+    {
+      "path": "src/main/store/novels.js",
+      "sha256": "328e961ae5a25d32c70b753d6a5d8b25854ee150764acf6368c7b1ed8f640dd7"
+    },
+    {
+      "path": "src/main/store/offlineLog.js",
+      "sha256": "0cf9f32753e7e412bd3c01ad62a725db35d74342e93623f7fdb211d5c3e5a49b"
+    },
+    {
+      "path": "src/main/store/paths.js",
+      "sha256": "b1913a113c5d1094324fa3eab3dae2133923e2e5a1f5f8c08743aeea645c53ea"
+    },
+    {
+      "path": "src/main/store/projectTransactions.js",
+      "sha256": "38125ee41ee82b2bd66848894e2c265568ae0402452c4b424dd50b9369fca72f"
+    },
+    {
+      "path": "src/main/store/resourceIdentity.js",
+      "sha256": "7265e6e001b14249f9e4cae6de4e8dc2a23dac69fa58db73f6a3ed648cdeb01b"
+    },
+    {
+      "path": "test-scripts.json",
+      "sha256": "f09edce8fd0a657f2d229a2f6130668067e45c7fade184ff9b30b8f4a68a70b4"
+    },
+    {
+      "path": "test/character-enricher-validate-regression.test.js",
+      "sha256": "9856ee9939bf31e33026a514e245021548f006ccccb55873bea771a711488b7e"
+    },
+    {
+      "path": "test/data-import-safety.test.js",
+      "sha256": "4ee544cd9d418ceb48e2bb7ab92ed536f7f871c6b949f565205c61bea906c990"
+    },
+    {
+      "path": "test/import-atomic-boundary-regression.test.js",
+      "sha256": "b98c9df0280aabc7c8ec00859b56485a3313eafc1ab6847691e8efddd316788b"
+    },
+    {
+      "path": "test/import-authority-adversarial.test.js",
+      "sha256": "6b31cc448b8a562a591279b7d258c3a85cb8ca1127fe4d7c9e23baa9f5459a14"
+    },
+    {
+      "path": "test/import-authority-regression.test.js",
+      "sha256": "a7d061f7210216f6afc9c33341593f1f7d0aa1f5300ec48cdf1ab95534eb1b34"
+    },
+    {
+      "path": "test/import-duplicate-character-merge-regression.test.js",
+      "sha256": "5bd63676f244110dff1ed8c776eae08b3388514421a91e6d0d76d926545e6009"
+    },
+    {
+      "path": "test/import-five-hundred-conflicts-regression.test.js",
+      "sha256": "d16ab8eab1fb6f65e656b717c7ecca349ba4f7e3fc5aa85017b6fbc9e18e8f97"
+    },
+    {
+      "path": "test/import-merge-reset-regression.test.js",
+      "sha256": "8388acd3ebc72d94f86f700f7dd5d4c0203bc8759dae42b6242bba46f0313a5e"
+    },
+    {
+      "path": "test/import-promotion-crash-child.js",
+      "sha256": "69063eae85d24f6c13b542c36405cfd4f6b8689d6071f014962595890496ac6a"
+    },
+    {
+      "path": "test/import-saga-regression.test.js",
+      "sha256": "bc28c6dc70529f3132976140922a582b58879f41f2e93d293b1898b9bbd1b7d8"
+    },
+    {
+      "path": "test/import-saga-ui-e2e.js",
+      "sha256": "8e469ffab5902ec6b167ce0cd85881c89ac94a8a1a2a0407d562c145e4b7172b"
+    },
+    {
+      "path": "test/import-transaction-p1.test.js",
+      "sha256": "e8d1c92f8543ce4fa93493fa173bf629c3fb196aa68de3562ee9eef14d9df070"
+    },
+    {
+      "path": "test/project-transactions-review.test.js",
+      "sha256": "a74f959aebb769827cbb12ea0611dc75ba2ced131466d64a0a18a2efb71c957a"
+    }
+  ]
+}

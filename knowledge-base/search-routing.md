@@ -28,3 +28,5 @@
 抓取使用 [networkFetch](../src/main/import/networkFetch.js) 及对应超时/重试策略。搜索失败须归属到来源和角色，不能生成假 URL 或将无来源内容标为已验证。字段提取与合并由 [角色补全](character-enrichment-system.md) 负责。
 
 修改排序时同步此表及受影响的文化圈测试；不要在人物补全文档、技能转述和测试 fixture 中分别维护互相矛盾的规则。
+
+角色补全的候选资格要求标题指向目标角色、介绍区出现作品。引文存在只是结构检查；身份与语义支持还需逐项审阅，不能把名称共现或生成字段互相佐证当作事实验证。候选、来源与确认值的保存规则见 [角色补全](character-enrichment-system.md)。本次未变更来源排序。证据与限制见 [数据导入安全审计](../artifacts/data-import-safety-audit/report.md)。

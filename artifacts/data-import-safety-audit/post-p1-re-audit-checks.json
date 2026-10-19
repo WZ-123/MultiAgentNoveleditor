@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-10-18T20:43:03.440470+00:00",
+  "head": "60efc03e9c68486baafc39fd0577a345f6433131",
+  "productTestsScriptsCompared": 47,
+  "changedProductTestsScripts": [],
+  "probeSyntaxExitCode": 0,
+  "gitDiffCheckExitCode": 0,
+  "newAuditCommand": "node artifacts/data-import-safety-audit/post-p1-re-audit.cjs",
+  "newAuditExitCode": 1,
+  "newAuditMeaning": "Correct-behavior assertions fail; this is not a product pass.",
+  "existingRegressionCommand": "node test/import-transaction-p1.test.js",
+  "existingRegressionExitCode": 0,
+  "documentLinksChecked": 79,
+  "noNewUiBuildClaim": true,
+  "finalProbeChildExitCode": 0,
+  "note": "Only audit script/evidence and report/edge-cases changed in this turn; previous source manifest is preserved."
+}

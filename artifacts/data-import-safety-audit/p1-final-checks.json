@@ -1,0 +1,237 @@
+{
+  "timestamp": "2026-10-18T20:34:57.967442+00:00",
+  "workspace": "/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant",
+  "head": "60efc03e9c68486baafc39fd0577a345f6433131",
+  "branch": "(detached HEAD)",
+  "syntax": [
+    {
+      "path": "main.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "preload.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "scripts/run-import-saga-ui-e2e.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "scripts/run-unit-tests.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/analyzer.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/asyncTasks.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/characterEnricher.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/characterUpdates.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/importRunStore.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/importSaga.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/mergeEngine.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/promotionTransactions.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/resourcePlan.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/resultMerger.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/reviewOperations.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/reviewStore.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/stagingProject.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/import/worldSchema.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/ipc/fs.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/ipc/import.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/ipc/novel.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/ipc/offlineLog.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/lan/remoteServer.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/store/atomicFile.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/store/entityIdentity.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/store/jsonStore.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/store/novelData.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/store/novels.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/store/offlineLog.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/store/paths.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/store/projectTransactions.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "src/main/store/resourceIdentity.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "test/character-enricher-validate-regression.test.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "test/data-import-safety.test.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "test/import-atomic-boundary-regression.test.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "test/import-duplicate-character-merge-regression.test.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "test/import-promotion-crash-child.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "test/import-saga-ui-e2e.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "test/import-transaction-p1.test.js",
+      "exitCode": 0,
+      "error": ""
+    },
+    {
+      "path": "test/project-transactions-review.test.js",
+      "exitCode": 0,
+      "error": ""
+    }
+  ],
+  "gitDiffCheck": {
+    "exitCode": 0,
+    "output": ""
+  },
+  "excludedMainWritingFiles": {
+    "paths": [
+      "src/main/codex-runtime/",
+      "src/main/mcp/",
+      "src/components/AiChatPanel.jsx",
+      "src/components/CharacterEditDialog.jsx"
+    ],
+    "changed": []
+  },
+  "evidence": {
+    "unit": "p1-unit-final.log",
+    "adversarial": "p1-final-adversarial-audit.log",
+    "build": "p1-build-final.log",
+    "uiDiagnostic": "diag-9efc0ab0-d347-4848-818d-25985a74ecea",
+    "visual": "p1-visual-review.json"
+  },
+  "limits": [
+    "No claim of real model/web quality, hardware power-loss durability or release packaging verification.",
+    "Shared store changes validated with associated regression; excluded-file status alone does not prove no behavior impact."
+  ],
+  "documentLinks": {
+    "checked": 127,
+    "missing": []
+  },
+  "unitScriptReferences": "all referenced test files exist"
+}

@@ -5,6 +5,14 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const tests = [
+  'test/import-authority-regression.test.js',
+  'test/import-transaction-p1.test.js',
+  'test/project-transactions-review.test.js',
+  'test/data-import-safety.test.js',
+  'test/import-saga-regression.test.js',
+  'test/import-atomic-boundary-regression.test.js',
+  'test/import-duplicate-character-merge-regression.test.js',
+  'test/character-enricher-validate-regression.test.js',
   'test/editor-save-race-regression.test.js',
   'test/chapter-save-snapshot-regression.test.js',
   'test/novel-structure-persistence.test.js',

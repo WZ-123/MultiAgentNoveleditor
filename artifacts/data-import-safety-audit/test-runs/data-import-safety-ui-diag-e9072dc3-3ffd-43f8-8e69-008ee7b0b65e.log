@@ -1,0 +1,70 @@
+TEST_PASS IMPORT_UI1_file_to_durable_analyzing_snapshot
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/import-saga-analyzing.png
+TEST_PASS IMPORT_UI2_review_promote_and_open_reaches_completed
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/import-saga-completed.png
+TEST_PASS IMPORT_UI3_disk_manifest_and_registry_readback
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/offline-saved-records.png
+TEST_PASS IMPORT_UI4_offline_confirmation_preserves_2000_char_body_and_style
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/partial-analysis-review.png
+TEST_PASS IMPORT_UI5_partial_analysis_is_visible_and_requires_review
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/merge-complete-plan.png
+[import ipc] Error: 审阅后资源已变化：world/lore.md
+    at error (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importState.js:13:98)
+    at ImportSagaService.finalizeSession (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importSaga.js:168:47)
+    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/ipc/import.js:27:33
+    at async Session.<anonymous> (node:electron/js2c/browser_init:2:118313) {
+  code: 'stale_import_review',
+  retryable: true
+}
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/merge-stale-review.png
+TEST_PASS IMPORT_UI6_new_character_and_places_save_with_stale_review_and_durable_saga_receipt
+[analyzer] characters chunk 0 failed: fixture regeneration failure
+TEST_PASS IMPORT_UI7_failed_regeneration_keeps_visible_and_saved_cards
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/regeneration-review.png
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/regeneration-saved.png
+TEST_PASS IMPORT_UI8_regeneration_review_reject_and_approve_matches_official_readback
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/fact-review-candidates.png
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/fact-review-restored.png
+TEST_PASS IMPORT_UI9_real_analyzer_fact_review_blocks_early_save_and_restores_choices_after_reload
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/fact-review-promoted.png
+TEST_PASS IMPORT_UI10_reviewed_facts_promote_with_selected_value_and_official_readback
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/web-fact-review.png
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/web-fact-saved.png
+TEST_PASS IMPORT_UI11_web_candidates_require_identity_and_field_decisions_before_visible_official_save
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/offline-pending-preview.png
+TEST_PASS IMPORT_UI12_pending_offline_preview_commits_full_payload_with_durable_receipt
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/p1-existing-facts-review.png
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/p1-existing-facts-saved.png
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/p1-existing-place-visible.png
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/p1-existing-event-visible.png
+TEST_PASS IMPORT_UI13_existing_event_and_place_rejection_preserves_formal_data
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/p1-promotion-interrupted.png
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/p1-promotion-recovered.png
+TEST_PASS IMPORT_UI14_interrupted_promotion_reload_restore_resume_same_project_and_receipt
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/p1-cancel-after-commit.png
+TEST_PASS IMPORT_UI15_cancel_after_commit_reports_actual_project_and_receipt
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/p1-cancel-before-commit.png
+TEST_PASS IMPORT_UI16_cancel_before_commit_creates_no_formal_project
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/p1-cancel-auto-promotion.png
+TEST_PASS IMPORT_UI17_initial_analysis_auto_promotion_cancel_keeps_the_cancelled_view
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/p1-cancel-at-decision.png
+TEST_PASS IMPORT_UI18_durable_cancel_before_decision_wins_after_target_reservation
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/authority-name-review.png
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/authority-name-saved.png
+TEST_PASS IMPORT_UI19_alternative_name_keeps_original_rejected_fields_through_formal_readback
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/authority-failed-preparation.png
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/authority-failed-cancelled.png
+TEST_PASS IMPORT_UI20_failed_preparation_cancel_has_one_visible_and_durable_terminal
+[import ipc] Error: merge incomplete
+    at error (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importState.js:13:98)
+    at ImportSagaService.finalizeSession (/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/import/importSaga.js:168:47)
+    at async /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/src/main/ipc/import.js:27:33
+    at async Session.<anonymous> (node:electron/js2c/browser_init:2:118313) {
+  code: 'invalid_import_state',
+  retryable: false
+}
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/authority-merge-cancel-before.png
+TEST_PASS IMPORT_UI21_pending_compatibility_merge_cannot_write_after_acknowledged_cancellation
+TEST_SCREENSHOT /Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant/artifacts/data-import-safety-audit/ui/authority-merge-cancel-after.png
+TEST_PASS IMPORT_UI22_decided_merge_cancellation_reports_saved_data_and_original_receipt
+TEST_SUMMARY 22/22 passed, 0 failed

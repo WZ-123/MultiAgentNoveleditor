@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-10-18T21:39:17.290010+00:00",
+  "head": "60efc03e9c68486baafc39fd0577a345f6433131",
+  "workspace": "/Users/potablewater/.codex/worktrees/968c/MultiAgentNovelAssistant",
+  "frozenSourceCount": 54,
+  "frozenSourceMismatches": [],
+  "javascriptSyntaxFiles": 47,
+  "syntaxFailures": [],
+  "gitDiffCheck": {
+    "exitCode": 0,
+    "output": ""
+  },
+  "excludedWritingSources": [
+    "src/main/codex-runtime/",
+    "src/main/mcp/",
+    "src/components/AiChatPanel.jsx",
+    "src/components/CharacterEditDialog.jsx"
+  ],
+  "excludedDiff": [],
+  "localDocumentLinkFailures": [],
+  "missingTestScriptFiles": [],
+  "executions": {
+    "unit": {
+      "command": "npm test -- test:unit",
+      "exitCode": 0,
+      "log": "authority-unit-release.log"
+    },
+    "counterAudit": {
+      "command": "npm test -- test:import-authority-audit",
+      "exitCode": 0,
+      "log": "authority-adversarial-release.log"
+    },
+    "build": {
+      "command": "npx vite build",
+      "exitCode": 0,
+      "log": "authority-build-release.log"
+    },
+    "ui": {
+      "command": "node scripts/run-import-saga-ui-e2e.js",
+      "exitCode": 0,
+      "status": "passed",
+      "diagnosticId": "diag-8611558d-aa15-473f-8385-d52e712eb0fd",
+      "log": "authority-ui-release.log"
+    }
+  },
+  "limits": [
+    "No original workspace, mainline integration or release operated in this phase.",
+    "UI uses deterministic input producers/transport and file-dialog fixtures, with real IPC and persistence.",
+    "Real backend process termination is covered, not hardware power-loss or full Electron process-kill UI.",
+    "Node v25.8.0 differs from project declaration 24.19.0; no cross-platform package acceptance."
+  ],
+  "status": "passed"
+}

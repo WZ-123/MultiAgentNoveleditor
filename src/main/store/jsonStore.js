@@ -44,16 +44,10 @@ async function readAllJson(dir) {
 }
 
 async function deleteFile(file) {
-  try {
-    await fsp.unlink(file);
-  } catch (err) {
-    if (err.code !== 'ENOENT') throw err;
-  }
+  return require('./projectTransactions').writeFile(file, null);
 }
-
 async function appendJsonl(file, line) {
-  await fsp.mkdir(path.dirname(file), { recursive: true });
-  await fsp.appendFile(file, JSON.stringify(line) + '\n', 'utf8');
+  return require('./projectTransactions').appendFile(file, JSON.stringify(line) + '\n');
 }
 
 async function readJsonl(file) {

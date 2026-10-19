@@ -1,5 +1,6 @@
+import { FactReviewDialog } from './FactReviewDialog.jsx';
 import { committedSections } from './chatRunState.mjs';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { User, Globe, Book, Pen, Calendar, Loader2, Edit3, Save, X, Sparkles, Package, Plus, ShieldAlert, Trash2 } from 'lucide-react';
 import { CharacterEnrichPanel } from './CharacterEnrichPanel.jsx';
 import { CharacterEditDialog } from './CharacterEditDialog.jsx';
@@ -86,6 +87,25 @@ export function DataTabContent({ dataType, novelId }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [externalChange, setExternalChange] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [pendingFactReview, setPendingFactReview] = useState(null);
+  const [regenerationReview, setRegenerationReview] = useState(null);
+  const currentNovelRef = useRef(novelId);
+  currentNovelRef.current = novelId;
+  useEffect(() => { setRegenerationReview(null); setRegenerating(false); setShowEnrichPanel(false); }, [novelId]);
+  useEffect(() => {
+    let cancelled = false;
+    setPendingFactReview(null);
+    if (dataType === 'characters' && !showEnrichPanel && novelId && mana?.novel?.listReview) {
+      mana.novel.listReview(novelId).then((reviews) => {
+        if (cancelled) return;
+        const first = reviews[0];
+        if (!first) return;
+        if (first.kind === 'regeneration' && !first.fields.length) setRegenerationReview({ ...first, reviewId: first.id, novelId, characters: first.candidates.length, removed: first.plan.changes.filter((c) => c.after === null).length });
+        else setPendingFactReview(first.id);
+      }).catch((e) => { if (!cancelled) setSaveFeedback(e.message); });
+    }
+    return () => { cancelled = true; };
+  }, [novelId, dataType, refreshKey, showEnrichPanel]);
   // Hierarchical outline state
   const [outlineHierarchy, setOutlineHierarchy] = useState(null);
   const [outlineCurrentFile, setOutlineCurrentFile] = useState(null);
@@ -250,10 +270,12 @@ export function DataTabContent({ dataType, novelId }) {
   const handleRegenerate = async () => {
     if (!mana?.novel || !novelId) return;
     // Double confirmation 1
-    if (!window.confirm('确定要重新生成角色卡吗？这会清空现有所有角色卡，并重新扫描小说文本提取角色。此操作不可撤销。')) {
+    if (!window.confirm('是否扫描小说并准备新的角色卡候选？提取完成后需审阅确认才会替换现有角色卡。')) {
       return;
     }
+    const targetNovelId = novelId;
     setRegenerating(true);
+    setSaveFeedback('');
     try {
       const check = await mana.novel.regenerateCharacters(novelId, false);
       if (check?.needConfirm) {
@@ -263,16 +285,34 @@ export function DataTabContent({ dataType, novelId }) {
           proceed = window.confirm(`该小说共约 ${check.wordCountWan} 万字，重新生成角色卡将消耗较多时间与 API 费用。是否继续？`);
         }
         if (proceed) {
-          const result = await mana.novel.regenerateCharacters(novelId, true);
-          setSaveFeedback(`已重新生成 ${result.characters} 个角色`);
-          setTimeout(() => setSaveFeedback(''), 4000);
-          setRefreshKey((k) => k + 1);
+          const prepared = await mana.novel.regenerateCharacters(novelId, true);
+          if (currentNovelRef.current === targetNovelId) {
+            if (prepared.fields?.length) setPendingFactReview(prepared.reviewId);
+            else setRegenerationReview({ ...prepared, novelId: targetNovelId });
+          }
         }
       }
     } catch (err) {
-      setError(err?.message || String(err));
+      if (currentNovelRef.current === targetNovelId) setSaveFeedback(`重新生成失败: ${err?.message || String(err)}`);
     }
-    setRegenerating(false);
+    if (currentNovelRef.current === targetNovelId) setRegenerating(false);
+  };
+
+  const finishRegenerationReview = async (approved) => {
+    const review = regenerationReview;
+    if (!review || review.novelId !== novelId) return;
+    setRegenerating(true);
+    try {
+      const result = await mana.novel.regenerateCharacters(review.novelId, true, { reviewId: review.reviewId, approved });
+      if (currentNovelRef.current !== review.novelId) return;
+      setRegenerationReview(null);
+      setSaveFeedback(result.cancelled ? '已保留现有角色卡' : `已重新生成 ${result.characters} 个角色`);
+      if (!result.cancelled) setRefreshKey((key) => key + 1);
+    } catch (error) {
+      if (currentNovelRef.current === review.novelId) setSaveFeedback(`角色替换失败: ${error.message || String(error)}`);
+    } finally {
+      if (currentNovelRef.current === review.novelId) setRegenerating(false);
+    }
   };
 
   const saveCharacter = async (character) => {
@@ -390,6 +430,20 @@ export function DataTabContent({ dataType, novelId }) {
   if (dataType === 'characters') {
     return (
       <div className="h-full overflow-y-auto p-4 text-sm relative">
+        {pendingFactReview && <FactReviewDialog api={mana.novel} ownerId={novelId} reviewId={pendingFactReview} onComplete={() => { setPendingFactReview(null); setRefreshKey((k) => k + 1); }} />}
+        {regenerationReview?.novelId === novelId && (
+          <div className="fixed inset-0 z-[110] bg-black/70 flex items-center justify-center p-8" role="dialog" aria-label="审阅重新生成的角色卡" data-testid="regeneration-review">
+            <div className="bg-vscode-panel-bg border border-vscode-panel-border rounded-lg w-[760px] max-w-full max-h-full flex flex-col p-4 gap-3">
+              <h2 className="text-gray-200 font-semibold">审阅角色卡候选</h2>
+              <p className="text-xs text-gray-400">候选 {regenerationReview.characters} 个，将删除旧卡 {regenerationReview.removed} 个。确认替换后保留原角色的记忆文件；审阅期间的修改会触发版本检查。</p>
+              <textarea className="w-full h-[50vh] min-h-32 bg-vscode-bg text-gray-300 text-xs font-mono p-3 resize-y" aria-label="候选角色卡完整内容" readOnly value={JSON.stringify(regenerationReview.candidates, null, 2)} />
+              <div className="flex justify-end gap-3">
+                <button disabled={regenerating} className="text-gray-300 text-xs" onClick={() => finishRegenerationReview(false)}>保留现有角色卡</button>
+                <button disabled={regenerating} className="rounded bg-blue-700 text-white px-3 py-2 text-xs" onClick={() => finishRegenerationReview(true)}>确认替换角色卡</button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-between mb-3">
           <div className="text-lg font-bold text-gray-200 flex items-center gap-2">
             <User size={18}/>角色卡 ({data.length || 0})
@@ -411,9 +465,9 @@ export function DataTabContent({ dataType, novelId }) {
             )}
             <button
               onClick={handleRegenerate}
-              disabled={regenerating}
+              disabled={regenerating || !!regenerationReview}
               className="px-2 py-0.5 bg-vscode-active-item text-gray-400 hover:text-gray-200 rounded text-xs flex items-center gap-1 disabled:opacity-40"
-              title="清空现有角色卡并重新扫描小说生成"
+              title="提取候选角色卡，审阅确认后替换"
             >
               {regenerating ? <Loader2 size={11} className="animate-spin"/> : <Pen size={11}/>}
               {regenerating ? '生成中...' : '重新生成'}

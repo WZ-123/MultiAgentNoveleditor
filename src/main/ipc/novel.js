@@ -8,11 +8,14 @@ const novelData = require('../store/novelData');
 const appConfig = require('../store/appConfig');
 const offlineLog = require('../store/offlineLog');
 const networkStatus = require('../store/networkStatus');
+const characterUpdates = require('../import/characterUpdates');
 const characterEnricher = require('../import/characterEnricher');
 const { assertFanworkCharacters } = require('../import/characterEnrichmentEligibility');
 const { extractCharacters } = require('../import/analyzer');
 const eventBus = require('../events/appEventBus');
 const clientEvents = require('../events/clientEvents');
+
+const enrichmentRuns = new Map();
 
 function notifyChapterChanged(name, action, title) {
   if (!name) return;
@@ -78,6 +81,7 @@ async function maybeLogOffline({ type, action, targetId, targetName, payload, no
       targetName: targetName || '',
       payload: payload || {},
       networkStatus: networkStatus.get(),
+      persistence: 'local_committed',
       novelId: novelId || null,
     });
   } catch (err) {
@@ -86,6 +90,22 @@ async function maybeLogOffline({ type, action, targetId, targetName, payload, no
 }
 
 function registerNovelIpc() {
+  ipcMain.handle('mana:novel:listReview', safeIpc(async (_e, { id, reviewId, decisions, approved }) => {
+    const root = (await novelsStore.pathsFor(id)).root;
+    return require('../import/reviewStore').list(root);
+  }));
+  ipcMain.handle('mana:novel:getReview', safeIpc(async (_e, { id, reviewId, decisions, approved }) => {
+    const root = (await novelsStore.pathsFor(id)).root;
+    return require('../import/reviewStore').get(root, reviewId);
+  }));
+  ipcMain.handle('mana:novel:decideReview', safeIpc(async (_e, { id, reviewId, decisions, approved }) => {
+    const root = (await novelsStore.pathsFor(id)).root;
+    return require('../import/reviewStore').decide(root, reviewId, decisions);
+  }));
+  ipcMain.handle('mana:novel:finishReview', safeIpc(async (_e, { id, reviewId, decisions, approved }) => {
+    const root = (await novelsStore.pathsFor(id)).root;
+    return require('../import/reviewStore').finish(root, reviewId, approved);
+  }));
   // ---- Network status reporting from renderer ----
   ipcMain.handle('mana:networkStatus:set', safeIpc(async (_e, { status }) => {
     networkStatus.set(status);
@@ -194,7 +214,7 @@ function registerNovelIpc() {
       : null;
     const snapshot = await buildChapterSaveSnapshot(id, np.root, result.name || name, finalMeta);
     notifyChapterChanged(result.name || name, 'updated', finalMeta.title || existing?.metadata?.title || null);
-    await maybeLogOffline({ type: 'chapter', action: 'update', targetId: name, targetName: name, payload: { name, content: content?.slice(0, 500) }, novelId: id });
+    await maybeLogOffline({ type: 'chapter', action: 'update', targetId: name, targetName: name, payload: { name, content, metadata: finalMeta }, novelId: id });
     return {
       ...result,
       ...snapshot,
@@ -379,11 +399,17 @@ function registerNovelIpc() {
   ipcMain.handle('mana:novel:writeStyleMemory', safeIpc(async (_e, { id, text }) => {
     const np = await novelsStore.pathsFor(id);
     const result = await novelData.writeStyleMemory(np.root, text);
-    await maybeLogOffline({ type: 'style', action: 'update', targetId: 'style', targetName: '文风记忆', payload: { text: text?.slice(0, 500) }, novelId: id });
+    await maybeLogOffline({ type: 'style', action: 'update', targetId: 'style', targetName: '文风记忆', payload: { text }, novelId: id });
     return result;
   }));
 
   // ---- Character enrichment (manual web search) ----
+  ipcMain.handle('mana:novel:cancelEnrichment', safeIpc(async (_e, { id, runId }) => {
+    const active = enrichmentRuns.get(id);
+    if (!active || active.runId !== runId) throw new Error('enrichment run does not belong to this novel');
+    active.controller.abort(new DOMException('用户已取消角色补全', 'AbortError'));
+    return { cancelled: true, runId };
+  }));
   ipcMain.handle('mana:novel:enrichCharacters', safeIpc(async (_e, { id, fanworkName, characterIds, runId }) => {
     const np = await novelsStore.pathsFor(id);
     let characters = await novelData.listCharacters(np.root);
@@ -413,6 +439,10 @@ function registerNovelIpc() {
     }
 
     const resolvedRunId = eventBus.ensureRunId(runId || `enrich-${id}-${Date.now()}`);
+    if (enrichmentRuns.has(id)) throw new Error('该小说已有角色补全任务正在运行');
+    const controller = new AbortController();
+    enrichmentRuns.set(id, { runId: resolvedRunId, controller });
+    try {
 
     // Progress callback emits events via eventBus so renderer can subscribe
     let progressQueue = Promise.resolve();
@@ -421,7 +451,7 @@ function registerNovelIpc() {
         runId: resolvedRunId,
         subagentId: 'character-enricher',
         kind: 'progress',
-        data: evt,
+        data: evt.status === 'complete' ? { ...evt, status: 'extracted' } : evt,
       })).catch(() => {});
     };
 
@@ -429,32 +459,28 @@ function registerNovelIpc() {
       characters,
       null,
       'zh-CN',
-      { fanworkNameOverride: resolvedFanworkName, onProgress }
+      { fanworkNameOverride: resolvedFanworkName, onProgress, abortSignal: controller.signal }
     );
     await progressQueue;
 
-    // Write enriched characters back to disk
-    let written = 0;
-    for (const ch of enriched) {
-      if (ch._enrichmentStatus === 'success') {
-        await novelData.writeCharacter(np.root, ch);
-        written++;
-      }
-    }
+    const saved = await characterUpdates.saveEnrichment(np.root, characters, enriched, { runId: resolvedRunId, abortSignal: controller.signal });
+    const written = saved.written;
 
     await eventBus.emit({
       runId: resolvedRunId,
       subagentId: 'character-enricher',
       kind: 'complete',
-      data: { written, total: characters.length },
+      data: { ...saved, charName: '_all', status: 'complete', successCount: written, failCount: saved.failures.length, total: characters.length, message: saved.needReview ? '已生成候选，待逐项审阅后保存' : `正式保存 ${written}/${characters.length} 个角色；字段冲突 ${saved.conflicts.length}，失败 ${saved.failures.length}${saved.cancelled ? '（已取消）' : ''}` },
     });
 
-    return { runId: resolvedRunId, written, total: characters.length, fanworkName: resolvedFanworkName };
+    return { ...saved, runId: resolvedRunId, written, total: characters.length, fanworkName: resolvedFanworkName };
+    } finally { if (enrichmentRuns.get(id)?.runId === resolvedRunId) enrichmentRuns.delete(id); }
   }));
 
   // ---- Regenerate characters from novel text ----
-  ipcMain.handle('mana:novel:regenerateCharacters', safeIpc(async (_e, { id, confirmed }) => {
+  ipcMain.handle('mana:novel:regenerateCharacters', safeIpc(async (_e, { id, confirmed, reviewId, approved }) => {
     const np = await novelsStore.pathsFor(id);
+    if (reviewId) return characterUpdates.commitRegeneration(np.root, reviewId, approved === true);
 
     // 1. Read all chapters and compute word count
     const chapters = await novelData.listChapters(np.root);
@@ -475,33 +501,7 @@ function registerNovelIpc() {
       return { needConfirm: true, wordCount, wordCountWan, isLong: wordCount > 100000 };
     }
 
-    // 3. Execute: clear existing characters, then extract new ones
-    const charDir = path.join(np.root, 'characters');
-    try {
-      const files = await fs.readdir(charDir);
-      for (const f of files) {
-        if (f.endsWith('.json')) await fs.unlink(path.join(charDir, f));
-      }
-    } catch (err) {
-      if (err.code !== 'ENOENT') throw err;
-    }
-
-    const extracted = await extractCharacters(fullText);
-    const chars = Array.isArray(extracted) ? extracted : [];
-
-    // Write each character
-    const usedNames = new Set();
-    for (const ch of chars) {
-      let baseName = ch.id || ch.name || 'char';
-      let fname = baseName;
-      let dupIdx = 1;
-      while (usedNames.has(fname)) { fname = `${baseName}-${dupIdx++}`; }
-      usedNames.add(fname);
-      const charObj = { ...ch, id: ch.id || fname };
-      await novelData.writeCharacter(np.root, charObj);
-    }
-
-    return { characters: chars.length, wordCount, wordCountWan };
+    return { ...await characterUpdates.prepareRegeneration(np.root, extractCharacters, fullText), wordCount, wordCountWan };
   }));
 
   // ---- Search across novel project ----
