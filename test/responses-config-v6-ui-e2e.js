@@ -60,6 +60,7 @@ async function runResponsesConfigV6UiE2E(win) {
     await shot('model-config-v8-selection.png', '[data-testid="setup-editor"]');
     await evaluate(`qa.click('验证并使用');`);
     await evaluate(`qa.op('failed')`);
+    await evaluate(`qa.wait(()=>document.querySelector('[data-testid="setup-progress"]')?.innerText.includes('Fixture text verification rejected'))`);
     assert(await evaluate(`document.querySelector('[data-testid="setup-progress"]').innerText.includes('Fixture text verification rejected')`), 'text failure shown inline');
     const first = (await config.load()).setupOperations[0];
     await evaluate(`(async()=>{document.querySelector('[aria-label="关闭配置"]').click();await qa.wait(()=>document.querySelector('[data-testid="pending-setups"]'));})()`);
@@ -68,6 +69,7 @@ async function runResponsesConfigV6UiE2E(win) {
     await evaluate(`(async()=>{qa.click('继续配置',document.querySelector('[data-testid="pending-setups"]'));await qa.wait(()=>document.querySelector('[data-testid="setup-progress"]'));})()`);
     await evaluate(`qa.click('验证并使用');`);
     await evaluate(`qa.op('awaiting_chat')`);
+    await evaluate(`qa.wait(()=>document.querySelector('[data-testid="setup-progress"]')?.innerText.includes('仅用于聊天'))`);
     assert(await evaluate(`document.querySelector('[data-testid="setup-progress"]').innerText.includes('仅用于聊天')`), 'tools failure offers chat-only');
     assert((await config.load()).activeSelection === null, 'tool failure does not auto-activate');
     await shot('model-config-v8-tools-failed.png', '[data-testid="setup-progress"]');

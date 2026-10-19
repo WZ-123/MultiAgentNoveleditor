@@ -1,0 +1,37 @@
+sandbox_extension_issue_file_to_process failed for /private/tmp/mana-runtime-selective-20261019/head/node_modules/electron/dist/Electron.app: 1 (Operation not permitted)
+TEST_PASS empty state
+TEST_PASS 500 models paginated to 20
+TEST_PASS 500-model count
+TEST_PASS pagination works
+TEST_PASS model search
+TEST_PASS text failure shown inline
+TEST_PASS unfinished attempt explains failure and impact
+TEST_PASS tools failure offers chat-only
+TEST_PASS tool failure does not auto-activate
+TEST_PASS retries reuse one credential
+TEST_PASS retries reuse one connection
+TEST_PASS retry only tools and enable novel operations
+TEST_PASS parameter draft preserves active settings
+TEST_PASS completed setup edits persist after verification
+TEST_PASS manual parameter provenance persists
+TEST_PASS reopened editor retains manual parameters
+TEST_PASS editing URL preserves active route before verification
+TEST_PASS stale-save button removed
+TEST_PASS login automatically loads subscription models once
+TEST_PASS login leaves API model active until selected
+TEST_PASS refresh leaves current model unchanged
+TEST_PASS manual ID available when listing fails
+TEST_PASS manual model completes native tool verification
+TEST_PASS manual connection reuses existing credential
+TEST_PASS pending saved-model attempt is understandable and dismissible
+TEST_PASS the selected pending attempt is removed from disk
+TEST_PASS deleting one attempt preserves all other attempts
+TEST_PASS discard leaves the closed configuration editor closed
+TEST_PASS discarding attempt keeps active model
+TEST_PASS discarding attempt keeps saved connections
+TEST_PASS narrow settings have no horizontal overflow
+TEST_PASS narrow primary action is not covered by chat drawer
+TEST_PASS public snapshot redacts key
+TEST_PASS no renderer errors
+responses-config-v8-ui: ok (34 checks)
+responses-config-v6-runner: ok

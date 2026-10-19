@@ -1,0 +1,69 @@
+{
+  "base": "f06212e",
+  "source": {
+    "src/components/ProviderSettingsPanel.jsx": {
+      "commit_sha256": "c0289250b4428c227e422f7de93112bde041fcd0da45d32133bf606f5e1e21c1",
+      "workspace_sha256": "c0289250b4428c227e422f7de93112bde041fcd0da45d32133bf606f5e1e21c1"
+    },
+    "src/components/modelSetupId.mjs": {
+      "commit_sha256": "a8aec9fde705f4b785c9d939cb831d3e4dc8f4ef99f05c25eae939f8be1a856c",
+      "workspace_sha256": "a8aec9fde705f4b785c9d939cb831d3e4dc8f4ef99f05c25eae939f8be1a856c"
+    },
+    "src/main/codex-runtime/codexSessionService.js": {
+      "commit_sha256": "228a2014e765aa747cde6966c24e57c52ecc1bfb0a3f9e2e422604413facb0cb",
+      "workspace_sha256": "18573118cfad47d39867c8953943d34000668a770f5050b783b16716eda06454"
+    },
+    "src/main/codex-runtime/jsonRpcClient.js": {
+      "commit_sha256": "d45bc4c40ea0421052ed5b192b5d11e5cc9331d5632c610f62da41ea7e93ee96",
+      "workspace_sha256": "d45bc4c40ea0421052ed5b192b5d11e5cc9331d5632c610f62da41ea7e93ee96"
+    },
+    "src/main/codex-runtime/processManager.js": {
+      "commit_sha256": "b20cfb4e19d83d3b67029fcae38ee4d93513a071d0981493328167a447a1d6af",
+      "workspace_sha256": "b20cfb4e19d83d3b67029fcae38ee4d93513a071d0981493328167a447a1d6af"
+    },
+    "scripts/run-unit-tests.js": {
+      "commit_sha256": "8baf7ddf65d45263bc7b406e101bdb21836a3c8dfd33828287589a308d87f08a",
+      "workspace_sha256": "123e5aea67458d033103d1e90d9294728c9af90ca1fc27db9de4e72f94f4adbb"
+    },
+    "test-scripts.json": {
+      "commit_sha256": "313451f895ea91ed4928fdfd28e083d9609630fb53b6b8aa16c8e0ce1e91bfcd",
+      "workspace_sha256": "6b4fe3ef063f449be198d5a4774cef68135f872b4a77d15de3de6501f46cb539"
+    },
+    "test/model-setup-id.test.js": {
+      "commit_sha256": "40cf06fa55743b56e0b016100fa8d5341187dbf4182253d766666bf5021e360f",
+      "workspace_sha256": "40cf06fa55743b56e0b016100fa8d5341187dbf4182253d766666bf5021e360f"
+    },
+    "test/runtime-recovery-confirmation.test.js": {
+      "commit_sha256": "ee27a4e26fec5cbb0cc0ddacbe7697c3818ab4582a4561a24f07d6323d323e26",
+      "workspace_sha256": "ee27a4e26fec5cbb0cc0ddacbe7697c3818ab4582a4561a24f07d6323d323e26"
+    },
+    "test/runtime-transport-recovery.test.js": {
+      "commit_sha256": "ca04dbedfb300ca5a49c0177cf86ed9d1bb8e2530dd6a07b6dcaaa91a662fc66",
+      "workspace_sha256": "ca04dbedfb300ca5a49c0177cf86ed9d1bb8e2530dd6a07b6dcaaa91a662fc66"
+    },
+    "test/responses-config-v6-ui-e2e.js": {
+      "commit_sha256": "f01b53ffd15a590794604daafd057b6645df4e951ada6547acf362945a5316dd",
+      "workspace_sha256": "f01b53ffd15a590794604daafd057b6645df4e951ada6547acf362945a5316dd"
+    },
+    "test/model-setup-lan-http-ui.cjs": {
+      "commit_sha256": "dc24b4b197751e0364a8503398d47e2f0977f8c93a86938a73c77b23c7c12b05",
+      "workspace_sha256": "dc24b4b197751e0364a8503398d47e2f0977f8c93a86938a73c77b23c7c12b05"
+    },
+    "scripts/run-model-setup-lan-http-ui.js": {
+      "commit_sha256": "bfae0056b38c40417679b2477017d6a93a91f33923214ba1d6ebc3095262e50e",
+      "workspace_sha256": "bfae0056b38c40417679b2477017d6a93a91f33923214ba1d6ebc3095262e50e"
+    },
+    "knowledge-base/codex-native-runtime-contract.md": {
+      "commit_sha256": "e054af519ff079ffee9e20847ab8f89c229bdee0b05512a75f33b3697e23fe1d",
+      "workspace_sha256": "4b724289f75e1198d157218f430c12fd6a80eac80f4cbd71f345b5fd7a775b71"
+    },
+    "knowledge-base/model-config-v8.md": {
+      "commit_sha256": "38df642ba23847b37608f45f2998af68933607052787551e24794e222c4f69e2",
+      "workspace_sha256": "38df642ba23847b37608f45f2998af68933607052787551e24794e222c4f69e2"
+    },
+    "knowledge-base/edge-cases.md": {
+      "commit_sha256": "6297efe9de9355a25f3ac6200263c09c947c0e5162e013ee65d0d24bd5270455",
+      "workspace_sha256": "58ec16811a9f6c562409f5d232f2b40aa2485effc830ff10b20f08ed32a34cc9"
+    }
+  }
+}

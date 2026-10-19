@@ -1,0 +1,291 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:unit
+
+✔ same-route replacement clears process-local residency and bootstraps each client generation once (3.36775ms)
+✔ replacement resumes the persisted thread without creating, importing, or replacing conversation history (0.729583ms)
+✔ concurrent ensure calls wait for one shared successful bootstrap (0.353084ms)
+✔ failed bootstrap at rpc:skills/extraRoots/set remains retryable on the same manager (0.454416ms)
+✔ failed bootstrap at rpc:skills/list remains retryable on the same manager (0.35675ms)
+✔ late bootstrap completion after exit cannot mark a stale client initialized (0.411041ms)
+✔ late bootstrap completion after replacement cannot mark a stale client initialized (0.401125ms)
+✔ exit during thread resume cannot restore stale residency or silently replace the thread (0.407208ms)
+✔ an obsolete client cannot skip resume merely because its thread is already known (0.321584ms)
+✔ confirmation ledger failure retains the request and retry answers only after all persistence (1.329125ms)
+✔ confirmation progress failure retains the request and retry answers only after all persistence (0.639625ms)
+✔ confirmation checkpoint failure retains the request and retry answers only after all persistence (0.273917ms)
+✔ confirmation history-checkpoint failure retains the request and retry answers only after all persistence (0.24875ms)
+✔ concurrent same-decision confirmations share persistence and answer once; a changed decision is rejected (0.258542ms)
+✔ decline after ledger failure retries once without installing an approval (0.265292ms)
+✔ decline after progress failure retries once without installing an approval (0.256583ms)
+✔ decline after checkpoint failure retries once without installing an approval (0.253875ms)
+✔ decline after history-checkpoint failure retries once without installing an approval (0.252958ms)
+✔ interrupt during pending ledger cancels once and cannot resurrect approval (0.331875ms)
+✔ interrupt during pending progress cancels once and cannot resurrect approval (0.271667ms)
+✔ interrupt during pending checkpoint cancels once and cannot resurrect approval (0.522292ms)
+✔ interrupt during pending history-checkpoint cancels once and cannot resurrect approval (0.318459ms)
+✔ exit during pending ledger cancels once and cannot resurrect approval (2.561084ms)
+✔ exit during pending progress cancels once and cannot resurrect approval (2.634958ms)
+✔ exit during pending checkpoint cancels once and cannot resurrect approval (4.074709ms)
+✔ exit during pending history-checkpoint cancels once and cannot resurrect approval (4.018417ms)
+✔ interrupt during explicit approval authorization cannot create a late approval (0.533834ms)
+✔ interrupt during automatic approval authorization cannot create a late approval (0.251292ms)
+✔ interrupt during automatic approval ledger cannot create a late approval (0.222375ms)
+✔ interrupt during automatic approval progress cannot create a late approval (0.610417ms)
+✔ exit during explicit approval authorization cannot create a late approval (2.057ms)
+✔ exit during automatic approval authorization cannot create a late approval (0.391875ms)
+✔ exit during automatic approval ledger cannot create a late approval (3.529791ms)
+✔ exit during automatic approval progress cannot create a late approval (0.515709ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35.400458
+runtime-transport-recovery: ok (real manager/client, fake child streams; handshake, restart, stale exit, closed approval transport)
+model setup IDs: ok (native, insecure HTTP crypto, missing crypto, uniqueness, handler behavior and wiring)
+PASS PA-01 A selectable alternative name must not invalidate later fields of an ID-less place
+PASS PA-02 Cancellation acknowledged before a pending compatibility submission enters commit must prevent formal writes
+PASS PA-03 Cancelling a retryable failed promotion must persist and return cancelled
+PASS PA-04 Reading an active analysis from another service must not declare it interrupted
+PASS AUTH-05 A stale snapshot cannot replace cancelled or manufacture a commit decision
+PASS AUTH-06 All direct compatibility mutation APIs respect the same cancellation
+PASS AUTH-07 Concurrent adoption of a legacy staging project returns one run identity
+PASS AUTH-08 A real dead analysis owner is recovered explicitly with a new generation
+PASS AUTH-09 A legacy irreversible promotion decision wins over its contradictory old cancelled run
+PASS AUTH-10 A failed authority revision save rolls back the unacknowledged merge choice
+PASS AUTH-11 A failed authority save rolls back reviewed domain bytes and the review terminal
+PASS AUTH-12 Unregistered promotion recovery cannot adopt files absent from its manifest
+PASS AUTH-13 The run decision recovers even when the physical checkpoint was not advanced
+PASS AUTH-14 A dead source owner resumes its saved preview and metadata before staging exists
+PASS AUTH-15 A legacy committed merge is adopted from its verified file-transaction receipt
+PASS AUTH-16 A failed parsed source with no local worker claims a fresh token and stages its saved request
+PASS AUTH-17 Candidate defaults and omissions are not authorization to erase existing facts
+PASS nested storage scopes keep their own journal when addressed through a parent path alias
+PASS existing timeline rejects retain originals by identity, including reordered and unmentioned events
+PASS existing nested entities reject to original identity and fields; rejected new entities are absent
+PASS promotion interrupted after target rename resumes the same operation and receipt
+PASS cancel after commit decision reports the completed project and its receipt
+PASS cancel before commit decision creates no formal project and cannot resume
+PASS each persisted completion boundary recovers before reads and keeps one project/receipt
+PASS interrupted promotion rejects external changes without adopting or overwriting them
+PASS separate service instances serialize finalization and return the same receipt
+PASS rejecting world facts preserves the original Markdown bytes as well as structured data
+PASS cross-process cancellation before decision is durable and repeatable
+PASS interruption during ownership bootstrap recovers its journal before preparing again
+PASS callbacks outliving a lease or transaction cannot inherit expired lock ownership
+PASS recovery never redirects a registry identity that now belongs to a different directory
+PASS a durable promotion decision reserves its target across process death
+PASS corrupt promotion records stop recovery without replacing the record or creating a project
+PASS different promotions preserve both registry entries; committed replay preserves later edits
+PASS SIGKILL after rename recovers durable ownership after stale process locks expire
+PASS recovery after formal registration keeps later user edits and completes the original receipt
+PASS schema 1 pending decisions bind to saved originals after a fresh process restart
+PASS cancellation between target reservation and commit decision wins before publication
+PASS legacy identity migration and CAS use one logical character and preserve memory
+PASS ordinary save queues behind batch commit and the later user edit wins
+PASS rollback owns attempted writes only, even when an untouched file equals proposed bytes
+PASS quote contradiction and related-page mention cannot become accepted facts
+PASS persisted decisions survive a fresh process; unresolved and stale reviews cannot commit
+PASS real process death after rename recovers before any ordinary save and exact-plan retry is idempotent
+PASS binary resources roll back byte-for-byte and concurrent processes serialize domain updates
+PASS rejecting a new entity does not create an unnamed authoritative card; timeline rejections preserve positions
+PASS recovery stops at third-party bytes and never overwrites them or accepts a later save
+PROJECT_TRANSACTION_REVIEW 9/9 passed
+PASS bounded chunks preserve all bytes, including oversized paragraphs and emoji
+PASS identity rejects traversal/symlinks/collisions and preserves special identities
+PASS production offline IPC acknowledges saved content without replay; legacy/unsupported stay pending
+PASS pending offline writes share the project transaction with normal saves and retain durable receipts
+PASS regeneration failure/empty/invalid retains cards, index and memory; approval binds version
+PASS analysis entry bounds total concurrency, uses previous chunks, preserves world and duplicate IDs through promotion
+PASS long source hints are not truncated; checkpoint identity and reviewed source versions include them
+[analyzer] characters chunk 0 failed: fixture provider failed
+[analyzer] factions chunk 0 failed: fixture provider failed
+[analyzer] timeline chunk 0 failed: fixture provider failed
+[analyzer] world chunk 0 failed: fixture provider failed
+[analyzer] outline chunk 0 failed: fixture provider failed
+[analyzer] style chunk 0 failed: fixture provider failed
+[analyzer] characters chunk 1 failed: fixture provider failed
+[analyzer] factions chunk 1 failed: fixture provider failed
+[analyzer] timeline chunk 1 failed: fixture provider failed
+[analyzer] world chunk 1 failed: fixture provider failed
+[analyzer] outline chunk 1 failed: fixture provider failed
+[analyzer] style chunk 1 failed: fixture provider failed
+[analyzer] characters chunk 2 failed: fixture provider failed
+[analyzer] factions chunk 2 failed: fixture provider failed
+[analyzer] timeline chunk 2 failed: fixture provider failed
+[analyzer] world chunk 2 failed: fixture provider failed
+[analyzer] outline chunk 2 failed: fixture provider failed
+[analyzer] style chunk 2 failed: fixture provider failed
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+[analyzer] _parseJsonArray raw start: [{"id":"x","name":"可恢复"},{"id":"
+[analyzer] _parseJsonArray attempting truncated JSON recovery...
+[analyzer] recovered 1 objects from truncated JSON
+PASS all failure never writes empty success; truncated JSON stays partial and keeps original domain
+PASS merge complete plan survives restart, rejects stale review, records each actual resource and idempotent receipt
+PASS committed storage receipt survives a failed UI checkpoint and never replays over later edits
+PASS fact conflicts preserve values, relationships and chunk provenance instead of choosing longer
+[enricher] fanwork="测试原作" sphere="global" (fixture, fixture)
+[enricher] processing 2 characters with concurrency=6
+[enricher] 2 个角色 → 1 补全成功, 1 失败/跳过
+[enricher] fanwork="测试原作" sphere="global" (fixture, fixture)
+[enricher] processing 1 characters with concurrency=6
+[enricher] 1 个角色 → 1 补全成功, 0 失败/跳过
+[enricher] fanwork="测试原作" sphere="global" (fixture, fixture)
+[enricher] processing 2 characters with concurrency=6
+PASS real enrichment entry executes helpers, isolates failures, validates identity and supports cancellation
+[enricher] fanwork="测试原作" sphere="global" (fixture, fixture)
+[enricher] processing 1 characters with concurrency=6
+[enricher] 1 个角色 → 1 补全成功, 0 失败/跳过
+PASS web extraction covers the fetched page tail in bounded requests and retains unconfirmed provenance
+PASS enrichment three-way save preserves concurrent user edits, new fields, deletions and task ownership
+[analyzer] world chunk 0 failed: world task failed
+PASS Saga records partial analysis, binds compatibility merge and completed retry never re-promotes
+PASS cancelled analysis cannot be resurrected by a late completion or failure
+DATA_IMPORT_SAFETY 16/16 passed (production storage/IPC with fake model and web transport)
+TEST_PASS import-saga-regression
+TEST_PASS import-atomic-boundary-regression
+IMPORT-B05 passed: duplicate normalized character names merge to one canonical record with conflicting assertions, provenance and deduplicated relationships.
+TEST_PASS CEVR1_rejects_lycaon_contamination_for_nico
+TEST_PASS CEVR2_requires_character_and_work_in_fetched_evidence
+
+TEST_SUMMARY 1/1 passed, 0 failed
+TEST_DONE
+TEST_PASS delayed save preserves typing and advances only saved baseline
+TEST_PASS overlapping manual/autosave writes serialize with successful predecessor base
+TEST_PASS debounced closure uses fresh saved baseline rather than typing-time base
+TEST_PASS failed writes preserve draft and do not poison queue
+TEST_PASS explicit verified base is not silently rebased
+TEST_PASS successful AI replacement applies only if editor has not changed
+TEST_PASS late project response cannot alter other project editor
+TEST_PASS switch flush waits for disk and cancels only source-project debounce
+TEST_PASS typing during switch flush is saved before reset
+TEST_PASS typing during structure flush is saved before project reset
+TEST_PASS failed structure write remains a switch barrier until retry succeeds
+TEST_PASS failed switch flush leaves source draft visible
+TEST_PASS manual flush cancels debounce and preserves typing during save
+TEST_PASS restore cancels stale debounce and follows pending save
+TEST_PASS restore preserves typing made after the restore request
+TEST_PASS project keys isolate simultaneous chapter writes
+TEST_SUMMARY 16/16 passed, 0 failed
+TEST_DONE
+TEST_PASS CSS1_ipc_save_returns_normalized_snapshot: saveChapter IPC now returns title/displayName metadata alongside the file result
+TEST_PASS CSS2_renderer_reconciles_after_save: manual save, autosave, and close-tab save all reapply the canonical title/displayName snapshot
+
+TEST_SUMMARY 2/2 passed, 0 failed
+TEST_DONE
+novel structure persistence: ok (disk round trips, empty groups, duplicate titles, legacy recovery, no loss)
+PASS next-chapter new-chapter intent does not match updating chapters or negated new writes
+PASS next-chapter actual parser does not count 100000 old words toward a 3000-word next chapter
+PASS next-chapter bounded range honors both 5 percent boundaries and never rolls back a save
+PASS next-chapter unrelated existing chapter edits do not satisfy new writing
+PASS next-chapter no writes, stale hashes, missing creates and deleted chapters cannot count
+PASS next-chapter current chapter and explicit whole-novel targets remain distinct
+PASS next-chapter generic writing and legacy constraints count saved chapters, never every chapter
+PASS next-chapter an empty first attempt can bind the chapter saved by a continuation
+PASS next-chapter create followed by replacement retains new-chapter identity
+PASS next-chapter persisted continuation binds original chapter and excludes unrelated later saves
+next-chapter-wordcount: ok (10 scenarios)
+(node:33202) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///private/tmp/mana-runtime-selective-20261019/head/test/chat-feedback-payload.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /private/tmp/mana-runtime-selective-20261019/head/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS CFP1_context_mode_includes_recent_tool_calls_and_checkpoint
+PASS CFP2_opinion_mode_omits_logs_and_sensitive_context
+PASS CFP3_default_omits_tool_inputs_results_and_body_even_with_screenshot
+PASS CFP4_context_mode_bounds_messages_and_includes_native_tool_records
+PASS FS1_submitFeedback_has_sync_metadata
+PASS FS2_updateSyncMeta_updates_status_and_index
+PASS FS3_listPendingForSync_filters_correctly
+PASS FS4_recoverStuckSyncing_resets_to_pending
+PASS FS5_computeNextRetryAt_exponential_backoff
+PASS FS6_classifyError_network_errors
+PASS FS7_classifyError_feishu_errors
+PASS FS8_fieldMapper_maps_payload_correctly
+PASS FS9_syncLock_acquire_release
+PASS FS10_fieldMapper_attachment_field
+PASS feedback-security invalid IDs rejected across storage and IPC
+PASS feedback-security duplicate concurrent submissions retain first record and attachment
+PASS feedback-security parallel records retained in index
+PASS feedback-security failed publication leaves no partial record and can be retried
+[feedbackSync] Sent feedback fb-mabc1234-abc123 to Feishu record fixture-record
+PASS feedback-security safe legacy records remain readable and syncable
+PASS feedback-security attachment names cannot escape or silently replace each other
+PASS feedback-security record and index symlinks rejected without touching targets
+PASS feedback-security forged attachment paths and symlinks never uploaded
+PASS feedback-security mismatched and malformed records isolated from valid records
+[feedbackSync] Sent feedback fb-ipc to Feishu record fixture-record
+PASS feedback-security IPC screenshot submission query retry and duplicate failure
+[lanRemote] listening on http://127.0.0.1:59696
+[feedbackSync] Sent feedback fb-lan to Feishu record fixture-record
+PASS feedback-security authenticated LAN uses production feedback IPC handlers
+PASS feedback-security outbox directory symlink rejected
+feedback-path-security: ok (12 scenarios)
+chat-chain-contract: ok
+[lanRemote] listening on http://0.0.0.0:59731
+chat-chain-lan: ok
+model-metadata: ok (14 checks)
+model-config-v6: ok
+model-config-v8-setup: ok (45 checks)
+[lanRemote] listening on http://127.0.0.1:59748
+model-config-discard-ipc: ok (desktop notifications, authorized LAN, key cleanup and active selection)
+responses-verification-lifecycle: ok
+codex-native-cutover: ok
+deepseek-no-reasoning-bridge: ok
+deepseek-novella-consistency-cache: ok
+exact-duplicate-cleanup: ok
+narrative-pov-cleanup: ok
+native-novel-workspace: ok
+native-patch-read-after-write: ok
+native-existing-resource-update: ok
+task-ledger-resource-contract: ok
+writing-authorization-policy: ok
+PASS task-completion 5 percent tolerance and exact boundaries
+PASS task-completion large shortfall and excess change acceptance without rollback
+PASS task-completion partial target commits remain incomplete
+PASS task-completion normal model ending without a write is not a completed writing task
+PASS task-completion formal version changes invalidate commit evidence
+PASS task-completion interruption preserves saved evidence and marks partial persistence
+PASS task-completion complete ending requires independent review after objective checks pass
+PASS task-completion reading requires actual successful resource reads
+PASS task-completion review requires covered report while quality remains unevaluated
+PASS task-completion roleplay and plain text do not invent objective acceptance
+PASS task-completion persisted task result and progress agree after incomplete turn
+PASS task-completion explicit continuation inherits target and stable task identity
+PASS task-completion valid prior commits allow completion without rewriting finished content
+PASS task-completion continuation rejects completed goals and other conversations
+PASS task-completion ordinary new messages do not inherit an unrelated target
+PASS task-completion restricted selection continuation requires a fresh user selection
+PASS task-completion continued evidence is invalidated when saved content changes
+PASS task-completion crash recovery retains partial saves and accurate progress
+task-completion-state: ok (18 scenarios)
+codex-native-apply-patch: ok (deepseek-v4-flash)
+codex-native-apply-patch: ok (deepseek-flash)
+codex-native-apply-patch: ok (deepseek-v4-pro)
+codex-continuous-writing: ok
+codex-native-mutation-loop: ok
+novel-mcp-mutation: ok
+TEST_PASS DAIM1_minimal_rewrite_passes: a shorter direct rewrite is accepted
+TEST_PASS DAIM2_new_decorations_are_rejected: new dialogue, metaphor, atmosphere, and psychology are rejected
+TEST_PASS DAIM3_irregular_rhythm_is_preserved_unless_merge_is_explicit: paragraph flattening requires explicit paragraph-function guidance
+TEST_PASS DAIM4_not_but_target_must_be_removed: the candidate must remove the targeted skeleton across punctuation, whitespace, sentence and paragraph variants
+TEST_PASS DAIM5_not_but_target_cannot_be_introduced: a de-ai candidate cannot introduce a new not-but skeleton into clean source text
+TEST_SUMMARY 5/5 passed, 0 failed
+TEST_DONE
+unit suite: ok (41 files)

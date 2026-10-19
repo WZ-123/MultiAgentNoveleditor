@@ -5,6 +5,9 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const tests = [
+  'test/runtime-recovery-confirmation.test.js',
+  'test/runtime-transport-recovery.test.js',
+  'test/model-setup-id.test.js',
   'test/import-authority-regression.test.js',
   'test/import-transaction-p1.test.js',
   'test/project-transactions-review.test.js',

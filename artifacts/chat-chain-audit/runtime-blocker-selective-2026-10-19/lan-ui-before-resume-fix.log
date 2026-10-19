@@ -1,0 +1,5 @@
+sandbox_extension_issue_file_to_process failed for /private/tmp/mana-runtime-selective-20261019/head/node_modules/electron/dist/Electron.app: 1 (Operation not permitted)
+[lanRemote] listening on http://127.0.0.1:60324
+Error: LAN setup operation not persisted
+    at getOperation (/private/tmp/mana-runtime-selective-20261019/head/test/model-setup-lan-http-ui.cjs:47:13)
+    at async /private/tmp/mana-runtime-selective-20261019/head/test/model-setup-lan-http-ui.cjs:60:20

@@ -1,0 +1,52 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:runtime-recovery
+
+✔ same-route replacement clears process-local residency and bootstraps each client generation once (18.303375ms)
+✔ replacement resumes the persisted thread without creating, importing, or replacing conversation history (0.795625ms)
+✔ concurrent ensure calls wait for one shared successful bootstrap (0.493667ms)
+✔ failed bootstrap at rpc:skills/extraRoots/set remains retryable on the same manager (0.667458ms)
+✔ failed bootstrap at rpc:skills/list remains retryable on the same manager (0.449541ms)
+✔ late bootstrap completion after exit cannot mark a stale client initialized (0.82875ms)
+✔ late bootstrap completion after replacement cannot mark a stale client initialized (0.354125ms)
+✔ exit during thread resume cannot restore stale residency or silently replace the thread (0.441792ms)
+✔ an obsolete client cannot skip resume merely because its thread is already known (0.361458ms)
+✔ confirmation ledger failure retains the request and retry answers only after all persistence (1.46725ms)
+✔ confirmation progress failure retains the request and retry answers only after all persistence (0.463666ms)
+✔ confirmation checkpoint failure retains the request and retry answers only after all persistence (0.33125ms)
+✔ confirmation history-checkpoint failure retains the request and retry answers only after all persistence (0.361ms)
+✔ concurrent same-decision confirmations share persistence and answer once; a changed decision is rejected (0.31775ms)
+✔ decline after ledger failure retries once without installing an approval (0.762083ms)
+✔ decline after progress failure retries once without installing an approval (0.38225ms)
+✔ decline after checkpoint failure retries once without installing an approval (0.312ms)
+✔ decline after history-checkpoint failure retries once without installing an approval (0.469625ms)
+✔ interrupt during pending ledger cancels once and cannot resurrect approval (0.607084ms)
+✔ interrupt during pending progress cancels once and cannot resurrect approval (0.309667ms)
+✔ interrupt during pending checkpoint cancels once and cannot resurrect approval (0.318834ms)
+✔ interrupt during pending history-checkpoint cancels once and cannot resurrect approval (0.388417ms)
+✔ exit during pending ledger cancels once and cannot resurrect approval (2.61425ms)
+✔ exit during pending progress cancels once and cannot resurrect approval (0.491292ms)
+✔ exit during pending checkpoint cancels once and cannot resurrect approval (0.467958ms)
+✔ exit during pending history-checkpoint cancels once and cannot resurrect approval (0.60775ms)
+✔ interrupt during explicit approval authorization cannot create a late approval (0.788625ms)
+✔ interrupt during automatic approval authorization cannot create a late approval (0.283459ms)
+✔ interrupt during automatic approval ledger cannot create a late approval (0.263875ms)
+✔ interrupt during automatic approval progress cannot create a late approval (0.302708ms)
+✔ exit during explicit approval authorization cannot create a late approval (1.078708ms)
+✔ exit during automatic approval authorization cannot create a late approval (0.529125ms)
+✔ exit during automatic approval ledger cannot create a late approval (0.377583ms)
+✔ exit during automatic approval progress cannot create a late approval (0.366083ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39.556833
+runtime-transport-recovery: ok (real manager/client, fake child streams; handshake, restart, stale exit, closed approval transport)
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:model-setup-id
+
+model setup IDs: ok (native, insecure HTTP crypto, missing crypto, uniqueness, handler behavior and wiring)

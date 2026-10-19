@@ -114,8 +114,8 @@ class CodexProcessManager extends EventEmitter {
   }
 
   async start() {
-    if (this.client && !this.client.closed) return this.client;
     if (this.starting) return this.starting;
+    if (this.client && !this.client.closed) return this.client;
     this.starting = this._start();
     try { return await this.starting; }
     finally { this.starting = null; }

@@ -186,6 +186,7 @@ class CodexSessionService extends EventEmitter {
     this.projectRuns = new Map();
     this.pendingConfirmations = new Map();
     this.knownThreads = new Set();
+    this.initializedClient = null;
     this.notificationQueue = Promise.resolve();
     this.processTransition = Promise.resolve();
     this.ledger = new TaskLedger();
@@ -252,7 +253,7 @@ class CodexSessionService extends EventEmitter {
 
   async _ensureProcessNow(route) {
     const runtimeFingerprint = route.connection.kind === 'codexSubscription' ? 'codex-subscription-managed-auth' : route.fingerprint;
-    if (this.processManager && this.routeFingerprint === runtimeFingerprint) return this.processManager.start();
+    if (this.processManager && this.routeFingerprint === runtimeFingerprint) return this._initializeProcessClient();
     if (this.processManager && this.activeRuns.size > 0) {
       const error = new Error('当前仍有 Codex turn 在运行，完成或取消后才能切换模型连接');
       error.code = 'codex_turn_active';
@@ -276,11 +277,26 @@ class CodexSessionService extends EventEmitter {
       this._cacheNativePatchUpdate(message);
       this.notificationQueue = this.notificationQueue.then(() => this._onNotification(message)).catch((error) => this._failAll(error));
     });
-    this.processManager.on('exit', (error) => this._failAll(error));
+    this.processManager.on('exit', (error) => {
+      this.initializedClient = null;
+      this.knownThreads.clear();
+      this._failAll(error).catch(() => {});
+    });
+    return this._initializeProcessClient();
+  }
+
+  async _initializeProcessClient() {
     const client = await this.processManager.start();
+    if (client === this.initializedClient && !client.closed) return client;
+    // Thread residency and skill configuration belong to this App Server,
+    // not the manager object or the on-disk conversation binding.
+    this.initializedClient = null;
+    this.knownThreads.clear();
     const roots = [builtinSkillRoot(), path.join(paths().root, 'codex-home', 'skills')];
     await client.request('skills/extraRoots/set', { extraRoots: roots });
     await this._syncSkillIsolation(client);
+    if (client.closed || client !== this.processManager.client) throw contractError('Codex App Server stopped during initialization', 'runtime_interrupted');
+    this.initializedClient = client;
     return client;
   }
 
@@ -363,6 +379,7 @@ class CodexSessionService extends EventEmitter {
     });
     const threadId = resultId(result, 'thread');
     if (!threadId) throw new Error('Codex App Server 未返回 threadId');
+    if (client.closed || client !== this.initializedClient) throw contractError('Codex App Server stopped while loading thread', 'runtime_interrupted');
     this.knownThreads.add(threadId);
     return threadId;
   }
@@ -372,6 +389,7 @@ class CodexSessionService extends EventEmitter {
   }
 
   async _resumeThread(client, threadId, route, payload = {}) {
+    if (client.closed || client !== this.initializedClient) throw contractError('Codex App Server is no longer current', 'runtime_interrupted');
     if (this.knownThreads.has(threadId)) return;
     const config = await this._threadConfig(route, payload.novelId, payload.runId || `resume-${crypto.randomUUID()}`, { includeMcp: payload.includeMcp !== false });
     await client.request('thread/resume', {
@@ -383,6 +401,7 @@ class CodexSessionService extends EventEmitter {
       sandbox: 'read-only',
       config,
     });
+    if (client.closed || client !== this.initializedClient) throw contractError('Codex App Server stopped while loading thread', 'runtime_interrupted');
     this.knownThreads.add(threadId);
   }
 
@@ -639,6 +658,7 @@ class CodexSessionService extends EventEmitter {
       return { interrupted: false };
     }
     run.interruptionRequested = true;
+    this._cancelConfirmations(run.runId);
     if (!run.turnId) return { interrupted: false, starting: true };
     await this.processManager.request('turn/interrupt', { threadId: run.threadId, turnId: run.turnId });
     return { interrupted: true };
@@ -674,27 +694,62 @@ class CodexSessionService extends EventEmitter {
   async resolveConfirmation({ confirmationId, runId, accept, reason }) {
     const key = String(confirmationId || '');
     const pending = this.pendingConfirmations.get(key);
-    if (!pending || (runId && pending.run.runId !== runId)) throw new Error('确认请求已失效');
-    if (pending.kind !== 'native-file-change') throw new Error('确认请求已失效');
-    this.pendingConfirmations.delete(key);
-    if (accept) pending.run.approvedFileItems.set(pending.itemId, {
-      nativeChanges: pending.nativeChanges,
-      fingerprint: pending.fingerprint,
-      evidence: pending.evidence,
-      nextSelectionState: pending.nextSelectionState,
-      acceptedAt: new Date().toISOString(),
-      approvalKind: 'explicit',
-      consumed: false,
-    });
-    else pending.run.userRejectedFileItems.add(pending.itemId);
-    await this.ledger.record(pending.run.runId, 'confirmation_resolved', { confirmationId: key, itemId: pending.itemId, decision: accept ? 'accept' : 'decline', reason: reason ? String(reason) : null });
-    await this._updateProgress(pending.run, { phase: accept ? 'tool-running' : 'waiting-model' });
-    const record = this.runRecords.get(pending.run.runId);
-    if (record) { record.status = 'running'; record.confirmation = null; record.version++; }
-    await this._checkpointRun(pending.run.runId);
-    this._emitEvent({ type: 'run_state', runId: pending.run.runId, conversationId: pending.run.conversationId });
-    pending.resolve({ decision: accept ? 'accept' : 'decline', ...(reason ? { reason: String(reason) } : {}) });
-    return { resolved: true };
+    if (!pending || (runId && pending.run.runId !== runId) || pending.kind !== 'native-file-change') throw new Error('确认请求已失效');
+    const answer = { decision: accept ? 'accept' : 'decline', ...(reason ? { reason: String(reason) } : {}) };
+    // A failed persistence attempt may already have written part of the decision.
+    // Retry that decision, never race a different answer against it.
+    if (pending.answer && JSON.stringify(pending.answer) !== JSON.stringify(answer)) throw new Error('确认正在保存，请重试原决定或停止任务');
+    if (pending.resolving) return pending.resolving;
+    pending.answer = answer;
+    const assertLive = () => {
+      if (this.pendingConfirmations.get(key) !== pending || pending.run.interruptionRequested || pending.run.finalizing) throw new Error('确认请求已失效');
+    };
+    const resolve = async () => {
+      assertLive();
+      if (!pending.decisionRecorded) {
+        await this.ledger.record(pending.run.runId, 'confirmation_resolved', { confirmationId: key, itemId: pending.itemId, decision: answer.decision, reason: answer.reason || null });
+        pending.decisionRecorded = true;
+      }
+      assertLive();
+      await this._updateProgress(pending.run, { phase: accept ? 'tool-running' : 'waiting-model' });
+      assertLive();
+      const record = this.runRecords.get(pending.run.runId);
+      const previous = record && { status: record.status, confirmation: record.confirmation };
+      if (record) { record.status = 'running'; record.confirmation = null; record.version++; }
+      try { await this._checkpointRun(pending.run.runId); }
+      catch (error) {
+        if (record && this.pendingConfirmations.get(key) === pending && !pending.run.interruptionRequested && !pending.run.finalizing) {
+          Object.assign(record, previous); record.version++;
+        }
+        throw error;
+      }
+      assertLive();
+      // No await between installing approval, consuming the pending request and
+      // answering the server. Cancel/exit cannot resurrect a stale approval.
+      if (accept) pending.run.approvedFileItems.set(pending.itemId, {
+        nativeChanges: pending.nativeChanges, fingerprint: pending.fingerprint,
+        evidence: pending.evidence, nextSelectionState: pending.nextSelectionState,
+        acceptedAt: new Date().toISOString(), approvalKind: 'explicit', consumed: false,
+      });
+      else pending.run.userRejectedFileItems.add(pending.itemId);
+      this.pendingConfirmations.delete(key);
+      pending.resolve(answer);
+      this._emitEvent({ type: 'run_state', runId: pending.run.runId, conversationId: pending.run.conversationId });
+      return { resolved: true };
+    };
+    // Defer execution so the in-flight promise is installed before any callbacks.
+    const operation = Promise.resolve().then(resolve);
+    pending.resolving = operation;
+    try { return await operation; }
+    finally { if (pending.resolving === operation) pending.resolving = null; }
+  }
+
+  _cancelConfirmations(runId) {
+    for (const [key, pending] of this.pendingConfirmations) {
+      if (pending.run.runId !== runId) continue;
+      this.pendingConfirmations.delete(key);
+      pending.resolve?.({ decision: 'cancel' });
+    }
   }
 
   _subscriptionBootstrapRoute() {
@@ -999,18 +1054,21 @@ class CodexSessionService extends EventEmitter {
     const fingerprint = nativeChangeFingerprint(nativeChanges);
     const currentResourceRef = evidence.find((change) => change.resourceRef.startsWith('chapter:'))?.resourceRef || run.progress?.currentResourceRef || null;
     const authorization = await getAuthorization(run.entry);
+    if (run.interruptionRequested || run.finalizing || this.activeRuns.get(run.runId) !== run) return { decision: 'cancel' };
     if (authorization.granted && isAuthorizedProseAppend(evidence)) {
+      await this.ledger.record(run.runId, 'confirmation_resolved', { confirmationId, itemId, decision: 'accept', automatic: true, authorizationVersion: authorization.version });
+      if (run.interruptionRequested || run.finalizing || this.activeRuns.get(run.runId) !== run) return { decision: 'cancel' };
+      await this._updateProgress(run, { phase: 'tool-running', currentResourceRef });
+      if (run.interruptionRequested || run.finalizing || this.activeRuns.get(run.runId) !== run) return { decision: 'cancel' };
       run.approvedFileItems.set(itemId, {
         nativeChanges, fingerprint, evidence, nextSelectionState, authorization,
         acceptedAt: new Date().toISOString(), approvalKind: 'project-append-prose', consumed: false,
       });
-      await this.ledger.record(run.runId, 'confirmation_resolved', { confirmationId, itemId, decision: 'accept', automatic: true, authorizationVersion: authorization.version });
-      await this._updateProgress(run, { phase: 'tool-running', currentResourceRef });
       return { decision: 'accept' };
     }
     return new Promise((resolve) => {
       this.pendingConfirmations.set(confirmationId, { kind: 'native-file-change', run, itemId, nativeChanges, fingerprint, evidence, nextSelectionState, resolve });
-      this.ledger.record(run.runId, 'confirmation_requested', { confirmationId, itemId, resources: nativeChanges.map((change) => change.resourceRef) });
+      this.ledger.record(run.runId, 'confirmation_requested', { confirmationId, itemId, resources: nativeChanges.map((change) => change.resourceRef) }).catch(error => this._failAll(error));
       this._updateProgress(run, { phase: 'waiting-approval', currentResourceRef }).catch(() => {});
       this._emitEvent({
         type: 'confirmation_requested',
@@ -1207,11 +1265,7 @@ class CodexSessionService extends EventEmitter {
     const run = this.activeRuns.get(runId);
     if (!run) return;
     this.activeRuns.delete(runId);
-    for (const [confirmationId, pending] of this.pendingConfirmations) {
-      if (!confirmationId.startsWith(`${runId}:`)) continue;
-      this.pendingConfirmations.delete(confirmationId);
-      pending.resolve?.({ decision: 'cancel' });
-    }
+    this._cancelConfirmations(runId);
     if (run.conversationId && this.threadRuns.get(run.conversationId) === runId) this.threadRuns.delete(run.conversationId);
     clearTimeout(this.checkpointTimers.get(runId));
     this.checkpointTimers.delete(runId);
@@ -1219,6 +1273,11 @@ class CodexSessionService extends EventEmitter {
   }
 
   async _failAll(error) {
+    // Invalidate every outstanding answer before any fallible finalization I/O.
+    for (const run of this.activeRuns.values()) {
+      run.interruptionRequested = true;
+      this._cancelConfirmations(run.runId);
+    }
     for (const run of [...this.activeRuns.values()]) {
       const failure = { code: error?.code || 'runtime_interrupted', message: error?.message || 'Codex App Server stopped', stage: 'runtime', savedResources: run.committedResources || [] };
       await this._finalizeRun(run, { type: 'turn_failed', runId: run.runId, conversationId: run.conversationId, error: failure.message, failure });

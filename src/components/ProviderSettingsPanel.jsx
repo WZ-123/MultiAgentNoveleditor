@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Plus, RefreshCw, X } from 'lucide-react';
+import { createModelSetupId } from './modelSetupId.mjs';
 
 const fieldClass = 'mt-1 w-full min-w-0 rounded-lg border border-white/10 bg-[#181b22] px-3 py-2 text-sm text-gray-100';
 const cardClass = 'rounded-xl border border-white/10 bg-white/[0.025] p-4';
@@ -7,7 +8,7 @@ const stages = { discover: '检测模型列表', select: '选择模型', respons
 const setupStateText = (item) => ({ failed: '失败', cancelled: '已取消', paused: '已中断', awaiting_model: '等待选择模型', awaiting_chat: '等待决定是否仅用于聊天', running: '进行中', cancelling: '取消中' }[item.status] || '待继续');
 const statusFor = (model, effort = '') => model?.verification?.byEffort?.[effort || 'default'] || { responses: 'unknown', tools: 'unknown' };
 const modeLabel = (result) => result.responses !== 'ok' ? '需验证' : result.tools === 'ok' ? '可操作小说' : result.tools === 'failed' ? '仅聊天' : '工具需验证';
-const newDraft = () => ({ id: crypto.randomUUID(), name: '', templateId: 'deepseek', inputUrl: '', apiKey: '', credentialId: '', authMode: 'auto', customHeaderName: '', connectionId: '' });
+const newDraft = () => ({ id: createModelSetupId(), name: '', templateId: 'deepseek', inputUrl: '', apiKey: '', credentialId: '', authMode: 'auto', customHeaderName: '', connectionId: '' });
 function Button({ children, primary, className = '', ...props }) {
   return <button {...props} className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs transition disabled:cursor-not-allowed disabled:opacity-40 ${primary ? 'bg-blue-600 text-white hover:bg-blue-500' : 'border border-white/10 text-gray-300 hover:bg-white/5'} ${className}`}>{children}</button>;
 }
@@ -145,7 +146,7 @@ export function ProviderSettingsPanel() {
   });
   const resume = (next) => {
     setAdding(true); setMethod('api'); setError('');
-    setDraft({ ...newDraft(), ...next, apiKey: '' }); useOperation(next);
+    setDraft({ ...newDraft(), ...next, connectionId: next.originalConnection?.id || '', apiKey: '' }); useOperation(next);
   };
   const discard = (item) => act(async () => {
     await mana.modelConfig.discardSetup(item.id);
@@ -155,7 +156,7 @@ export function ProviderSettingsPanel() {
     setMessage(`已删除“${item.name}”的配置尝试，当前使用的模型未改变。`);
   });
   const editAgain = () => {
-    setDraft({ ...draft, id: crypto.randomUUID(), credentialId: operation?.credentialId || draft.credentialId, apiKey: '' });
+    setDraft({ ...draft, id: createModelSetupId(), credentialId: operation?.credentialId || draft.credentialId, apiKey: '' });
     useOperation(null); setError('');
   };
   const detect = () => act(async () => {

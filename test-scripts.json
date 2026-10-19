@@ -2,6 +2,9 @@
   "$schema": "https://json.schemastore.org/package.json",
   "description": "Codex 原生宿主与产品测试入口。",
   "scripts": {
+    "test:model-setup:lan-ui": "npx vite build && node scripts/run-model-setup-lan-http-ui.js",
+    "test:runtime-recovery": "node test/runtime-recovery-confirmation.test.js && node test/runtime-transport-recovery.test.js",
+    "test:model-setup-id": "node test/model-setup-id.test.js",
     "test:feedback": "node test/chat-feedback-payload.test.js && node test/feedback-sync.test.js && node test/feedback-path-security.test.js",
     "test:task-completion": "node test/task-completion-state.test.js && node test/writing-authorization-policy.test.js && node test/task-ledger-resource-contract.test.js",
     "prepare:codex-runtime": "node scripts/prepare-codex-runtime.js",

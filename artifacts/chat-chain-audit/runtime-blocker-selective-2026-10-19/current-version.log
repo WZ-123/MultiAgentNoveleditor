@@ -1,0 +1,12 @@
+✔ current explicit approval persists the commit barrier before answering and retains prior pending commits (15.265ms)
+✔ current decline rolls back preparation stage on checkpoint failure, then persists the rejection on retry (0.643042ms)
+✔ current interrupt during automatic approval checkpoint never installs a late approval (1.507833ms)
+✔ current exit during automatic approval checkpoint never installs a late approval (0.620708ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 23.393084

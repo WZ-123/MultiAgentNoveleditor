@@ -28,3 +28,10 @@ DeepSeek 正式线程关闭 code mode，使用原生函数工具和 apply_patch�
 ## 验收
 
 配置保存失败、凭据轮换、迟到验证结果、运行中切换模型、未知档位、工具失败但文本可用、订阅登录失效均需验证。主要测试入口在 [开发与发布](development-and-release.md)。本页不声称任何外部供应商、账号或实时服务当前可用。
+
+
+## HTTP 配置尝试身份（2026-10-19）
+
+LAN HTTP 浏览器没有 randomUUID 时，配置尝试使用 getRandomValues 生成 UUID；无 crypto 的旧环境使用本地计数与随机兼容 ID。这些 ID 仅标识配置尝试，不承担认证、令牌或授权。继续及验证重试保留尝试 ID，修改接入信息生成新 ID并复用已有凭据。未保存的新候选 connectionId 不是已保存连接身份；恢复编辑仅从 originalConnection 还原实际连接 ID，避免再次检测报“原连接已被删除”。
+
+`npm test -- test:model-setup:lan-ui` 使用真实 Chromium 的不安全 HTTP 上下文、生产 LAN 认证/RPC和本地模型列表，覆盖新增、继续、重新编辑与凭据复用；不代表真实局域网设备或外部供应商验收。

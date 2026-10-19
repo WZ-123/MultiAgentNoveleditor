@@ -89,17 +89,23 @@ class JsonRpcClient extends EventEmitter {
   }
 
   async _handleServerRequest(message) {
+    let response;
     if (typeof this.requestHandler !== 'function') {
-      this._write({ id: message.id, error: { code: -32601, message: `unsupported server request: ${message.method}` } });
+      response = { id: message.id, error: { code: -32601, message: `unsupported server request: ${message.method}` } };
       this.emit('serverRequestRejected', { method: message.method, id: message.id });
-      return;
+    } else {
+      try {
+        const result = await this.requestHandler(message.method, message.params, message);
+        response = { id: message.id, result: result == null ? {} : result };
+      } catch (error) {
+        response = { id: message.id, error: { code: Number(error?.rpcCode) || -32000, message: error?.message || 'server request rejected' } };
+      }
     }
-    try {
-      const result = await this.requestHandler(message.method, message.params, message);
-      this._write({ id: message.id, result: result == null ? {} : result });
-    } catch (error) {
-      this._write({ id: message.id, error: { code: Number(error?.rpcCode) || -32000, message: error?.message || 'server request rejected' } });
-    }
+    // A server approval can settle after process exit. Do not write to that
+    // dead transport or attempt a second response after a failed result write.
+    if (this.closed) return;
+    try { this._write(response); }
+    catch (error) { this.close(error); }
   }
 
   request(method, params = {}, options = {}) {
