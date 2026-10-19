@@ -1,0 +1,50 @@
+{
+  "head": "5490a3259b53115c063ae86b746f6871cb9274ac",
+  "originalFiles": 2085,
+  "originalFilesPreservedExactlyExceptMerged": 2079,
+  "combinedOverlapFiles": [
+    "knowledge-base/data-and-editor.md",
+    "knowledge-base/development-and-release.md",
+    "knowledge-base/edge-cases.md",
+    "scripts/run-unit-tests.js",
+    "src/main/store/novelData.js",
+    "test-scripts.json"
+  ],
+  "unmerged": [],
+  "staged": [],
+  "lostOriginalFiles": [],
+  "autostash": "ec9ae84",
+  "timestamp": "2026-10-19T03:29:51.437753+00:00",
+  "targetBranch": "master",
+  "targetClarification": "User explicitly confirmed existing master; repository has no main branch.",
+  "preservationRecheck": "passed; non-overlap original files exact; six combined files match prepared merges",
+  "verificationScope": "Merged primary working tree including original uncommitted writing changes",
+  "executions": {
+    "unit": {
+      "exitCode": 0,
+      "log": "unit.log",
+      "summary": "45 test files"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "build.log"
+    },
+    "counterAudit": {
+      "exitCode": 0,
+      "log": "adversarial.log"
+    },
+    "importUI": {
+      "exitCode": 0,
+      "log": "import-ui.log",
+      "diagnosticId": "diag-eb315f32-236e-4363-af9e-9e5304c665df"
+    }
+  },
+  "gitDiffCheck": {
+    "exitCode": 0,
+    "output": ""
+  },
+  "visualReview": "visual-review.json",
+  "originalEvidenceImagesRestored": true,
+  "pushOrRelease": false,
+  "status": "passed"
+}
