@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lin",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lin-initial",
+      "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "ch3-lin-fact",
+      "summary": "航行中听见船底闷响；听见陆行舟称看见岑寂昨夜从钟楼出来、岑寂承认取公文并否认改钟；药于21:02抵达诊所"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "ch3-lin-emotion",
+      "summary": "对钟楼目击与岑寂辩解保持警惕，仍未公开潮钟慢七分钟或自己的抄本"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "ch3-lin-rel",
+      "summary": "苏砚以记录而非拘捕处理钟楼指控，林岚见其守程序；陆行舟提供有限目击证词"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lin-goal",
+      "summary": "查出潮钟误差，保护弟弟"
+    },
+    {
+      "id": "ch3-lin-intent",
+      "summary": "按苏砚要求记录两处时间；仍需独立核查潮钟误差"
+    }
+  ],
+  "privateMisbeliefs": []
+}

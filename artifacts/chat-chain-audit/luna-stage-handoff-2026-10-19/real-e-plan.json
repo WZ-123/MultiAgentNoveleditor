@@ -1,0 +1,15 @@
+{
+  "samples": [
+    "format-accept",
+    "format-decline",
+    "format-conflict",
+    "format-stop"
+  ],
+  "sampleInputsUnchangedFrom": "real-d/original-commands.json",
+  "reason": "formal readback must update stage before the model checks task completion; retain D inconsistent final reply and model capacity failure",
+  "automaticRetries": 0,
+  "eachSamplePreparationLimit": 1,
+  "eachSampleCommitTurnLimit": 1,
+  "model": "gpt-6-luna",
+  "effort": "medium"
+}

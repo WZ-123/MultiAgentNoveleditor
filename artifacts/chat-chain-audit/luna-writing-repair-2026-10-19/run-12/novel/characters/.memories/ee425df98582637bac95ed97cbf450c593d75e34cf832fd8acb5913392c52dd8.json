@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "ye",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "ye-initial",
+      "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "ye-ch3-fact",
+      "summary": "检查时从船底取出带新裂口的薄木片；复敲后判定可走正规航道，20:38从旧渡口启航。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "ye-ch3-emotion",
+      "summary": "担心船况和执照风险，拒绝在未查明异响前装货；排除木片后才接受载药。"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "ye-ch3-rel",
+      "summary": "要求陆行舟遵守船上边界后允许他同行；何芷把药箱交她运送，信任有所巩固。"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "ye-goal",
+      "summary": "保住执照与船员"
+    },
+    {
+      "id": "ye-ch3-intent",
+      "summary": "安全航行四十分钟抵达灯塔，确认船底异响是否完全排除。"
+    }
+  ],
+  "privateMisbeliefs": []
+}

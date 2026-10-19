@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "su",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "su-initial",
+      "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "陆行舟在船上报告两声疑似松木楔的闷响但未证实；陆行舟又称看见岑寂昨夜进钟楼，岑寂称送公文且未动钟。",
+      "id": "69c59004-6a50-4de3-83ea-903e0d0f2e0a"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "坚持程序使船上秩序暂稳，但两项未证实疑点令他保持戒备。",
+      "id": "10d1a2fc-ba99-4f8e-b0ae-a6abacadfba6"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "允许陆行舟在限定范围观察而非搜身，仍要求证据；把钟楼核查留到返港并由林岚见证。",
+      "id": "8e044886-2f2e-4441-a97a-e0083b5b0fbe"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "su-goal",
+      "summary": "在封桥前合法完成交接"
+    },
+    {
+      "summary": "抵达后先完成药物交付；返港再处理钟楼记录与船底异响，不凭怀疑立案。",
+      "id": "b6ce1ad6-69f8-4ea8-bfc5-e40b8466bd1d"
+    }
+  ],
+  "privateMisbeliefs": []
+}

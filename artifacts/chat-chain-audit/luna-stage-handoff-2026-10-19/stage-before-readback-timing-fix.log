@@ -1,0 +1,20 @@
+PASS preparation-stage one native child completes while parent and project ownership stay active; same preparation implementation produces atomic candidate
+PASS preparation-stage durable candidate survives module reload, old timestamp and more than eight other candidates; retrieval never increments revision
+PASS preparation-stage host and MCP processes cannot overwrite each other or drop candidates during concurrent checkpoints
+PASS preparation-stage handoff binds exact revision; changed candidate or invented native bytes cannot enter approval
+AssertionError [ERR_ASSERTION]: formal readback must settle the stage before the native writer asks check_writing_task
++ actual - expected
+
++ 'native_commit'
+- 'readback_complete'
+
+    at /Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation-stage.test.js:103:14
+    at async test (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation-stage.test.js:21:31)
+    at async main (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation-stage.test.js:95:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'native_commit',
+  expected: 'readback_complete',
+  operator: 'strictEqual',
+  diff: 'simple'
+}

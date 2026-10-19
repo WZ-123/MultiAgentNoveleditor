@@ -1,0 +1,10 @@
+Error: 本任务没有 character-memory:lin 的实际读取版本凭证；请先读取该资源。无需手抄 hash。
+    at fail (/Users/potablewater/Desktop/MultiAgentNovelAssistant/src/main/mcp/writingTools.js:16:55)
+    at Object.prepareNovelPatch (/Users/potablewater/Desktop/MultiAgentNovelAssistant/src/main/mcp/writingTools.js:134:24)
+    at async Object.prepareStage (/Users/potablewater/Desktop/MultiAgentNovelAssistant/src/main/codex-runtime/writingPreparationStage.js:32:23)
+    at async /Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation-stage.test.js:49:14
+    at async test (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation-stage.test.js:21:31)
+    at async main (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation-stage.test.js:38:5) {
+  code: 'resource_version_read_required',
+  details: undefined
+}

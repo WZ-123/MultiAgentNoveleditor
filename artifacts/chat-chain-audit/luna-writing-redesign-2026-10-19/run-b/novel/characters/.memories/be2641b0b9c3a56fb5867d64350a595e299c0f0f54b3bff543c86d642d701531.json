@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "cen",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "cen-initial",
+      "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "启航后船底出现异响，尚无证据确定原因；六人决定靠系缆桩检查，再据损伤决定去留。",
+      "id": "ea1d934e-7911-4ea7-a95b-eedb0ffe6705"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "担心蓝签账页外流，又不愿药物与病人因争执受损。",
+      "id": "b79409b6-8cef-4f0c-bd30-7a9b0bb9ea13"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "在船况问题上接受叶澄与苏砚的现场安排，暂缓追问账页。",
+      "id": "acce36fc-528b-4443-94bf-71dffb9ce0fa"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "cen-goal",
+      "summary": "阻止旧账公开但不伤及病人"
+    },
+    {
+      "summary": "若到达诊所，仍需按程序办理蓝签账页交接，不使病人承担旧账后果。",
+      "id": "1a34dcc8-f92f-4002-b412-5c45dc75dd76"
+    }
+  ],
+  "privateMisbeliefs": []
+}

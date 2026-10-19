@@ -105,6 +105,7 @@ async function main() {
     service.processManager = { workspacesDirectory: path.join(root, 'workspaces'), request: async () => ({}), stop: async () => {} };
     service._ensureProcess = async () => service.processManager;
     service._bindConversation = async () => 'fixture-thread';
+    service.runOneShot=async options=>{assert.equal(options.purpose,'task_intent');return {...require('./fixtures/fake-responses-server').taskIntentFixture([{text:options.text}]),modelId:'fixture'};};
     let inputs;
     service._startNativeTurn = async value => { inputs = value; return { turn: { id: 'fixture-turn' } }; };
     const first = { runId: 'first', conversationId: thread.id, novelId: novel.id, text: '写作目标200字', taskConstraints: { operation: 'write', targetResourceRefs: [ref], minBodyCjk: 200 } };
@@ -130,7 +131,7 @@ async function main() {
       assert.equal((await service.getRunState({ runId: 'continue' })).taskResult.goalVerified, false);
     });
     await test('valid prior commits allow completion without rewriting finished content', async () => {
-      await service.startTurn({ runId: 'tolerated', conversationId: thread.id, novelId: novel.id, text: '继续未完成任务，目标100字', continueFromRunId: 'continue', taskConstraints: { minBodyCjk: 100 } });
+      await service.startTurn({ runId: 'tolerated', conversationId: thread.id, novelId: novel.id, text: '继续未完成任务，目标95字', continueFromRunId: 'continue', taskConstraints: { minBodyCjk: 95 } });
       await service._finalizeRun(service.activeRuns.get('tolerated'), { type: 'turn_completed', runId: 'tolerated', conversationId: thread.id });
       const result = (await service.getRunState({ runId: 'tolerated' })).taskResult;
       assert.equal(result.goalVerified, true);
@@ -159,6 +160,15 @@ async function main() {
         await assert.rejects(prepareTaskContinuation({ conversationId: thread.id, novelId: novel.id, text: '继续未完成任务', continueFromRunId: first.runId }), error => error.code === 'continuation_scope_required');
       } finally { await store.save({ ...source, version: source.version + 2 }); }
     });
+    await test('continuation retains the logical task original memory baseline rather than freezing unreviewed draft entries',async()=>{
+      const store=require('../src/main/store/chatRuns');const source=await store.get(first.runId);
+      const baseline={'character-memory:he':{characterId:'he',factsKnown:[{id:'initial',summary:'任务开始前的事实'}]}};
+      await store.save({...source,version:source.version+1,memoryBaselines:baseline});
+      try {
+        const payload=await prepareTaskContinuation({conversationId:thread.id,novelId:novel.id,text:'继续未完成任务',continueFromRunId:first.runId});
+        assert.deepEqual(payload.continuation.memoryBaselines,baseline);
+      } finally {await store.save({...source,version:source.version+2});}
+    });
     await test('continued evidence is invalidated when saved content changes', async () => {
       const payload = await prepareTaskContinuation({ conversationId: thread.id, novelId: novel.id, text: '继续未完成任务', continueFromRunId: first.runId, taskConstraints: { minBodyCjk: 90 } });
       await novelData.writeChapterWithMeta(novel.dir, 'chapter-001.md', '乙'.repeat(95), {}, { baseContent: '甲'.repeat(95) });
@@ -182,6 +192,34 @@ async function main() {
         const continuing = await prepareTaskContinuation({ conversationId: thread.id, novelId: novel.id, text: '继续未完成任务', continueFromRunId: 'crash' });
         assert.equal(continuing.taskConstraints.minBodyCjk, 200);
       } finally { await recoveredService.dispose(); }
+    });
+    await test('scope cancellation and late successful scope replies cannot start the author',async()=>{
+      const originalOneShot=service.runOneShot,originalStart=service._startNativeTurn;
+      let authors=0;service._startNativeTurn=async()=>{authors++;return {turn:{id:'must-not-start'}};};
+      try {
+        for(const lateSuccess of [false,true]) {
+          const runId='scope-cancel-'+lateSuccess;let entered;
+          const ready=new Promise(resolve=>{entered=resolve;});
+          service.runOneShot=async options=>{
+            entered();await new Promise(resolve=>options.abortSignal.addEventListener('abort',resolve,{once:true}));
+            if(!lateSuccess)throw new Error('native child interrupted');
+            return {...require('./fixtures/fake-responses-server').taskIntentFixture([{text:options.text}]),modelId:'fixture'};
+          };
+          const pending=service.startTurn({runId,conversationId:thread.id,novelId:novel.id,text:'写下一章并保存，写后自查'});
+          const rejected=assert.rejects(pending,e=>e.code==='turn_interrupted');await ready;
+          await service.interrupt({runId});await rejected;
+          assert.equal((await service.getRunState({runId})).status,'interrupted');assert.equal(service.intentControllers.has(runId),false);
+        }
+        assert.equal(authors,0);
+        const update=service._updateProgress;
+        service.runOneShot=originalOneShot;
+        service._updateProgress=async run=>{if(run.runId==='scope-to-author-cancel')await service.interrupt({runId:run.runId});return update.call(service,run);};
+        try {
+          await assert.rejects(service.startTurn({runId:'scope-to-author-cancel',conversationId:thread.id,novelId:novel.id,text:'写下一章并保存，写后自查'}),e=>e.code==='turn_interrupted');
+          assert.equal(authors,0,'stop between scope parsing and author start must not dispatch an author');
+          assert.equal((await service.getRunState({runId:'scope-to-author-cancel'})).status,'interrupted');
+        } finally {service._updateProgress=update;}
+      } finally {service.runOneShot=originalOneShot;service._startNativeTurn=originalStart;}
     });
     console.log(`task-completion-state: ok (${checks} scenarios)`);
   } finally { await service.dispose(); await fs.rm(root, { recursive: true, force: true }); }

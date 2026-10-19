@@ -1,0 +1,187 @@
+{
+  "auditedAt": "2026-10-18T20:49:42.112Z",
+  "productionCodeModified": false,
+  "realModelInvoked": false,
+  "sourceDigests": {
+    "src/main/codex-runtime/narrativeAudit.js": "38e57f45139b8d12a04969a2614a5eaa113d9233fe5d1482d445908279936144",
+    "src/main/codex-runtime/narrativeReviewJobs.js": "51b07dd6477e3ad164dc086ed7ec095b4723f89f626bfc356ff84543f6423013",
+    "src/main/codex-runtime/taskRequirements.js": "b47fffb1b91b2f6aaefc3d049938f70feee031b5d57231c8fa4d334c5107e756",
+    "src/main/codex-runtime/taskLedger.js": "cbdbb682a801790cb05d64181bf0672d1874f9664b2f6a4978b36794604ab786"
+  },
+  "results": [
+    {
+      "name": "omitted_time_and_presupposed_secret_are_accepted",
+      "expected": "Known bad prose must not become evidence of a clean semantic audit merely through complete slots.",
+      "actual": {
+        "status": "checked",
+        "errors": [],
+        "issues": [],
+        "unitsRequired": 3,
+        "unitsReviewed": 3,
+        "timePointCount": 0,
+        "assertionsReviewed": 5,
+        "temporalConstraintCount": 0,
+        "knowledgeClaimCount": 0,
+        "qualityConclusion": "evidence_backed_model_extraction"
+      },
+      "scope": "production resolveReview + assessNarrativeAudit boundary; constructed extraction, not a real model response"
+    },
+    {
+      "name": "uncertain_label_hides_asserted_presupposition",
+      "expected": "Uncertain whether somebody took the letter still presupposes a letter in the box.",
+      "actual": {
+        "status": "checked",
+        "errors": [],
+        "issues": [],
+        "unitsRequired": 1,
+        "unitsReviewed": 1,
+        "timePointCount": 0,
+        "assertionsReviewed": 1,
+        "temporalConstraintCount": 0,
+        "knowledgeClaimCount": 1,
+        "qualityConclusion": "evidence_backed_model_extraction"
+      },
+      "scope": "production resolveReview + assessNarrativeAudit boundary; constructed extraction, not a real model response"
+    },
+    {
+      "name": "supported_label_and_self_quote_hide_actual_leak",
+      "expected": "Actual quote provenance does not prove that the focal character could know it.",
+      "actual": {
+        "status": "checked",
+        "errors": [],
+        "issues": [],
+        "unitsRequired": 1,
+        "unitsReviewed": 1,
+        "timePointCount": 0,
+        "assertionsReviewed": 1,
+        "temporalConstraintCount": 0,
+        "knowledgeClaimCount": 1,
+        "qualityConclusion": "evidence_backed_model_extraction"
+      },
+      "scope": "production resolveReview + assessNarrativeAudit boundary; constructed extraction, not a real model response"
+    },
+    {
+      "name": "valid_overlap_of_claim_and_ground_is_rejected",
+      "expected": "A visible stamp action supports the following observation; that ground should not require a duplicate independent claim.",
+      "actual": {
+        "status": "incomplete",
+        "errors": [
+          "knowledge_assertion_unmodeled:0"
+        ],
+        "issues": [],
+        "unitsRequired": 1,
+        "unitsReviewed": 1,
+        "timePointCount": 0,
+        "assertionsReviewed": 2,
+        "temporalConstraintCount": 0,
+        "knowledgeClaimCount": 1,
+        "qualityConclusion": "evidence_backed_model_extraction"
+      },
+      "scope": "production resolveReview + assessNarrativeAudit boundary; constructed extraction, not a real model response"
+    },
+    {
+      "name": "single_quote_mathematical_contradiction_loses_finding",
+      "expected": "One sentence can contain all three facts required to prove a contradiction; two distinct quotation spans are not logically required.",
+      "actual": {
+        "status": "incomplete",
+        "errors": [
+          "insufficient_conflict_evidence:@origin>end|end>start|start>@origin"
+        ],
+        "issues": [],
+        "unitsRequired": 1,
+        "unitsReviewed": 1,
+        "timePointCount": 2,
+        "assertionsReviewed": 1,
+        "temporalConstraintCount": 1,
+        "knowledgeClaimCount": 0,
+        "qualityConclusion": "evidence_backed_model_extraction"
+      },
+      "scope": "production resolveReview + assessNarrativeAudit boundary; constructed extraction, not a real model response"
+    },
+    {
+      "name": "numeric_interpretation_not_verified_by_exact_quote",
+      "expected": "20:24 to 20:28 cannot contain seven and a half minutes; genuine quotations do not authenticate the extracted numeric values.",
+      "actual": {
+        "status": "checked",
+        "errors": [],
+        "issues": [],
+        "unitsRequired": 3,
+        "unitsReviewed": 3,
+        "timePointCount": 2,
+        "assertionsReviewed": 5,
+        "temporalConstraintCount": 1,
+        "knowledgeClaimCount": 0,
+        "qualityConclusion": "evidence_backed_model_extraction"
+      },
+      "scope": "production resolveReview + assessNarrativeAudit boundary; constructed extraction, not a real model response"
+    },
+    {
+      "name": "lawful_focal_introspection_has_no_suitable_prior_proof",
+      "expected": "A focal character can directly experience her own preferences; later clause is not illicit future evidence of a secret.",
+      "actual": {
+        "status": "conflicts",
+        "errors": [],
+        "issues": [
+          {
+            "issueId": "knowledge:chapter:chapter-001.md:738215d946c0",
+            "category": "knowledge",
+            "severity": "hard",
+            "status": "open",
+            "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：阿青对药品保管的偏好。先前知识的依据位于叙述之后或来自本任务写出的记忆。",
+            "evidence": [
+              {
+                "resourceRef": "chapter:chapter-001.md",
+                "location": "L1",
+                "quote": "阿青不喜欢把药交给别人，",
+                "quoteOffset": 0
+              },
+              {
+                "resourceRef": "chapter:chapter-001.md",
+                "location": "L1",
+                "quote": "也不喜欢让药箱离开视线。",
+                "quoteOffset": 36
+              }
+            ],
+            "derivedBy": "narrative_constraints"
+          }
+        ],
+        "unitsRequired": 1,
+        "unitsReviewed": 1,
+        "timePointCount": 0,
+        "assertionsReviewed": 2,
+        "temporalConstraintCount": 0,
+        "knowledgeClaimCount": 2,
+        "qualityConclusion": "evidence_backed_model_extraction"
+      },
+      "scope": "production resolveReview + assessNarrativeAudit boundary; constructed extraction, not a real model response"
+    },
+    {
+      "name": "persisted_bound_scope_bypasses_new_audit",
+      "expected": "Continued legacy writing/review tasks must evaluate the current review obligation.",
+      "actual": {
+        "narrativeAuditRequired": false,
+        "reviewRequired": true,
+        "reviewScopeBound": true,
+        "writeScopeBound": true
+      },
+      "scope": "production bindRequirements early-return, constructed persisted constraints; no filesystem access"
+    },
+    {
+      "name": "unbound_review_focus_has_no_resource_id_domain",
+      "expected": "Reviewer should select an actual character identity rather than freely inventing a name.",
+      "actual": {
+        "focusSchema": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "readCharacterRefs": [
+          "character:a",
+          "character:b"
+        ]
+      },
+      "scope": "production makeReviewSchema; live controls-v2 independently reproduced focus_character_not_read"
+    }
+  ]
+}

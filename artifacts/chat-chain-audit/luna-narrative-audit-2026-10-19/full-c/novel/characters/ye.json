@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "ye",
+  "name": "叶澄",
+  "role": "摆渡人",
+  "personality": "敏锐、务实，说话带水路术语",
+  "attributes": {
+    "欲望": "保住执照与船员",
+    "已知信息": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+    "隐瞒事实": "听到船底异响，尚不能判断原因",
+    "关系": "欠何芷人情，与陆行舟争运价"
+  },
+  "relationships": [
+    {
+      "with": "lin",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "su",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "he",
+      "type": "欠何芷人情，与陆行舟争运价"
+    },
+    {
+      "with": "lu",
+      "type": "欠何芷人情，与陆行舟争运价"
+    },
+    {
+      "with": "cen",
+      "type": "认识但无私下信息共享"
+    }
+  ],
+  "aliases": [],
+  "faction": "",
+  "gender": "",
+  "age": "",
+  "sourceWork": "",
+  "originalName": "",
+  "bio": "",
+  "appearance": "",
+  "background": "",
+  "quotes": ""
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "he",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "he-initial",
+      "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "ch3-he-fact",
+      "summary": "冷藏药箱离柜四十二分钟后在灯塔诊所交收，铅封完好、药品入柜；船上听见船底闷响并听到岑寂承认昨夜进钟楼取公文"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "ch3-he-emotion",
+      "summary": "送药后短暂松懈；对岑寂的公文措辞更警惕，但未能据此定论"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "ch3-he-rel",
+      "summary": "认可叶澄在异响后稳船并按正规航路靠岸；与苏砚维持程序合作"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "he-goal",
+      "summary": "把冷藏药送到灯塔诊所"
+    },
+    {
+      "id": "ch3-he-intent",
+      "summary": "次日补全药单，继续将药品交接与旧档事务分开；暗格账页仍未透露"
+    }
+  ],
+  "privateMisbeliefs": []
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "ye",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "ye-initial",
+      "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "ch3-ye-fact",
+      "summary": "航行中船底出现一次闷响，原因未明；循正规航路于21:02抵达灯塔，交付后需检查船底"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "ch3-ye-emotion",
+      "summary": "坚持不冒险靠碎石滩，受质疑时以实际航况回应；对船况仍不放心"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "ch3-ye-rel",
+      "summary": "何芷将药箱交由其安全靠岸，增添一次实际信任；陆行舟受托协助检查船底"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "ye-goal",
+      "summary": "保住执照与船员"
+    },
+    {
+      "id": "ch3-ye-intent",
+      "summary": "在苏砚见证下与陆行舟检查船底，夜雾中不返航"
+    }
+  ],
+  "privateMisbeliefs": []
+}

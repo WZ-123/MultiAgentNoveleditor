@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "ye",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "ye-initial",
+      "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "浮标处拖链缠住旧木桩造成船底异响，剪断后船能行驶；仍按正规航道计四十分钟，不抄碎石滩。",
+      "id": "604cab60-fc06-4674-a19b-15b3e914bd78"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "因异响和延误谨慎，但不愿冒险损伤船或执照。",
+      "id": "abddab91-3ed6-4b11-bc24-e9518c877fca"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "何芷听从靠浮标检查、不进碎石滩的处置，协作稳固；陆行舟递工具配合检查。",
+      "id": "878a4553-5bd6-40f2-b3e6-b66472214a6d"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "ye-goal",
+      "summary": "保住执照与船员"
+    },
+    {
+      "summary": "将船安全驶到灯塔诊所，保住执照与船员。",
+      "id": "d1c65262-8c61-4e0d-8073-32a3037ae575"
+    }
+  ],
+  "privateMisbeliefs": []
+}

@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-18",
+  "evidence": "production renderer/preload/IPC + native App Server + fake Responses; isolated disk",
+  "characterRelationshipsAfterSave": [],
+  "checks": 3,
+  "screenshots": [
+    "relationships-hidden-in-editor.png",
+    "whole-review-false-complete.png",
+    "missing-character-generic-error.png"
+  ]
+}

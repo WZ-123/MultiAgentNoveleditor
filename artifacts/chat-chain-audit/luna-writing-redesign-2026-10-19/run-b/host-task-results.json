@@ -1,0 +1,1631 @@
+[
+  {
+    "runId": "run-0db4d01f-31d8-40f6-9c6d-d073cafe442b",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "edit",
+      "targetResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "requiredWriteResourceRefs": [],
+      "memoryUpdateRequired": false,
+      "memoryScopeBound": false,
+      "memoryParticipantCount": null,
+      "participantCharacterRefs": [],
+      "chapterWritePolicy": "any",
+      "resourceWritePolicy": "targets",
+      "initialChapterResourceRefs": [
+        "chapter:chapter-001.md",
+        "chapter:chapter-002.md",
+        "chapter:chapter-003.md"
+      ],
+      "writeScopeBound": true,
+      "atomicMemoryWithChapter": false,
+      "preserveOriginalMemories": false,
+      "wordCountScope": "target_resources",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": null,
+      "maxBodyCjk": null,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "repairRequired": true,
+      "reviewScope": "target_resources",
+      "reviewTargetResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "reviewSourceKinds": [],
+      "reviewScopeBound": true
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "edit",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "requiredWriteResourceRefs": [],
+        "memoryUpdateRequired": false,
+        "memoryScopeBound": false,
+        "memoryParticipantCount": null,
+        "participantCharacterRefs": [],
+        "chapterWritePolicy": "any",
+        "resourceWritePolicy": "targets",
+        "initialChapterResourceRefs": [
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md",
+          "chapter:chapter-003.md"
+        ],
+        "writeScopeBound": true,
+        "atomicMemoryWithChapter": false,
+        "preserveOriginalMemories": false,
+        "wordCountScope": "target_resources",
+        "wordCountResourceRefs": [],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": null,
+        "maxBodyCjk": null,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "repairRequired": true,
+        "reviewScope": "target_resources",
+        "reviewTargetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewSourceKinds": [],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "dfe057ed985d506bf7a2072b145a352fecaa30c69bbb9e69e791b5e791c58d2e",
+          "afterHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+          "nativeItemId": "exec-1cd3346a-0965-485c-a698-064872089fe0",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "mode": "replace",
+          "oldHash": "dfe057ed985d506bf7a2072b145a352fecaa30c69bbb9e69e791b5e791c58d2e",
+          "newHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+          "chineseCharacterCount": 1754,
+          "bodyChineseCharacterCount": 1749
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 1
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "target_resources",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1749,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "observedReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-8f8a3a4e-5c14-4fd3-ab1b-1519298cddfe",
+          "attemptId": "attempt-6b6b4149-2240-4ab1-a41e-3e8a24e6fb0d",
+          "runId": "run-0db4d01f-31d8-40f6-9c6d-d073cafe442b",
+          "reportSha256": "2cb305d057c5b58c92a69725d4d7aae0c09b45775ab168578a00d74b59121eb8",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-002.md"
+          ],
+          "coverageObserved": [
+            "chapter:chapter-002.md"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2"
+            }
+          ],
+          "versionCurrent": true,
+          "invalidatedIssueIds": [],
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "not_requested",
+          "blocking": false,
+          "actual": 1749,
+          "minimum": null,
+          "maximum": null,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": null,
+          "acceptedMaximum": null,
+          "withinTolerance": false,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "writeScope": {
+          "status": "met"
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": [],
+          "invalidIssueIds": []
+        },
+        "semanticReview": {
+          "status": "reported_clear",
+          "qualityConclusion": "model_reported",
+          "repairRequired": true,
+          "blockingIssues": [],
+          "reportedIssues": []
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "dfe057ed985d506bf7a2072b145a352fecaa30c69bbb9e69e791b5e791c58d2e",
+        "afterHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+        "nativeItemId": "exec-1cd3346a-0965-485c-a698-064872089fe0",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "mode": "replace",
+        "oldHash": "dfe057ed985d506bf7a2072b145a352fecaa30c69bbb9e69e791b5e791c58d2e",
+        "newHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+        "chineseCharacterCount": 1754,
+        "bodyChineseCharacterCount": 1749
+      }
+    ],
+    "reviewFindings": [],
+    "memoryBaselines": {}
+  },
+  {
+    "runId": "run-a279ec38-54c6-44f3-8baf-17ce1ed961be",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "read",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [],
+      "memoryUpdateRequired": false,
+      "memoryScopeBound": false,
+      "memoryParticipantCount": null,
+      "participantCharacterRefs": [],
+      "chapterWritePolicy": "any",
+      "resourceWritePolicy": "any",
+      "initialChapterResourceRefs": [],
+      "writeScopeBound": false,
+      "atomicMemoryWithChapter": false,
+      "preserveOriginalMemories": false,
+      "wordCountScope": "saved_resources",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": null,
+      "maxBodyCjk": null,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": false,
+      "repairRequired": false,
+      "reviewScope": "observed_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [],
+      "reviewScopeBound": false
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "read",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [],
+        "memoryUpdateRequired": false,
+        "memoryScopeBound": false,
+        "memoryParticipantCount": null,
+        "participantCharacterRefs": [],
+        "chapterWritePolicy": "any",
+        "resourceWritePolicy": "any",
+        "initialChapterResourceRefs": [],
+        "writeScopeBound": false,
+        "atomicMemoryWithChapter": false,
+        "preserveOriginalMemories": false,
+        "wordCountScope": "saved_resources",
+        "wordCountResourceRefs": [],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": null,
+        "maxBodyCjk": null,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": false,
+        "repairRequired": false,
+        "reviewScope": "observed_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [],
+        "reviewScopeBound": false
+      },
+      "savedResources": [],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "no_changes",
+        "committedCount": 0
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "saved_resources",
+        "targetResourceRefs": [
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "readableResources": 6,
+        "bodyChineseCharacterCount": 763,
+        "hashes": [
+          {
+            "resourceRef": "character-memory:cen",
+            "hash": "c51d6dec88b1b42df0a758b5f29f6c0b5d2f103ee0c1aa032d11ca9c32d91362"
+          },
+          {
+            "resourceRef": "character-memory:he",
+            "hash": "4698a0d0ab0a38f83f8bdc75854185e69016ef0ef202dcd78bc2fae58affabca"
+          },
+          {
+            "resourceRef": "character-memory:lin",
+            "hash": "ac3c4fbe781e6e928a89b2e50040314d9ba9dd9c6a27becc30c00b5a872bb262"
+          },
+          {
+            "resourceRef": "character-memory:lu",
+            "hash": "f96f690fb106c7c9bdc860dff5c931e793f6357c0c50c801f03c0b06f0217fcd"
+          },
+          {
+            "resourceRef": "character-memory:su",
+            "hash": "83e34e187793217e70b456cc63e4b8d599a9fdbcb10045aaa5c06fd2b2bbd507"
+          },
+          {
+            "resourceRef": "character-memory:ye",
+            "hash": "52914787f2578f0325c106ae02ffde54448c461464beca020fc5575724aa1489"
+          }
+        ],
+        "currentSavedResourceRefs": [],
+        "observedReadResourceRefs": [
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "fullyReadResourceRefs": [
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ]
+      },
+      "checks": {
+        "wordCount": {
+          "status": "not_requested",
+          "blocking": false,
+          "actual": 763,
+          "minimum": null,
+          "maximum": null,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": null,
+          "acceptedMaximum": null,
+          "withinTolerance": false,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "writeScope": {
+          "status": "met"
+        }
+      }
+    },
+    "savedResources": [],
+    "reviewFindings": [],
+    "memoryBaselines": {}
+  },
+  {
+    "runId": "run-7fd11ea7-4ad3-42fd-ad76-6136d013a3e3",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [],
+      "memoryUpdateRequired": false,
+      "memoryScopeBound": false,
+      "memoryParticipantCount": null,
+      "participantCharacterRefs": [],
+      "chapterWritePolicy": "new",
+      "resourceWritePolicy": "any",
+      "initialChapterResourceRefs": [
+        "chapter:chapter-001.md"
+      ],
+      "writeScopeBound": true,
+      "atomicMemoryWithChapter": false,
+      "preserveOriginalMemories": false,
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "repairRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [],
+        "memoryUpdateRequired": false,
+        "memoryScopeBound": false,
+        "memoryParticipantCount": null,
+        "participantCharacterRefs": [],
+        "chapterWritePolicy": "new",
+        "resourceWritePolicy": "any",
+        "initialChapterResourceRefs": [
+          "chapter:chapter-001.md"
+        ],
+        "writeScopeBound": true,
+        "atomicMemoryWithChapter": false,
+        "preserveOriginalMemories": false,
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "repairRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "style",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "afterHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+          "nativeItemId": "exec-150cf66b-67ed-4e98-bee4-76a20eeb28e6",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "mode": "create",
+          "oldHash": null,
+          "newHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+          "chineseCharacterCount": 1754,
+          "bodyChineseCharacterCount": 1749
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 1
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1749,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "observedReadResourceRefs": [
+          "outline:hierarchy",
+          "outline:master",
+          "character:lin",
+          "character:lu",
+          "character:cen",
+          "style:memory",
+          "character:he",
+          "chapter:chapter-001.md",
+          "character:su",
+          "character:ye",
+          "world:places",
+          "world:lore",
+          "chapter:chapter-002.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-0209e4c9-04ed-4675-b5fe-66d53127534b",
+          "attemptId": "attempt-eb909967-f1cb-47d8-9c62-f9f5e349a1ff",
+          "runId": "run-7fd11ea7-4ad3-42fd-ad76-6136d013a3e3",
+          "reportSha256": "5eb864d507cff5a237049151b27bfb877734b48dc0b85bc757246c117d7a4533",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-002.md",
+            "chapter:chapter-001.md",
+            "character:cen",
+            "character:he",
+            "character:lin",
+            "character:lu",
+            "character:su",
+            "character:ye",
+            "world:lore",
+            "world:places",
+            "outline:master",
+            "outline:hierarchy",
+            "style:memory"
+          ],
+          "coverageObserved": [
+            "outline:hierarchy",
+            "outline:master",
+            "character:lin",
+            "character:lu",
+            "character:cen",
+            "style:memory",
+            "character:he",
+            "chapter:chapter-001.md",
+            "character:su",
+            "character:ye",
+            "world:places",
+            "world:lore",
+            "chapter:chapter-002.md"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2"
+            },
+            {
+              "resourceRef": "chapter:chapter-001.md",
+              "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+            },
+            {
+              "resourceRef": "character:cen",
+              "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "character:lu",
+              "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+            },
+            {
+              "resourceRef": "character:su",
+              "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "world:places",
+              "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+            },
+            {
+              "resourceRef": "outline:master",
+              "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+            },
+            {
+              "resourceRef": "outline:hierarchy",
+              "hash": "afa14801b02d4436f28503d2a4c6af9af8a42e0d462735bf239d0879134291f0"
+            },
+            {
+              "resourceRef": "style:memory",
+              "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+            }
+          ],
+          "versionCurrent": true,
+          "invalidatedIssueIds": [],
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "met",
+          "blocking": false,
+          "actual": 1749,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0,
+          "acceptedMinimum": 1500,
+          "acceptedMaximum": 2000,
+          "withinTolerance": true,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "writeScope": {
+          "status": "met"
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": [],
+          "invalidIssueIds": []
+        },
+        "semanticReview": {
+          "status": "reported_clear",
+          "qualityConclusion": "model_reported",
+          "repairRequired": true,
+          "blockingIssues": [],
+          "reportedIssues": []
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "afterHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+        "nativeItemId": "exec-150cf66b-67ed-4e98-bee4-76a20eeb28e6",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "mode": "create",
+        "oldHash": null,
+        "newHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+        "chineseCharacterCount": 1754,
+        "bodyChineseCharacterCount": 1749
+      }
+    ],
+    "reviewFindings": [],
+    "memoryBaselines": {}
+  },
+  {
+    "runId": "run-5c5f6b6b-fea9-4d77-9c3e-83149829971a",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "memoryUpdateRequired": true,
+      "memoryScopeBound": true,
+      "memoryParticipantCount": 6,
+      "participantCharacterRefs": [
+        "character:cen",
+        "character:he",
+        "character:lin",
+        "character:lu",
+        "character:su",
+        "character:ye"
+      ],
+      "chapterWritePolicy": "new",
+      "resourceWritePolicy": "any",
+      "initialChapterResourceRefs": [
+        "chapter:chapter-001.md",
+        "chapter:chapter-002.md"
+      ],
+      "writeScopeBound": true,
+      "atomicMemoryWithChapter": true,
+      "preserveOriginalMemories": true,
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "repairRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "memoryUpdateRequired": true,
+        "memoryScopeBound": true,
+        "memoryParticipantCount": 6,
+        "participantCharacterRefs": [
+          "character:cen",
+          "character:he",
+          "character:lin",
+          "character:lu",
+          "character:su",
+          "character:ye"
+        ],
+        "chapterWritePolicy": "new",
+        "resourceWritePolicy": "any",
+        "initialChapterResourceRefs": [
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md"
+        ],
+        "writeScopeBound": true,
+        "atomicMemoryWithChapter": true,
+        "preserveOriginalMemories": true,
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "repairRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "afterHash": "6c850f2cfd4f7495a64ab006c73c7bb757c36e0715b788adfe0298e0efe1fb2d",
+          "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "create",
+          "oldHash": null,
+          "newHash": "6c850f2cfd4f7495a64ab006c73c7bb757c36e0715b788adfe0298e0efe1fb2d",
+          "chineseCharacterCount": 1359,
+          "bodyChineseCharacterCount": 1353
+        },
+        {
+          "resourceRef": "character-memory:cen",
+          "beforeHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+          "afterHash": "c51d6dec88b1b42df0a758b5f29f6c0b5d2f103ee0c1aa032d11ca9c32d91362",
+          "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+          "newHash": "c51d6dec88b1b42df0a758b5f29f6c0b5d2f103ee0c1aa032d11ca9c32d91362",
+          "chineseCharacterCount": 146,
+          "bodyChineseCharacterCount": 146
+        },
+        {
+          "resourceRef": "character-memory:he",
+          "beforeHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+          "afterHash": "4698a0d0ab0a38f83f8bdc75854185e69016ef0ef202dcd78bc2fae58affabca",
+          "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+          "newHash": "4698a0d0ab0a38f83f8bdc75854185e69016ef0ef202dcd78bc2fae58affabca",
+          "chineseCharacterCount": 118,
+          "bodyChineseCharacterCount": 118
+        },
+        {
+          "resourceRef": "character-memory:lin",
+          "beforeHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+          "afterHash": "ac3c4fbe781e6e928a89b2e50040314d9ba9dd9c6a27becc30c00b5a872bb262",
+          "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+          "newHash": "ac3c4fbe781e6e928a89b2e50040314d9ba9dd9c6a27becc30c00b5a872bb262",
+          "chineseCharacterCount": 120,
+          "bodyChineseCharacterCount": 120
+        },
+        {
+          "resourceRef": "character-memory:lu",
+          "beforeHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+          "afterHash": "f96f690fb106c7c9bdc860dff5c931e793f6357c0c50c801f03c0b06f0217fcd",
+          "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+          "newHash": "f96f690fb106c7c9bdc860dff5c931e793f6357c0c50c801f03c0b06f0217fcd",
+          "chineseCharacterCount": 122,
+          "bodyChineseCharacterCount": 122
+        },
+        {
+          "resourceRef": "character-memory:su",
+          "beforeHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+          "afterHash": "83e34e187793217e70b456cc63e4b8d599a9fdbcb10045aaa5c06fd2b2bbd507",
+          "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+          "newHash": "83e34e187793217e70b456cc63e4b8d599a9fdbcb10045aaa5c06fd2b2bbd507",
+          "chineseCharacterCount": 123,
+          "bodyChineseCharacterCount": 123
+        },
+        {
+          "resourceRef": "character-memory:ye",
+          "beforeHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+          "afterHash": "52914787f2578f0325c106ae02ffde54448c461464beca020fc5575724aa1489",
+          "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+          "newHash": "52914787f2578f0325c106ae02ffde54448c461464beca020fc5575724aa1489",
+          "chineseCharacterCount": 134,
+          "bodyChineseCharacterCount": 134
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "6c850f2cfd4f7495a64ab006c73c7bb757c36e0715b788adfe0298e0efe1fb2d",
+          "afterHash": "d2e369d0a7d7bce9cdc0764524284a9d9b1a6b026f6eb29135780725de56cefa",
+          "nativeItemId": "exec-6a95f999-8452-4e83-8469-e7096b3872cc",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "mode": "replace",
+          "oldHash": "6c850f2cfd4f7495a64ab006c73c7bb757c36e0715b788adfe0298e0efe1fb2d",
+          "newHash": "d2e369d0a7d7bce9cdc0764524284a9d9b1a6b026f6eb29135780725de56cefa",
+          "chineseCharacterCount": 1504,
+          "bodyChineseCharacterCount": 1498
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "d2e369d0a7d7bce9cdc0764524284a9d9b1a6b026f6eb29135780725de56cefa",
+          "afterHash": "49191605f513e00cba78116b349c3385bc34899e7151005d154d13525a820bf2",
+          "nativeItemId": "exec-a2e6d9e2-5f82-4183-bf11-13833f490b9b",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "mode": "replace",
+          "oldHash": "d2e369d0a7d7bce9cdc0764524284a9d9b1a6b026f6eb29135780725de56cefa",
+          "newHash": "49191605f513e00cba78116b349c3385bc34899e7151005d154d13525a820bf2",
+          "chineseCharacterCount": 1508,
+          "bodyChineseCharacterCount": 1502
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "49191605f513e00cba78116b349c3385bc34899e7151005d154d13525a820bf2",
+          "afterHash": "200162ff6c3e66890686b08b16840e8ad31f97f03d95ceb731159f118e067fb3",
+          "nativeItemId": "exec-6643532b-ebec-4024-a437-38e4f40bb5eb",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "mode": "replace",
+          "oldHash": "49191605f513e00cba78116b349c3385bc34899e7151005d154d13525a820bf2",
+          "newHash": "200162ff6c3e66890686b08b16840e8ad31f97f03d95ceb731159f118e067fb3",
+          "chineseCharacterCount": 1508,
+          "bodyChineseCharacterCount": 1502
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 10
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1502,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-003.md",
+            "hash": "200162ff6c3e66890686b08b16840e8ad31f97f03d95ceb731159f118e067fb3"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "observedReadResourceRefs": [
+          "outline:hierarchy",
+          "timeline:all",
+          "chapter:chapter-002.md",
+          "character:lin",
+          "outline:master",
+          "character:cen",
+          "character:su",
+          "character:lu",
+          "character:he",
+          "character:ye",
+          "style:memory",
+          "chapter:chapter-001.md",
+          "character-memory:cen",
+          "character-memory:lu",
+          "world:lore",
+          "character-memory:lin",
+          "character-memory:su",
+          "character-memory:ye",
+          "world:places",
+          "character-memory:he",
+          "chapter:chapter-003.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-350a431c-1ea0-4bf3-b8a8-fb694ad9541a",
+          "attemptId": "attempt-c3a64128-f62a-48e8-af66-273e0f33df03",
+          "runId": "run-5c5f6b6b-fea9-4d77-9c3e-83149829971a",
+          "reportSha256": "26bcf431d446a287c4ca1f99b2e3d61866aedc49ce1420ee5a65fa2936674847",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-003.md",
+            "world:lore",
+            "world:places",
+            "outline:master",
+            "style:memory",
+            "character:cen",
+            "character:he",
+            "character:lin",
+            "character:lu",
+            "character:su",
+            "character:ye",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "coverageObserved": [
+            "outline:hierarchy",
+            "timeline:all",
+            "chapter:chapter-002.md",
+            "character:lin",
+            "outline:master",
+            "character:cen",
+            "character:su",
+            "character:lu",
+            "character:he",
+            "character:ye",
+            "style:memory",
+            "chapter:chapter-001.md",
+            "character-memory:cen",
+            "character-memory:lu",
+            "world:lore",
+            "character-memory:lin",
+            "character-memory:su",
+            "character-memory:ye",
+            "world:places",
+            "character-memory:he",
+            "chapter:chapter-003.md"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-003.md",
+              "hash": "200162ff6c3e66890686b08b16840e8ad31f97f03d95ceb731159f118e067fb3"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "world:places",
+              "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+            },
+            {
+              "resourceRef": "outline:master",
+              "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+            },
+            {
+              "resourceRef": "style:memory",
+              "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+            },
+            {
+              "resourceRef": "character:cen",
+              "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "character:lu",
+              "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+            },
+            {
+              "resourceRef": "character:su",
+              "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            },
+            {
+              "resourceRef": "character-memory:cen",
+              "hash": "c51d6dec88b1b42df0a758b5f29f6c0b5d2f103ee0c1aa032d11ca9c32d91362"
+            },
+            {
+              "resourceRef": "character-memory:he",
+              "hash": "4698a0d0ab0a38f83f8bdc75854185e69016ef0ef202dcd78bc2fae58affabca"
+            },
+            {
+              "resourceRef": "character-memory:lin",
+              "hash": "ac3c4fbe781e6e928a89b2e50040314d9ba9dd9c6a27becc30c00b5a872bb262"
+            },
+            {
+              "resourceRef": "character-memory:lu",
+              "hash": "f96f690fb106c7c9bdc860dff5c931e793f6357c0c50c801f03c0b06f0217fcd"
+            },
+            {
+              "resourceRef": "character-memory:su",
+              "hash": "83e34e187793217e70b456cc63e4b8d599a9fdbcb10045aaa5c06fd2b2bbd507"
+            },
+            {
+              "resourceRef": "character-memory:ye",
+              "hash": "52914787f2578f0325c106ae02ffde54448c461464beca020fc5575724aa1489"
+            }
+          ],
+          "versionCurrent": true,
+          "invalidatedIssueIds": [],
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "met",
+          "blocking": false,
+          "actual": 1502,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0,
+          "acceptedMinimum": 1500,
+          "acceptedMaximum": 2000,
+          "withinTolerance": true,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "memoryScope": {
+          "status": "bound",
+          "participantCharacterRefs": [
+            "character:cen",
+            "character:he",
+            "character:lin",
+            "character:lu",
+            "character:su",
+            "character:ye"
+          ]
+        },
+        "requiredWrites": {
+          "expectedResourceRefs": [
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "missingResourceRefs": []
+        },
+        "combinedMemoryCommit": {
+          "status": "met"
+        },
+        "writeScope": {
+          "status": "met"
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": [],
+          "invalidIssueIds": []
+        },
+        "semanticReview": {
+          "status": "reported_clear",
+          "qualityConclusion": "model_reported",
+          "repairRequired": true,
+          "blockingIssues": [],
+          "reportedIssues": []
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "afterHash": "6c850f2cfd4f7495a64ab006c73c7bb757c36e0715b788adfe0298e0efe1fb2d",
+        "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "create",
+        "oldHash": null,
+        "newHash": "6c850f2cfd4f7495a64ab006c73c7bb757c36e0715b788adfe0298e0efe1fb2d",
+        "chineseCharacterCount": 1359,
+        "bodyChineseCharacterCount": 1353
+      },
+      {
+        "resourceRef": "character-memory:cen",
+        "beforeHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+        "afterHash": "c51d6dec88b1b42df0a758b5f29f6c0b5d2f103ee0c1aa032d11ca9c32d91362",
+        "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+        "newHash": "c51d6dec88b1b42df0a758b5f29f6c0b5d2f103ee0c1aa032d11ca9c32d91362",
+        "chineseCharacterCount": 146,
+        "bodyChineseCharacterCount": 146
+      },
+      {
+        "resourceRef": "character-memory:he",
+        "beforeHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+        "afterHash": "4698a0d0ab0a38f83f8bdc75854185e69016ef0ef202dcd78bc2fae58affabca",
+        "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+        "newHash": "4698a0d0ab0a38f83f8bdc75854185e69016ef0ef202dcd78bc2fae58affabca",
+        "chineseCharacterCount": 118,
+        "bodyChineseCharacterCount": 118
+      },
+      {
+        "resourceRef": "character-memory:lin",
+        "beforeHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+        "afterHash": "ac3c4fbe781e6e928a89b2e50040314d9ba9dd9c6a27becc30c00b5a872bb262",
+        "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+        "newHash": "ac3c4fbe781e6e928a89b2e50040314d9ba9dd9c6a27becc30c00b5a872bb262",
+        "chineseCharacterCount": 120,
+        "bodyChineseCharacterCount": 120
+      },
+      {
+        "resourceRef": "character-memory:lu",
+        "beforeHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+        "afterHash": "f96f690fb106c7c9bdc860dff5c931e793f6357c0c50c801f03c0b06f0217fcd",
+        "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+        "newHash": "f96f690fb106c7c9bdc860dff5c931e793f6357c0c50c801f03c0b06f0217fcd",
+        "chineseCharacterCount": 122,
+        "bodyChineseCharacterCount": 122
+      },
+      {
+        "resourceRef": "character-memory:su",
+        "beforeHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+        "afterHash": "83e34e187793217e70b456cc63e4b8d599a9fdbcb10045aaa5c06fd2b2bbd507",
+        "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+        "newHash": "83e34e187793217e70b456cc63e4b8d599a9fdbcb10045aaa5c06fd2b2bbd507",
+        "chineseCharacterCount": 123,
+        "bodyChineseCharacterCount": 123
+      },
+      {
+        "resourceRef": "character-memory:ye",
+        "beforeHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+        "afterHash": "52914787f2578f0325c106ae02ffde54448c461464beca020fc5575724aa1489",
+        "nativeItemId": "exec-0d2ab993-2ca9-480f-a4a5-79660c6a8e01",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+        "newHash": "52914787f2578f0325c106ae02ffde54448c461464beca020fc5575724aa1489",
+        "chineseCharacterCount": 134,
+        "bodyChineseCharacterCount": 134
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "6c850f2cfd4f7495a64ab006c73c7bb757c36e0715b788adfe0298e0efe1fb2d",
+        "afterHash": "d2e369d0a7d7bce9cdc0764524284a9d9b1a6b026f6eb29135780725de56cefa",
+        "nativeItemId": "exec-6a95f999-8452-4e83-8469-e7096b3872cc",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "mode": "replace",
+        "oldHash": "6c850f2cfd4f7495a64ab006c73c7bb757c36e0715b788adfe0298e0efe1fb2d",
+        "newHash": "d2e369d0a7d7bce9cdc0764524284a9d9b1a6b026f6eb29135780725de56cefa",
+        "chineseCharacterCount": 1504,
+        "bodyChineseCharacterCount": 1498
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "d2e369d0a7d7bce9cdc0764524284a9d9b1a6b026f6eb29135780725de56cefa",
+        "afterHash": "49191605f513e00cba78116b349c3385bc34899e7151005d154d13525a820bf2",
+        "nativeItemId": "exec-a2e6d9e2-5f82-4183-bf11-13833f490b9b",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "mode": "replace",
+        "oldHash": "d2e369d0a7d7bce9cdc0764524284a9d9b1a6b026f6eb29135780725de56cefa",
+        "newHash": "49191605f513e00cba78116b349c3385bc34899e7151005d154d13525a820bf2",
+        "chineseCharacterCount": 1508,
+        "bodyChineseCharacterCount": 1502
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "49191605f513e00cba78116b349c3385bc34899e7151005d154d13525a820bf2",
+        "afterHash": "200162ff6c3e66890686b08b16840e8ad31f97f03d95ceb731159f118e067fb3",
+        "nativeItemId": "exec-6643532b-ebec-4024-a437-38e4f40bb5eb",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "mode": "replace",
+        "oldHash": "49191605f513e00cba78116b349c3385bc34899e7151005d154d13525a820bf2",
+        "newHash": "200162ff6c3e66890686b08b16840e8ad31f97f03d95ceb731159f118e067fb3",
+        "chineseCharacterCount": 1508,
+        "bodyChineseCharacterCount": 1502
+      }
+    ],
+    "reviewFindings": [],
+    "memoryBaselines": {
+      "character-memory:cen": {
+        "schemaVersion": 1,
+        "characterId": "cen",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "cen-initial",
+            "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "cen-goal",
+            "summary": "阻止旧账公开但不伤及病人"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:he": {
+        "schemaVersion": 1,
+        "characterId": "he",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "he-initial",
+            "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "he-goal",
+            "summary": "把冷藏药送到灯塔诊所"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lin": {
+        "schemaVersion": 1,
+        "characterId": "lin",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lin-initial",
+            "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lin-goal",
+            "summary": "查出潮钟误差，保护弟弟"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lu": {
+        "schemaVersion": 1,
+        "characterId": "lu",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lu-initial",
+            "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lu-goal",
+            "summary": "修好潮钟并洗清偷芯嫌疑"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:su": {
+        "schemaVersion": 1,
+        "characterId": "su",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "su-initial",
+            "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "su-goal",
+            "summary": "在封桥前合法完成交接"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:ye": {
+        "schemaVersion": 1,
+        "characterId": "ye",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "ye-initial",
+            "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "ye-goal",
+            "summary": "保住执照与船员"
+          }
+        ],
+        "privateMisbeliefs": []
+      }
+    }
+  }
+]

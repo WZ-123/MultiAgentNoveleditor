@@ -1,0 +1,56 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:writing-workflow:ui
+
+vite v8.2.2 building client environment for production...
+transforming...
+✓ 3737 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                  1.29 kB │ gzip:   0.55 kB
+dist/assets/index-i7xX1cau.css                 464.05 kB │ gzip:  47.64 kB
+dist/assets/rolldown-runtime-hePW80VL.js         0.71 kB │ gzip:   0.42 kB
+dist/assets/LanguageSettings-BrRGeZ34.js         1.39 kB │ gzip:   0.66 kB
+dist/assets/AppSettingsPanel-BU_MesdD.js         1.52 kB │ gzip:   0.96 kB
+dist/assets/SearchSettings-BGiR-_7D.js           3.68 kB │ gzip:   1.82 kB
+dist/assets/FactReviewDialog-DHCLscNh.js         3.98 kB │ gzip:   1.91 kB
+dist/assets/StorageSettings--P0Wgcl6.js          4.44 kB │ gzip:   1.51 kB
+dist/assets/SkillSettings-BrwZSGud.js            4.56 kB │ gzip:   1.67 kB
+dist/assets/OfflineSyncDialog-WJBkjjvw.js        4.81 kB │ gzip:   2.02 kB
+dist/assets/SearchPanel-CZAWEBvu.js              4.91 kB │ gzip:   1.93 kB
+dist/assets/NovelDataBrowser-JzSkHUKf.js         7.49 kB │ gzip:   2.41 kB
+dist/assets/LanRemoteSettings-DrhO_-jq.js        9.31 kB │ gzip:   2.97 kB
+dist/assets/ImportMergePanel-93_1OsL7.js        15.17 kB │ gzip:   4.59 kB
+dist/assets/vendor-diff-BflPwFzc.js             19.01 kB │ gzip:   6.31 kB
+dist/assets/ProviderSettingsPanel-1LvH03uo.js   28.01 kB │ gzip:   8.88 kB
+dist/assets/ImportNovelPanel-YG5tybva.js        40.51 kB │ gzip:  11.03 kB
+dist/assets/DataTabContent-BQGE903d.js          54.54 kB │ gzip:  14.16 kB
+dist/assets/vendor-misc-B2dMrqYV.js             91.01 kB │ gzip:  30.47 kB
+dist/assets/index-X1jcRCO1.js                  159.40 kB │ gzip:  52.10 kB
+dist/assets/vendor-markdown-Og84yWAm.js        161.49 kB │ gzip:  48.51 kB
+dist/assets/vendor-react-BH0rCosz.js           179.43 kB │ gzip:  56.81 kB
+dist/assets/vendor-editor-CINcjdpy.js          537.28 kB │ gzip: 185.62 kB
+
+✓ built in 1.11s
+TEST_PASS actual character edit save preserves relationships with formal readback
+TEST_PASS natural roleplay prompt mounts role skill and saves memory with approval
+TEST_PASS whole review with one chapter stays incomplete
+TEST_PASS continuation retains frozen review scope and completes full read/report coverage
+TEST_PASS missing character is a normal query result and model recovers in the same turn
+TEST_PASS formal chapter save does not satisfy requested post-write review
+TEST_PASS post-write review continuation preserves formal save and completes evidence
+TEST_PASS malformed read parameters return actual recoverable query error
+TEST_PASS editing cannot propose whole-resource deletion as a patch workaround
+TEST_PASS prepared patch uses current mirror, native approval and formal commit; structured review is revalidated and visible
+TEST_PASS prose is not keyword-blocked; an evidence-backed required hard conflict keeps the task incomplete
+TEST_PASS continuation cannot erase known hard conflicts with an empty report
+TEST_PASS actual repair and current evidence close the original issue and finish the same task
+TEST_PASS named participant subset binds exactly two memories; staged drafts assemble before one atomic native approval
+TEST_PASS independent review findings retain time and limited-view conflicts despite empty author reports
+TEST_PASS read-only review failure stays incomplete and cannot trigger a second inference for the same version
+TEST_PASS staged 1324-character draft saves through native approval; zero-tolerance 1500–2000 target stays incomplete with 176-character deficit
+TEST_PASS early ending remains incomplete without hidden recovery or additional model turns
+[codex] turn_interrupted 任务范围解析已取消
+TEST_PASS stopping task scope parsing remains interrupted and cannot start the author
+TEST_PASS stopping independent review preserves interrupted state, rejects late review output and keeps formal prose unchanged
+TEST_PASS separate character responses bind no single focal narrator and remain readonly

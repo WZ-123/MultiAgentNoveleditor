@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "characterId": "ye",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "ye-initial",
+      "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "ye-ch3-fact",
+      "summary": "正规航行中20:32出现一次刮擦；21:05抵灯塔，白痕未渗水但船底情况仍未完全确定。"
+    },
+    {
+      "id": "ye-ch3-time-correction",
+      "summary": "时间核对修正：20:20离开旧渡口，21:05抵灯塔；刮擦后复查五分钟；原记载20:59为初稿误差，不作为最终事实。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "ye-ch3-emotion",
+      "summary": "因刮擦担心执照与船员安全；坚持减速检查而承受延误压力。"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "ye-ch3-rel",
+      "summary": "何芷接受其五分钟复查，陆行舟只记录不确定判断，协作信任略增。"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "ye-goal",
+      "summary": "保住执照与船员"
+    },
+    {
+      "id": "ye-ch3-intent",
+      "summary": "留在灯塔守船，让陆行舟复查船底后再决定是否适航。"
+    }
+  ],
+  "privateMisbeliefs": []
+}

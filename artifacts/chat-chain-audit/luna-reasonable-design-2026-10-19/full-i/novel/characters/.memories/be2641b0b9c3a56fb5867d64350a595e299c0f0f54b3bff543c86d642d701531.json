@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "cen",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "cen-initial",
+      "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "听见林岚称20:35钟声来源未核，苏砚将其记为未核；船继续正航道，何芷承诺先送药后谈账页。",
+      "id": "257a8f08-40ac-4756-a824-05948b8f8749"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "何芷拒绝承诺交账页，使他感到交接仍可能失控。",
+      "id": "52077813-44f3-4f1d-8292-8893c11dde3e"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "对何芷的试探未获结果，但接受她先救病人的顺序。",
+      "id": "bab6b6c7-da19-442e-bd47-94ad3ce9f789"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "cen-goal",
+      "summary": "阻止旧账公开但不伤及病人"
+    },
+    {
+      "summary": "抵达后仍要促成账页交接，同时避免妨碍病人用药。",
+      "id": "d443780a-3bb4-4198-bbef-78e6e82498f4"
+    }
+  ],
+  "privateMisbeliefs": []
+}

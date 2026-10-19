@@ -13,7 +13,7 @@ const {
   ListToolsRequestSchema,
 } = require('@modelcontextprotocol/sdk/types.js');
 
-const { TOOLS, getToolByName } = require('./tools');
+const { TOOLS, getToolByName, textResult } = require('./tools');
 
 // ---------- Tool dispatch context ----------
 
@@ -76,14 +76,15 @@ async function startServer() {
     try {
       const ctx = await buildCtx({ runId, subagentId, metaNovelId, metaNovelDir });
       ctx.abortSignal = extra?.signal || null;
+      await require('../codex-runtime/nativeCommitBarrier').awaitFormalCommits(ctx);
       const result = await tool.handler(args, ctx);
       // Tool handlers return { content: [{type:'text', text}] } or throw.
       return result;
     } catch (err) {
-      return {
-        isError: true,
-        content: [{ type: 'text', text: err.message || String(err) }],
-      };
+      // All tools in this server are read-only. A query failure is data the
+      // model can act on; it must not masquerade as a mutation or end the turn.
+      return textResult({ ok: false, resourceRef: args.resourceRef || null,
+        error: { code: err.code || 'query_failed', message: err.message || String(err), stage: 'query', recoverable: true, ...(err.details ? {details:err.details} : {}) } });
     }
   });
 

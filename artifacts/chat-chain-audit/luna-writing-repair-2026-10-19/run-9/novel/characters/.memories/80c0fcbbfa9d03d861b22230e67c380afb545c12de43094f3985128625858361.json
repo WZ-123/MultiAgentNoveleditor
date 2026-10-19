@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lu",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lu-initial",
+      "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "ch3-lu-fact",
+      "summary": "航行中听见船底闷响，无法隔水确认损伤；在众人面前说明看见岑寂昨夜从钟楼门里出来，没看见其手中物品"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "ch3-lu-emotion",
+      "summary": "担心被怀疑偷芯牵连，仍选择公开有限目击以求把事实和猜测分开"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "ch3-lu-rel",
+      "summary": "苏砚要求书面记录而非仅凭怀疑拘捕，陆行舟暂接受其程序；受叶澄邀请协助查船"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lu-goal",
+      "summary": "修好潮钟并洗清偷芯嫌疑"
+    },
+    {
+      "id": "ch3-lu-intent",
+      "summary": "在码头协助叶澄检查船底，并书面记录钟楼目击"
+    }
+  ],
+  "privateMisbeliefs": []
+}

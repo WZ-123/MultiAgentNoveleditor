@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "su",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "su-initial",
+      "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "船尾擦痕无法判定成因；药箱仍冷藏，通行证已有双印，暂缓出港决定已记录。",
+      "id": "1ad3aae0-b1e5-45ea-ba04-e52865f91635"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "对陆行舟仍有疑虑，但无证据不立案；愿为风险留下程序记录。",
+      "id": "49a57b3a-e6fe-447a-86e8-994c63d40fbf"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "采纳林岚标明怀表读数来源的要求；与陆行舟以暂不搜身换取其自愿配合检查。",
+      "id": "dcb77e6a-1a9e-4a42-aaad-e3d7869f5058"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "su-goal",
+      "summary": "在封桥前合法完成交接"
+    },
+    {
+      "summary": "明早核对钟楼记录，待复查船尾后再决定是否启航。",
+      "id": "43094e63-ddf5-409b-928c-cb430ac3c654"
+    }
+  ],
+  "privateMisbeliefs": []
+}

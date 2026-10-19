@@ -1,0 +1,270 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
+const os = require('node:os');
+const path = require('node:path');
+async function main() {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'mana-writing-preparation-'));
+  process.env.MANA_USER_DATA_ROOT = path.join(root, 'data');
+  const data = require('../src/main/store/novelData');
+  const { readResource } = require('../src/main/mcp/novelResources');
+  const { getToolByName } = require('../src/main/mcp/tools');
+  const { prepareNovelPatch, inspectWritingTask } = require('../src/main/mcp/writingTools');
+  const { assessReview, fileFor } = require('../src/main/codex-runtime/reviewLedger');
+  const { syncNativeNovelWorkspace } = require('../src/main/codex-runtime/nativeNovelWorkspace');
+  const { applyUnifiedDiff } = require('../src/main/codex-runtime/nativeChangePolicy');
+  const runs = require('../src/main/store/chatRuns');
+  let passed = 0;
+  const test = async (label, fn) => { await fn(); passed++; console.log('PASS preparation ' + label); };
+  try {
+    const novel = await require('../src/main/store/novels').createNovel({ title: '补丁准备回归', dir: path.join(root, 'novel') });
+    const ctx = { novel, novelDir: novel.dir };
+    // Reproduce the literal backslash-n-plus followed by a REAL line break.
+    const before = '# 本章\n\n她握住缆绳。\\n+\n\n他说“$()、`、\\、＋均须原样保留”。\\n+\n\n尾声。\\n+\n\n落点。\\n+\n';
+    const ref = 'chapter:chapter-001.md';
+    await data.writeChapterWithMeta(novel.dir, 'chapter-001.md', before, {}, { baseContent: '' });
+    for (const id of ['lin','su','he','ye','lu','cen']) {
+      await data.writeCharacter(novel.dir, { id, name:id });
+      await data.writeCharacterMemory(novel.dir, {characterId:id,factsKnown:[{id:id+'-old',summary:'旧事实'}],privateMisbeliefs:[{id:id+'-belief',summary:'尚未证实的猜测'}]});
+    }
+    const workspace = await syncNativeNovelWorkspace(novel, path.join(root, 'workspaces'));
+    let resource = await readResource(novel, ref);
+    const snapshot = { runId:'active-preparation', novelId:novel.id,status:'running',version:1,workspaceRoot:workspace.root,items:[],taskConstraints:{operation:'edit',targetResourceRefs:[ref],reviewRequired:true},savedResources:[] };
+    const save = async () => { snapshot.version++; await runs.save(snapshot); };
+    await save();
+    const prepare = changes => prepareNovelPatch({changes},ctx);
+    const one = replacements => prepare([{resourceRef:ref,baseHash:resource.sourceHash,replacements}]);
+    let savedPreparation, automaticPreparation;
+    await test('four literal escape fragments are removed without transcribing the source or changing other bytes', async()=>{
+      const result = await getToolByName('prepare_novel_patch').handler({changes:[{resourceRef:ref,baseHash:resource.sourceHash,replacements:[{oldText:'\\n+',newText:'',all:true}]}]},ctx);
+      const patch = result.structuredContent.patch;
+      savedPreparation=result.structuredContent;
+      assert.equal(result.structuredContent.saved,false);
+      assert.match(patch,/\*\*\* Update File: chapters\/chapter-001.md/u);
+      const diff = patch.split('\n').slice(2,-1).join('\n');
+      assert.equal(applyUnifiedDiff(before,diff),before.split('\\n+').join(''));
+      assert.equal(await fs.readFile(path.join(workspace.root,'chapters/chapter-001.md'),'utf8'),before);
+      assert.equal((await readResource(novel,ref)).sourceHash,resource.sourceHash);
+      assert.equal((await prepareNovelPatch({preparationId:savedPreparation.preparationId},ctx)).patch,patch,'retrieve the same authored candidate without printing/retyping a long patch');
+      assert.equal(JSON.parse(result.content[0].text).patch,undefined,'text content must not duplicate the large structured patch');
+      await assert.rejects(prepareNovelPatch({preparationId:'invented'},ctx),e=>e.code==='preparation_expired');
+      await getToolByName('read_novel_resource').handler({resourceRef:ref},ctx);
+      automaticPreparation=await prepare([{resourceRef:ref,replacements:[{oldText:'\\n+',newText:'',all:true}]}]);
+      assert.equal(automaticPreparation.patch,patch,'omitting a manually copied hash still binds the actual successful read version');
+      const missing='chapter:chapter-new.md';
+      const absent=await prepare([{resourceRef:missing,content:'新章。'}]);
+      assert.equal(absent.resources[0].mode,'create','host can bind a confirmed absent resource without asking the model to read nonexistent content');
+      await data.writeChapterWithMeta(novel.dir,'chapter-new.md','并发创建。',{}, {baseContent:''});
+      await fs.writeFile(path.join(workspace.root,'chapters/chapter-new.md'),'并发创建。\n');
+      await assert.rejects(prepareNovelPatch({preparationId:absent.preparationId},ctx),e=>e.code==='resource_version_changed','a cached absent version cannot overwrite a concurrently created resource');
+      await assert.rejects(prepare([{resourceRef:missing,content:'覆盖。'}]),e=>e.code==='resource_version_read_required','once a resource exists the model must read it before editing');
+      assert.equal(require('../src/main/mcp/readVersionReceipts').readVersion('different-run',ref),undefined);
+    });
+    await test('stale hash, absent context, ambiguous replacement and no-op are rejected',async()=>{
+      await assert.rejects(prepare([{resourceRef:ref,baseHash:'stale',content:'新文'}]),e=>e.code==='resource_version_changed');
+      await assert.rejects(one([{oldText:'不存在',newText:''}]),e=>e.code==='replacement_not_found');
+      await assert.rejects(one([{oldText:'\\n+',newText:''}]),e=>e.code==='ambiguous_replacement');
+      await assert.rejects(one([{oldText:'她',newText:'她'}]),e=>e.code==='no_changes');
+      await assert.rejects(prepare([{resourceRef:ref,baseHash:'absent',content:'误判新增'}]),e=>e.code==='resource_version_changed');
+    });
+    await test('retrieving an actually committed candidate is idempotent and never reports a false stale-version repair',async()=>{
+      const file='chapter-consumed.md',resourceRef='chapter:'+file,content='已确认并保存的正文。\n';
+      const candidate=await prepare([{resourceRef,content}]);
+      assert.equal(candidate.resources[0].bodyChineseCharacterCount,require('../src/main/mcp/novelResources').bodyChineseCharacterCount(content));
+      await data.writeChapterWithMeta(novel.dir,file,content,{}, {baseContent:''});
+      await fs.writeFile(path.join(workspace.root,'chapters',file),content);
+      const current=await readResource(novel,resourceRef);
+      await assert.rejects(prepareNovelPatch({preparationId:candidate.preparationId},ctx),e=>e.code==='resource_version_changed','matching bytes without a task commit cannot fabricate a save');
+      snapshot.savedResources.push({resourceRef,mode:'create',newHash:current.sourceHash});await save();
+      const repeated=await prepareNovelPatch({preparationId:candidate.preparationId},ctx);
+      assert.equal(repeated.status,'already_committed');assert.equal(repeated.saved,true);assert.equal(repeated.preparedOnly,false);assert.equal(repeated.patch,undefined);
+      snapshot.savedResources=[];await save();
+    });
+    await test('one prepared patch contains a new chapter and six lossless subjective-memory appends',async()=>{
+      const changes = [{resourceRef:'chapter:chapter-002.md',baseHash:'absent',content:'# 下一章\n\n真实创作正文。\n'}];
+      for(const id of ['lin','su','he','ye','lu','cen']) {
+        const memory = await readResource(novel,'character-memory:'+id);
+        changes.push({resourceRef:memory.resourceRef,baseHash:memory.sourceHash,memoryAppend:{factsKnown:[{id:id+'-new',summary:'在场听见医师确认双印'}],lastUpdatedChapterRef:'chapter:chapter-002.md'}});
+      }
+      const result = await prepare(changes);
+      assert.equal(result.resources.length,7);
+      assert.equal((result.patch.match(/\*\*\* Add File:/gu)||[]).length,1);
+      assert.equal((result.patch.match(/\*\*\* Update File:/gu)||[]).length,6);
+      for(const segment of result.patch.split('*** Update File: ').slice(1)) {
+        const [relative,...lines] = segment.split('\n');
+        const diff = lines.filter(line=>line!=='*** End Patch').join('\n');
+        const old = await fs.readFile(path.join(workspace.root,relative),'utf8');
+        const after = JSON.parse(applyUnifiedDiff(old,diff));
+        assert.equal(after.factsKnown.length,2); assert.equal(after.privateMisbeliefs.length,1);
+        assert.equal(after.factsKnown[0].summary,'旧事实');
+      }
+      const memory = await readResource(novel,'character-memory:he');
+      await assert.rejects(prepare([{resourceRef:memory.resourceRef,baseHash:memory.sourceHash,memoryAppend:{factsKnown:[{id:'he-old',summary:'静默覆盖'}]}}]),e=>e.code==='memory_entry_conflict');
+      const assigned=await prepare([{resourceRef:memory.resourceRef,baseHash:memory.sourceHash,memoryAppend:{factsKnown:[{summary:'新事实，由宿主管理身份'}]}}]);
+      assert.equal((await prepareNovelPatch({preparationId:assigned.preparationId},ctx)).patch,assigned.patch,'generated memory identities must be frozen in cached preparations');
+      assert.equal((assigned.patch.match(/新事实，由宿主管理身份/gu)||[]).length,1);
+      assert.equal(JSON.parse((await readResource(novel,memory.resourceRef)).content).factsKnown.length,1,'preparing assigned identities still cannot write formal memory');
+    });
+    await test('scope, duplicate targets and symlink mirrors cannot bypass approval boundaries',async()=>{
+      snapshot.taskConstraints.allowedWriteResourceRefs=[ref]; await save();
+      await assert.rejects(prepare([{resourceRef:'chapter:chapter-002.md',baseHash:'absent',content:'越界'}]),e=>e.code==='task_scope_violation');
+      delete snapshot.taskConstraints.allowedWriteResourceRefs; await save();
+      const change={resourceRef:ref,baseHash:resource.sourceHash,content:'新文'};
+      await assert.rejects(prepare([change,change]),e=>e.code==='duplicate_resource');
+      const file=path.join(workspace.root,'chapters/chapter-001.md');
+      await fs.rename(file,file+'.backup'); await fs.symlink(file+'.backup',file);
+      await assert.rejects(prepare([change]),e=>e.code==='unsafe_workspace_path');
+      await fs.unlink(file); await fs.rename(file+'.backup',file);
+    });
+    const read = async()=>({name:'read_novel_resource',status:'completed',arguments:{resourceRef:ref},result:await getToolByName('read_novel_resource').handler({resourceRef:ref},ctx)});
+    const report={coveredResourceRefs:[ref],issues:[]};
+    await test('preflight does not write a ledger or claim success from metadata or missing saves',async()=>{
+      let result=await inspectWritingTask({report},ctx);
+      assert.equal(result.ok,false); assert.ok(result.unmet.includes('no_current_commit'));
+      assert.ok(result.unmet.includes('review_evidence_missing'));
+      await assert.rejects(fs.stat(fileFor(novel)),e=>e.code==='ENOENT');
+      snapshot.savedResources=[{resourceRef:ref,mode:'replace',newHash:resource.sourceHash}];
+      snapshot.items=[{name:'read_novel_resource',status:'completed',result:await getToolByName('read_novel_resource').handler({resourceRef:ref,mode:'metadata'},ctx)}];await save();
+      result=await inspectWritingTask({report},ctx);assert.equal(result.ok,false);
+      snapshot.items=[await read()];await save();
+      result=await inspectWritingTask({report},ctx);assert.equal(result.ok,true);
+      snapshot.reviewItemOffset=snapshot.items.length;await save();
+      assert.equal((await inspectWritingTask({report},ctx)).ok,false,'independent review cannot reuse draft-phase reads');
+      snapshot.items.push(await read());await save();assert.equal((await inspectWritingTask({report},ctx)).ok,true);
+      snapshot.reviewItemOffset=0;await save();
+      await assert.rejects(fs.stat(fileFor(novel)),e=>e.code==='ENOENT');
+    });
+    await test('preflight and final assessment still reject invented quotes, wrong lines and stale report versions',async()=>{
+      const issue={issueId:'pov:chapter-001:state',category:'pov',severity:'suspicion',status:'open',contradiction:'待核对',evidence:[{resourceRef:ref,hash:resource.sourceHash,location:'L999',quote:'她握住缆绳'}]};
+      assert.equal((await inspectWritingTask({report:{...report,issues:[issue]}},ctx)).ok,false);
+      const context={items:snapshot.items,text:'```json\n'+JSON.stringify(report)+'\n```'};
+      const assessed=await assessReview(novel,context);
+      await data.writeChapterWithMeta(novel.dir,'chapter-001.md',before+'后续修改。\n',{}, {baseContent:before});
+      await assert.rejects(prepareNovelPatch({preparationId:savedPreparation.preparationId},ctx),e=>e.code==='resource_version_changed');
+      await getToolByName('read_novel_resource').handler({resourceRef:ref},ctx);
+      await assert.rejects(prepareNovelPatch({preparationId:automaticPreparation.preparationId},ctx),e=>e.code==='resource_version_changed','a later actual read must not silently rebase an earlier prepared candidate');
+      const stale=await assessReview(novel,{...context,items:[await read()],expectedCoverageHashes:assessed.coverageHashes});
+      assert.equal(stale.versionCurrent,false);assert.equal(stale.coverageVerified,false);assert.equal(stale.evidenceVerified,false);
+    });
+    await test('empty source only accepts unambiguous insertion; nonempty unanchored patches remain rejected',async()=>{
+      assert.equal(applyUnifiedDiff('','@@\n+首段。'),'首段。\n');
+      assert.throws(()=>applyUnifiedDiff('原文','@@\n+首段。'),/缺少定位上下文/u);
+    });
+    await test('same-batch memory requirement needs real native transaction identity, not just all resource names',async()=>{
+      const {evaluateTaskResult}=require('../src/main/codex-runtime/taskCompletion');
+      const {deriveRequirements,bindRequirements}=require('../src/main/codex-runtime/taskRequirements');
+      const payload=await deriveRequirements({text:'角色驱动修改本章，把六人记忆与正文在同一补丁保存'});
+      let constraints=await bindRequirements(novel,payload.taskConstraints,payload.text);
+      assert.equal(constraints.memoryScopeBound,false);
+      constraints=await require('../src/main/codex-runtime/writingScope').bindCandidateScope(novel,constraints,{participantCharacterRefs:['lin','su','he','ye','lu','cen'].map(id=>'character:'+id),resourceRefs:[]});
+      assert.equal(constraints.atomicMemoryWithChapter,true);assert.equal(constraints.requiredWriteResourceRefs.length,6);
+      const natural=await deriveRequirements({text:'先读取六位角色卡和关系。写下一章，把六人的新增已知事实、情绪、关系变化和未决意图分别写入各自记忆，与正文同一批次交我确认。'});
+      await bindRequirements(novel,natural.taskConstraints,natural.text);
+      assert.equal(natural.taskConstraints.memoryUpdateRequired,true,'分别写入 is positive, not the negative command 别写入');
+      assert.equal(natural.taskConstraints.memoryScopeBound,false,'the host must not guess participant identities from total project count');
+      assert.equal(natural.taskConstraints.atomicMemoryWithChapter,true);
+      const {positiveInstructions}=await import('../src/domain/writingTaskConstraints.mjs');
+      assert.match(positiveInstructions('把六人的变化分别写入记忆'),/分别写入/u);
+      assert.doesNotMatch(positiveInstructions('读取记忆，但别写入记忆'),/写入/u);
+      assert.doesNotMatch(positiveInstructions('别写入记忆'),/写入/u);
+      const saved=await Promise.all([ref,...constraints.requiredWriteResourceRefs].map(async(resourceRef,index)=>({resourceRef,mode:'replace',newHash:(await readResource(novel,resourceRef)).sourceHash,nativeItemId:'split-'+index})));
+      const run={entry:novel,taskConstraints:constraints,committedResources:saved,items:[],text:'已保存'};
+      assert.ok((await evaluateTaskResult(run,true)).objective.unmet.includes('combined_memory_commit_missing'));
+      assert.equal((await evaluateTaskResult({...run,committedResources:saved.map(item=>({...item,nativeItemId:'single-native-patch'}))},true)).checks.combinedMemoryCommit.status,'met');
+      const batchRefs=saved.map(item=>item.resourceRef);
+      const continued=saved.map(item=>({...item,nativeItemId:item.resourceRef===ref?'later-revision':'single-native-patch',nativeBatchResourceRefs:item.resourceRef===ref?[ref]:batchRefs}));
+      assert.equal((await evaluateTaskResult({...run,committedResources:[],reusedSavedResources:continued},true)).checks.combinedMemoryCommit.status,'met','chapter-only revision must not erase the original combined transaction proof on continuation');
+    });
+    await test('MCP readers wait for the host commit checkpoint and never return a pending old version',async()=>{
+      const {awaitFormalCommits}=require('../src/main/codex-runtime/nativeCommitBarrier');
+      snapshot.pendingNativeCommits=['pending-patch'];await save();
+      let released=false;
+      const waiting=awaitFormalCommits(ctx).then(()=>{released=true});
+      await new Promise(resolve=>setTimeout(resolve,40));assert.equal(released,false);
+      snapshot.pendingNativeCommits=[];await save();await waiting;assert.equal(released,true);
+      snapshot.pendingNativeCommits=['never-committed'];await save();
+      await assert.rejects(awaitFormalCommits(ctx,{timeoutMs:20}),e=>e.code==='native_commit_pending');
+      const interrupted=awaitFormalCommits(ctx);
+      const interruptedRejected=assert.rejects(interrupted,e=>e.code==='native_commit_incomplete');
+      await new Promise(resolve=>setTimeout(resolve,10));snapshot.status='interrupted';await save();
+      await interruptedRejected;
+      snapshot.status='running';await save();
+      const prematurelyEnded=awaitFormalCommits(ctx);
+      const endedRejected=assert.rejects(prematurelyEnded,e=>e.code==='native_commit_incomplete','a completed model turn cannot stand in for an absent formal commit');
+      await new Promise(resolve=>setTimeout(resolve,10));snapshot.status='completed';await save();
+      await endedRejected;
+    });
+    await test('participant identities bind selected memories without interpreting prose keywords as a save gate',async()=>{
+      const {bindRequirements,deriveRequirements}=require('../src/main/codex-runtime/taskRequirements');
+      const {bindCandidateScope}=require('../src/main/codex-runtime/writingScope');
+      await data.writeCharacter(novel.dir,{id:'he',name:'何芷'});await data.writeCharacter(novel.dir,{id:'lin',name:'林岚'});
+      const payload=await deriveRequirements({text:'用何芷有限视角写下一章，把六人的变化分别写入记忆，与正文同一补丁保存，保留原始记忆，写后自查'});
+      await bindRequirements(novel,payload.taskConstraints,payload.text);
+      assert.equal(payload.taskConstraints.memoryParticipantCount,6);
+      assert.equal(payload.taskConstraints.memoryScopeBound,false);
+      snapshot.status='running';snapshot.taskConstraints=payload.taskConstraints;snapshot.savedResources=[];snapshot.reusedSavedResources=[];await save();
+      const changes=[{resourceRef:'chapter:chapter-002.md',content:'何芷等了七分钟。她读到纸上写着：林岚听见钟声。'}];
+      const participants=['lin','su','he','ye','lu','cen'].map(id=>'character:'+id);
+      await assert.rejects(prepare(changes),e=>e.code==='writing_scope_unbound');
+      const staged=await prepareNovelPatch({participantCharacterRefs:participants,changes},ctx);
+      assert.equal(staged.status,'draft_incomplete');assert.equal(staged.patch,undefined);assert.equal(staged.saved,false);assert.equal(staged.missingResourceRefs.length,6);
+      for(const id of ['lin','su','he','ye','lu','cen']) {
+        const r=await readResource(novel,'character-memory:'+id);
+        changes.push({resourceRef:r.resourceRef,baseHash:r.sourceHash,memoryAppend:{factsKnown:[{summary:'在场听见船主判断'}]}});
+      }
+      const intent=require('../src/main/codex-runtime/taskIntent');const input=await intent.intentInput(novel,payload.text,payload.taskConstraints);
+      snapshot.taskConstraints=intent.bindTaskIntent(payload.taskConstraints,{participants:{selection:'all',characterRefs:participants,requestQuote:'六人的变化'},perspective:{mode:'limited',focusCharacterRef:'character:he',requestQuote:'用何芷有限视角写下一章'},requiredReadResourceRefs:[],memoryUpdateRequired:true,atomicMemoryWithChapter:true,preserveOriginalMemories:true,reviewAspects:[]},{text:payload.text,descriptors:input.descriptors});await save();
+      const assembled=await prepareNovelPatch({preparationId:staged.preparationId,changes:changes.slice(1)},ctx);
+      assert.equal(assembled.preparationId,staged.preparationId,'draft identity stays stable while assembling');
+      assert.equal(assembled.resources.length,7);assert.ok(assembled.patch.includes('*** Add File: chapters/chapter-002.md'));assert.equal(assembled.saved,false);
+      assert.ok(!assembled.missingResourceRefs,'a complete draft alone does not save or approve');
+      const extended=await prepareNovelPatch({preparationId:assembled.preparationId,changes:[{resourceRef:'chapter:chapter-002.md',replacements:[{oldText:'何芷等了七分钟。',newText:'何芷等了三分钟。'}]}]},ctx);
+      assert.equal(extended.preparationId,staged.preparationId);
+      const retrieved=await prepareNovelPatch({preparationId:staged.preparationId},ctx);assert.equal(retrieved.preparationId,staged.preparationId);assert.ok(retrieved.patch.includes('+何芷等了三分钟。'));
+      assert.ok(extended.patch.includes('+何芷等了三分钟。'));assert.equal(extended.resources.length,7);
+      await assert.rejects(fs.stat(path.join(workspace.root,'chapters/chapter-002.md')),e=>e.code==='ENOENT','editing a staged new chapter never creates a formal resource');
+      await assert.rejects(prepareNovelPatch({narrativePerspective:{mode:'omniscient',focusCharacterRef:null},participantCharacterRefs:participants,changes},ctx),e=>e.code==='narrative_perspective_changed');
+      assert.equal((await prepareNovelPatch({narrativePerspective:{mode:'limited',focusCharacterRef:'character:he'},participantCharacterRefs:participants,changes},ctx)).resources.length,7,'semantic keywords cannot block a technically valid candidate');
+      await assert.rejects(fs.stat(path.join(workspace.root,'chapters/chapter-002.md')),e=>e.code==='ENOENT');
+      const subset=await deriveRequirements({text:'角色驱动写下一章，只让何芷、林岚两位角色参与，把两人的新增事实分别写入各自记忆，与正文同一补丁确认'});
+      await bindRequirements(novel,subset.taskConstraints,subset.text);
+      const bound=await bindCandidateScope(novel,subset.taskConstraints,{participantCharacterRefs:['character:he','character:lin'],resourceRefs:[]});
+      assert.deepEqual(bound.requiredWriteResourceRefs,['character-memory:he','character-memory:lin']);
+      assert.equal(bound.atomicMemoryWithChapter,true);
+      await assert.rejects(bindCandidateScope(novel,subset.taskConstraints,{participantCharacterRefs:['character:lin'],resourceRefs:[]}),e=>e.code==='participant_count_mismatch');
+      await assert.rejects(bindCandidateScope(novel,bound,{participantCharacterRefs:['character:he','character:su'],resourceRefs:[]}),e=>e.code==='task_scope_changed');
+      await assert.rejects(bindCandidateScope(novel,subset.taskConstraints,{participantCharacterRefs:['character:missing','character:he'],resourceRefs:[]}),e=>e.code==='invalid_participant_scope');
+      await assert.rejects(bindCandidateScope(novel,bound,{resourceRefs:[ref]}),e=>e.code==='task_scope_violation','new chapter request cannot silently edit an old chapter');
+    });
+    await test('timeline arithmetic checks inaccurate clock readings separately from a feasible travel budget',async()=>{
+      const args={eventA:{when:'18:05',where:'港口'},eventB:{when:'18:45',where:'诊所'},minimumTravelMinutes:40};
+      const check=clockReadings=>getToolByName('check_timeline_feasibility').handler({...args,clockReadings}).then(r=>r.structuredContent);
+      const wrong=await check([{actualTime:'18:05',displayedTime:'18:00',offsetMinutes:-7}]);
+      assert.equal(wrong.feasible,false);assert.equal(wrong.clockChecks[0].observedOffsetMinutes,-5);
+      assert.equal((await check([{actualTime:'18:05',displayedTime:'17:58',offsetMinutes:-7}])).feasible,true);
+      assert.equal((await check([{actualTime:'18:05',displayedTime:'18:12',offsetMinutes:7}])).feasible,true);
+      assert.equal((await check([{actualTime:'2026-10-19T00:05:00Z',displayedTime:'2026-10-18T23:58:00Z',offsetMinutes:-7}])).feasible,true);
+      assert.equal((await check([{actualTime:'18:05',displayedTime:'约整点',offsetMinutes:-7}])).feasible,null);
+    });
+    await test('original memories are immutable while task-created entries can be corrected in place without draft metadata',async()=>{
+      const {appendMemory}=require('../src/main/mcp/writingTools');
+      const {assertMemoryBaseline}=require('../src/main/codex-runtime/memoryBaseline');
+      const baseline={characterId:'he',factsKnown:[{id:'he-old',summary:'原始事实'}],privateMisbeliefs:[]};
+      const draft={...baseline,factsKnown:[...baseline.factsKnown,{id:'he-new',summary:'错误时刻'}]};
+      const fixed=JSON.parse(appendMemory(JSON.stringify(draft),'he',{factsKnown:[{id:'he-new',summary:'现场核对后的时刻'}]},baseline));
+      assert.equal(fixed.factsKnown.length,2);assert.equal(fixed.factsKnown[1].summary,'现场核对后的时刻');assertMemoryBaseline(baseline,fixed);
+      assert.throws(()=>appendMemory(JSON.stringify(draft),'he',{factsKnown:[{id:'he-old',summary:'覆盖原始事实'}]},baseline),e=>e.code==='memory_entry_conflict');
+      assert.throws(()=>assertMemoryBaseline(baseline,{...fixed,factsKnown:[fixed.factsKnown[1]]}),e=>e.code==='original_memory_changed');
+      const {CodexSessionService}=require('../src/main/codex-runtime/codexSessionService');
+      const stored=await readResource(novel,'character-memory:he');const original=JSON.parse(stored.content);
+      const changed=structuredClone(original);changed.factsKnown[0].summary='擅自覆盖原始事实';
+      const diff=require('../src/main/mcp/writingTools').nativePatch('character-memories/he.json',stored.content,JSON.stringify(changed,null,2)+'\n').split('\n').slice(1).join('\n');
+      const run={runId:'baseline-approval',workspace:{root:workspace.root,snapshots:new Map([[stored.resourceRef,stored]])},nativeFileItems:new Map(),taskConstraints:{operation:'write',allowedWriteResourceRefs:[]},memoryBaselines:{[stored.resourceRef]:original}};
+      const receiver={notificationQueue:Promise.resolve(),_runForProtocolParams:()=>run,ledger:{record:async()=>{}},runRecords:new Map(),_emitEvent:()=>{},_rejectNativeApproval:CodexSessionService.prototype._rejectNativeApproval};
+      await assert.rejects(CodexSessionService.prototype._handleServerRequest.call(receiver,'item/fileChange/requestApproval',{itemId:'bad-memory',fileChanges:[{path:'character-memories/he.json',kind:{type:'update'},diff}]}),e=>e.code==='original_memory_changed');
+      assert.equal((await readResource(novel,stored.resourceRef)).sourceHash,stored.sourceHash,'approval guard must leave formal memory intact');
+    });
+    console.log(`writing-preparation: ok (${passed} scenarios)`);
+  } finally { await fs.rm(root,{recursive:true,force:true}); }
+}
+main().catch(error=>{console.error(error);process.exitCode=1});

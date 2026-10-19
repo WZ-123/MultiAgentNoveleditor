@@ -1,0 +1,24 @@
+AssertionError [ERR_ASSERTION]: all declared novel tools retain their namespace: read_writing_context
++ actual - expected
+
+  {
+    name: 'read_writing_context',
+-   namespace: 'mcp__novel_tools'
+  }
+
+    at run (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/deepseek-no-reasoning-bridge.test.js:49:12)
+    at Object.<anonymous> (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/deepseek-no-reasoning-bridge.test.js:134:1)
+    at Module._compile (node:internal/modules/cjs/loader:1831:14)
+    at Object..js (node:internal/modules/cjs/loader:1971:10)
+    at Module.load (node:internal/modules/cjs/loader:1552:32)
+    at Module._load (node:internal/modules/cjs/loader:1354:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [Object],
+  expected: [Object],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}

@@ -1,0 +1,15 @@
+PASS preparation-stage one native child completes while parent and project ownership stay active; same preparation implementation produces atomic candidate
+PASS preparation-stage durable candidate survives module reload, old timestamp and more than eight other candidates; retrieval never increments revision
+PASS preparation-stage host and MCP processes cannot overwrite each other or drop candidates during concurrent checkpoints
+PASS preparation-stage handoff binds exact revision; changed candidate or invented native bytes cannot enter approval
+PASS preparation-stage ordinary native approval and mutation service commit chapter and canonical memory together, then real readback settles stage
+PASS preparation-stage cancel propagates to a running native preparation child; late output cannot prepare or commit
+PASS preparation-stage a source edited while the model prepares cannot be silently rebound to its newer version
+Error: 候选正文未达到本任务原始篇幅要求
+    at contractError (/Users/potablewater/Desktop/MultiAgentNovelAssistant/src/main/codex-runtime/contracts.js:11:17)
+    at Object.commitInput (/Users/potablewater/Desktop/MultiAgentNovelAssistant/src/main/codex-runtime/writingPreparationStage.js:74:11)
+    at async /Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation-stage.test.js:163:9
+    at async test (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation-stage.test.js:21:31)
+    at async main (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation-stage.test.js:153:5) {
+  code: 'preparation_word_count'
+}

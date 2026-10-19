@@ -1,0 +1,409 @@
+[
+  {
+    "id": "accept",
+    "action": "turn",
+    "text": "阶段交接验证：只让林岚参与，先读取她的角色卡和主观记忆以及世界观、大纲、文风和前章。新写第2章并保存，正文1500—2000字，林岚第三人称有限视角，停留在旧渡口，写她整理潮表并决定等候。把她本场新增见闻追加到她的记忆，与正文在同一批次交我确认，保留原始记忆。",
+    "timeoutMs": 360000,
+    "allowedWriteRefs": [
+      "chapter:chapter-002.md",
+      "character-memory:lin"
+    ],
+    "preparationHandoff": {
+      "text": "完成以下写作任务，交付实际正文和新增主观记忆，不执行工具或声称已经保存。资源和基线由随后附带的任务上下文给出。\n阶段交接验证：只让林岚参与，先读取她的角色卡和主观记忆以及世界观、大纲、文风和前章。新写第2章并保存，正文1500—2000字，林岚第三人称有限视角，停留在旧渡口，写她整理潮表并决定等候。把她本场新增见闻追加到她的记忆，与正文在同一批次交我确认，保留原始记忆。",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "chapter:chapter-002.md"
+                      ]
+                    },
+                    "content": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "content"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "character-memory:lin"
+                      ]
+                    },
+                    "memoryAppend": {
+                      "type": "object",
+                      "properties": {
+                        "factsKnown": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "summary"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "minItems": 1
+                        },
+                        "lastUpdatedChapterRef": {
+                          "type": "string",
+                          "enum": [
+                            "chapter:chapter-002.md"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "factsKnown",
+                        "lastUpdatedChapterRef"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "memoryAppend"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "id": "new-for-decline",
+    "action": "newConversation"
+  },
+  {
+    "id": "decline",
+    "action": "turn",
+    "text": "阶段交接验证：只让林岚参与，先读取她的角色卡和主观记忆以及世界观、大纲、文风和前章。新写第3章并保存，正文1500—2000字，林岚第三人称有限视角，停留在旧渡口，写她整理潮表并决定等候。把她本场新增见闻追加到她的记忆，与正文在同一批次交我确认，保留原始记忆。",
+    "timeoutMs": 360000,
+    "allowedWriteRefs": [
+      "chapter:chapter-003.md",
+      "character-memory:lin"
+    ],
+    "preparationHandoff": {
+      "text": "完成以下写作任务，交付实际正文和新增主观记忆，不执行工具或声称已经保存。资源和基线由随后附带的任务上下文给出。\n阶段交接验证：只让林岚参与，先读取她的角色卡和主观记忆以及世界观、大纲、文风和前章。新写第3章并保存，正文1500—2000字，林岚第三人称有限视角，停留在旧渡口，写她整理潮表并决定等候。把她本场新增见闻追加到她的记忆，与正文在同一批次交我确认，保留原始记忆。",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "chapter:chapter-003.md"
+                      ]
+                    },
+                    "content": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "content"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "character-memory:lin"
+                      ]
+                    },
+                    "memoryAppend": {
+                      "type": "object",
+                      "properties": {
+                        "factsKnown": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "summary"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "minItems": 1
+                        },
+                        "lastUpdatedChapterRef": {
+                          "type": "string",
+                          "enum": [
+                            "chapter:chapter-003.md"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "factsKnown",
+                        "lastUpdatedChapterRef"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "memoryAppend"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "decline": true
+  },
+  {
+    "id": "new-for-conflict",
+    "action": "newConversation"
+  },
+  {
+    "id": "conflict",
+    "action": "turn",
+    "text": "阶段交接验证：只让林岚参与，先读取她的角色卡和主观记忆以及世界观、大纲、文风和前章。新写第4章并保存，正文1500—2000字，林岚第三人称有限视角，停留在旧渡口，写她整理潮表并决定等候。把她本场新增见闻追加到她的记忆，与正文在同一批次交我确认，保留原始记忆。",
+    "timeoutMs": 360000,
+    "allowedWriteRefs": [
+      "chapter:chapter-004.md",
+      "character-memory:lin"
+    ],
+    "preparationHandoff": {
+      "text": "完成以下写作任务，交付实际正文和新增主观记忆，不执行工具或声称已经保存。资源和基线由随后附带的任务上下文给出。\n阶段交接验证：只让林岚参与，先读取她的角色卡和主观记忆以及世界观、大纲、文风和前章。新写第4章并保存，正文1500—2000字，林岚第三人称有限视角，停留在旧渡口，写她整理潮表并决定等候。把她本场新增见闻追加到她的记忆，与正文在同一批次交我确认，保留原始记忆。",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "chapter:chapter-004.md"
+                      ]
+                    },
+                    "content": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "content"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "character-memory:lin"
+                      ]
+                    },
+                    "memoryAppend": {
+                      "type": "object",
+                      "properties": {
+                        "factsKnown": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "summary"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "minItems": 1
+                        },
+                        "lastUpdatedChapterRef": {
+                          "type": "string",
+                          "enum": [
+                            "chapter:chapter-004.md"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "factsKnown",
+                        "lastUpdatedChapterRef"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "memoryAppend"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "conflictAfterPreparation": true
+  },
+  {
+    "id": "new-for-stop",
+    "action": "newConversation"
+  },
+  {
+    "id": "stop",
+    "action": "turn",
+    "text": "阶段交接验证：只让林岚参与，先读取她的角色卡和主观记忆以及世界观、大纲、文风和前章。新写第5章并保存，正文1500—2000字，林岚第三人称有限视角，停留在旧渡口，写她整理潮表并决定等候。把她本场新增见闻追加到她的记忆，与正文在同一批次交我确认，保留原始记忆。",
+    "timeoutMs": 360000,
+    "allowedWriteRefs": [
+      "chapter:chapter-005.md",
+      "character-memory:lin"
+    ],
+    "preparationHandoff": {
+      "text": "完成以下写作任务，交付实际正文和新增主观记忆，不执行工具或声称已经保存。资源和基线由随后附带的任务上下文给出。\n阶段交接验证：只让林岚参与，先读取她的角色卡和主观记忆以及世界观、大纲、文风和前章。新写第5章并保存，正文1500—2000字，林岚第三人称有限视角，停留在旧渡口，写她整理潮表并决定等候。把她本场新增见闻追加到她的记忆，与正文在同一批次交我确认，保留原始记忆。",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "chapter:chapter-005.md"
+                      ]
+                    },
+                    "content": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "content"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "character-memory:lin"
+                      ]
+                    },
+                    "memoryAppend": {
+                      "type": "object",
+                      "properties": {
+                        "factsKnown": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "summary"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "minItems": 1
+                        },
+                        "lastUpdatedChapterRef": {
+                          "type": "string",
+                          "enum": [
+                            "chapter:chapter-005.md"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "factsKnown",
+                        "lastUpdatedChapterRef"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "memoryAppend"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "stopPreparation": true
+  }
+]

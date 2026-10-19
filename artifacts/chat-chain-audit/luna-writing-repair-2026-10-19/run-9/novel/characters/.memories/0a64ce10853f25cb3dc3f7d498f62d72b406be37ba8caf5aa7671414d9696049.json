@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "su",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "su-initial",
+      "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "ch3-su-fact",
+      "summary": "船在21:02抵达灯塔，药品交收；21:00东桥封闭但水路仍可用；船底异响尚未查明；陆行舟报告钟楼目击、岑寂承认取公文"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "ch3-su-emotion",
+      "summary": "按程序处置未证实指控并成功完成药品交接，对夜间返航风险保持谨慎"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "ch3-su-rel",
+      "summary": "要求岑寂与陆行舟书面记录，避免在证据不足时拘捕；安排叶澄与陆行舟查船"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "su-goal",
+      "summary": "在封桥前合法完成交接"
+    },
+    {
+      "id": "ch3-su-intent",
+      "summary": "留在灯塔见证船况检查与两份书面记录，避免夜雾中贸然返航"
+    }
+  ],
+  "privateMisbeliefs": []
+}

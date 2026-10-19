@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "su",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "su-initial",
+      "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "船底异响三次；船停在外堤系船桩，安排自己步行回渡口带陆行舟查绞盘。何芷保管双印通行证。",
+      "id": "042ac06b-acc2-4f9e-8137-cd04e5deee42"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "对航程延误及手续受查感到压力，但避免无据拘捕或强行搜查。",
+      "id": "310b78af-3e3f-46dc-b9c0-5332e6524ad0"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "开始把林岚的潮表读数作为行动记录依据；把船况判断交由叶澄。",
+      "id": "4e41d0af-ae86-4257-ab24-5de5384b21a9"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "su-goal",
+      "summary": "在封桥前合法完成交接"
+    },
+    {
+      "summary": "带陆行舟返回查明绞盘异响，再决定是否继续航行。",
+      "id": "20360495-8026-4cf9-8d7b-e32ea2c3add2"
+    }
+  ],
+  "privateMisbeliefs": []
+}

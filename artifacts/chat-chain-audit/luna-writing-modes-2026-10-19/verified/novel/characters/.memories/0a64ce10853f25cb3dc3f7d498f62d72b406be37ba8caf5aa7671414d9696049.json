@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "characterId": "su",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "su-initial",
+      "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "su-ch3",
+      "summary": "在20:20记录药物离柜；通行双印有效。船底异响后记录停船、检查与重启共三分钟，封存叶澄钩起且陆行舟交来的湿绳；21:03药箱铅封完好、药品点数齐全并交接",
+      "sourceChapterRef": "chapter:chapter-003.md"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "su-ch3",
+      "summary": "坚持记录令何芷的不安更明显，他因此感到为难；但没有证据便不搜查，交接完成后稍感释然"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "su-ch3",
+      "summary": "何芷虽防备仍遵守交接，苏砚对她的守约多一分认可；对陆行舟保持审慎但依其要求封存绳段"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "su-goal",
+      "summary": "在封桥前合法完成交接"
+    },
+    {
+      "id": "su-next-ch3",
+      "summary": "保留停船与药物交接记录，后续仅凭证据处理账页或湿绳，不越权搜查"
+    }
+  ],
+  "privateMisbeliefs": []
+}

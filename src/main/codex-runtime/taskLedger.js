@@ -19,17 +19,42 @@ function normalizeTaskConstraints(value = {}) {
   return {
     operation: source.operation ? String(source.operation) : 'unspecified',
     targetResourceRefs: strings(source.targetResourceRefs),
+    requiredWriteResourceRefs: strings(source.requiredWriteResourceRefs),
+    memoryUpdateRequired: source.memoryUpdateRequired === true,
+    memoryScopeBound: source.memoryScopeBound === true,
+    memoryParticipantCount: integer(source.memoryParticipantCount),
+    participantCharacterRefs: strings(source.participantCharacterRefs),
+    participantScopeFixed: source.participantScopeFixed === true,
+    requiredReadResourceRefs: strings(source.requiredReadResourceRefs),
+    intentBinding: source.intentBinding && typeof source.intentBinding === 'object' ? JSON.parse(JSON.stringify(source.intentBinding)) : null,
+    chapterWritePolicy: source.chapterWritePolicy === 'new' ? 'new' : 'any',
+    resourceWritePolicy: source.resourceWritePolicy === 'targets' ? 'targets' : 'any',
+    initialChapterResourceRefs: strings(source.initialChapterResourceRefs),
+    writeScopeBound: source.writeScopeBound === true,
+    atomicMemoryWithChapter: source.atomicMemoryWithChapter === true,
+    preserveOriginalMemories: source.preserveOriginalMemories === true,
     // Missing/legacy scope must never imply permission to count the whole novel.
     wordCountScope: ['whole_novel', 'target_resources', 'new_writing', 'saved_resources'].includes(source.wordCountScope)
       ? source.wordCountScope : strings(source.targetResourceRefs).length ? 'target_resources' : 'saved_resources',
     wordCountResourceRefs: strings(source.wordCountResourceRefs),
     allowedWriteResourceRefs: strings(source.allowedWriteResourceRefs),
+    allowResourceDeletion: source.allowResourceDeletion === true,
     minBodyCjk: integer(source.minBodyCjk),
     maxBodyCjk: integer(source.maxBodyCjk),
     wordCountToleranceRatio: Number.isFinite(source.wordCountToleranceRatio) && source.wordCountToleranceRatio >= 0 && source.wordCountToleranceRatio <= 0.2 ? source.wordCountToleranceRatio : 0.05,
     completionEvidence: strings(source.completionEvidence),
     prohibitRepetition: source.prohibitRepetition === true,
     requiresCompleteEnding: source.requiresCompleteEnding === true,
+    reviewRequired: source.reviewRequired === true || source.operation === 'review',
+    narrativeAuditRequired: source.narrativeAuditRequired === true,
+    narrativePerspective: source.narrativePerspective && ['limited','omniscient'].includes(source.narrativePerspective.mode)
+      ? {mode:source.narrativePerspective.mode,focusCharacterRef:source.narrativePerspective.focusCharacterRef || null} : null,
+    repairRequired: source.repairRequired === true,
+    reviewScope: ['whole_novel', 'target_resources', 'saved_resources', 'observed_resources'].includes(source.reviewScope)
+      ? source.reviewScope : source.wordCountScope === 'whole_novel' && source.operation === 'review' ? 'whole_novel' : strings(source.targetResourceRefs).length ? 'target_resources' : 'observed_resources',
+    reviewTargetResourceRefs: strings(source.reviewTargetResourceRefs),
+    reviewSourceKinds: strings(source.reviewSourceKinds).filter(kind => ['character', 'world', 'style'].includes(kind)),
+    reviewScopeBound: source.reviewScopeBound === true,
   };
 }
 

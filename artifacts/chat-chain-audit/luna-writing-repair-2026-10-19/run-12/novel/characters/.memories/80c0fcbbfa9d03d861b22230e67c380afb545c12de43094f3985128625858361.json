@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lu",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lu-initial",
+      "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "lu-ch3-fact",
+      "summary": "被叶澄允许登船但仅留船头、不得碰缆；见到船底取出的新裂木片，检查前后木板敲击声有变化。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "lu-ch3-emotion",
+      "summary": "因苏砚限制他接近船而恼火，仍以摆出工具和遵守边界证明自己谨慎。"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "lu-ch3-rel",
+      "summary": "叶澄最终允许他随船但严格限定位置和动作；与苏砚仍互不信任。"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lu-goal",
+      "summary": "修好潮钟并洗清偷芯嫌疑"
+    },
+    {
+      "id": "lu-ch3-intent",
+      "summary": "继续洗清偷芯嫌疑，查明木片来源及其与异响是否有关。"
+    }
+  ],
+  "privateMisbeliefs": []
+}

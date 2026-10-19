@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "su",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "su-initial",
+      "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "su-ch3",
+      "summary": "船20:20启航沿正规深槽；林岚用怀表与潮表公开证实潮钟慢七分钟，实际时间21:06；东桥已封但水路仍通；药在离柜六十分钟时交诊所"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "su-em3",
+      "summary": "因林岚先前未公开七分钟而恼怒，仍把她核实的时间写入回执"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "su-rel3",
+      "summary": "与林岚发生信任摩擦但承认其证据；何芷坚持亲自交药，程序合作成立"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "su-goal",
+      "summary": "在封桥前合法完成交接"
+    },
+    {
+      "id": "su-int3",
+      "summary": "要求后续调查潮钟误差；继续追问旧账但尊重何芷未交答案"
+    }
+  ],
+  "privateMisbeliefs": []
+}

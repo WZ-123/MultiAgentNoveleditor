@@ -17,12 +17,16 @@ module.exports = {
           record.error = '上次运行已停止，恢复到最后保存的检查点';
           record.confirmation = null;
           record.generation = Number(record.generation || 0) + 1;
+          if(record.preparationStage) {
+            record.preparationStage={...record.preparationStage,phase:'interrupted',revision:record.preparationStage.revision+1,error:{code:'host_restarted',message:'上次阶段已停止，保留候选；原批准不可恢复'}};
+          }
           record.version++;
           record.updatedAt = new Date().toISOString();
           // Retain host commit evidence, never replay an old approval or patch.
           const entry = record.novelId ? await novels.getNovelById(record.novelId).catch(() => null) : null;
           record.taskResult = await this._evaluateTaskResult({ entry, taskConstraints: record.taskConstraints || record.taskResult?.constraints,
             committedResources: record.savedResources || [], items: record.items || [], interruptionRequested: true,
+            preparationStage:record.preparationStage,
             continuedFromRunId: record.continuedFromRunId, reusedSavedResources: record.reusedSavedResources || record.taskResult?.reusedSavedResources || [] }, false);
           record.taskResult.execution.status = 'interrupted';
           if (record.progress) {
@@ -47,8 +51,18 @@ module.exports = {
     if (!record) return null;
     if (run) Object.assign(record, {
       threadId: run.threadId, turnId: run.turnId, text: run.text || '', items: clone(run.items || []),
+      taskConstraints: clone(run.taskConstraints),
+      requestText:run.requestText || '',taskRequestText:run.taskRequestText || run.requestText || '',
+      reviewFindings: clone(run.reviewFindings || []),
+      activityText: run.activityText || '',
       savedResources: clone(run.committedResources || []), progress: clone(run.progress || null),
       reusedSavedResources: clone(run.reusedSavedResources || []),
+      workspaceRoot: run.workspace?.root || null,
+      memoryBaselines: clone(run.memoryBaselines || {}),
+      reviewSubmission: clone(run.reviewSubmission || null),
+      narrativeReview: clone(run.narrativeReview || null),
+      pendingNativeCommits: clone(run.pendingNativeCommits || []),
+      ...(run.preparationStage ? {preparationStage:clone(run.preparationStage)} : {}),
     });
     record.updatedAt = new Date().toISOString();
     return record;
@@ -74,6 +88,8 @@ module.exports = {
         timestamp: Date.parse(snapshot.startedAt), codexTurnId: snapshot.turnId || null,
         isStreaming: !TERMINAL.has(snapshot.status), toolCalls: snapshot.items || [],
         execution: { status: snapshot.status, version: snapshot.version, error: snapshot.error || null,
+          ...(snapshot.preparationStage?.resultOrigin?{resultOrigin:snapshot.preparationStage.resultOrigin}:{}),
+          activityText: snapshot.activityText || '',
           savedResources: snapshot.savedResources || [], taskResult: snapshot.taskResult || null },
       });
     }
@@ -114,7 +130,9 @@ module.exports = {
     const finish = async () => {
       const record = this._captureRun(run.runId);
       const terminal = event.type === 'turn_completed' ? 'completed' : event.type === 'turn_interrupted' ? 'interrupted' : 'failed';
+      await require('./writingPreparationStage').settleStage(run,terminal);
       const taskResult = await this._evaluateTaskResult(run, terminal === 'completed');
+      if(terminal==='completed')require('./writingPreparationStage').presentReceipt(run,taskResult);
       taskResult.execution.status = terminal;
       if (record) {
         record.status = 'finalizing'; record.confirmation = null; record.error = event.error || null;

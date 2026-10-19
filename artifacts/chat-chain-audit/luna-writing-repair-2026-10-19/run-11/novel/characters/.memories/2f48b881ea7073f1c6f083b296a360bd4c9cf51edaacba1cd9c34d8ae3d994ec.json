@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lin",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lin-initial",
+      "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "lin-ch3",
+      "summary": "船离桩后沿正规深槽航行；叶澄发现船底异响但未进水；林岚以怀表和潮表当众证实潮钟慢七分钟，实际21:06东桥已封"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "lin-em3",
+      "summary": "将七分钟公开后感到被苏砚质问，但坚持先让证据进入记录"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "lin-rel3",
+      "summary": "苏砚把她复核的时间写入回执，信任有所增加但隐瞒造成摩擦"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lin-goal",
+      "summary": "查出潮钟误差，保护弟弟"
+    },
+    {
+      "id": "lin-int3",
+      "summary": "追查潮钟误差并保护弟弟；要求检查船底异响"
+    }
+  ],
+  "privateMisbeliefs": []
+}

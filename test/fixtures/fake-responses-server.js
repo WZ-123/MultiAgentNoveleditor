@@ -4,6 +4,20 @@ const http = require('node:http');
 const crypto = require('node:crypto');
 
 function id(prefix) { return `${prefix}_${crypto.randomUUID().replaceAll('-', '')}`; }
+// Transport fixture only: semantic task parsing is exercised with live models
+// separately. Do not consume the scripted author responses for the scope stage.
+function taskIntentFixture(input) {
+  const find=value=>{if(typeof value==='string'&&value.startsWith('解析用户本次任务的范围'))return value;if(value&&typeof value==='object')for(const child of Object.values(value)){const result=find(child);if(result)return result;}return null;};
+  const prompt=find(input);if(!prompt)return null;
+  const {request,roster,resources,existingConstraints:c}=JSON.parse(prompt.slice(prompt.indexOf('\n')+1));
+  const named=roster.filter(r=>r.name&&request.includes(r.name));
+  const all=/(?:所有|全部|全体)(?:的)?角色/u.test(request)||c.memoryParticipantCount===roster.length&&c.memoryUpdateRequired;
+  const selection=all?'all':named.length?'specified':'unspecified';
+  const focus=named[0];const limited=request.includes('有限视角')&&!!focus;
+  const readRequest=request.replaceAll('当前章节','').replaceAll('当前章','');
+  const requiredReadResourceRefs=/(?:读取|阅读|先读)/u.test(request)?resources.filter(r=>r.kind==='character'&&/(?:角色|人物)/u.test(request)||r.kind==='character-memory'&&request.includes('记忆')||r.kind==='world'&&request.includes('世界观')||r.kind==='chapter'&&/(?:全书|全文|前章|前两章)/u.test(readRequest)).map(r=>r.resourceRef):[];
+  return {text:JSON.stringify({operation:c.operation==='unspecified'&&request.includes('读取')?'read':c.operation,operationRequestQuote:request,participants:{selection,characterRefs:all?roster.map(r=>r.resourceRef):named.map(r=>r.resourceRef),requestQuote:selection==='unspecified'?null:request},perspective:{mode:limited?'limited':'unspecified',focusCharacterRef:limited?focus.resourceRef:null,requestQuote:limited?request:null},requiredReadResourceRefs,missingRequestedSources:[],memoryUpdateRequired:c.memoryUpdateRequired,atomicMemoryWithChapter:c.atomicMemoryWithChapter,preserveOriginalMemories:c.preserveOriginalMemories,reviewAspects:[]})};
+}
 function responseShape(responseId, model, status, output, usage) {
   return {
     id: responseId, object: 'response', created_at: Math.floor(Date.now() / 1000), status,
@@ -105,7 +119,8 @@ async function createFakeResponsesServer(options = {}) {
     try {
       const body = await readJson(request);
       requests.push({ body, url: request.url, headers: { authorization: request.headers.authorization || '', xApiKey: request.headers['x-api-key'] || '', apiKey: request.headers['api-key'] || '' } });
-      const selected = typeof options.respond === 'function' ? await options.respond(body, requests) : null;
+      const intent=taskIntentFixture(body.input);
+      const selected = intent ? (typeof options.respondTaskIntent==='function'?await options.respondTaskIntent(body,intent):intent) : (typeof options.respond === 'function' ? await options.respond(body, requests) : null);
       const events = selected?.customToolName
         ? customToolEvents({ model: body.model, toolName: selected.customToolName, input: selected.input })
         : selected?.toolName
@@ -132,4 +147,4 @@ async function createFakeResponsesServer(options = {}) {
   return { origin: `http://127.0.0.1:${server.address().port}`, requests, modelRequests, close: () => new Promise((resolve) => server.close(resolve)) };
 }
 
-module.exports = { completedEvents, createFakeResponsesServer, customToolEvents, readJson, requestInputText, toolEvents };
+module.exports = { completedEvents, createFakeResponsesServer, customToolEvents, readJson, requestInputText, toolEvents,taskIntentFixture };

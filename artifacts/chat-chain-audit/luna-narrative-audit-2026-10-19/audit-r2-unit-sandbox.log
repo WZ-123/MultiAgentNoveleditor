@@ -1,0 +1,75 @@
+TEST_PASS delayed save preserves typing and advances only saved baseline
+TEST_PASS overlapping manual/autosave writes serialize with successful predecessor base
+TEST_PASS debounced closure uses fresh saved baseline rather than typing-time base
+TEST_PASS failed writes preserve draft and do not poison queue
+TEST_PASS explicit verified base is not silently rebased
+TEST_PASS successful AI replacement applies only if editor has not changed
+TEST_PASS late project response cannot alter other project editor
+TEST_PASS switch flush waits for disk and cancels only source-project debounce
+TEST_PASS typing during switch flush is saved before reset
+TEST_PASS typing during structure flush is saved before project reset
+TEST_PASS failed structure write remains a switch barrier until retry succeeds
+TEST_PASS failed switch flush leaves source draft visible
+TEST_PASS manual flush cancels debounce and preserves typing during save
+TEST_PASS restore cancels stale debounce and follows pending save
+TEST_PASS restore preserves typing made after the restore request
+TEST_PASS project keys isolate simultaneous chapter writes
+TEST_SUMMARY 16/16 passed, 0 failed
+TEST_DONE
+TEST_PASS CSS1_ipc_save_returns_normalized_snapshot: saveChapter IPC now returns title/displayName metadata alongside the file result
+TEST_PASS CSS2_renderer_reconciles_after_save: manual save, autosave, and close-tab save all reapply the canonical title/displayName snapshot
+
+TEST_SUMMARY 2/2 passed, 0 failed
+TEST_DONE
+novel structure persistence: ok (disk round trips, empty groups, duplicate titles, legacy recovery, no loss)
+PASS next-chapter new-chapter intent does not match updating chapters or negated new writes
+PASS next-chapter actual parser does not count 100000 old words toward a 3000-word next chapter
+PASS next-chapter explicit range honors exact requested boundaries and never rolls back a save
+PASS next-chapter unrelated existing chapter edits do not satisfy new writing
+PASS next-chapter no writes, stale hashes, missing creates and deleted chapters cannot count
+PASS next-chapter current chapter and explicit whole-novel targets remain distinct
+PASS next-chapter generic writing and legacy constraints count saved chapters, never every chapter
+PASS next-chapter an empty first attempt can bind the chapter saved by a continuation
+PASS next-chapter create followed by replacement retains new-chapter identity
+PASS next-chapter persisted continuation binds original chapter and excludes unrelated later saves
+next-chapter-wordcount: ok (10 scenarios)
+(node:39714) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/potablewater/Desktop/MultiAgentNovelAssistant/test/chat-feedback-payload.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/potablewater/Desktop/MultiAgentNovelAssistant/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS CFP1_context_mode_includes_recent_tool_calls_and_checkpoint
+PASS CFP2_opinion_mode_omits_logs_and_sensitive_context
+PASS CFP3_default_omits_tool_inputs_results_and_body_even_with_screenshot
+PASS CFP4_context_mode_bounds_messages_and_includes_native_tool_records
+PASS FS1_submitFeedback_has_sync_metadata
+PASS FS2_updateSyncMeta_updates_status_and_index
+PASS FS3_listPendingForSync_filters_correctly
+PASS FS4_recoverStuckSyncing_resets_to_pending
+PASS FS5_computeNextRetryAt_exponential_backoff
+PASS FS6_classifyError_network_errors
+PASS FS7_classifyError_feishu_errors
+PASS FS8_fieldMapper_maps_payload_correctly
+PASS FS9_syncLock_acquire_release
+PASS FS10_fieldMapper_attachment_field
+PASS feedback-security invalid IDs rejected across storage and IPC
+PASS feedback-security duplicate concurrent submissions retain first record and attachment
+PASS feedback-security parallel records retained in index
+PASS feedback-security failed publication leaves no partial record and can be retried
+[feedbackSync] Sent feedback fb-mabc1234-abc123 to Feishu record fixture-record
+PASS feedback-security safe legacy records remain readable and syncable
+PASS feedback-security attachment names cannot escape or silently replace each other
+PASS feedback-security record and index symlinks rejected without touching targets
+PASS feedback-security forged attachment paths and symlinks never uploaded
+PASS feedback-security mismatched and malformed records isolated from valid records
+[feedbackSync] Sent feedback fb-ipc to Feishu record fixture-record
+PASS feedback-security IPC screenshot submission query retry and duplicate failure
+Error: listen EPERM: operation not permitted 127.0.0.1
+    at Server.setupListenHandle [as _listen2] (node:net:1986:21)
+    at listenInCluster (node:net:2065:12)
+    at node:net:2274:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  code: 'EPERM',
+  errno: -1,
+  syscall: 'listen',
+  address: '127.0.0.1'
+}

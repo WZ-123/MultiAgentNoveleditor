@@ -1,16 +1,16 @@
 ---
 name: mana-fiction-writing
-description: Draft chapters and perform style-preserving, minimal fiction rewrites with native Codex planning and optional subagents.
+description: Draft and revise fiction using canonical resources and native approved changes.
 ---
 
 # 小说写作
 
-只读取当前任务真正依赖的小说证据。改写先读目标正文，再按冲突点选择相邻章节、相关人物、世界观、大纲或文风；新建资源且项目为空、用户已给出完整约束时，跳过不存在、空白或与场景无关的资料。每类资源最多列举一次，已知 `resourceRef` 时直接读取；多个独立资源应在同一轮并行读取，不要逐个试探或重复列举。
+按用户指定的范围、视角、篇幅和文风创作。先用 read_writing_context 读取任务绑定资料，按需补读相关前文。公共资料与各角色自己的主观记忆分开使用；不能将作者掌握的秘密当作焦点已知。人物信息边界、时间和因果关系由创作与语义审查负责，程序不以关键词判定内容真伪。
 
-改写以用户指令为最高约束，保持叙事视角、人物声线、信息密度和段落节奏；选区任务只改必要范围。新章生成前确认章节目标和落点。复杂长章或彼此独立的审查可以按需使用 Codex 原生 subagent，但不要固定创建 Writer/Reviewer 线程。开始创作或切换章节时调用 `report_writing_progress` 报告当前章节；它只更新进度显示，不代表正文已经保存。候选完成后用 Codex 原生 `apply_patch` 修改映射文件；宿主会按项目授权自动保存纯新增正文，其他变更展示原生 fileChange 差异并等待确认。`nativeWorkspace` 就是补丁根目录；`chapter:<name>.md` 的补丁路径只能是 `chapters/<name>.md`，绝不添加 `novel/`、工作区目录名或绝对路径前缀。
+调用 report_writing_progress 标示当前章节。正文由模型直接创作，functions.exec 只编排工具，不用模板、循环或字符串拼接生成剧情。
 
-`functions.exec` 只用于编排真实工具调用，不得用循环、模板、句子数组、字符串拼接或代码生成器合成正文、扩写字数或复制段落。正文必须由模型按连续场景直接创作。完整场景出现自然落点后再提交，不按 800 字或任何固定长度切开对话、动作和情绪；提交成功后留在同一原生回合，继续创作下一场景或章节，直到本次内容目标完成。用户明确禁止重复时，不得把换人名、换地点或重排固定句式视为新内容。
+使用 prepare_novel_patch 提交候选：完整原创正文用 content，精确编辑用 replacements，角色记忆用 memoryAppend。用户指定的参与者与视角已在创作前绑定，候选不能更换；只有用户未指定时才以 narrativePerspective 声明实际选择的视角。宿主管理真实读取版本、文件是否存在、新记忆ID及原生补丁，不转抄 hash 或手写 diff。已有资源编辑前实际读取；有 patch 的 preparedOnly:true 结果在同一次 exec 中将 structuredContent.patch 交 tools.apply_patch，不打印长补丁；draft_incomplete 没有 patch，用 preparationId 加 changes 补齐，带该ID的 replacements 编辑暂存正文；already_committed 表示同一候选已有正式收据，应读取保存结果而非重复取回。准备结果提供实际正文字数与目标。准备只生成候选，实际批准和正式提交才表示保存。映射路径相对于 nativeWorkspace，不加其他目录前缀；普通修改不能用删章替代。
 
-原生补丁获批且执行完成后，宿主会提交该补丁，小说读取工具即可读回本次修改；工具已成功返回后，不要再次要求用户批准同一补丁。仅核对篇幅或版本时，用 `read_novel_resource` 的 `mode:"metadata"` 读取完整资源的 `bodyChineseCharacterCount`、`chineseCharacterCount` 和 hash，避免将刚生成的全文再次放入上下文；需要检查实际内容时再读取相应正文。不要逐字心算、用 UTF-8 字节折算或反复列目录来估计字数。章节 resourceRef 必须保留 `.md` 后缀。taskConstraints 中的篇幅是最终目标，不是单次保存门禁；修订中暂时超过或未达到目标都可以继续保存，并在最终结果中如实记录偏差。不自行增加出版级审校或逐章理想字数；明显篇幅缺口应补充有实质推进的完整场景，避免多次追加几句话追凑精确字数。重复统计只提供证据，不能代替完整结局、情节推进、人物一致性或全书质量判断。写作完成不自动触发全书一致性审查。
+用户要求角色记忆时，沿用任务已绑定的角色ID；用户未限定参与者时再在准备工具中用 participantCharacterRefs 声明，宿主绑定各自必写记忆；同批要求下把正文和所有这些记忆一起提交。范围不能在后续候选中静默缩小。
 
-整章重写优先使用 `Update File` 替换正文，保持章节在整个过程中可用。局部补丁匹配失败时，按实际读回文本修正上下文，不要立刻删除整章来规避匹配失败。
+保存后读回正式资源。仅检查计数可读 mode:"metadata" 的 bodyChineseCharacterCount；篇幅按用户原上下限，不用容差降低目标。要求写后自查时，调用 check_writing_task 取得冻结版本的独立审查意见；要求修复的硬冲突未解决时任务不完成。工具返回的是当前实际缺项，保存与审查结果分别说明。错误须按实际原因修正，不用空 changes、整项删除或重写无关资料规避。

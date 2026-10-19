@@ -36,9 +36,9 @@ function applyUnifiedDiff(original, diff) {
         if (line[0] !== '-') after.push(line.slice(1));
         end += 1;
       }
-      if (!before.length) throw patchError('无行号补丁缺少定位上下文');
+      if (!before.length && original !== '') throw patchError('无行号补丁缺少定位上下文');
       const matches = [];
-      for (let at = sourceIndex; at <= source.length - before.length; at += 1) {
+      for (let at = sourceIndex; at <= (before.length ? source.length - before.length : 0); at += 1) {
         if (before.every((line, offset) => source[at + offset] === line)) matches.push(at);
       }
       if (matches.length !== 1) throw patchError('原生更新差异无法唯一定位到原文，请提供更多上下文');

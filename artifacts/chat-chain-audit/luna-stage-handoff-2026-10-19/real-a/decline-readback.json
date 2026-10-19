@@ -1,0 +1,133 @@
+{
+  "chapters": {
+    "chapter-001.md": "# 第一章 雾口\n\n20:05，六人聚在旧渡口。林岚把潮表压在木箱边，机械怀表还在她袖口。她确认潮钟慢了七分钟，却未开口。\n\n何芷将铅封完整的冷藏药箱放回冰柜，蓝签账页藏在只有她知道的暗格。苏砚摊开尚未盖印的通行证，要求先核对药单。\n\n叶澄检查船绳，提醒水路四十分钟。陆行舟抱着工具袋，不敢直视队长。岑寂带来议事厅的交接公文，没人看见他此前进过钟楼。\n\n远处钟声响起。林岚看着六人的影子，没有拿出那页抄本。"
+  },
+  "memories": {
+    "lin": {
+      "schemaVersion": 1,
+      "characterId": "lin",
+      "lastUpdatedChapterRef": "chapter:chapter-001.md",
+      "factsKnown": [
+        {
+          "id": "lin-initial",
+          "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+          "sourceChapterRef": "chapter:chapter-001.md"
+        }
+      ],
+      "emotionalMemory": [],
+      "relationshipDeltas": [],
+      "unresolvedIntentions": [
+        {
+          "id": "lin-goal",
+          "summary": "查出潮钟误差，保护弟弟"
+        }
+      ],
+      "privateMisbeliefs": []
+    },
+    "su": {
+      "schemaVersion": 1,
+      "characterId": "su",
+      "lastUpdatedChapterRef": "chapter:chapter-001.md",
+      "factsKnown": [
+        {
+          "id": "su-initial",
+          "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+          "sourceChapterRef": "chapter:chapter-001.md"
+        }
+      ],
+      "emotionalMemory": [],
+      "relationshipDeltas": [],
+      "unresolvedIntentions": [
+        {
+          "id": "su-goal",
+          "summary": "在封桥前合法完成交接"
+        }
+      ],
+      "privateMisbeliefs": []
+    },
+    "he": {
+      "schemaVersion": 1,
+      "characterId": "he",
+      "lastUpdatedChapterRef": "chapter:chapter-001.md",
+      "factsKnown": [
+        {
+          "id": "he-initial",
+          "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+          "sourceChapterRef": "chapter:chapter-001.md"
+        }
+      ],
+      "emotionalMemory": [],
+      "relationshipDeltas": [],
+      "unresolvedIntentions": [
+        {
+          "id": "he-goal",
+          "summary": "把冷藏药送到灯塔诊所"
+        }
+      ],
+      "privateMisbeliefs": []
+    },
+    "ye": {
+      "schemaVersion": 1,
+      "characterId": "ye",
+      "lastUpdatedChapterRef": "chapter:chapter-001.md",
+      "factsKnown": [
+        {
+          "id": "ye-initial",
+          "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+          "sourceChapterRef": "chapter:chapter-001.md"
+        }
+      ],
+      "emotionalMemory": [],
+      "relationshipDeltas": [],
+      "unresolvedIntentions": [
+        {
+          "id": "ye-goal",
+          "summary": "保住执照与船员"
+        }
+      ],
+      "privateMisbeliefs": []
+    },
+    "lu": {
+      "schemaVersion": 1,
+      "characterId": "lu",
+      "lastUpdatedChapterRef": "chapter:chapter-001.md",
+      "factsKnown": [
+        {
+          "id": "lu-initial",
+          "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+          "sourceChapterRef": "chapter:chapter-001.md"
+        }
+      ],
+      "emotionalMemory": [],
+      "relationshipDeltas": [],
+      "unresolvedIntentions": [
+        {
+          "id": "lu-goal",
+          "summary": "修好潮钟并洗清偷芯嫌疑"
+        }
+      ],
+      "privateMisbeliefs": []
+    },
+    "cen": {
+      "schemaVersion": 1,
+      "characterId": "cen",
+      "lastUpdatedChapterRef": "chapter:chapter-001.md",
+      "factsKnown": [
+        {
+          "id": "cen-initial",
+          "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+          "sourceChapterRef": "chapter:chapter-001.md"
+        }
+      ],
+      "emotionalMemory": [],
+      "relationshipDeltas": [],
+      "unresolvedIntentions": [
+        {
+          "id": "cen-goal",
+          "summary": "阻止旧账公开但不伤及病人"
+        }
+      ],
+      "privateMisbeliefs": []
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "checks": [
+    {
+      "name": "F native approval, one batch, canonical chapter/memory readback and exact four-fragment cleanup",
+      "status": "passed"
+    },
+    {
+      "name": "E decline has one visible declined approval, zero commits and unchanged formal memory/body from the injected baseline",
+      "status": "passed"
+    },
+    {
+      "name": "E concurrent formal memory edit prevents native dispatch and preserves the user edit",
+      "status": "passed"
+    },
+    {
+      "name": "E stop aborts the preparation stage without a native commit or any formal write",
+      "status": "passed"
+    },
+    {
+      "name": "B 1324-character draft remains a failed original-count sample; no retry or relaxed threshold",
+      "status": "passed"
+    },
+    {
+      "name": "all real samples use gpt-6-luna and all exported private runtimes were removed; failures stay retained",
+      "status": "passed"
+    }
+  ],
+  "scope": "protocol handoff only; no two-mode narrative acceptance",
+  "originalNewWritingAccepted": false
+}

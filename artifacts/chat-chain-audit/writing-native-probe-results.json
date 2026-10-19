@@ -1,0 +1,703 @@
+{
+  "date": "2026-10-18",
+  "evidence": "actual App Server + fake Responses + isolated formal novel store; no live model",
+  "checks": [
+    {
+      "name": "canonical-reading",
+      "type": "turn_completed",
+      "text": "资料已读取。",
+      "taskResult": {
+        "schemaVersion": 2,
+        "modelTurnCompleted": true,
+        "goalVerified": false,
+        "goalStatus": "incomplete",
+        "constraints": {
+          "operation": "write",
+          "targetResourceRefs": [],
+          "wordCountScope": "saved_resources",
+          "wordCountResourceRefs": [],
+          "allowedWriteResourceRefs": [],
+          "minBodyCjk": null,
+          "maxBodyCjk": null,
+          "wordCountToleranceRatio": 0.05,
+          "completionEvidence": [],
+          "prohibitRepetition": false,
+          "requiresCompleteEnding": false
+        },
+        "savedResources": [],
+        "reusedSavedResources": [],
+        "continuedFromRunId": null,
+        "execution": {
+          "status": "completed"
+        },
+        "persistence": {
+          "status": "no_changes",
+          "committedCount": 0
+        },
+        "objective": {
+          "status": "incomplete",
+          "unmet": [
+            "no_current_commit"
+          ]
+        },
+        "contentReview": {
+          "ending": {
+            "status": "not_evaluated"
+          },
+          "plotProgression": {
+            "status": "not_evaluated"
+          },
+          "characterConsistency": {
+            "status": "not_evaluated"
+          },
+          "style": {
+            "status": "not_evaluated"
+          }
+        },
+        "evidence": {
+          "wordCountScope": "saved_resources",
+          "targetResourceRefs": [],
+          "readableResources": 0,
+          "bodyChineseCharacterCount": 0,
+          "hashes": [],
+          "currentSavedResourceRefs": [],
+          "observedReadResourceRefs": [
+            "character:lin",
+            "character-memory:lin",
+            "world:lore",
+            "style:memory"
+          ],
+          "fullyReadResourceRefs": []
+        },
+        "checks": {
+          "wordCount": {
+            "status": "not_requested",
+            "blocking": false,
+            "actual": 0,
+            "minimum": null,
+            "maximum": null,
+            "toleranceRatio": 0.05,
+            "acceptedMinimum": null,
+            "acceptedMaximum": null,
+            "withinTolerance": false,
+            "belowBy": 0,
+            "aboveBy": 0
+          }
+        }
+      },
+      "toolItems": [
+        {
+          "type": "mcpToolCall",
+          "tool": "read_novel_resource",
+          "status": "completed",
+          "error": null,
+          "arguments": {
+            "resourceRef": "character:lin"
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"resourceRef\": \"character:lin\",\n  \"workspacePath\": \"characters/lin.json\",\n  \"kind\": \"character\",\n  \"hash\": \"f99e0d1f20c2d6f3699ac6f199e6ecf67f704e0c1579c2b33563901b515b4bf1\",\n  \"chineseCharacterCount\": 8,\n  \"bodyChineseCharacterCount\": 8,\n  \"totalBytes\": 379,\n  \"mode\": \"content\",\n  \"offset\": 0,\n  \"nextCursor\": null,\n  \"content\": \"{\\n  \\\"schemaVersion\\\": 1,\\n  \\\"id\\\": \\\"lin\\\",\\n  \\\"name\\\": \\\"林岚\\\",\\n  \\\"personality\\\": \\\"谨慎\\\",\\n  \\\"relationships\\\": [\\n    {\\n      \\\"with\\\": \\\"苏绾\\\",\\n      \\\"type\\\": \\\"信任\\\"\\n    }\\n  ],\\n  \\\"aliases\\\": [],\\n  \\\"attributes\\\": {},\\n  \\\"role\\\": \\\"\\\",\\n  \\\"faction\\\": \\\"\\\",\\n  \\\"gender\\\": \\\"\\\",\\n  \\\"age\\\": \\\"\\\",\\n  \\\"sourceWork\\\": \\\"\\\",\\n  \\\"originalName\\\": \\\"\\\",\\n  \\\"bio\\\": \\\"\\\",\\n  \\\"appearance\\\": \\\"\\\",\\n  \\\"background\\\": \\\"\\\",\\n  \\\"quotes\\\": \\\"\\\"\\n}\"\n}"
+              }
+            ],
+            "structuredContent": {
+              "resourceRef": "character:lin",
+              "workspacePath": "characters/lin.json",
+              "kind": "character",
+              "hash": "f99e0d1f20c2d6f3699ac6f199e6ecf67f704e0c1579c2b33563901b515b4bf1",
+              "chineseCharacterCount": 8,
+              "bodyChineseCharacterCount": 8,
+              "totalBytes": 379,
+              "mode": "content",
+              "offset": 0,
+              "nextCursor": null,
+              "content": "{\n  \"schemaVersion\": 1,\n  \"id\": \"lin\",\n  \"name\": \"林岚\",\n  \"personality\": \"谨慎\",\n  \"relationships\": [\n    {\n      \"with\": \"苏绾\",\n      \"type\": \"信任\"\n    }\n  ],\n  \"aliases\": [],\n  \"attributes\": {},\n  \"role\": \"\",\n  \"faction\": \"\",\n  \"gender\": \"\",\n  \"age\": \"\",\n  \"sourceWork\": \"\",\n  \"originalName\": \"\",\n  \"bio\": \"\",\n  \"appearance\": \"\",\n  \"background\": \"\",\n  \"quotes\": \"\"\n}"
+            },
+            "_meta": null
+          }
+        },
+        {
+          "type": "mcpToolCall",
+          "tool": "read_novel_resource",
+          "status": "completed",
+          "error": null,
+          "arguments": {
+            "resourceRef": "character-memory:lin"
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"resourceRef\": \"character-memory:lin\",\n  \"workspacePath\": \"character-memories/lin.json\",\n  \"kind\": \"character-memory\",\n  \"hash\": \"5e807c998cbc52b591e7cf1d88f801e43e532aa2bd6ad19f05aca314ac20869b\",\n  \"chineseCharacterCount\": 6,\n  \"bodyChineseCharacterCount\": 6,\n  \"totalBytes\": 282,\n  \"mode\": \"content\",\n  \"offset\": 0,\n  \"nextCursor\": null,\n  \"content\": \"{\\n  \\\"schemaVersion\\\": 1,\\n  \\\"characterId\\\": \\\"lin\\\",\\n  \\\"lastUpdatedChapterRef\\\": \\\"\\\",\\n  \\\"factsKnown\\\": [\\n    {\\n      \\\"id\\\": \\\"door\\\",\\n      \\\"summary\\\": \\\"城门九点关闭\\\"\\n    }\\n  ],\\n  \\\"emotionalMemory\\\": [],\\n  \\\"relationshipDeltas\\\": [],\\n  \\\"unresolvedIntentions\\\": [],\\n  \\\"privateMisbeliefs\\\": []\\n}\"\n}"
+              }
+            ],
+            "structuredContent": {
+              "resourceRef": "character-memory:lin",
+              "workspacePath": "character-memories/lin.json",
+              "kind": "character-memory",
+              "hash": "5e807c998cbc52b591e7cf1d88f801e43e532aa2bd6ad19f05aca314ac20869b",
+              "chineseCharacterCount": 6,
+              "bodyChineseCharacterCount": 6,
+              "totalBytes": 282,
+              "mode": "content",
+              "offset": 0,
+              "nextCursor": null,
+              "content": "{\n  \"schemaVersion\": 1,\n  \"characterId\": \"lin\",\n  \"lastUpdatedChapterRef\": \"\",\n  \"factsKnown\": [\n    {\n      \"id\": \"door\",\n      \"summary\": \"城门九点关闭\"\n    }\n  ],\n  \"emotionalMemory\": [],\n  \"relationshipDeltas\": [],\n  \"unresolvedIntentions\": [],\n  \"privateMisbeliefs\": []\n}"
+            },
+            "_meta": null
+          }
+        },
+        {
+          "type": "mcpToolCall",
+          "tool": "read_novel_resource",
+          "status": "completed",
+          "error": null,
+          "arguments": {
+            "resourceRef": "world:lore"
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"resourceRef\": \"world:lore\",\n  \"workspacePath\": \"world/lore.md\",\n  \"kind\": \"world\",\n  \"hash\": \"c7360370e427d757cd5e29d3958732ab434c9871f62b4d1e7924124aa28d7325\",\n  \"chineseCharacterCount\": 8,\n  \"bodyChineseCharacterCount\": 8,\n  \"totalBytes\": 27,\n  \"mode\": \"content\",\n  \"offset\": 0,\n  \"nextCursor\": null,\n  \"content\": \"城门每晚九点关闭。\"\n}"
+              }
+            ],
+            "structuredContent": {
+              "resourceRef": "world:lore",
+              "workspacePath": "world/lore.md",
+              "kind": "world",
+              "hash": "c7360370e427d757cd5e29d3958732ab434c9871f62b4d1e7924124aa28d7325",
+              "chineseCharacterCount": 8,
+              "bodyChineseCharacterCount": 8,
+              "totalBytes": 27,
+              "mode": "content",
+              "offset": 0,
+              "nextCursor": null,
+              "content": "城门每晚九点关闭。"
+            },
+            "_meta": null
+          }
+        },
+        {
+          "type": "mcpToolCall",
+          "tool": "read_novel_resource",
+          "status": "completed",
+          "error": null,
+          "arguments": {
+            "resourceRef": "style:memory"
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"resourceRef\": \"style:memory\",\n  \"workspacePath\": \"style/memory.md\",\n  \"kind\": \"style\",\n  \"hash\": \"cb283e2e1216798cc1d3b4cdd1604dfa474ea05217d3dfa9a1f6b10c528e1904\",\n  \"chineseCharacterCount\": 6,\n  \"bodyChineseCharacterCount\": 6,\n  \"totalBytes\": 18,\n  \"mode\": \"content\",\n  \"offset\": 0,\n  \"nextCursor\": null,\n  \"content\": \"第三人称限知\"\n}"
+              }
+            ],
+            "structuredContent": {
+              "resourceRef": "style:memory",
+              "workspacePath": "style/memory.md",
+              "kind": "style",
+              "hash": "cb283e2e1216798cc1d3b4cdd1604dfa474ea05217d3dfa9a1f6b10c528e1904",
+              "chineseCharacterCount": 6,
+              "bodyChineseCharacterCount": 6,
+              "totalBytes": 18,
+              "mode": "content",
+              "offset": 0,
+              "nextCursor": null,
+              "content": "第三人称限知"
+            },
+            "_meta": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "roleplay-persist-memory",
+      "type": "turn_completed",
+      "text": "角色记忆已提交。",
+      "taskResult": {
+        "schemaVersion": 2,
+        "modelTurnCompleted": true,
+        "goalVerified": false,
+        "goalStatus": "unverified",
+        "constraints": {
+          "operation": "roleplay",
+          "targetResourceRefs": [],
+          "wordCountScope": "saved_resources",
+          "wordCountResourceRefs": [],
+          "allowedWriteResourceRefs": [],
+          "minBodyCjk": null,
+          "maxBodyCjk": null,
+          "wordCountToleranceRatio": 0.05,
+          "completionEvidence": [],
+          "prohibitRepetition": false,
+          "requiresCompleteEnding": false
+        },
+        "savedResources": [
+          {
+            "resourceRef": "character-memory:lin",
+            "beforeHash": "5e807c998cbc52b591e7cf1d88f801e43e532aa2bd6ad19f05aca314ac20869b",
+            "afterHash": "4519dc6a8d512ac154d323baeece34d6e365af7f3f692ed4a4fd6282c8a8d545",
+            "mode": "replace",
+            "oldHash": "5e807c998cbc52b591e7cf1d88f801e43e532aa2bd6ad19f05aca314ac20869b",
+            "newHash": "4519dc6a8d512ac154d323baeece34d6e365af7f3f692ed4a4fd6282c8a8d545",
+            "chineseCharacterCount": 12,
+            "bodyChineseCharacterCount": 12
+          }
+        ],
+        "reusedSavedResources": [],
+        "continuedFromRunId": null,
+        "execution": {
+          "status": "completed"
+        },
+        "persistence": {
+          "status": "saved",
+          "committedCount": 1
+        },
+        "objective": {
+          "status": "not_evaluated",
+          "unmet": []
+        },
+        "contentReview": {
+          "ending": {
+            "status": "not_evaluated"
+          },
+          "plotProgression": {
+            "status": "not_evaluated"
+          },
+          "characterConsistency": {
+            "status": "not_evaluated"
+          },
+          "style": {
+            "status": "not_evaluated"
+          }
+        },
+        "evidence": {
+          "wordCountScope": "saved_resources",
+          "targetResourceRefs": [
+            "character-memory:lin"
+          ],
+          "readableResources": 1,
+          "bodyChineseCharacterCount": 12,
+          "hashes": [
+            {
+              "resourceRef": "character-memory:lin",
+              "hash": "4519dc6a8d512ac154d323baeece34d6e365af7f3f692ed4a4fd6282c8a8d545"
+            }
+          ],
+          "currentSavedResourceRefs": [
+            "character-memory:lin"
+          ],
+          "observedReadResourceRefs": [
+            "character-memory:lin"
+          ],
+          "fullyReadResourceRefs": []
+        },
+        "checks": {
+          "wordCount": {
+            "status": "not_requested",
+            "blocking": false,
+            "actual": 12,
+            "minimum": null,
+            "maximum": null,
+            "toleranceRatio": 0.05,
+            "acceptedMinimum": null,
+            "acceptedMaximum": null,
+            "withinTolerance": false,
+            "belowBy": 0,
+            "aboveBy": 0
+          }
+        }
+      },
+      "toolItems": [
+        {
+          "type": "mcpToolCall",
+          "tool": "read_novel_resource",
+          "status": "completed",
+          "error": null,
+          "arguments": {
+            "resourceRef": "character-memory:lin"
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"resourceRef\": \"character-memory:lin\",\n  \"workspacePath\": \"character-memories/lin.json\",\n  \"kind\": \"character-memory\",\n  \"hash\": \"5e807c998cbc52b591e7cf1d88f801e43e532aa2bd6ad19f05aca314ac20869b\",\n  \"chineseCharacterCount\": 6,\n  \"bodyChineseCharacterCount\": 6,\n  \"totalBytes\": 282,\n  \"mode\": \"content\",\n  \"offset\": 0,\n  \"nextCursor\": null,\n  \"content\": \"{\\n  \\\"schemaVersion\\\": 1,\\n  \\\"characterId\\\": \\\"lin\\\",\\n  \\\"lastUpdatedChapterRef\\\": \\\"\\\",\\n  \\\"factsKnown\\\": [\\n    {\\n      \\\"id\\\": \\\"door\\\",\\n      \\\"summary\\\": \\\"城门九点关闭\\\"\\n    }\\n  ],\\n  \\\"emotionalMemory\\\": [],\\n  \\\"relationshipDeltas\\\": [],\\n  \\\"unresolvedIntentions\\\": [],\\n  \\\"privateMisbeliefs\\\": []\\n}\"\n}"
+              }
+            ],
+            "structuredContent": {
+              "resourceRef": "character-memory:lin",
+              "workspacePath": "character-memories/lin.json",
+              "kind": "character-memory",
+              "hash": "5e807c998cbc52b591e7cf1d88f801e43e532aa2bd6ad19f05aca314ac20869b",
+              "chineseCharacterCount": 6,
+              "bodyChineseCharacterCount": 6,
+              "totalBytes": 282,
+              "mode": "content",
+              "offset": 0,
+              "nextCursor": null,
+              "content": "{\n  \"schemaVersion\": 1,\n  \"characterId\": \"lin\",\n  \"lastUpdatedChapterRef\": \"\",\n  \"factsKnown\": [\n    {\n      \"id\": \"door\",\n      \"summary\": \"城门九点关闭\"\n    }\n  ],\n  \"emotionalMemory\": [],\n  \"relationshipDeltas\": [],\n  \"unresolvedIntentions\": [],\n  \"privateMisbeliefs\": []\n}"
+            },
+            "_meta": null
+          }
+        },
+        {
+          "type": "fileChange",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "name": "missing-character-read",
+      "type": "turn_failed",
+      "error": "mcpToolCall执行失败",
+      "text": "",
+      "taskResult": {
+        "schemaVersion": 2,
+        "modelTurnCompleted": false,
+        "goalVerified": false,
+        "goalStatus": "incomplete",
+        "constraints": {
+          "operation": "read",
+          "targetResourceRefs": [],
+          "wordCountScope": "saved_resources",
+          "wordCountResourceRefs": [],
+          "allowedWriteResourceRefs": [],
+          "minBodyCjk": null,
+          "maxBodyCjk": null,
+          "wordCountToleranceRatio": 0.05,
+          "completionEvidence": [],
+          "prohibitRepetition": false,
+          "requiresCompleteEnding": false
+        },
+        "savedResources": [],
+        "reusedSavedResources": [],
+        "continuedFromRunId": null,
+        "execution": {
+          "status": "failed"
+        },
+        "persistence": {
+          "status": "no_changes",
+          "committedCount": 0
+        },
+        "objective": {
+          "status": "incomplete",
+          "unmet": [
+            "read_evidence_missing",
+            "turn_not_completed"
+          ]
+        },
+        "contentReview": {
+          "ending": {
+            "status": "not_evaluated"
+          },
+          "plotProgression": {
+            "status": "not_evaluated"
+          },
+          "characterConsistency": {
+            "status": "not_evaluated"
+          },
+          "style": {
+            "status": "not_evaluated"
+          }
+        },
+        "evidence": {
+          "wordCountScope": "saved_resources",
+          "targetResourceRefs": [],
+          "readableResources": 0,
+          "bodyChineseCharacterCount": 0,
+          "hashes": [],
+          "currentSavedResourceRefs": [],
+          "observedReadResourceRefs": [],
+          "fullyReadResourceRefs": []
+        },
+        "checks": {
+          "wordCount": {
+            "status": "not_requested",
+            "blocking": false,
+            "actual": 0,
+            "minimum": null,
+            "maximum": null,
+            "toleranceRatio": 0.05,
+            "acceptedMinimum": null,
+            "acceptedMaximum": null,
+            "withinTolerance": false,
+            "belowBy": 0,
+            "aboveBy": 0
+          }
+        }
+      },
+      "toolItems": [
+        {
+          "type": "mcpToolCall",
+          "tool": "read_novel_resource",
+          "status": "failed",
+          "error": null,
+          "arguments": {
+            "resourceRef": "character:missing"
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "novel resource does not exist: character:missing"
+              }
+            ],
+            "structuredContent": null,
+            "_meta": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "whole-review-one-chapter",
+      "type": "turn_completed",
+      "text": "全书审校完成。\n```json\n{\"coveredResourceRefs\":[\"chapter:chapter-001.md\"],\"issues\":[]}\n```",
+      "taskResult": {
+        "schemaVersion": 2,
+        "modelTurnCompleted": true,
+        "goalVerified": true,
+        "goalStatus": "completed",
+        "constraints": {
+          "operation": "review",
+          "targetResourceRefs": [],
+          "wordCountScope": "whole_novel",
+          "wordCountResourceRefs": [],
+          "allowedWriteResourceRefs": [],
+          "minBodyCjk": null,
+          "maxBodyCjk": null,
+          "wordCountToleranceRatio": 0.05,
+          "completionEvidence": [],
+          "prohibitRepetition": false,
+          "requiresCompleteEnding": false
+        },
+        "savedResources": [],
+        "reusedSavedResources": [],
+        "continuedFromRunId": null,
+        "execution": {
+          "status": "completed"
+        },
+        "persistence": {
+          "status": "no_changes",
+          "committedCount": 0
+        },
+        "objective": {
+          "status": "met",
+          "unmet": []
+        },
+        "contentReview": {
+          "ending": {
+            "status": "not_evaluated"
+          },
+          "plotProgression": {
+            "status": "not_evaluated"
+          },
+          "characterConsistency": {
+            "status": "not_evaluated"
+          },
+          "style": {
+            "status": "not_evaluated"
+          }
+        },
+        "evidence": {
+          "wordCountScope": "whole_novel",
+          "targetResourceRefs": [
+            "chapter:chapter-001.md"
+          ],
+          "readableResources": 1,
+          "bodyChineseCharacterCount": 6,
+          "hashes": [
+            {
+              "resourceRef": "chapter:chapter-001.md",
+              "hash": "ce74a3c7588349f6dd21b06b74e0d79d30ac7326a6ed84be0673c4505513b78e"
+            }
+          ],
+          "currentSavedResourceRefs": [],
+          "observedReadResourceRefs": [
+            "chapter:chapter-001.md"
+          ],
+          "fullyReadResourceRefs": [
+            "chapter:chapter-001.md"
+          ],
+          "reviewRecord": {
+            "type": "review_recorded",
+            "taskId": "user-whole-review-one-chapter",
+            "attemptId": "attempt-c59fbba3-5497-4f23-86e5-a17a5bc2c093",
+            "runId": "whole-review-one-chapter",
+            "reportSha256": "8a0de60b71dabb4947f4a5f18aa4bfd697f44ce7ac58367c3fbb93ed99b1e46c",
+            "parsed": true,
+            "coverageClaimed": [
+              "chapter:chapter-001.md"
+            ],
+            "coverageObserved": [
+              "chapter:chapter-001.md"
+            ],
+            "coverageVerified": true,
+            "issues": []
+          }
+        },
+        "checks": {
+          "wordCount": {
+            "status": "not_requested",
+            "blocking": false,
+            "actual": 6,
+            "minimum": null,
+            "maximum": null,
+            "toleranceRatio": 0.05,
+            "acceptedMinimum": null,
+            "acceptedMaximum": null,
+            "withinTolerance": false,
+            "belowBy": 0,
+            "aboveBy": 0
+          }
+        }
+      },
+      "toolItems": [
+        {
+          "type": "mcpToolCall",
+          "tool": "read_novel_resource",
+          "status": "completed",
+          "error": null,
+          "arguments": {
+            "resourceRef": "chapter:chapter-001.md"
+          },
+          "result": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"resourceRef\": \"chapter:chapter-001.md\",\n  \"workspacePath\": \"chapters/chapter-001.md\",\n  \"kind\": \"chapter\",\n  \"hash\": \"ce74a3c7588349f6dd21b06b74e0d79d30ac7326a6ed84be0673c4505513b78e\",\n  \"chineseCharacterCount\": 6,\n  \"bodyChineseCharacterCount\": 6,\n  \"totalBytes\": 21,\n  \"mode\": \"content\",\n  \"offset\": 0,\n  \"nextCursor\": null,\n  \"content\": \"城门九点关闭。\"\n}"
+              }
+            ],
+            "structuredContent": {
+              "resourceRef": "chapter:chapter-001.md",
+              "workspacePath": "chapters/chapter-001.md",
+              "kind": "chapter",
+              "hash": "ce74a3c7588349f6dd21b06b74e0d79d30ac7326a6ed84be0673c4505513b78e",
+              "chineseCharacterCount": 6,
+              "bodyChineseCharacterCount": 6,
+              "totalBytes": 21,
+              "mode": "content",
+              "offset": 0,
+              "nextCursor": null,
+              "content": "城门九点关闭。"
+            },
+            "_meta": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "write-requested-self-review",
+      "type": "turn_completed",
+      "text": "正文保存完成，未调用任何审校工具或提交审校报告。",
+      "taskResult": {
+        "schemaVersion": 2,
+        "modelTurnCompleted": true,
+        "goalVerified": true,
+        "goalStatus": "completed",
+        "constraints": {
+          "operation": "write",
+          "targetResourceRefs": [],
+          "wordCountScope": "new_writing",
+          "wordCountResourceRefs": [],
+          "allowedWriteResourceRefs": [],
+          "minBodyCjk": null,
+          "maxBodyCjk": null,
+          "wordCountToleranceRatio": 0.05,
+          "completionEvidence": [],
+          "prohibitRepetition": false,
+          "requiresCompleteEnding": false
+        },
+        "savedResources": [
+          {
+            "resourceRef": "chapter:chapter-003.md",
+            "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+            "afterHash": "c7bc40127d14cbd4ca776ad870c59e6df43a7c9ceff2caeafd3e4c9e333e18c3",
+            "mode": "create",
+            "oldHash": null,
+            "newHash": "c7bc40127d14cbd4ca776ad870c59e6df43a7c9ceff2caeafd3e4c9e333e18c3",
+            "chineseCharacterCount": 6,
+            "bodyChineseCharacterCount": 6
+          }
+        ],
+        "reusedSavedResources": [],
+        "continuedFromRunId": null,
+        "execution": {
+          "status": "completed"
+        },
+        "persistence": {
+          "status": "saved",
+          "committedCount": 1
+        },
+        "objective": {
+          "status": "met",
+          "unmet": []
+        },
+        "contentReview": {
+          "ending": {
+            "status": "not_evaluated"
+          },
+          "plotProgression": {
+            "status": "not_evaluated"
+          },
+          "characterConsistency": {
+            "status": "not_evaluated"
+          },
+          "style": {
+            "status": "not_evaluated"
+          }
+        },
+        "evidence": {
+          "wordCountScope": "new_writing",
+          "targetResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "readableResources": 1,
+          "bodyChineseCharacterCount": 6,
+          "hashes": [
+            {
+              "resourceRef": "chapter:chapter-003.md",
+              "hash": "c7bc40127d14cbd4ca776ad870c59e6df43a7c9ceff2caeafd3e4c9e333e18c3"
+            }
+          ],
+          "currentSavedResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "observedReadResourceRefs": [],
+          "fullyReadResourceRefs": []
+        },
+        "checks": {
+          "wordCount": {
+            "status": "not_requested",
+            "blocking": false,
+            "actual": 6,
+            "minimum": null,
+            "maximum": null,
+            "toleranceRatio": 0.05,
+            "acceptedMinimum": null,
+            "acceptedMaximum": null,
+            "withinTolerance": false,
+            "belowBy": 0,
+            "aboveBy": 0
+          }
+        }
+      },
+      "toolItems": [
+        {
+          "type": "fileChange",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "name": "deepseek-length-limit-reported-completed",
+      "upstreamFinishReason": "length",
+      "finalEvent": "response.completed",
+      "incompleteDetails": null,
+      "normalizedReviewOutputCap": 1200,
+      "reviewTimeoutMs": 18000,
+      "note": "Flash chat conversion caps at 6000 separately; 1200 belongs to Responses normalization path."
+    }
+  ]
+}

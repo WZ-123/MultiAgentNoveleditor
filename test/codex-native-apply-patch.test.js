@@ -49,7 +49,7 @@ async function run(modelId) {
   const service = new CodexSessionService();
   try {
     const confirmationPromise = waitEvent(service, (event) => event.type === 'confirmation_requested');
-    const terminalPromise = waitEvent(service, (event) => ['turn_completed', 'turn_failed'].includes(event.type));
+    const terminalPromise = waitEvent(service, (event) => event.runId==='native-patch-run'&&['turn_completed', 'turn_failed'].includes(event.type));
     await service.startTurn({ runId: 'native-patch-run', persistence: 'one-shot', novelId: novel.id, text: '使用原生 apply_patch 修改第一章。', skillName: 'mana-fiction-writing' });
     const confirmation = await confirmationPromise;
     assert.equal(confirmation.tool, 'apply_patch');
@@ -61,8 +61,9 @@ async function run(modelId) {
     const terminal = await terminalPromise;
     assert.equal(terminal.type, 'turn_completed', terminal.error || 'native turn failed');
     assert.equal(await novelData.readChapter(novel.dir, 'chapter-001.md'), '她在门外停了一会。\n');
-    assert.equal(fake.requests[0].body.tools.some((tool) => tool.type === 'custom' && tool.name === 'exec'), false, 'DeepSeek must use native tools without a custom exec wrapper');
-    assert.equal(fake.requests[0].body.tools.some((tool) => tool.type === 'custom' && tool.name === 'apply_patch'), true, 'Codex must expose its native apply_patch custom tool');
+    const authorRequest=fake.requests.find(request=>!JSON.stringify(request.body.input).includes('解析用户本次任务的范围'));
+    assert.equal(authorRequest.body.tools.some((tool) => tool.type === 'custom' && tool.name === 'exec'), false, 'DeepSeek must use native tools without a custom exec wrapper');
+    assert.equal(authorRequest.body.tools.some((tool) => tool.type === 'custom' && tool.name === 'apply_patch'), true, 'Codex must expose its native apply_patch custom tool');
     assert.equal(JSON.stringify(fake.requests.at(-1).body.input).includes('custom_tool_call_output'), true, 'native apply_patch output must return through Responses');
 
     const rejectedConfirmationPromise = waitEvent(service, (event) => event.type === 'confirmation_requested' && event.runId === 'native-patch-reject');

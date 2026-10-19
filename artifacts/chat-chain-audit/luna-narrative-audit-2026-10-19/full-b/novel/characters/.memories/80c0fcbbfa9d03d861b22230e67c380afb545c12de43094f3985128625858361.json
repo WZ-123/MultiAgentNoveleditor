@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lu",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lu-initial",
+      "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "苏砚拟回渡口带他到外堤检查船上绞盘；尚未实际检查。",
+      "id": "b11db2a3-0fa0-4fe5-b554-a6aacdf9f977"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "担心异响让自己再次被怀疑，但愿意用工具与操作证据说话。",
+      "id": "809aace9-e1e7-442f-b34e-07db99f3d23f"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "苏砚把他作为检修者而非嫌疑人带回，关系出现有限缓和。",
+      "id": "12fc652f-c242-466f-817d-595fdaec59c4"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lu-goal",
+      "summary": "修好潮钟并洗清偷芯嫌疑"
+    },
+    {
+      "summary": "检查绞盘并以可见证据说明异响原因。",
+      "id": "650dd970-5e14-4637-a075-a8d2680aedc5"
+    }
+  ],
+  "privateMisbeliefs": []
+}

@@ -25,7 +25,11 @@ async function prepareTaskContinuation(payload) {
   }
   const saved = [...(source.taskResult.reusedSavedResources || []), ...(source.savedResources || [])];
   return { ...payload, taskId: source.taskId || source.userMessageId, taskConstraints: constraints,
-    continuation: { sourceRunId: source.runId, savedResources: [...new Map(saved.map(resource => [resource.resourceRef, resource])).values()] } };
+    continuation: { sourceRunId: source.runId, savedResources: [...new Map(saved.map(resource => [resource.resourceRef, resource])).values()],
+      memoryBaselines: source.memoryBaselines || null,
+      taskRequestText:source.taskRequestText || source.requestText || branch.find(message=>message.id===source.userMessageId)?.text || '',
+      reviewFindings: source.reviewFindings || [],
+      unmet: source.taskResult.objective?.unmet || [], checks: source.taskResult.checks || {} } };
 }
 
 module.exports = { prepareTaskContinuation };

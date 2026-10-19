@@ -1,0 +1,12 @@
+{
+  "fullJFrozenFiles": 189,
+  "deltas": [
+    {
+      "file": "src/main/codex-runtime/codexSessionService.js",
+      "matchesFrozenAfterReversingOnlyCancellationGuard": true,
+      "frozenSha256": "08d742dd6f6c1ef1ca068191007e13b570d734cfc3a6ffe96a3dc835acaaeabe",
+      "currentSha256": "87ce69ebfc1588ddca9ffec11b4c0246a725bbc8b77d463ebe4dfe29b1eb5d42"
+    }
+  ],
+  "validation": "cancel-handoff-before.log reproduces dispatch; cancel-handoff-after.log and final unit/UI validate rejection before author starts"
+}

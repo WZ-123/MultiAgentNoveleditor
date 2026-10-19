@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lin",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lin-initial",
+      "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "lin-ch3-fact",
+      "summary": "船21:05抵灯塔；从叶澄得知检查耗时五分钟，队伍决定返回取药。仍未向他人公开潮钟慢七分钟。"
+    },
+    {
+      "id": "lin-ch3-time-correction",
+      "summary": "时间核对修正：20:20离开旧渡口，21:05抵灯塔；原记载20:59为初稿误差，不作为最终事实。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "lin-ch3-emotion",
+      "summary": "沉默让她感到队长将记住她的选择；因诊所病人等待而紧迫。"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "lin-ch3-rel",
+      "summary": "苏砚没有逼问她的时间计算，她愿随他和何芷返程协助核时。"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lin-goal",
+      "summary": "查出潮钟误差，保护弟弟"
+    },
+    {
+      "id": "lin-ch3-intent",
+      "summary": "同行返回渡口，继续寻找可验证潮钟误差的依据。"
+    }
+  ],
+  "privateMisbeliefs": []
+}

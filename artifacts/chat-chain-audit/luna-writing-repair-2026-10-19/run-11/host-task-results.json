@@ -1,0 +1,1304 @@
+[
+  {
+    "runId": "run-2a53b886-3af3-4217-9d10-3f38a10bde8a",
+    "conversationId": "thread-mve5rg9b-b71ns5",
+    "novelId": "novel-mve5q7tr-kaggry",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "atomicMemoryWithChapter": true,
+      "preserveOriginalMemories": true,
+      "pointOfView": {
+        "characterRef": "character:he",
+        "name": "何芷",
+        "otherNames": [
+          "岑寂",
+          "林岚",
+          "陆行舟",
+          "苏砚",
+          "叶澄"
+        ]
+      },
+      "withheldInformation": [
+        {
+          "ownerRef": "character:he",
+          "ownerName": "何芷",
+          "term": "暗格"
+        },
+        {
+          "ownerRef": "character:lin",
+          "ownerName": "林岚",
+          "term": "七分钟"
+        }
+      ],
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "repairAttempt": 1,
+    "reviewItemOffset": 71,
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "atomicMemoryWithChapter": true,
+        "preserveOriginalMemories": true,
+        "pointOfView": {
+          "characterRef": "character:he",
+          "name": "何芷",
+          "otherNames": [
+            "岑寂",
+            "林岚",
+            "陆行舟",
+            "苏砚",
+            "叶澄"
+          ]
+        },
+        "withheldInformation": [
+          {
+            "ownerRef": "character:he",
+            "ownerName": "何芷",
+            "term": "暗格"
+          },
+          {
+            "ownerRef": "character:lin",
+            "ownerName": "林岚",
+            "term": "七分钟"
+          }
+        ],
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "afterHash": "67f3c096dc6bdfb4f9ec60f28dffcc80eeb8bca9cb97791c99e81aa737a6b658",
+          "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "create",
+          "oldHash": null,
+          "newHash": "67f3c096dc6bdfb4f9ec60f28dffcc80eeb8bca9cb97791c99e81aa737a6b658",
+          "chineseCharacterCount": 1844,
+          "bodyChineseCharacterCount": 1839
+        },
+        {
+          "resourceRef": "character-memory:cen",
+          "beforeHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+          "afterHash": "e007ab1420c38fc07751a4685afa871667a6e9aa0d9d38f130484e6cb88b1200",
+          "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+          "newHash": "e007ab1420c38fc07751a4685afa871667a6e9aa0d9d38f130484e6cb88b1200",
+          "chineseCharacterCount": 134,
+          "bodyChineseCharacterCount": 134
+        },
+        {
+          "resourceRef": "character-memory:he",
+          "beforeHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+          "afterHash": "a54a04fca9e49795fe0f0aeb95f7c6988afc78cf38b9c9b8ab95f8e0c7246e8b",
+          "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+          "newHash": "a54a04fca9e49795fe0f0aeb95f7c6988afc78cf38b9c9b8ab95f8e0c7246e8b",
+          "chineseCharacterCount": 175,
+          "bodyChineseCharacterCount": 175
+        },
+        {
+          "resourceRef": "character-memory:lin",
+          "beforeHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+          "afterHash": "3b21d63dd9a60c398fc9dc05f6063d2241c3934bfebd180a84cc0220439fd83b",
+          "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+          "newHash": "3b21d63dd9a60c398fc9dc05f6063d2241c3934bfebd180a84cc0220439fd83b",
+          "chineseCharacterCount": 149,
+          "bodyChineseCharacterCount": 149
+        },
+        {
+          "resourceRef": "character-memory:lu",
+          "beforeHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+          "afterHash": "9e499ce4daa2deaa3891b02a5ccb8e02ede681033c7633c52fd051a886ebeffa",
+          "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+          "newHash": "9e499ce4daa2deaa3891b02a5ccb8e02ede681033c7633c52fd051a886ebeffa",
+          "chineseCharacterCount": 121,
+          "bodyChineseCharacterCount": 121
+        },
+        {
+          "resourceRef": "character-memory:su",
+          "beforeHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+          "afterHash": "e821f45170613a38955b393f54bec0f77a96684dc612d3c2a7f17818ee3a8a55",
+          "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+          "newHash": "e821f45170613a38955b393f54bec0f77a96684dc612d3c2a7f17818ee3a8a55",
+          "chineseCharacterCount": 162,
+          "bodyChineseCharacterCount": 162
+        },
+        {
+          "resourceRef": "character-memory:ye",
+          "beforeHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+          "afterHash": "2e47dc0cbf562d6cec5eaee704db260ceca5007293222a499c7c4ded6271a252",
+          "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+          "newHash": "2e47dc0cbf562d6cec5eaee704db260ceca5007293222a499c7c4ded6271a252",
+          "chineseCharacterCount": 130,
+          "bodyChineseCharacterCount": 130
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "67f3c096dc6bdfb4f9ec60f28dffcc80eeb8bca9cb97791c99e81aa737a6b658",
+          "afterHash": "9db12d11087068bf1be12c8bdf8e217c8888366df3627e6c0edc7fce3c403507",
+          "nativeItemId": "exec-3c88491d-6457-4463-938c-cdf31d107997",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:he",
+            "character-memory:su"
+          ],
+          "mode": "replace",
+          "oldHash": "67f3c096dc6bdfb4f9ec60f28dffcc80eeb8bca9cb97791c99e81aa737a6b658",
+          "newHash": "9db12d11087068bf1be12c8bdf8e217c8888366df3627e6c0edc7fce3c403507",
+          "chineseCharacterCount": 1848,
+          "bodyChineseCharacterCount": 1843
+        },
+        {
+          "resourceRef": "character-memory:he",
+          "beforeHash": "a54a04fca9e49795fe0f0aeb95f7c6988afc78cf38b9c9b8ab95f8e0c7246e8b",
+          "afterHash": "55b521bba35736f8b4fdf505f8ebbef12cff53c13169fd6df4745fafbf604b5e",
+          "nativeItemId": "exec-3c88491d-6457-4463-938c-cdf31d107997",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:he",
+            "character-memory:su"
+          ],
+          "mode": "replace",
+          "oldHash": "a54a04fca9e49795fe0f0aeb95f7c6988afc78cf38b9c9b8ab95f8e0c7246e8b",
+          "newHash": "55b521bba35736f8b4fdf505f8ebbef12cff53c13169fd6df4745fafbf604b5e",
+          "chineseCharacterCount": 174,
+          "bodyChineseCharacterCount": 174
+        },
+        {
+          "resourceRef": "character-memory:su",
+          "beforeHash": "e821f45170613a38955b393f54bec0f77a96684dc612d3c2a7f17818ee3a8a55",
+          "afterHash": "faf34ba3dba38c13dffb66f4900ffd7e19043ff4d537ad9a8fa9c6e4f4fb46a7",
+          "nativeItemId": "exec-3c88491d-6457-4463-938c-cdf31d107997",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:he",
+            "character-memory:su"
+          ],
+          "mode": "replace",
+          "oldHash": "e821f45170613a38955b393f54bec0f77a96684dc612d3c2a7f17818ee3a8a55",
+          "newHash": "faf34ba3dba38c13dffb66f4900ffd7e19043ff4d537ad9a8fa9c6e4f4fb46a7",
+          "chineseCharacterCount": 161,
+          "bodyChineseCharacterCount": 161
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "9db12d11087068bf1be12c8bdf8e217c8888366df3627e6c0edc7fce3c403507",
+          "afterHash": "7bd3dc7ab0d571037487df6def6f3914910777853edce0d170229273c510adb2",
+          "nativeItemId": "exec-339296ab-fdf0-446e-871a-4f9654f27e26",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "mode": "replace",
+          "oldHash": "9db12d11087068bf1be12c8bdf8e217c8888366df3627e6c0edc7fce3c403507",
+          "newHash": "7bd3dc7ab0d571037487df6def6f3914910777853edce0d170229273c510adb2",
+          "chineseCharacterCount": 1853,
+          "bodyChineseCharacterCount": 1848
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 11
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1848,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-003.md",
+            "hash": "7bd3dc7ab0d571037487df6def6f3914910777853edce0d170229273c510adb2"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "observedReadResourceRefs": [
+          "character:cen",
+          "chapter:chapter-002.md",
+          "character:ye",
+          "character:lin",
+          "character:he",
+          "chapter:chapter-001.md",
+          "character:su",
+          "character:lu",
+          "outline:master",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:su",
+          "character-memory:ye",
+          "character-memory:lu",
+          "world:places",
+          "world:lore",
+          "chapter:chapter-003.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-5d5fba8d-8ffb-4b0b-8f0d-e9efa41037b6",
+          "attemptId": "attempt-9dad5358-49ce-4747-8413-68e9c920f2a1",
+          "runId": "run-2a53b886-3af3-4217-9d10-3f38a10bde8a",
+          "reportSha256": "85cf4059d57083da74210bb14811971b981c140feff904e2adefec503010fc3e",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye",
+            "character:cen",
+            "character:he",
+            "character:lin",
+            "character:lu",
+            "character:su",
+            "character:ye",
+            "chapter:chapter-001.md",
+            "chapter:chapter-002.md",
+            "world:lore",
+            "world:places",
+            "outline:master"
+          ],
+          "coverageObserved": [
+            "chapter:chapter-003.md",
+            "chapter:chapter-001.md",
+            "character:cen",
+            "character:he",
+            "character:ye",
+            "chapter:chapter-002.md",
+            "character:su",
+            "character:lu",
+            "outline:master",
+            "character-memory:cen",
+            "character:lin",
+            "character-memory:su",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:ye",
+            "world:places",
+            "world:lore"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-003.md",
+              "hash": "7bd3dc7ab0d571037487df6def6f3914910777853edce0d170229273c510adb2"
+            },
+            {
+              "resourceRef": "character-memory:cen",
+              "hash": "e007ab1420c38fc07751a4685afa871667a6e9aa0d9d38f130484e6cb88b1200"
+            },
+            {
+              "resourceRef": "character-memory:he",
+              "hash": "55b521bba35736f8b4fdf505f8ebbef12cff53c13169fd6df4745fafbf604b5e"
+            },
+            {
+              "resourceRef": "character-memory:lin",
+              "hash": "3b21d63dd9a60c398fc9dc05f6063d2241c3934bfebd180a84cc0220439fd83b"
+            },
+            {
+              "resourceRef": "character-memory:lu",
+              "hash": "9e499ce4daa2deaa3891b02a5ccb8e02ede681033c7633c52fd051a886ebeffa"
+            },
+            {
+              "resourceRef": "character-memory:su",
+              "hash": "faf34ba3dba38c13dffb66f4900ffd7e19043ff4d537ad9a8fa9c6e4f4fb46a7"
+            },
+            {
+              "resourceRef": "character-memory:ye",
+              "hash": "2e47dc0cbf562d6cec5eaee704db260ceca5007293222a499c7c4ded6271a252"
+            },
+            {
+              "resourceRef": "character:cen",
+              "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "character:lu",
+              "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+            },
+            {
+              "resourceRef": "character:su",
+              "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            },
+            {
+              "resourceRef": "chapter:chapter-001.md",
+              "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+            },
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "ceeb56dc0a7cee7d19f90fb5eb2dc17f32ce8bd0dbb4d2c212b0db54dc0a9cbc"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "world:places",
+              "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+            },
+            {
+              "resourceRef": "outline:master",
+              "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+            }
+          ],
+          "versionCurrent": true,
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "met",
+          "blocking": false,
+          "actual": 1848,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": 1425,
+          "acceptedMaximum": 2100,
+          "withinTolerance": true,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "requiredWrites": {
+          "expectedResourceRefs": [
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "missingResourceRefs": []
+        },
+        "combinedMemoryCommit": {
+          "status": "met"
+        },
+        "pointOfView": {
+          "status": "met",
+          "focus": "何芷",
+          "risks": [],
+          "coverage": "explicit_non_focal_perception_and_thought_only"
+        },
+        "informationBoundary": {
+          "status": "met",
+          "risks": [],
+          "coverage": "explicit_user_withheld_terms_in_unquoted_focal_narration"
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": []
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "afterHash": "67f3c096dc6bdfb4f9ec60f28dffcc80eeb8bca9cb97791c99e81aa737a6b658",
+        "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "create",
+        "oldHash": null,
+        "newHash": "67f3c096dc6bdfb4f9ec60f28dffcc80eeb8bca9cb97791c99e81aa737a6b658",
+        "chineseCharacterCount": 1844,
+        "bodyChineseCharacterCount": 1839
+      },
+      {
+        "resourceRef": "character-memory:cen",
+        "beforeHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+        "afterHash": "e007ab1420c38fc07751a4685afa871667a6e9aa0d9d38f130484e6cb88b1200",
+        "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+        "newHash": "e007ab1420c38fc07751a4685afa871667a6e9aa0d9d38f130484e6cb88b1200",
+        "chineseCharacterCount": 134,
+        "bodyChineseCharacterCount": 134
+      },
+      {
+        "resourceRef": "character-memory:he",
+        "beforeHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+        "afterHash": "a54a04fca9e49795fe0f0aeb95f7c6988afc78cf38b9c9b8ab95f8e0c7246e8b",
+        "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+        "newHash": "a54a04fca9e49795fe0f0aeb95f7c6988afc78cf38b9c9b8ab95f8e0c7246e8b",
+        "chineseCharacterCount": 175,
+        "bodyChineseCharacterCount": 175
+      },
+      {
+        "resourceRef": "character-memory:lin",
+        "beforeHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+        "afterHash": "3b21d63dd9a60c398fc9dc05f6063d2241c3934bfebd180a84cc0220439fd83b",
+        "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+        "newHash": "3b21d63dd9a60c398fc9dc05f6063d2241c3934bfebd180a84cc0220439fd83b",
+        "chineseCharacterCount": 149,
+        "bodyChineseCharacterCount": 149
+      },
+      {
+        "resourceRef": "character-memory:lu",
+        "beforeHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+        "afterHash": "9e499ce4daa2deaa3891b02a5ccb8e02ede681033c7633c52fd051a886ebeffa",
+        "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+        "newHash": "9e499ce4daa2deaa3891b02a5ccb8e02ede681033c7633c52fd051a886ebeffa",
+        "chineseCharacterCount": 121,
+        "bodyChineseCharacterCount": 121
+      },
+      {
+        "resourceRef": "character-memory:su",
+        "beforeHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+        "afterHash": "e821f45170613a38955b393f54bec0f77a96684dc612d3c2a7f17818ee3a8a55",
+        "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+        "newHash": "e821f45170613a38955b393f54bec0f77a96684dc612d3c2a7f17818ee3a8a55",
+        "chineseCharacterCount": 162,
+        "bodyChineseCharacterCount": 162
+      },
+      {
+        "resourceRef": "character-memory:ye",
+        "beforeHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+        "afterHash": "2e47dc0cbf562d6cec5eaee704db260ceca5007293222a499c7c4ded6271a252",
+        "nativeItemId": "exec-a642b42f-e78e-4ff9-9015-988127795f50",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+        "newHash": "2e47dc0cbf562d6cec5eaee704db260ceca5007293222a499c7c4ded6271a252",
+        "chineseCharacterCount": 130,
+        "bodyChineseCharacterCount": 130
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "67f3c096dc6bdfb4f9ec60f28dffcc80eeb8bca9cb97791c99e81aa737a6b658",
+        "afterHash": "9db12d11087068bf1be12c8bdf8e217c8888366df3627e6c0edc7fce3c403507",
+        "nativeItemId": "exec-3c88491d-6457-4463-938c-cdf31d107997",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:he",
+          "character-memory:su"
+        ],
+        "mode": "replace",
+        "oldHash": "67f3c096dc6bdfb4f9ec60f28dffcc80eeb8bca9cb97791c99e81aa737a6b658",
+        "newHash": "9db12d11087068bf1be12c8bdf8e217c8888366df3627e6c0edc7fce3c403507",
+        "chineseCharacterCount": 1848,
+        "bodyChineseCharacterCount": 1843
+      },
+      {
+        "resourceRef": "character-memory:he",
+        "beforeHash": "a54a04fca9e49795fe0f0aeb95f7c6988afc78cf38b9c9b8ab95f8e0c7246e8b",
+        "afterHash": "55b521bba35736f8b4fdf505f8ebbef12cff53c13169fd6df4745fafbf604b5e",
+        "nativeItemId": "exec-3c88491d-6457-4463-938c-cdf31d107997",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:he",
+          "character-memory:su"
+        ],
+        "mode": "replace",
+        "oldHash": "a54a04fca9e49795fe0f0aeb95f7c6988afc78cf38b9c9b8ab95f8e0c7246e8b",
+        "newHash": "55b521bba35736f8b4fdf505f8ebbef12cff53c13169fd6df4745fafbf604b5e",
+        "chineseCharacterCount": 174,
+        "bodyChineseCharacterCount": 174
+      },
+      {
+        "resourceRef": "character-memory:su",
+        "beforeHash": "e821f45170613a38955b393f54bec0f77a96684dc612d3c2a7f17818ee3a8a55",
+        "afterHash": "faf34ba3dba38c13dffb66f4900ffd7e19043ff4d537ad9a8fa9c6e4f4fb46a7",
+        "nativeItemId": "exec-3c88491d-6457-4463-938c-cdf31d107997",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:he",
+          "character-memory:su"
+        ],
+        "mode": "replace",
+        "oldHash": "e821f45170613a38955b393f54bec0f77a96684dc612d3c2a7f17818ee3a8a55",
+        "newHash": "faf34ba3dba38c13dffb66f4900ffd7e19043ff4d537ad9a8fa9c6e4f4fb46a7",
+        "chineseCharacterCount": 161,
+        "bodyChineseCharacterCount": 161
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "9db12d11087068bf1be12c8bdf8e217c8888366df3627e6c0edc7fce3c403507",
+        "afterHash": "7bd3dc7ab0d571037487df6def6f3914910777853edce0d170229273c510adb2",
+        "nativeItemId": "exec-339296ab-fdf0-446e-871a-4f9654f27e26",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "mode": "replace",
+        "oldHash": "9db12d11087068bf1be12c8bdf8e217c8888366df3627e6c0edc7fce3c403507",
+        "newHash": "7bd3dc7ab0d571037487df6def6f3914910777853edce0d170229273c510adb2",
+        "chineseCharacterCount": 1853,
+        "bodyChineseCharacterCount": 1848
+      }
+    ],
+    "memoryBaselines": {
+      "character-memory:cen": {
+        "schemaVersion": 1,
+        "characterId": "cen",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "cen-initial",
+            "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "cen-goal",
+            "summary": "阻止旧账公开但不伤及病人"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:he": {
+        "schemaVersion": 1,
+        "characterId": "he",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "he-initial",
+            "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "he-goal",
+            "summary": "把冷藏药送到灯塔诊所"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lin": {
+        "schemaVersion": 1,
+        "characterId": "lin",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lin-initial",
+            "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lin-goal",
+            "summary": "查出潮钟误差，保护弟弟"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lu": {
+        "schemaVersion": 1,
+        "characterId": "lu",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lu-initial",
+            "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lu-goal",
+            "summary": "修好潮钟并洗清偷芯嫌疑"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:su": {
+        "schemaVersion": 1,
+        "characterId": "su",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "su-initial",
+            "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "su-goal",
+            "summary": "在封桥前合法完成交接"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:ye": {
+        "schemaVersion": 1,
+        "characterId": "ye",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "ye-initial",
+            "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "ye-goal",
+            "summary": "保住执照与船员"
+          }
+        ],
+        "privateMisbeliefs": []
+      }
+    },
+    "error": null
+  },
+  {
+    "runId": "run-d20a204f-b244-4b82-9f42-e103e4853ba8",
+    "conversationId": "thread-mve5qajt-n8gk36",
+    "novelId": "novel-mve5q7tr-kaggry",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [],
+      "atomicMemoryWithChapter": false,
+      "preserveOriginalMemories": false,
+      "pointOfView": {
+        "characterRef": "character:lin",
+        "name": "林岚",
+        "otherNames": [
+          "岑寂",
+          "何芷",
+          "陆行舟",
+          "苏砚",
+          "叶澄"
+        ]
+      },
+      "withheldInformation": [],
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "repairAttempt": 1,
+    "reviewItemOffset": 31,
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [],
+        "atomicMemoryWithChapter": false,
+        "preserveOriginalMemories": false,
+        "pointOfView": {
+          "characterRef": "character:lin",
+          "name": "林岚",
+          "otherNames": [
+            "岑寂",
+            "何芷",
+            "陆行舟",
+            "苏砚",
+            "叶澄"
+          ]
+        },
+        "withheldInformation": [],
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "style",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "afterHash": "4ff42b538423831f31f5dd3d62a914fc596f875bcf0f930231d668f126ca045d",
+          "nativeItemId": "exec-69284548-2526-45c8-ae5c-5d17edad9a1d",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "mode": "create",
+          "oldHash": null,
+          "newHash": "4ff42b538423831f31f5dd3d62a914fc596f875bcf0f930231d668f126ca045d",
+          "chineseCharacterCount": 1432,
+          "bodyChineseCharacterCount": 1427
+        },
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "4ff42b538423831f31f5dd3d62a914fc596f875bcf0f930231d668f126ca045d",
+          "afterHash": "570728920f7e1de9c8215126787f6d3a323c94c9b28def9c0668221d3c02cbd8",
+          "nativeItemId": "exec-0e7bbc6a-bcad-403f-8ae3-61bfebfb3026",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "mode": "replace",
+          "oldHash": "4ff42b538423831f31f5dd3d62a914fc596f875bcf0f930231d668f126ca045d",
+          "newHash": "570728920f7e1de9c8215126787f6d3a323c94c9b28def9c0668221d3c02cbd8",
+          "chineseCharacterCount": 1515,
+          "bodyChineseCharacterCount": 1510
+        },
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "570728920f7e1de9c8215126787f6d3a323c94c9b28def9c0668221d3c02cbd8",
+          "afterHash": "ceeb56dc0a7cee7d19f90fb5eb2dc17f32ce8bd0dbb4d2c212b0db54dc0a9cbc",
+          "nativeItemId": "exec-cc8268fc-2e73-4680-8691-64a2034d0ffb",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "mode": "replace",
+          "oldHash": "570728920f7e1de9c8215126787f6d3a323c94c9b28def9c0668221d3c02cbd8",
+          "newHash": "ceeb56dc0a7cee7d19f90fb5eb2dc17f32ce8bd0dbb4d2c212b0db54dc0a9cbc",
+          "chineseCharacterCount": 1506,
+          "bodyChineseCharacterCount": 1501
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 3
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1501,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "ceeb56dc0a7cee7d19f90fb5eb2dc17f32ce8bd0dbb4d2c212b0db54dc0a9cbc"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "observedReadResourceRefs": [
+          "chapter:chapter-001.md",
+          "character:lu",
+          "outline:master",
+          "character:cen",
+          "character:su",
+          "character:he",
+          "character:ye",
+          "character:lin",
+          "style:memory",
+          "world:places",
+          "world:lore",
+          "chapter:chapter-002.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-4e20d6b1-c744-438a-b7de-5f1b59063b7b",
+          "attemptId": "attempt-cffd4281-c6e3-41c8-b985-880dd17cbbe5",
+          "runId": "run-d20a204f-b244-4b82-9f42-e103e4853ba8",
+          "reportSha256": "c5baf336be5dd7dcf8425def8880e4e3f3b982df264a874eb5c50c58f2c9e3d7",
+          "parsed": true,
+          "coverageClaimed": [
+            "character:cen",
+            "character:he",
+            "character:lin",
+            "character:lu",
+            "character:su",
+            "character:ye",
+            "outline:master",
+            "style:memory",
+            "world:lore",
+            "world:places",
+            "chapter:chapter-002.md"
+          ],
+          "coverageObserved": [
+            "chapter:chapter-001.md",
+            "chapter:chapter-002.md",
+            "outline:master",
+            "character:lu",
+            "character:cen",
+            "style:memory",
+            "character:he",
+            "character:su",
+            "character:ye",
+            "character:lin",
+            "world:places",
+            "world:lore"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "character:cen",
+              "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "character:lu",
+              "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+            },
+            {
+              "resourceRef": "character:su",
+              "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            },
+            {
+              "resourceRef": "outline:master",
+              "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+            },
+            {
+              "resourceRef": "style:memory",
+              "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "world:places",
+              "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+            },
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "ceeb56dc0a7cee7d19f90fb5eb2dc17f32ce8bd0dbb4d2c212b0db54dc0a9cbc"
+            }
+          ],
+          "versionCurrent": true,
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "met",
+          "blocking": false,
+          "actual": 1501,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": 1425,
+          "acceptedMaximum": 2100,
+          "withinTolerance": true,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "pointOfView": {
+          "status": "met",
+          "focus": "林岚",
+          "risks": [],
+          "coverage": "explicit_non_focal_perception_and_thought_only"
+        },
+        "informationBoundary": {
+          "status": "met",
+          "risks": [],
+          "coverage": "explicit_user_withheld_terms_in_unquoted_focal_narration"
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": []
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "afterHash": "4ff42b538423831f31f5dd3d62a914fc596f875bcf0f930231d668f126ca045d",
+        "nativeItemId": "exec-69284548-2526-45c8-ae5c-5d17edad9a1d",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "mode": "create",
+        "oldHash": null,
+        "newHash": "4ff42b538423831f31f5dd3d62a914fc596f875bcf0f930231d668f126ca045d",
+        "chineseCharacterCount": 1432,
+        "bodyChineseCharacterCount": 1427
+      },
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "4ff42b538423831f31f5dd3d62a914fc596f875bcf0f930231d668f126ca045d",
+        "afterHash": "570728920f7e1de9c8215126787f6d3a323c94c9b28def9c0668221d3c02cbd8",
+        "nativeItemId": "exec-0e7bbc6a-bcad-403f-8ae3-61bfebfb3026",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "mode": "replace",
+        "oldHash": "4ff42b538423831f31f5dd3d62a914fc596f875bcf0f930231d668f126ca045d",
+        "newHash": "570728920f7e1de9c8215126787f6d3a323c94c9b28def9c0668221d3c02cbd8",
+        "chineseCharacterCount": 1515,
+        "bodyChineseCharacterCount": 1510
+      },
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "570728920f7e1de9c8215126787f6d3a323c94c9b28def9c0668221d3c02cbd8",
+        "afterHash": "ceeb56dc0a7cee7d19f90fb5eb2dc17f32ce8bd0dbb4d2c212b0db54dc0a9cbc",
+        "nativeItemId": "exec-cc8268fc-2e73-4680-8691-64a2034d0ffb",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "mode": "replace",
+        "oldHash": "570728920f7e1de9c8215126787f6d3a323c94c9b28def9c0668221d3c02cbd8",
+        "newHash": "ceeb56dc0a7cee7d19f90fb5eb2dc17f32ce8bd0dbb4d2c212b0db54dc0a9cbc",
+        "chineseCharacterCount": 1506,
+        "bodyChineseCharacterCount": 1501
+      }
+    ],
+    "memoryBaselines": {},
+    "error": null
+  }
+]

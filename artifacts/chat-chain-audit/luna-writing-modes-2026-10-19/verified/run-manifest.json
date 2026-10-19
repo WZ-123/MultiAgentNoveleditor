@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-19 Asia/Shanghai",
+  "mode": "codex-mock-real-login",
+  "model": "gpt-6-luna",
+  "effort": "medium",
+  "runtime": "0.163.0-alpha.10.2",
+  "bundledRuntime": "0.153.0 (did not list requested model)",
+  "fakeResponsesUsedForLiveRuns": false,
+  "muted": true,
+  "characterCount": 6,
+  "worldRules": 13,
+  "traditionalFinal": "incomplete",
+  "roleFinal": "completed after multiple corrective turns",
+  "readonlyMemoryContinuity": "six current memories read, replies matched entries, no disk changes",
+  "formalFixtureRestoredAfterAccident": true,
+  "productionProjectsTouched": false,
+  "reviewDoesNotProveSemanticPerfection": true,
+  "eventLogCompaction": "Removed repeated runState snapshots; individual tool inputs/outputs, text events and terminal task results retained.",
+  "requestedTurns": 16,
+  "completedModelTurns": 15
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lu",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lu-initial",
+      "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "船底异响后何芷允许他只固定药箱外部绳结；全员决定靠桩检查船腹。",
+      "id": "d39760dc-b283-4577-a25d-e640057b406c"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "被允许帮忙让他稍感释然，但仍担心被怀疑。",
+      "id": "96afa1bf-d2d0-496c-86d9-7d4930379c76"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "何芷暂时接受其不触碰药箱封条的协助。",
+      "id": "7d67d412-8df6-468c-8898-cc5d6888b7cc"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lu-goal",
+      "summary": "修好潮钟并洗清偷芯嫌疑"
+    },
+    {
+      "summary": "待检查时查明船底异响是否与船具有关，同时避免被当作偷芯嫌疑人。",
+      "id": "a0ff992b-ae6f-4666-9825-68a9d27ce763"
+    }
+  ],
+  "privateMisbeliefs": []
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "cen",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "cen-initial",
+      "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "cen-ch3-fact",
+      "summary": "乘船抵灯塔停泊口；得知队伍决定何芷、苏砚、林岚返回渡口取药，自己留在诊所外见证交接。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "cen-ch3-emotion",
+      "summary": "被要求只记亲眼所见，感到自己的叙述权限受限。"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "cen-ch3-rel",
+      "summary": "苏砚明确约束其不得替他人补写理由，彼此戒备加深。"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "cen-goal",
+      "summary": "阻止旧账公开但不伤及病人"
+    },
+    {
+      "id": "cen-ch3-intent",
+      "summary": "仍想阻止旧账公开且不伤及病人，准备记录交接。"
+    }
+  ],
+  "privateMisbeliefs": []
+}

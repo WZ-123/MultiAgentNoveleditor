@@ -1,0 +1,11 @@
+[codex] selection_stale 编辑目标或选区版本已经变化，请重新选择
+TEST_FAIL codex_native_ui: Error: UI wait timed out: [...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('执行证据齐全')
+    at waitFor (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/codex-native-ui-e2e.js:17:9)
+    at async Object.runCodexNativeUiE2E (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/codex-native-ui-e2e.js:260:3)
+    at async createWindow (/Users/potablewater/Desktop/MultiAgentNovelAssistant/main.js:100:22)
+    at async /Users/potablewater/Desktop/MultiAgentNovelAssistant/main.js:177:3
+Error: Codex native UI phase failed with exit 1
+    at ChildProcess.<anonymous> (/Users/potablewater/Desktop/MultiAgentNovelAssistant/scripts/run-codex-native-ui-e2e.js:32:66)
+    at Object.onceWrapper (node:events:623:12)
+    at ChildProcess.emit (node:events:508:20)
+    at ChildProcess._handle.onexit (node:internal/child_process:294:12)

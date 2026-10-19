@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lin",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lin-initial",
+      "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "lin-ch3-fact",
+      "summary": "亲见叶澄从船底挑出有新裂口的木片；20:38船载药离开渡口走正规航道，叶澄掌舵，何芷守箱。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "lin-ch3-emotion",
+      "summary": "对岑寂的保证仍不放心；提出稍后共同复核钟差，避免在缺证时公布测量。"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "lin-ch3-rel",
+      "summary": "苏砚同意等船抵岸后与她共同核对怀表和潮表，信任建立在证据程序上。"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lin-goal",
+      "summary": "查出潮钟误差，保护弟弟"
+    },
+    {
+      "id": "lin-ch3-intent",
+      "summary": "在现场共同复核钟差并确认木片记录完整；保护弟弟的顾虑未解。"
+    }
+  ],
+  "privateMisbeliefs": []
+}

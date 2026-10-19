@@ -1,0 +1,235 @@
+[
+  {
+    "id": "traditional-draft",
+    "observationSucceeded": true,
+    "nativeTurns": 3,
+    "confirmations": [
+      {
+        "decision": "accept"
+      },
+      {
+        "decision": "accept"
+      }
+    ],
+    "chapters": [
+      {
+        "file": "chapter-001.md",
+        "bodyCjk": 163
+      },
+      {
+        "file": "chapter-002.md",
+        "bodyCjk": 1880
+      }
+    ],
+    "memories": [
+      {
+        "id": "lin",
+        "originalPrefixPreserved": true,
+        "added": {
+          "factsKnown": 0,
+          "privateMisbeliefs": 0,
+          "emotionalMemory": 0,
+          "relationshipDeltas": 0,
+          "unresolvedIntentions": 0
+        }
+      },
+      {
+        "id": "su",
+        "originalPrefixPreserved": true,
+        "added": {
+          "factsKnown": 0,
+          "privateMisbeliefs": 0,
+          "emotionalMemory": 0,
+          "relationshipDeltas": 0,
+          "unresolvedIntentions": 0
+        }
+      },
+      {
+        "id": "he",
+        "originalPrefixPreserved": true,
+        "added": {
+          "factsKnown": 0,
+          "privateMisbeliefs": 0,
+          "emotionalMemory": 0,
+          "relationshipDeltas": 0,
+          "unresolvedIntentions": 0
+        }
+      },
+      {
+        "id": "ye",
+        "originalPrefixPreserved": true,
+        "added": {
+          "factsKnown": 0,
+          "privateMisbeliefs": 0,
+          "emotionalMemory": 0,
+          "relationshipDeltas": 0,
+          "unresolvedIntentions": 0
+        }
+      },
+      {
+        "id": "lu",
+        "originalPrefixPreserved": true,
+        "added": {
+          "factsKnown": 0,
+          "privateMisbeliefs": 0,
+          "emotionalMemory": 0,
+          "relationshipDeltas": 0,
+          "unresolvedIntentions": 0
+        }
+      },
+      {
+        "id": "cen",
+        "originalPrefixPreserved": true,
+        "added": {
+          "factsKnown": 0,
+          "privateMisbeliefs": 0,
+          "emotionalMemory": 0,
+          "relationshipDeltas": 0,
+          "unresolvedIntentions": 0
+        }
+      }
+    ],
+    "preparedCalls": 2,
+    "preparedExplicitHashFields": 0,
+    "preparationDiagnostics": [],
+    "submittedIssueCount": 0,
+    "submittedExplicitEvidenceHashes": 0,
+    "exactUserRangePassed": true,
+    "semanticQuality": "requires independent manual reading; this script does not establish it"
+  },
+  {
+    "id": "role-draft",
+    "observationSucceeded": true,
+    "nativeTurns": 2,
+    "confirmations": [],
+    "chapters": [
+      {
+        "file": "chapter-001.md",
+        "bodyCjk": 163
+      },
+      {
+        "file": "chapter-002.md",
+        "bodyCjk": 1880
+      }
+    ],
+    "memories": [
+      {
+        "id": "lin",
+        "originalPrefixPreserved": true,
+        "added": {
+          "factsKnown": 0,
+          "privateMisbeliefs": 0,
+          "emotionalMemory": 0,
+          "relationshipDeltas": 0,
+          "unresolvedIntentions": 0
+        }
+      },
+      {
+        "id": "su",
+        "originalPrefixPreserved": true,
+        "added": {
+          "factsKnown": 0,
+          "privateMisbeliefs": 0,
+          "emotionalMemory": 0,
+          "relationshipDeltas": 0,
+          "unresolvedIntentions": 0
+        }
+      },
+      {
+        "id": "he",
+        "originalPrefixPreserved": true,
+        "added": {
+          "factsKnown": 0,
+          "privateMisbeliefs": 0,
+          "emotionalMemory": 0,
+          "relationshipDeltas": 0,
+          "unresolvedIntentions": 0
+        }
+      },
+      {
+        "id": "ye",
+        "originalPrefixPreserved": true,
+        "added": {
+          "factsKnown": 0,
+          "privateMisbeliefs": 0,
+          "emotionalMemory": 0,
+          "relationshipDeltas": 0,
+          "unresolvedIntentions": 0
+        }
+      },
+      {
+        "id": "lu",
+        "originalPrefixPreserved": true,
+        "added": {
+          "factsKnown": 0,
+          "privateMisbeliefs": 0,
+          "emotionalMemory": 0,
+          "relationshipDeltas": 0,
+          "unresolvedIntentions": 0
+        }
+      },
+      {
+        "id": "cen",
+        "originalPrefixPreserved": true,
+        "added": {
+          "factsKnown": 0,
+          "privateMisbeliefs": 0,
+          "emotionalMemory": 0,
+          "relationshipDeltas": 0,
+          "unresolvedIntentions": 0
+        }
+      }
+    ],
+    "preparedCalls": 5,
+    "preparedExplicitHashFields": 0,
+    "preparationDiagnostics": [
+      {
+        "code": "resource_version_read_required",
+        "message": "本任务没有 chapter:chapter-003.md 的实际读取版本凭证；请先读取该资源。无需手抄 hash。",
+        "stage": "query",
+        "recoverable": true
+      },
+      {
+        "code": "invalid_change_count",
+        "message": "单个补丁需要 1—16 项资源修改",
+        "stage": "query",
+        "recoverable": true
+      },
+      {
+        "code": "point_of_view",
+        "message": "候选正文包含非焦点人物的感知或内心直述；请按指定焦点重新创作这些句段，再准备补丁。",
+        "stage": "query",
+        "recoverable": true,
+        "details": {
+          "focus": "何芷",
+          "risks": [
+            {
+              "resourceRef": "chapter:chapter-003.md",
+              "hash": null,
+              "character": "陆行舟",
+              "location": "L39",
+              "quote": "陆行舟听到船底擦过一声轻响，立刻报了出来，手仍留在膝上。",
+              "reason": "non_focal_perception_or_thought"
+            }
+          ]
+        }
+      },
+      {
+        "code": "invalid_change_count",
+        "message": "单个补丁需要 1—16 项资源修改",
+        "stage": "query",
+        "recoverable": true
+      },
+      {
+        "code": "memory_entry_conflict",
+        "message": "记忆条目 cen-goal 已存在且内容不同，不会覆盖原始记忆",
+        "stage": "query",
+        "recoverable": true
+      }
+    ],
+    "submittedIssueCount": 0,
+    "submittedExplicitEvidenceHashes": 0,
+    "exactUserRangePassed": false,
+    "semanticQuality": "requires independent manual reading; this script does not establish it"
+  }
+]

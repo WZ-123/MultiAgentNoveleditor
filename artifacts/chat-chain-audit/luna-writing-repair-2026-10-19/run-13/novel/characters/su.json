@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "su",
+  "name": "苏砚",
+  "role": "巡港队长",
+  "personality": "守程序，话少，不滥用武力",
+  "attributes": {
+    "欲望": "在封桥前合法完成交接",
+    "已知信息": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+    "隐瞒事实": "父亲卷入旧案，不愿公开",
+    "关系": "信林岚的测量，怀疑陆行舟"
+  },
+  "relationships": [
+    {
+      "with": "lin",
+      "type": "信林岚的测量，怀疑陆行舟"
+    },
+    {
+      "with": "he",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "ye",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "lu",
+      "type": "信林岚的测量，怀疑陆行舟"
+    },
+    {
+      "with": "cen",
+      "type": "认识但无私下信息共享"
+    }
+  ],
+  "aliases": [],
+  "faction": "",
+  "gender": "",
+  "age": "",
+  "sourceWork": "",
+  "originalName": "",
+  "bio": "",
+  "appearance": "",
+  "background": "",
+  "quotes": ""
+}

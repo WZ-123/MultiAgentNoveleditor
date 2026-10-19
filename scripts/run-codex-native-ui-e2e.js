@@ -43,6 +43,12 @@ async function run() {
   const fake = await createFakeResponsesServer({
     respond(body) {
       const inputs = Array.isArray(body.input) ? body.input : [];
+      const findReview=value=>{if(typeof value==='string'&&value.startsWith('对冻结正文及资料进行一次只读一致性审查'))return value;if(value&&typeof value==='object')for(const child of Object.values(value)){const found=findReview(child);if(found)return found;}return null;};
+      const prompt=findReview(inputs);
+      if(prompt) {
+        const bundle=JSON.parse(prompt.slice(prompt.indexOf('\n')+1));
+        return {text:JSON.stringify({reviews:bundle.targets.map(resourceRef=>({resourceRef,aspects:['timeline','viewpoint','character','world','style','format'],conclusion:'确定性审查接口夹具。',limitations:[]})),issues:[],resolutions:[]})};
+      }
       const commands = ['连续创作三个完整场景', '重启后继续刚才的对话', '拒绝测试：', '去 AI 味：', '普通问答：', '乙项目问答', '缓慢回答停止测试', '资料页世界观修改', '世界观脏稿冲突', '保存后停止', '重写选中文本', '在光标处续写小说正文', '人物卡修改'];
       commands.push('人物卡更新');
       commands.push('任务状态验收', '继续未完成任务', '任务状态重启', '任务阅读验收', '任务审校验收');
@@ -58,11 +64,12 @@ async function run() {
       }
       if (wire.includes('任务阅读验收') || wire.includes('任务审校验收')) {
         if (!wire.includes('function_call_output')) return { namespace: 'mcp__novel_tools', toolName: 'read_novel_resource', arguments: { resourceRef: 'chapter:chapter-007.md' } };
-        return { text: wire.includes('任务审校验收') ? '审校报告已生成。\n```json\n{"coveredResourceRefs":["chapter:chapter-007.md"],"issues":[]}\n```' : '读取章节已完成。' };
+        if(wire.includes('任务审校验收')&&!wire.includes('"hostedReview"'))return {namespace:'mcp__novel_tools',toolName:'check_writing_task',arguments:{}};
+        return { text: wire.includes('任务审校验收') ? '审校报告已生成。' : '读取章节已完成。' };
       }
       if (wire.includes('任务状态重启')) return { text: '重启前保留未完成目标。' };
       if (wire.includes('继续未完成任务')) return wire.includes('custom_tool_call_output') ? { text: '继续任务已补足，原有内容保留。' }
-        : { customToolName: 'apply_patch', input: `*** Begin Patch\n*** Update File: chapters/chapter-007.md\n@@\n 灯亮在雨中的小院。\n+${'山'.repeat(950)}\n*** End Patch` };
+        : { customToolName: 'apply_patch', input: `*** Begin Patch\n*** Update File: chapters/chapter-007.md\n@@\n 灯亮在雨中的小院。\n+${'山'.repeat(1000)}\n*** End Patch` };
       if (wire.includes('任务状态验收')) return wire.includes('custom_tool_call_output') ? { text: '本回合已保存短稿，目标仍未完成。' }
         : { customToolName: 'apply_patch', input: addChapterPatch({ fileName: 'chapter-007.md', content: '灯亮在雨中的小院。' }) };
       if (wire.includes('人物卡更新')) return wire.includes('custom_tool_call_output') ? { text: '已有人物卡更新完成。' }

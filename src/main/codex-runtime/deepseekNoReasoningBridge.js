@@ -5,10 +5,10 @@ const http = require('node:http');
 const { Readable } = require('node:stream');
 
 const NO_REASONING_OUTPUT_CAP = 6_000;
-const CONSISTENCY_REVIEW_OUTPUT_CAP = 1_200;
+const CONSISTENCY_REVIEW_OUTPUT_CAP = NO_REASONING_OUTPUT_CAP;
 const DEEPSEEK_UPSTREAM_TIMEOUT_MS = 50_000;
-const CONSISTENCY_REVIEW_TIMEOUT_MS = 18_000;
-const NOVEL_TOOL_NAMES = new Set(['connection_probe', 'list_novel_resources', 'read_novel_resource', 'search_novel_resources', 'scan_de_ai_patterns', 'check_de_ai_minimality', 'check_timeline_feasibility']);
+const CONSISTENCY_REVIEW_TIMEOUT_MS = DEEPSEEK_UPSTREAM_TIMEOUT_MS;
+const NOVEL_TOOL_NAMES = new Set(['read_writing_context', 'prepare_novel_patch', 'check_writing_task', 'connection_probe', 'list_novel_resources', 'read_novel_resource', 'search_novel_resources', 'report_writing_progress', 'scan_de_ai_patterns', 'check_de_ai_minimality', 'check_timeline_feasibility']);
 
 function normalizeNoReasoningRequest(body) {
   if (!body || typeof body !== 'object' || body.reasoning?.effort !== 'none') return body;
@@ -334,6 +334,8 @@ async function chatCompletionAsResponses({ body, headers, target }) {
     let messageItem = null;
     const toolCalls = new Map();
     let usage = null;
+    let finishReason = null;
+    let streamDone = false;
     try {
       for await (const chunk of upstream.body) {
         buffer += decoder.decode(chunk, { stream: true });
@@ -343,10 +345,13 @@ async function chatCompletionAsResponses({ body, headers, target }) {
           buffer = buffer.slice(newline + 1);
           if (!line.startsWith('data:')) continue;
           const payload = line.slice(5).trim();
-          if (!payload || payload === '[DONE]') continue;
+          if (payload === '[DONE]') { streamDone = true; continue; }
+          if (!payload) continue;
           let packet;
           try { packet = JSON.parse(payload); } catch { continue; }
           if (packet.usage) usage = packet.usage;
+          if (packet.error) throw new Error(packet.error.message || JSON.stringify(packet.error));
+          if (packet.choices?.[0]?.finish_reason) finishReason = packet.choices[0].finish_reason;
           const delta = packet.choices?.[0]?.delta || {};
           const content = typeof delta.content === 'string' ? delta.content : '';
           if (content) {
@@ -377,7 +382,9 @@ async function chatCompletionAsResponses({ body, headers, target }) {
         yield encode('response.output_item.done', { output_index: 0, item: complete });
         output.push(complete);
       }
-      for (const { call, normalized } of normalizeChatToolCalls([...toolCalls.values()], body)) {
+      const complete = ['stop', 'tool_calls', 'function_call'].includes(finishReason);
+      // Never execute a partially streamed tool call after a length limit or disconnect.
+      for (const { call, normalized } of complete ? normalizeChatToolCalls([...toolCalls.values()], body) : []) {
         const outputIndex = output.length;
         const callId = call.id || `call_${crypto.randomUUID().replace(/-/gu, '')}`;
         let item;
@@ -405,7 +412,10 @@ async function chatCompletionAsResponses({ body, headers, target }) {
         output_tokens_details: { reasoning_tokens: 0 },
         total_tokens: Number(usage.total_tokens) || 0,
       } : null;
-      yield encode('response.completed', { response: { ...responseBase, output, usage: normalizedUsage } });
+      const reason = finishReason === 'length' ? 'max_output_tokens' : finishReason === 'content_filter' ? 'content_filter'
+        : !streamDone && !finishReason ? 'upstream_disconnected' : finishReason || 'upstream_finish_reason_missing';
+      yield encode(complete ? 'response.completed' : 'response.incomplete', { response: { ...responseBase, output, usage: normalizedUsage,
+        status: complete ? 'completed' : 'incomplete', incomplete_details: complete ? null : { reason } } });
     } finally {
       clearTimeout(timeout);
     }

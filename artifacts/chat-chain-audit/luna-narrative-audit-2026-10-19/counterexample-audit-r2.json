@@ -1,0 +1,124 @@
+{
+  "auditedAt": "2026-10-18T20:54:14.724Z",
+  "productionModified": false,
+  "liveModelInvoked": false,
+  "uiInvoked": false,
+  "temporaryStorageRemoved": true,
+  "sourceDigests": {
+    "src/main/codex-runtime/taskRequirements.js": "b47fffb1b91b2f6aaefc3d049938f70feee031b5d57231c8fa4d334c5107e756",
+    "src/main/codex-runtime/writingScope.js": "10730c272161403af388f43e1a6b180cc3861ddcb6879cb8369e220ed9b49d6c",
+    "src/main/mcp/writingTools.js": "8f2a94c64de3d3990e3223dc25c3e79f0140217db95780ba5a0faa3a7125c24c",
+    "src/main/codex-runtime/narrativeReviewJobs.js": "51b07dd6477e3ad164dc086ed7ec095b4723f89f626bfc356ff84543f6423013",
+    "src/main/codex-runtime/reviewLedger.js": "8ebc43562531baa83d1f6805e81f4ba2281f48f4623d9fb08af4bde983788d65",
+    "src/main/codex-runtime/taskCompletion.js": "a48993a25db62194432427b6d07f765c4abb681728cf3de547050be34882c37a"
+  },
+  "results": [
+    {
+      "id": "R2-1",
+      "description": "Named participant identities can be replaced by another same-sized set",
+      "scope": "natural request -> requirements -> production candidate binder; no prose/model",
+      "request": "写下一章，只让阿青和阿白参与，更新两人的主观记忆，与正文同批保存。",
+      "actual": {
+        "participants": [
+          "character:a",
+          "character:c"
+        ],
+        "requiredMemories": [
+          "character-memory:a",
+          "character-memory:c"
+        ]
+      },
+      "positiveControl": "Changing an already bound a/b set to a/c is rejected. Initial user-specified identities remain unbound."
+    },
+    {
+      "id": "R2-2",
+      "description": "First prepared candidate can change requested limited POV to omniscient",
+      "scope": "natural request -> real isolated store + native workspace -> production prepare tool; no apply/approval",
+      "request": "续写下一章，以阿青为第三人称有限视角，写完自查人物与世界观。",
+      "actual": {
+        "initialPerspective": null,
+        "accepted": {
+          "mode": "omniscient",
+          "focusCharacterRef": null
+        }
+      },
+      "positiveControl": "A host-prebound limited perspective rejects the same change."
+    },
+    {
+      "id": "R2-3",
+      "description": "Reading one character and zero memories satisfies an all-character-and-memory review request",
+      "scope": "production readonly queue/host + actual stored sources + deterministic semantic responder + final evaluator; no live GPT/UI",
+      "request": "审校当前章节的人物和世界观一致性，请读取全部角色卡及各自主观记忆，核对后只报告问题。",
+      "actual": {
+        "delivered": [
+          "chapter:chapter-001.md",
+          "character:a",
+          "world:lore"
+        ],
+        "goalVerified": true,
+        "missingSourceKinds": [],
+        "narrativeAudit": "checked"
+      },
+      "positiveControl": "Omitting the world resource entirely is rejected. Cardinality/identity/memory obligations are absent."
+    },
+    {
+      "id": "R2-4",
+      "description": "Editing with mandatory time review skips hosted narrative analysis",
+      "scope": "natural requirements + actual store/report assessment + final evaluator; empty review and commit receipt are explicit fixtures",
+      "request": "修改当前章节的时间错误，写后自查，修好再交付。",
+      "actual": {
+        "operation": "edit",
+        "repairRequired": true,
+        "narrativeAuditRequired": false,
+        "goalVerified": true,
+        "knownContradictoryText": "20:24，她开始等待七分半。\n\n20:28，她起身。\n"
+      },
+      "positiveControl": "A write request with the same review/repair obligation requires hosted analysis."
+    },
+    {
+      "id": "R2-5",
+      "description": "A second genuine quote upgrades unresolved suspicion into a mandatory blocker",
+      "scope": "production report validation/merge/final evaluator with actual quotes; semantic judgement and commit receipt are fixtures",
+      "actual": {
+        "oneQuote": {
+          "goalVerified": true
+        },
+        "twoQuotes": {
+          "goalVerified": false,
+          "unmet": [
+            "review_findings_unresolved"
+          ]
+        }
+      },
+      "positiveControl": "Both reports keep severity=suspicion and both quotation sets verify; only the quote count changes."
+    },
+    {
+      "id": "R2-6",
+      "description": "Changing only the title authenticates a false fixed closure of an unchanged time contradiction",
+      "scope": "real isolated resource mutation/readback + production closure/merge/final evaluator; false closure statement and commit receipt are fixtures",
+      "actual": {
+        "unchangedClosureVerified": false,
+        "titleOnlyClosureVerified": true,
+        "goalVerified": true,
+        "contradictionStillPresent": true
+      },
+      "positiveControl": "The same fixed closure with no resource hash change is rejected. Any unrelated hash change supplies the missing condition."
+    },
+    {
+      "id": "R2-7",
+      "description": "Replacing an open issue evidence with unrelated world quotes loses its target relevance",
+      "scope": "production finding merge/relevance/final evaluator with actual quotes; malformed semantic association and commit receipt are fixtures",
+      "actual": {
+        "emptyReportGoalVerified": false,
+        "reassociatedEvidenceVerified": true,
+        "issueStillOpen": true,
+        "goalVerified": true,
+        "remainingEvidenceRefs": [
+          "world:lore",
+          "world:lore"
+        ]
+      },
+      "positiveControl": "An empty report cannot erase the existing open hard issue. Reusing its identity with unrelated valid citations removes its task relevance."
+    }
+  ]
+}

@@ -1,0 +1,778 @@
+[
+  {
+    "id": "traditional-draft",
+    "harnessOk": true,
+    "durationMs": 47164,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "met",
+      "blocking": false,
+      "actual": 1503,
+      "minimum": 1500,
+      "maximum": 2000,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": 1425,
+      "acceptedMaximum": 2100,
+      "withinTolerance": true,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "missingResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "evidenceVerified": false,
+      "qualityConclusion": "not_evaluated",
+      "missingSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ]
+    },
+    "commits": [
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "mode": "create",
+        "newHash": "1b3bc54c1b357fb5f279c1f58dabb09e8b0ef7995c95b6a40dbe190a917a80c2"
+      },
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "mode": "replace",
+        "newHash": "d7d7002abe9bfd0bc0b36c386bf70700ee0e7b29dcfc2bd9c73737f2f5304f70"
+      }
+    ],
+    "approvals": [
+      {
+        "id": "run-34461eef-9411-415c-a518-a697ba889d74:native:exec-f4edf347-2bee-437a-ab77-ab978aa0bcb1",
+        "decision": "accept"
+      },
+      {
+        "id": "run-34461eef-9411-415c-a518-a697ba889d74:native:exec-54c07172-30c7-4938-a706-17254063c95c",
+        "decision": "accept"
+      }
+    ]
+  },
+  {
+    "id": "traditional-review-continue",
+    "harnessOk": true,
+    "durationMs": 22835,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "met",
+      "blocking": false,
+      "actual": 1503,
+      "minimum": 1500,
+      "maximum": 2000,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": 1425,
+      "acceptedMaximum": 2100,
+      "withinTolerance": true,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "missingResourceRefs": [],
+      "evidenceVerified": false,
+      "qualityConclusion": "not_evaluated",
+      "missingSourceKinds": []
+    },
+    "commits": [],
+    "approvals": []
+  },
+  {
+    "id": "role-draft",
+    "harnessOk": false,
+    "error": "Error: UI timeout: document.querySelector('button[aria-label=\"停止\"]')||document.querySelector('[data-testid=\"codex-error\"]')\n    at wait (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/live-writing-modes-host.cjs:24:9)\n    at async execute (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/live-writing-modes-host.cjs:81:5)\n    at async /Users/potablewater/Desktop/MultiAgentNovelAssistant/test/live-writing-modes-host.cjs:135:272"
+  },
+  {
+    "id": "role-draft-retry",
+    "harnessOk": true,
+    "durationMs": 52992,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "word_count_target_missing",
+      "word_count",
+      "no_current_commit",
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "below_target",
+      "blocking": false,
+      "actual": 0,
+      "minimum": 1500,
+      "maximum": 2000,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": 1425,
+      "acceptedMaximum": 2100,
+      "withinTolerance": false,
+      "belowBy": 1500,
+      "aboveBy": 0
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [],
+      "missingResourceRefs": [],
+      "evidenceVerified": false,
+      "qualityConclusion": "not_evaluated",
+      "missingSourceKinds": [
+        "character",
+        "world"
+      ]
+    },
+    "commits": [],
+    "approvals": []
+  },
+  {
+    "id": "traditional-repair",
+    "harnessOk": true,
+    "durationMs": 39891,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "met",
+      "blocking": false,
+      "actual": 1882,
+      "minimum": 1500,
+      "maximum": 2000,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": 1425,
+      "acceptedMaximum": 2100,
+      "withinTolerance": true,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "missingResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "evidenceVerified": false,
+      "qualityConclusion": "not_evaluated",
+      "reportStatus": "missing_or_invalid",
+      "unverifiedEvidence": [],
+      "missingSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ]
+    },
+    "commits": [
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "mode": "replace",
+        "newHash": "b4929a782ef416eba356589876f55be54d3c1acbdc7c9ee31f6f8c0867c58c70"
+      }
+    ],
+    "approvals": [
+      {
+        "id": "run-a220ca5f-b88d-47ab-9385-7392119b629d:native:exec-afb20f15-0d0e-4194-bbb8-ee0bfa47bde7",
+        "decision": "accept"
+      }
+    ]
+  },
+  {
+    "id": "role-draft-final",
+    "harnessOk": true,
+    "durationMs": 54111,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "met",
+      "blocking": false,
+      "actual": 1549,
+      "minimum": 1500,
+      "maximum": 2000,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": 1425,
+      "acceptedMaximum": 2100,
+      "withinTolerance": true,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [
+        "chapter:chapter-003.md"
+      ],
+      "missingResourceRefs": [
+        "chapter:chapter-003.md"
+      ],
+      "evidenceVerified": false,
+      "qualityConclusion": "not_evaluated",
+      "reportStatus": "missing_or_invalid",
+      "unverifiedEvidence": [],
+      "missingSourceKinds": [
+        "character",
+        "world"
+      ]
+    },
+    "commits": [
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "mode": "create",
+        "newHash": "908313142fc674a10dcb2e8380624b1bf4f03aa815a9d1a816703fd5ab8a7dca"
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "mode": "replace",
+        "newHash": "2c766553d5dbe194734746f888f39635babf190b83eac2c244b1dde23bd9421d"
+      }
+    ],
+    "approvals": [
+      {
+        "id": "run-0963549d-546e-485c-b022-3d7ad8527c87:native:exec-fd9c195b-9e73-4097-b074-8da99e2b0e58",
+        "decision": "accept"
+      },
+      {
+        "id": "run-0963549d-546e-485c-b022-3d7ad8527c87:native:exec-dfcbab60-9d94-48a8-b4ac-00a77f13f790",
+        "decision": "accept"
+      }
+    ]
+  },
+  {
+    "id": "role-review-continue-final",
+    "harnessOk": true,
+    "durationMs": 40886,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "met",
+      "blocking": false,
+      "actual": 1549,
+      "minimum": 1500,
+      "maximum": 2000,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": 1425,
+      "acceptedMaximum": 2100,
+      "withinTolerance": true,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [
+        "chapter:chapter-003.md"
+      ],
+      "missingResourceRefs": [],
+      "evidenceVerified": true,
+      "qualityConclusion": "not_evaluated",
+      "reportStatus": "recorded",
+      "unverifiedEvidence": [],
+      "missingSourceKinds": []
+    },
+    "commits": [],
+    "approvals": []
+  },
+  {
+    "id": "role-repair-memory",
+    "harnessOk": true,
+    "durationMs": 62239,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "met",
+      "blocking": false,
+      "actual": 1582,
+      "minimum": 1500,
+      "maximum": 2000,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": 1425,
+      "acceptedMaximum": 2100,
+      "withinTolerance": true,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "requiredWrites": {
+      "expectedResourceRefs": [
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "missingResourceRefs": []
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [
+        "chapter:chapter-003.md",
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "missingResourceRefs": [],
+      "evidenceVerified": true,
+      "qualityConclusion": "not_evaluated",
+      "reportStatus": "recorded",
+      "incompleteCoverageRefs": [],
+      "unverifiedEvidence": [],
+      "missingSourceKinds": [
+        "character"
+      ]
+    },
+    "commits": [
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "mode": "replace",
+        "newHash": "8d6a925d8a2d3f1ec3a030330e297ed8b3b7ac3a9876c83f88653806b0e9bf1b"
+      },
+      {
+        "resourceRef": "character-memory:cen",
+        "mode": "replace",
+        "newHash": "1af07754ba569162d3a59e68d54aaaf8a6c644ac89a2c44c2a3d9e2da9b17d83"
+      },
+      {
+        "resourceRef": "character-memory:he",
+        "mode": "replace",
+        "newHash": "cf1e055f514ce8629083071730570f90b3bcfca51a131e05164e8ef8c88551ce"
+      },
+      {
+        "resourceRef": "character-memory:lin",
+        "mode": "replace",
+        "newHash": "da62852799bbc0732d5d3a72dabc2bd6fde11bfcccbc07fc4a3da8f02fe93cfe"
+      },
+      {
+        "resourceRef": "character-memory:lu",
+        "mode": "replace",
+        "newHash": "64ae5709fb39c8858c1e124582690d174c873cf9efba25618c24c015437764c0"
+      },
+      {
+        "resourceRef": "character-memory:su",
+        "mode": "replace",
+        "newHash": "ecfa1fefe1eb4d0247cfe7a0b0a5abf277b50a71846b511ee5f61a72e613cdfa"
+      },
+      {
+        "resourceRef": "character-memory:ye",
+        "mode": "replace",
+        "newHash": "1170f2cc0f0d19f4c86ed6ef2aca62f8d2fb4012a0158cc8bdf0c61f6d7ba19c"
+      }
+    ],
+    "approvals": [
+      {
+        "id": "run-82972f3b-1f46-4205-bc67-ab4ca14d4ecd:native:exec-613099dc-c0d4-4958-921e-9fc5c3a9921b",
+        "decision": "accept"
+      }
+    ]
+  },
+  {
+    "id": "role-review-complete",
+    "harnessOk": true,
+    "durationMs": 36849,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "met",
+      "blocking": false,
+      "actual": 1582,
+      "minimum": 1500,
+      "maximum": 2000,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": 1425,
+      "acceptedMaximum": 2100,
+      "withinTolerance": true,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "requiredWrites": {
+      "expectedResourceRefs": [
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "missingResourceRefs": []
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [
+        "chapter:chapter-003.md",
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "missingResourceRefs": [
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "evidenceVerified": true,
+      "qualityConclusion": "not_evaluated",
+      "reportStatus": "recorded",
+      "incompleteCoverageRefs": [
+        "character-memory:character-memory:cen",
+        "character-memory:character-memory:he",
+        "character-memory:character-memory:lin",
+        "character-memory:character-memory:lu",
+        "character-memory:character-memory:su",
+        "character-memory:character-memory:ye"
+      ],
+      "unverifiedEvidence": [],
+      "missingSourceKinds": []
+    },
+    "commits": [],
+    "approvals": []
+  },
+  {
+    "id": "traditional-clean-final",
+    "harnessOk": true,
+    "durationMs": 20326,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "no_current_commit",
+      "targets_not_saved",
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "not_requested",
+      "blocking": false,
+      "actual": 1882,
+      "minimum": null,
+      "maximum": null,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": null,
+      "acceptedMaximum": null,
+      "withinTolerance": false,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "missingResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "evidenceVerified": false,
+      "qualityConclusion": "not_evaluated",
+      "reportStatus": "missing_or_invalid",
+      "incompleteCoverageRefs": [],
+      "unverifiedEvidence": [],
+      "missingSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ]
+    },
+    "commits": [],
+    "approvals": []
+  },
+  {
+    "id": "traditional-clean-continue",
+    "harnessOk": true,
+    "durationMs": 44975,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "no_current_commit",
+      "targets_not_saved",
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "not_requested",
+      "blocking": false,
+      "actual": 1882,
+      "minimum": null,
+      "maximum": null,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": null,
+      "acceptedMaximum": null,
+      "withinTolerance": false,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "missingResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "evidenceVerified": false,
+      "qualityConclusion": "not_evaluated",
+      "reportStatus": "missing_or_invalid",
+      "incompleteCoverageRefs": [],
+      "unverifiedEvidence": [],
+      "missingSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ]
+    },
+    "commits": [],
+    "approvals": []
+  },
+  {
+    "id": "role-review-final-corrected",
+    "harnessOk": true,
+    "durationMs": 43648,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "met",
+      "blocking": false,
+      "actual": 1582,
+      "minimum": 1500,
+      "maximum": 2000,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": 1425,
+      "acceptedMaximum": 2100,
+      "withinTolerance": true,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "requiredWrites": {
+      "expectedResourceRefs": [
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "missingResourceRefs": []
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [
+        "chapter:chapter-003.md",
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "missingResourceRefs": [],
+      "evidenceVerified": false,
+      "qualityConclusion": "not_evaluated",
+      "reportStatus": "invalid_evidence",
+      "incompleteCoverageRefs": [],
+      "unverifiedEvidence": [
+        {
+          "issueId": "information-boundary:chapter-003.md:lin_seven_minutes",
+          "resourceRef": "chapter:chapter-002.md",
+          "location": "L59",
+          "reason": "source_not_read"
+        }
+      ],
+      "missingSourceKinds": []
+    },
+    "commits": [],
+    "approvals": []
+  },
+  {
+    "id": "role-final-report",
+    "harnessOk": true,
+    "durationMs": 20937,
+    "goalStatus": "completed",
+    "unmet": [],
+    "wordCount": {
+      "status": "met",
+      "blocking": false,
+      "actual": 1582,
+      "minimum": 1500,
+      "maximum": 2000,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": 1425,
+      "acceptedMaximum": 2100,
+      "withinTolerance": true,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "requiredWrites": {
+      "expectedResourceRefs": [
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "missingResourceRefs": []
+    },
+    "review": {
+      "status": "completed",
+      "expectedResourceRefs": [
+        "chapter:chapter-003.md",
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "missingResourceRefs": [],
+      "evidenceVerified": true,
+      "qualityConclusion": "not_evaluated",
+      "reportStatus": "recorded",
+      "incompleteCoverageRefs": [],
+      "unverifiedEvidence": [],
+      "missingSourceKinds": []
+    },
+    "commits": [],
+    "approvals": []
+  },
+  {
+    "id": "traditional-clean-last",
+    "harnessOk": true,
+    "durationMs": 23322,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "no_current_commit",
+      "targets_not_saved",
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "not_requested",
+      "blocking": false,
+      "actual": 1882,
+      "minimum": null,
+      "maximum": null,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": null,
+      "acceptedMaximum": null,
+      "withinTolerance": false,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "missingResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "evidenceVerified": false,
+      "qualityConclusion": "not_evaluated",
+      "reportStatus": "missing_or_invalid",
+      "incompleteCoverageRefs": [],
+      "unverifiedEvidence": [],
+      "missingSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ]
+    },
+    "commits": [],
+    "approvals": []
+  },
+  {
+    "id": "memory-continuity",
+    "harnessOk": true,
+    "durationMs": 19694,
+    "goalStatus": "unverified",
+    "unmet": [],
+    "wordCount": {
+      "status": "not_requested",
+      "blocking": false,
+      "actual": 0,
+      "minimum": null,
+      "maximum": null,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": null,
+      "acceptedMaximum": null,
+      "withinTolerance": false,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "commits": [],
+    "approvals": []
+  },
+  {
+    "id": "traditional-format-exact",
+    "harnessOk": true,
+    "durationMs": 19721,
+    "goalStatus": "incomplete",
+    "unmet": [
+      "review_evidence_missing"
+    ],
+    "wordCount": {
+      "status": "not_requested",
+      "blocking": false,
+      "actual": 0,
+      "minimum": null,
+      "maximum": null,
+      "toleranceRatio": 0.05,
+      "acceptedMinimum": null,
+      "acceptedMaximum": null,
+      "withinTolerance": false,
+      "belowBy": 0,
+      "aboveBy": 0
+    },
+    "review": {
+      "status": "incomplete",
+      "expectedResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "missingResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "evidenceVerified": false,
+      "qualityConclusion": "not_evaluated",
+      "reportStatus": "missing_or_invalid",
+      "incompleteCoverageRefs": [],
+      "unverifiedEvidence": [],
+      "missingSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ]
+    },
+    "commits": [
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "mode": "delete",
+        "newHash": null
+      }
+    ],
+    "approvals": [
+      {
+        "id": "run-c207a2d2-9c28-4a03-b571-c0c1f2547d8c:native:exec-25af4d31-b20e-40da-9a3c-e2ec89cd5cad",
+        "decision": "accept"
+      }
+    ]
+  }
+]

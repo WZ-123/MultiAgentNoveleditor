@@ -1,0 +1,2310 @@
+[
+  {
+    "runId": "run-11484df3-898d-4173-b699-b623b1d00415",
+    "conversationId": "thread-mvecik3q-xzlydi",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "error": null,
+    "taskConstraints": {
+      "operation": "review",
+      "targetResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "requiredWriteResourceRefs": [],
+      "memoryUpdateRequired": false,
+      "memoryScopeBound": false,
+      "memoryParticipantCount": null,
+      "participantCharacterRefs": [],
+      "participantScopeFixed": false,
+      "requiredReadResourceRefs": [
+        "chapter:chapter-001.md",
+        "chapter:chapter-002.md",
+        "character:lin",
+        "outline:master",
+        "style:memory",
+        "world:lore"
+      ],
+      "intentBinding": {
+        "version": 2,
+        "status": "bound",
+        "modelId": "gpt-6-luna",
+        "participantSelection": "unspecified",
+        "participantRequestQuote": "审校当前章节的人物、世界观、时间和林岚第三人称有限视角一致性。读取实际角色资料、世界观、文风、总纲和前章，提交有原文依据的自查分析和问题报告；这里只检查，不修改任何正文或资料。",
+        "perspectiveRequestQuote": "审校当前章节的人物、世界观、时间和林岚第三人称有限视角一致性。读取实际角色资料、世界观、文风、总纲和前章，提交有原文依据的自查分析和问题报告；这里只检查，不修改任何正文或资料。",
+        "reviewAspects": [
+          "timeline",
+          "viewpoint",
+          "character",
+          "world",
+          "style",
+          "format"
+        ]
+      },
+      "chapterWritePolicy": "any",
+      "resourceWritePolicy": "any",
+      "initialChapterResourceRefs": [],
+      "writeScopeBound": false,
+      "atomicMemoryWithChapter": false,
+      "preserveOriginalMemories": false,
+      "wordCountScope": "target_resources",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": null,
+      "maxBodyCjk": null,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "narrativeAuditRequired": true,
+      "narrativePerspective": {
+        "mode": "limited",
+        "focusCharacterRef": "character:lin"
+      },
+      "repairRequired": false,
+      "reviewScope": "target_resources",
+      "reviewTargetResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "reviewSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "review",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "requiredWriteResourceRefs": [],
+        "memoryUpdateRequired": false,
+        "memoryScopeBound": false,
+        "memoryParticipantCount": null,
+        "participantCharacterRefs": [],
+        "participantScopeFixed": false,
+        "requiredReadResourceRefs": [
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md",
+          "character:lin",
+          "outline:master",
+          "style:memory",
+          "world:lore"
+        ],
+        "intentBinding": {
+          "version": 2,
+          "status": "bound",
+          "modelId": "gpt-6-luna",
+          "participantSelection": "unspecified",
+          "participantRequestQuote": "审校当前章节的人物、世界观、时间和林岚第三人称有限视角一致性。读取实际角色资料、世界观、文风、总纲和前章，提交有原文依据的自查分析和问题报告；这里只检查，不修改任何正文或资料。",
+          "perspectiveRequestQuote": "审校当前章节的人物、世界观、时间和林岚第三人称有限视角一致性。读取实际角色资料、世界观、文风、总纲和前章，提交有原文依据的自查分析和问题报告；这里只检查，不修改任何正文或资料。",
+          "reviewAspects": [
+            "timeline",
+            "viewpoint",
+            "character",
+            "world",
+            "style",
+            "format"
+          ]
+        },
+        "chapterWritePolicy": "any",
+        "resourceWritePolicy": "any",
+        "initialChapterResourceRefs": [],
+        "writeScopeBound": false,
+        "atomicMemoryWithChapter": false,
+        "preserveOriginalMemories": false,
+        "wordCountScope": "target_resources",
+        "wordCountResourceRefs": [],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": null,
+        "maxBodyCjk": null,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "narrativeAuditRequired": true,
+        "narrativePerspective": {
+          "mode": "limited",
+          "focusCharacterRef": "character:lin"
+        },
+        "repairRequired": false,
+        "reviewScope": "target_resources",
+        "reviewTargetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewSourceKinds": [
+          "character",
+          "style",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "no_changes",
+        "committedCount": 0
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "target_resources",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1749,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2"
+          }
+        ],
+        "currentSavedResourceRefs": [],
+        "observedReadResourceRefs": [
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md",
+          "outline:master",
+          "style:memory",
+          "world:lore",
+          "character:lin"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-862507f8-fd37-43a0-b70a-8403cd218731",
+          "attemptId": "attempt-dc832501-1222-4da9-931c-70ed70b61138",
+          "runId": "run-11484df3-898d-4173-b699-b623b1d00415",
+          "reportSha256": "27b41f22cf6abd8897f8055f0790ce5f6cfcd886b5b352175b4468007a46d892",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-002.md"
+          ],
+          "coverageObserved": [
+            "chapter:chapter-001.md",
+            "chapter:chapter-002.md",
+            "outline:master",
+            "style:memory",
+            "world:lore",
+            "character:lin"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2"
+            },
+            {
+              "resourceRef": "chapter:chapter-001.md",
+              "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+            },
+            {
+              "resourceRef": "outline:master",
+              "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+            },
+            {
+              "resourceRef": "style:memory",
+              "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            }
+          ],
+          "versionCurrent": true,
+          "narrativeAudit": {
+            "status": "reported",
+            "errors": [],
+            "reviewedResourceRefs": [
+              "chapter:chapter-002.md"
+            ],
+            "requestedResourceRefs": [
+              "chapter:chapter-002.md"
+            ],
+            "aspects": [
+              "timeline",
+              "viewpoint",
+              "character",
+              "world",
+              "style",
+              "format"
+            ],
+            "limitations": [
+              "仅依据提供的sources.lines及资料审查，未检索其他内容。",
+              "未因文本未逐项交代耗时就推断动作无法完成；潮汐对话基准不明确，故列为疑点而非确定矛盾。",
+              "此结论不证明全文无错。"
+            ],
+            "qualityConclusion": "model_reported",
+            "origin": "host_readonly_analysis",
+            "modelId": "gpt-6-luna"
+          },
+          "invalidatedIssueIds": [],
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": [
+            {
+              "issueId": "content:94897b5a49:b05a5452c440",
+              "category": "viewpoint/continuity",
+              "sourceKey": "chapter:chapter-002.md#c00028",
+              "affectedResourceRefs": [
+                "chapter:chapter-002.md"
+              ],
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "林岚称“我手里有潮表和怀表”，随后苏砚取出自己的怀表供她核验，和第一章明确怀表仍在林岚袖口的描写不一致；本章又将怀表归于苏砚，所有权或表的指代不清。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-001.md",
+                  "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "bindReadVersion": true,
+                  "location": "L3",
+                  "quote": "20:05，六人聚在旧渡口。林岚把潮表压在木箱边，机械怀表还在她袖口。她确认潮钟慢了七分钟，却未开口。",
+                  "quoteOffset": 20,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L31",
+                  "quote": "“我手里有潮表和怀表。”她说。",
+                  "quoteOffset": 2036,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L45",
+                  "quote": "苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。",
+                  "quoteOffset": 2905,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true,
+              "sourceSnapshots": {
+                "chapter:chapter-001.md": "# 第一章 雾口\n\n20:05，六人聚在旧渡口。林岚把潮表压在木箱边，机械怀表还在她袖口。她确认潮钟慢了七分钟，却未开口。\n\n何芷将铅封完整的冷藏药箱放回冰柜，蓝签账页藏在只有她知道的暗格。苏砚摊开尚未盖印的通行证，要求先核对药单。\n\n叶澄检查船绳，提醒水路四十分钟。陆行舟抱着工具袋，不敢直视队长。岑寂带来议事厅的交接公文，没人看见他此前进过钟楼。\n\n远处钟声响起。林岚看着六人的影子，没有拿出那页抄本。",
+                "chapter:chapter-002.md": "# 第二章 双印\n\n20:05。\n\n钟声从雾里落下来，迟钝的一下，像有人隔着墙敲木头。林岚的手停在潮表边。她没有看钟楼，只把纸角压得更牢。雨水沿木箱缝往下滴，落进渡口的浅洼，声音细而密。\n\n“药单。”苏砚说。\n\n何芷把折好的单子递过去，没放开手。两人各执一端，像是在确认纸上每个字都能经得住拉扯。林岚看见药名、剂量和诊所收件人的名字。她看不清末尾的小字，便向前挪了半步。\n\n苏砚核过一遍，抬眼问：“药箱封口完整？”\n\n“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”\n\n声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”\n\n“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”\n\n“封桥九点。”岑寂将公文放在木箱上，纸面覆着一层潮气，“议事厅要求今晚交接蓝签账页。公文在此，按程序——”\n\n“公文不是医师的印。”苏砚把通行证转了个方向，“出港要两印。我盖队长印，何医师盖她的。没有第二个印，船不能走。”\n\n岑寂的指尖从公文边沿收回。他仍旧客气：“自然，医师的签字不可代替。若账页随药同行，交接时也请登记。”\n\n林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。\n\n陆行舟把工具袋搁到脚边，没去碰钟表，只盯着通行证：“你们要我证明钟没动过，我可以把工具一件件摆出来。可钟慢多少，不能拿我一句话当证据。”\n\n林岚抬起眼。他先说了钟。旁人没有应声。\n\n“我手里有潮表和怀表。”她说。\n\n话出口时，她听见自己声音比雨声还轻。六个人都看过来。她把袖口往下拉了一寸，没拿出怀表，也没把那页抄本从衣内取出。\n\n“两个来源？”苏砚问。\n\n“两个。”林岚说，“我可以现场核。先把药单、潮表和表盘读数记在通行证背面。钟声不够。”\n\n岑寂眉间没有变化：“为何现在提校时？”\n\n“因为要出航。潮钟是公共时钟，不是潮水本身。”她把潮表翻开，指给苏砚看表格上的时刻，“我只报我能核的。潮钟读数另记，不拿它替代潮表。”\n\n她没有说七分钟。那是她的测量，也是尚待两种来源当面核验的事。她更没有说抄本。那一页会把另一条线带进来，而此刻的每双眼睛都在等一个能被写在纸上的东西。\n\n苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。\n\n陆行舟探身看了一眼，没有伸手：“表针没问题。我没换过钟芯。”\n\n“没人说你换过。”林岚说，“现在只记读数。”\n\n“那昨夜进钟楼的人呢？”陆行舟脱口而出，随即闭了嘴。\n\n岑寂把手从公文上移开。他没有否认，只说：“昨夜我取公文。钟没有被改动。”\n\n林岚看着他的手。纸上只有读数，没有人名。她也没有证据把这句话接成一条指控。苏砚将记录折回去，没问陆行舟，也没要求任何人交出工具。\n\n“交接公文不能代替账页核验。”苏砚说，“若真有账页，要核年月、页码、签章。只凭一页不能定罪。”\n\n“我知道。”何芷说。\n\n她把药箱提到膝边，拇指沿着铅封摸了一圈。铅皮没有裂痕。动作停住时，她望向林岚：“这份单子写的药，是诊所缺的。再耽误，保存时限就少一刻。”\n\n林岚看见她指节被雨水浸得发白。她没有追问药箱，也没问那句“我知道”指的是什么。何芷有自己的边界。她也有。\n\n20:14，苏砚拿出印章。他先按住通行证的边角，确认出港人、船名和货物都在纸上。队长印落下，红色印痕在潮湿处稍稍晕开。他把纸递给何芷。\n\n“药单与药箱由你负责。你确认后再盖。”\n\n何芷接过纸，逐项看完。没有添上账页，也没有替任何人解释。她从衣袋里取出医师印，印面朝下，在另一格按实。双印相邻，界线分明。\n\n岑寂伸手要收公文，何芷却先把通行证递给苏砚。队长将它收入防水套里，才把公文还给文书。“账页若要交接，另立收据。今晚不搜药箱，也不以猜测扣人。”\n\n“我没有请求搜查。”岑寂说。\n\n“那就按你说的程序办。”苏砚答。\n\n林岚看了看自己的记录。潮表、怀表、钟面读数都在。她的抄本仍贴着衣襟，纸边硌着肋骨。那上面的字，今天还不该拿出来。她不愿让一份未核过年月与签章的旧纸，压过眼前的药单。\n\n20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”\n\n何芷把药箱抱紧些，没立刻交过去：“上船前我自己看它落位。”\n\n“行。”叶澄说，“你盯货，我盯水。”\n\n苏砚问林岚：“按你的记录，现在能走吗？”\n\n她望见渡口外的雾。岸灯只照出近处一片湿白，水道看不见尽头。时间并不等于安全，封桥也不等于水路封闭。她能确认的是两种时源的读数，能确认的还有叶澄没有打算冒险走浅滩。她不能替海面作保证。\n\n“可以启航。”林岚说，“照正规航道。记录带上，到了诊所再核一次。”\n\n苏砚点头。“决定记在通行证副联：双印齐备，准许启航，路线不变。”\n\n笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。\n"
+              }
+            },
+            {
+              "issueId": "content:6fcc12f355:09914d99ee77",
+              "category": "timeline",
+              "sourceKey": "chapter:chapter-002.md#c00049",
+              "affectedResourceRefs": [
+                "chapter:chapter-002.md"
+              ],
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "本章20:18已开始解缆准备，20:20启航。设定称20:30低潮始；叶澄称“四十分钟，不会少一分”与不可缩短航程一致，但此前称“低潮半小时后起”若以20:05为当前时刻则对应20:35，和设定的20:30有约五分钟差异。对话可能是估算或指向说话时刻，文本未明确基准，不能据此断定时间线错误。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L3",
+                  "quote": "20:05。",
+                  "quoteOffset": 20,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L17",
+                  "quote": "“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”",
+                  "quoteOffset": 807,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L79",
+                  "quote": "20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”",
+                  "quoteOffset": 5266,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L93",
+                  "quote": "笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。",
+                  "quoteOffset": 6176,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "world:lore",
+                  "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "bindReadVersion": true,
+                  "location": "L6",
+                  "quote": "低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。",
+                  "quoteOffset": 480,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true,
+              "sourceSnapshots": {
+                "chapter:chapter-002.md": "# 第二章 双印\n\n20:05。\n\n钟声从雾里落下来，迟钝的一下，像有人隔着墙敲木头。林岚的手停在潮表边。她没有看钟楼，只把纸角压得更牢。雨水沿木箱缝往下滴，落进渡口的浅洼，声音细而密。\n\n“药单。”苏砚说。\n\n何芷把折好的单子递过去，没放开手。两人各执一端，像是在确认纸上每个字都能经得住拉扯。林岚看见药名、剂量和诊所收件人的名字。她看不清末尾的小字，便向前挪了半步。\n\n苏砚核过一遍，抬眼问：“药箱封口完整？”\n\n“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”\n\n声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”\n\n“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”\n\n“封桥九点。”岑寂将公文放在木箱上，纸面覆着一层潮气，“议事厅要求今晚交接蓝签账页。公文在此，按程序——”\n\n“公文不是医师的印。”苏砚把通行证转了个方向，“出港要两印。我盖队长印，何医师盖她的。没有第二个印，船不能走。”\n\n岑寂的指尖从公文边沿收回。他仍旧客气：“自然，医师的签字不可代替。若账页随药同行，交接时也请登记。”\n\n林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。\n\n陆行舟把工具袋搁到脚边，没去碰钟表，只盯着通行证：“你们要我证明钟没动过，我可以把工具一件件摆出来。可钟慢多少，不能拿我一句话当证据。”\n\n林岚抬起眼。他先说了钟。旁人没有应声。\n\n“我手里有潮表和怀表。”她说。\n\n话出口时，她听见自己声音比雨声还轻。六个人都看过来。她把袖口往下拉了一寸，没拿出怀表，也没把那页抄本从衣内取出。\n\n“两个来源？”苏砚问。\n\n“两个。”林岚说，“我可以现场核。先把药单、潮表和表盘读数记在通行证背面。钟声不够。”\n\n岑寂眉间没有变化：“为何现在提校时？”\n\n“因为要出航。潮钟是公共时钟，不是潮水本身。”她把潮表翻开，指给苏砚看表格上的时刻，“我只报我能核的。潮钟读数另记，不拿它替代潮表。”\n\n她没有说七分钟。那是她的测量，也是尚待两种来源当面核验的事。她更没有说抄本。那一页会把另一条线带进来，而此刻的每双眼睛都在等一个能被写在纸上的东西。\n\n苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。\n\n陆行舟探身看了一眼，没有伸手：“表针没问题。我没换过钟芯。”\n\n“没人说你换过。”林岚说，“现在只记读数。”\n\n“那昨夜进钟楼的人呢？”陆行舟脱口而出，随即闭了嘴。\n\n岑寂把手从公文上移开。他没有否认，只说：“昨夜我取公文。钟没有被改动。”\n\n林岚看着他的手。纸上只有读数，没有人名。她也没有证据把这句话接成一条指控。苏砚将记录折回去，没问陆行舟，也没要求任何人交出工具。\n\n“交接公文不能代替账页核验。”苏砚说，“若真有账页，要核年月、页码、签章。只凭一页不能定罪。”\n\n“我知道。”何芷说。\n\n她把药箱提到膝边，拇指沿着铅封摸了一圈。铅皮没有裂痕。动作停住时，她望向林岚：“这份单子写的药，是诊所缺的。再耽误，保存时限就少一刻。”\n\n林岚看见她指节被雨水浸得发白。她没有追问药箱，也没问那句“我知道”指的是什么。何芷有自己的边界。她也有。\n\n20:14，苏砚拿出印章。他先按住通行证的边角，确认出港人、船名和货物都在纸上。队长印落下，红色印痕在潮湿处稍稍晕开。他把纸递给何芷。\n\n“药单与药箱由你负责。你确认后再盖。”\n\n何芷接过纸，逐项看完。没有添上账页，也没有替任何人解释。她从衣袋里取出医师印，印面朝下，在另一格按实。双印相邻，界线分明。\n\n岑寂伸手要收公文，何芷却先把通行证递给苏砚。队长将它收入防水套里，才把公文还给文书。“账页若要交接，另立收据。今晚不搜药箱，也不以猜测扣人。”\n\n“我没有请求搜查。”岑寂说。\n\n“那就按你说的程序办。”苏砚答。\n\n林岚看了看自己的记录。潮表、怀表、钟面读数都在。她的抄本仍贴着衣襟，纸边硌着肋骨。那上面的字，今天还不该拿出来。她不愿让一份未核过年月与签章的旧纸，压过眼前的药单。\n\n20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”\n\n何芷把药箱抱紧些，没立刻交过去：“上船前我自己看它落位。”\n\n“行。”叶澄说，“你盯货，我盯水。”\n\n苏砚问林岚：“按你的记录，现在能走吗？”\n\n她望见渡口外的雾。岸灯只照出近处一片湿白，水道看不见尽头。时间并不等于安全，封桥也不等于水路封闭。她能确认的是两种时源的读数，能确认的还有叶澄没有打算冒险走浅滩。她不能替海面作保证。\n\n“可以启航。”林岚说，“照正规航道。记录带上，到了诊所再核一次。”\n\n苏砚点头。“决定记在通行证副联：双印齐备，准许启航，路线不变。”\n\n笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。\n",
+                "world:lore": "# 雾港世界设定\n## 地理与时间\n雾港为潮汐岛城，北岸旧渡口、中央钟楼、东侧封桥、西侧灯塔诊所。当前为秋汛第六日，阴雨、能见度不足两百米。所有时间用二十四小时制。\n旧渡口到灯塔水路四十分钟，步行绕北堤九十分钟；钟楼到渡口步行十五分钟。不存在瞬移、飞行、瞬间传信。\n封桥时间为21:00，封桥只关闭东桥，不关闭水路；渡船仍须执照和通行证。\n低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。\n## 制度\n冷藏药出港须巡港队长与医师各盖一印，缺一不可。议事厅文书的公文不能代替医师签字。\n居民不允许强行搜身，须经队长立案和当事人见证；拘捕不能仅凭怀疑。\n潮钟只是公共时钟，不控制潮水、封桥和天气；校时须与机械怀表及潮表两种来源核对。\n## 技术与物资\n只有机械钟、油灯、纸张、蒸汽冷柜，无电报、手机、监控或魔法。船用手摇绞盘，不存在自动驾驶。\n药箱铅封完整，开启外箱会破坏铅封；暗格可在保持铅封时滑出，但外人看不出位置。冷藏药离开冰柜后只能保存六十分钟。\n蓝签账页只是旧账证据，不能凭一页直接定罪。证据需核对年月、页码、签章。\n## 信仰与信息边界\n灯塔守夜人相信海雾会记住名字，这是信仰而非客观超能力。\n角色私密信息不自动共享；只有在场听到或看到具体证据才能成为角色已知事实。\n第1章结束于20:05，六人刚在旧渡口集齐，所有人尚未启航。何芷未说出暗格，林岚未说出七分钟。\n"
+              }
+            },
+            {
+              "issueId": "content:6fcc12f355:c066ef1aac1b",
+              "category": "viewpoint",
+              "sourceKey": "chapter:chapter-002.md#c00018",
+              "affectedResourceRefs": [
+                "chapter:chapter-002.md"
+              ],
+              "severity": "preference",
+              "requestedSeverity": "preference",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "“她从第一章就听见了”作为林岚对既往信息的回想可以成立；但紧接着“任何人都看不出里面另有东西”是全知式确定判断，而非她当下可直接观察到的事实。此处与林岚有限视角存在轻微越界嫌疑。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L25",
+                  "quote": "林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。",
+                  "quoteOffset": 1487,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "style:memory",
+                  "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+                  "bindReadVersion": true,
+                  "location": "L1",
+                  "quote": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。",
+                  "quoteOffset": 0,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "world:lore",
+                  "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "bindReadVersion": true,
+                  "location": "L13",
+                  "quote": "药箱铅封完整，开启外箱会破坏铅封；暗格可在保持铅封时滑出，但外人看不出位置。冷藏药离开冰柜后只能保存六十分钟。",
+                  "quoteOffset": 1083,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true,
+              "sourceSnapshots": {
+                "chapter:chapter-002.md": "# 第二章 双印\n\n20:05。\n\n钟声从雾里落下来，迟钝的一下，像有人隔着墙敲木头。林岚的手停在潮表边。她没有看钟楼，只把纸角压得更牢。雨水沿木箱缝往下滴，落进渡口的浅洼，声音细而密。\n\n“药单。”苏砚说。\n\n何芷把折好的单子递过去，没放开手。两人各执一端，像是在确认纸上每个字都能经得住拉扯。林岚看见药名、剂量和诊所收件人的名字。她看不清末尾的小字，便向前挪了半步。\n\n苏砚核过一遍，抬眼问：“药箱封口完整？”\n\n“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”\n\n声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”\n\n“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”\n\n“封桥九点。”岑寂将公文放在木箱上，纸面覆着一层潮气，“议事厅要求今晚交接蓝签账页。公文在此，按程序——”\n\n“公文不是医师的印。”苏砚把通行证转了个方向，“出港要两印。我盖队长印，何医师盖她的。没有第二个印，船不能走。”\n\n岑寂的指尖从公文边沿收回。他仍旧客气：“自然，医师的签字不可代替。若账页随药同行，交接时也请登记。”\n\n林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。\n\n陆行舟把工具袋搁到脚边，没去碰钟表，只盯着通行证：“你们要我证明钟没动过，我可以把工具一件件摆出来。可钟慢多少，不能拿我一句话当证据。”\n\n林岚抬起眼。他先说了钟。旁人没有应声。\n\n“我手里有潮表和怀表。”她说。\n\n话出口时，她听见自己声音比雨声还轻。六个人都看过来。她把袖口往下拉了一寸，没拿出怀表，也没把那页抄本从衣内取出。\n\n“两个来源？”苏砚问。\n\n“两个。”林岚说，“我可以现场核。先把药单、潮表和表盘读数记在通行证背面。钟声不够。”\n\n岑寂眉间没有变化：“为何现在提校时？”\n\n“因为要出航。潮钟是公共时钟，不是潮水本身。”她把潮表翻开，指给苏砚看表格上的时刻，“我只报我能核的。潮钟读数另记，不拿它替代潮表。”\n\n她没有说七分钟。那是她的测量，也是尚待两种来源当面核验的事。她更没有说抄本。那一页会把另一条线带进来，而此刻的每双眼睛都在等一个能被写在纸上的东西。\n\n苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。\n\n陆行舟探身看了一眼，没有伸手：“表针没问题。我没换过钟芯。”\n\n“没人说你换过。”林岚说，“现在只记读数。”\n\n“那昨夜进钟楼的人呢？”陆行舟脱口而出，随即闭了嘴。\n\n岑寂把手从公文上移开。他没有否认，只说：“昨夜我取公文。钟没有被改动。”\n\n林岚看着他的手。纸上只有读数，没有人名。她也没有证据把这句话接成一条指控。苏砚将记录折回去，没问陆行舟，也没要求任何人交出工具。\n\n“交接公文不能代替账页核验。”苏砚说，“若真有账页，要核年月、页码、签章。只凭一页不能定罪。”\n\n“我知道。”何芷说。\n\n她把药箱提到膝边，拇指沿着铅封摸了一圈。铅皮没有裂痕。动作停住时，她望向林岚：“这份单子写的药，是诊所缺的。再耽误，保存时限就少一刻。”\n\n林岚看见她指节被雨水浸得发白。她没有追问药箱，也没问那句“我知道”指的是什么。何芷有自己的边界。她也有。\n\n20:14，苏砚拿出印章。他先按住通行证的边角，确认出港人、船名和货物都在纸上。队长印落下，红色印痕在潮湿处稍稍晕开。他把纸递给何芷。\n\n“药单与药箱由你负责。你确认后再盖。”\n\n何芷接过纸，逐项看完。没有添上账页，也没有替任何人解释。她从衣袋里取出医师印，印面朝下，在另一格按实。双印相邻，界线分明。\n\n岑寂伸手要收公文，何芷却先把通行证递给苏砚。队长将它收入防水套里，才把公文还给文书。“账页若要交接，另立收据。今晚不搜药箱，也不以猜测扣人。”\n\n“我没有请求搜查。”岑寂说。\n\n“那就按你说的程序办。”苏砚答。\n\n林岚看了看自己的记录。潮表、怀表、钟面读数都在。她的抄本仍贴着衣襟，纸边硌着肋骨。那上面的字，今天还不该拿出来。她不愿让一份未核过年月与签章的旧纸，压过眼前的药单。\n\n20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”\n\n何芷把药箱抱紧些，没立刻交过去：“上船前我自己看它落位。”\n\n“行。”叶澄说，“你盯货，我盯水。”\n\n苏砚问林岚：“按你的记录，现在能走吗？”\n\n她望见渡口外的雾。岸灯只照出近处一片湿白，水道看不见尽头。时间并不等于安全，封桥也不等于水路封闭。她能确认的是两种时源的读数，能确认的还有叶澄没有打算冒险走浅滩。她不能替海面作保证。\n\n“可以启航。”林岚说，“照正规航道。记录带上，到了诊所再核一次。”\n\n苏砚点头。“决定记在通行证副联：双印齐备，准许启航，路线不变。”\n\n笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。\n",
+                "style:memory": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。",
+                "world:lore": "# 雾港世界设定\n## 地理与时间\n雾港为潮汐岛城，北岸旧渡口、中央钟楼、东侧封桥、西侧灯塔诊所。当前为秋汛第六日，阴雨、能见度不足两百米。所有时间用二十四小时制。\n旧渡口到灯塔水路四十分钟，步行绕北堤九十分钟；钟楼到渡口步行十五分钟。不存在瞬移、飞行、瞬间传信。\n封桥时间为21:00，封桥只关闭东桥，不关闭水路；渡船仍须执照和通行证。\n低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。\n## 制度\n冷藏药出港须巡港队长与医师各盖一印，缺一不可。议事厅文书的公文不能代替医师签字。\n居民不允许强行搜身，须经队长立案和当事人见证；拘捕不能仅凭怀疑。\n潮钟只是公共时钟，不控制潮水、封桥和天气；校时须与机械怀表及潮表两种来源核对。\n## 技术与物资\n只有机械钟、油灯、纸张、蒸汽冷柜，无电报、手机、监控或魔法。船用手摇绞盘，不存在自动驾驶。\n药箱铅封完整，开启外箱会破坏铅封；暗格可在保持铅封时滑出，但外人看不出位置。冷藏药离开冰柜后只能保存六十分钟。\n蓝签账页只是旧账证据，不能凭一页直接定罪。证据需核对年月、页码、签章。\n## 信仰与信息边界\n灯塔守夜人相信海雾会记住名字，这是信仰而非客观超能力。\n角色私密信息不自动共享；只有在场听到或看到具体证据才能成为角色已知事实。\n第1章结束于20:05，六人刚在旧渡口集齐，所有人尚未启航。何芷未说出暗格，林岚未说出七分钟。\n"
+              }
+            },
+            {
+              "issueId": "content:6fcc12f355:2350970152e5",
+              "category": "viewpoint/style",
+              "sourceKey": "chapter:chapter-002.md#c00013",
+              "affectedResourceRefs": [
+                "chapter:chapter-002.md"
+              ],
+              "severity": "preference",
+              "requestedSeverity": "preference",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "“声音温和，句子却没有余地”对苏砚话语的概括是林岚可听见的语气与措辞判断，不构成明确内心披露；但“句子却没有余地”略偏作者评述，可考虑更紧贴林岚的现场感受。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L13",
+                  "quote": "“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”",
+                  "quoteOffset": 587,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L15",
+                  "quote": "声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”",
+                  "quoteOffset": 715,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "style:memory",
+                  "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+                  "bindReadVersion": true,
+                  "location": "L1",
+                  "quote": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。",
+                  "quoteOffset": 0,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true,
+              "sourceSnapshots": {
+                "chapter:chapter-002.md": "# 第二章 双印\n\n20:05。\n\n钟声从雾里落下来，迟钝的一下，像有人隔着墙敲木头。林岚的手停在潮表边。她没有看钟楼，只把纸角压得更牢。雨水沿木箱缝往下滴，落进渡口的浅洼，声音细而密。\n\n“药单。”苏砚说。\n\n何芷把折好的单子递过去，没放开手。两人各执一端，像是在确认纸上每个字都能经得住拉扯。林岚看见药名、剂量和诊所收件人的名字。她看不清末尾的小字，便向前挪了半步。\n\n苏砚核过一遍，抬眼问：“药箱封口完整？”\n\n“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”\n\n声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”\n\n“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”\n\n“封桥九点。”岑寂将公文放在木箱上，纸面覆着一层潮气，“议事厅要求今晚交接蓝签账页。公文在此，按程序——”\n\n“公文不是医师的印。”苏砚把通行证转了个方向，“出港要两印。我盖队长印，何医师盖她的。没有第二个印，船不能走。”\n\n岑寂的指尖从公文边沿收回。他仍旧客气：“自然，医师的签字不可代替。若账页随药同行，交接时也请登记。”\n\n林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。\n\n陆行舟把工具袋搁到脚边，没去碰钟表，只盯着通行证：“你们要我证明钟没动过，我可以把工具一件件摆出来。可钟慢多少，不能拿我一句话当证据。”\n\n林岚抬起眼。他先说了钟。旁人没有应声。\n\n“我手里有潮表和怀表。”她说。\n\n话出口时，她听见自己声音比雨声还轻。六个人都看过来。她把袖口往下拉了一寸，没拿出怀表，也没把那页抄本从衣内取出。\n\n“两个来源？”苏砚问。\n\n“两个。”林岚说，“我可以现场核。先把药单、潮表和表盘读数记在通行证背面。钟声不够。”\n\n岑寂眉间没有变化：“为何现在提校时？”\n\n“因为要出航。潮钟是公共时钟，不是潮水本身。”她把潮表翻开，指给苏砚看表格上的时刻，“我只报我能核的。潮钟读数另记，不拿它替代潮表。”\n\n她没有说七分钟。那是她的测量，也是尚待两种来源当面核验的事。她更没有说抄本。那一页会把另一条线带进来，而此刻的每双眼睛都在等一个能被写在纸上的东西。\n\n苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。\n\n陆行舟探身看了一眼，没有伸手：“表针没问题。我没换过钟芯。”\n\n“没人说你换过。”林岚说，“现在只记读数。”\n\n“那昨夜进钟楼的人呢？”陆行舟脱口而出，随即闭了嘴。\n\n岑寂把手从公文上移开。他没有否认，只说：“昨夜我取公文。钟没有被改动。”\n\n林岚看着他的手。纸上只有读数，没有人名。她也没有证据把这句话接成一条指控。苏砚将记录折回去，没问陆行舟，也没要求任何人交出工具。\n\n“交接公文不能代替账页核验。”苏砚说，“若真有账页，要核年月、页码、签章。只凭一页不能定罪。”\n\n“我知道。”何芷说。\n\n她把药箱提到膝边，拇指沿着铅封摸了一圈。铅皮没有裂痕。动作停住时，她望向林岚：“这份单子写的药，是诊所缺的。再耽误，保存时限就少一刻。”\n\n林岚看见她指节被雨水浸得发白。她没有追问药箱，也没问那句“我知道”指的是什么。何芷有自己的边界。她也有。\n\n20:14，苏砚拿出印章。他先按住通行证的边角，确认出港人、船名和货物都在纸上。队长印落下，红色印痕在潮湿处稍稍晕开。他把纸递给何芷。\n\n“药单与药箱由你负责。你确认后再盖。”\n\n何芷接过纸，逐项看完。没有添上账页，也没有替任何人解释。她从衣袋里取出医师印，印面朝下，在另一格按实。双印相邻，界线分明。\n\n岑寂伸手要收公文，何芷却先把通行证递给苏砚。队长将它收入防水套里，才把公文还给文书。“账页若要交接，另立收据。今晚不搜药箱，也不以猜测扣人。”\n\n“我没有请求搜查。”岑寂说。\n\n“那就按你说的程序办。”苏砚答。\n\n林岚看了看自己的记录。潮表、怀表、钟面读数都在。她的抄本仍贴着衣襟，纸边硌着肋骨。那上面的字，今天还不该拿出来。她不愿让一份未核过年月与签章的旧纸，压过眼前的药单。\n\n20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”\n\n何芷把药箱抱紧些，没立刻交过去：“上船前我自己看它落位。”\n\n“行。”叶澄说，“你盯货，我盯水。”\n\n苏砚问林岚：“按你的记录，现在能走吗？”\n\n她望见渡口外的雾。岸灯只照出近处一片湿白，水道看不见尽头。时间并不等于安全，封桥也不等于水路封闭。她能确认的是两种时源的读数，能确认的还有叶澄没有打算冒险走浅滩。她不能替海面作保证。\n\n“可以启航。”林岚说，“照正规航道。记录带上，到了诊所再核一次。”\n\n苏砚点头。“决定记在通行证副联：双印齐备，准许启航，路线不变。”\n\n笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。\n",
+                "style:memory": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。"
+              }
+            }
+          ]
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "not_requested",
+          "blocking": false,
+          "actual": 1749,
+          "minimum": null,
+          "maximum": null,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": null,
+          "acceptedMaximum": null,
+          "withinTolerance": false,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "requiredReads": {
+          "expectedResourceRefs": [
+            "chapter:chapter-001.md",
+            "chapter:chapter-002.md",
+            "character:lin",
+            "outline:master",
+            "style:memory",
+            "world:lore"
+          ],
+          "missingResourceRefs": []
+        },
+        "writeScope": {
+          "status": "met"
+        },
+        "narrativeAudit": {
+          "status": "reported",
+          "errors": [],
+          "reviewedResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "requestedResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "aspects": [
+            "timeline",
+            "viewpoint",
+            "character",
+            "world",
+            "style",
+            "format"
+          ],
+          "limitations": [
+            "仅依据提供的sources.lines及资料审查，未检索其他内容。",
+            "未因文本未逐项交代耗时就推断动作无法完成；潮汐对话基准不明确，故列为疑点而非确定矛盾。",
+            "此结论不证明全文无错。"
+          ],
+          "qualityConclusion": "model_reported",
+          "origin": "host_readonly_analysis",
+          "modelId": "gpt-6-luna"
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": [],
+          "invalidIssueIds": []
+        },
+        "semanticReview": {
+          "status": "reported_clear",
+          "qualityConclusion": "model_reported",
+          "repairRequired": false,
+          "blockingIssues": [],
+          "reportedIssues": [
+            {
+              "issueId": "content:94897b5a49:b05a5452c440",
+              "category": "viewpoint/continuity",
+              "sourceKey": "chapter:chapter-002.md#c00028",
+              "affectedResourceRefs": [
+                "chapter:chapter-002.md"
+              ],
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "林岚称“我手里有潮表和怀表”，随后苏砚取出自己的怀表供她核验，和第一章明确怀表仍在林岚袖口的描写不一致；本章又将怀表归于苏砚，所有权或表的指代不清。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-001.md",
+                  "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "bindReadVersion": true,
+                  "location": "L3",
+                  "quote": "20:05，六人聚在旧渡口。林岚把潮表压在木箱边，机械怀表还在她袖口。她确认潮钟慢了七分钟，却未开口。",
+                  "quoteOffset": 20,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L31",
+                  "quote": "“我手里有潮表和怀表。”她说。",
+                  "quoteOffset": 2036,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L45",
+                  "quote": "苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。",
+                  "quoteOffset": 2905,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true,
+              "sourceSnapshots": {
+                "chapter:chapter-001.md": "# 第一章 雾口\n\n20:05，六人聚在旧渡口。林岚把潮表压在木箱边，机械怀表还在她袖口。她确认潮钟慢了七分钟，却未开口。\n\n何芷将铅封完整的冷藏药箱放回冰柜，蓝签账页藏在只有她知道的暗格。苏砚摊开尚未盖印的通行证，要求先核对药单。\n\n叶澄检查船绳，提醒水路四十分钟。陆行舟抱着工具袋，不敢直视队长。岑寂带来议事厅的交接公文，没人看见他此前进过钟楼。\n\n远处钟声响起。林岚看着六人的影子，没有拿出那页抄本。",
+                "chapter:chapter-002.md": "# 第二章 双印\n\n20:05。\n\n钟声从雾里落下来，迟钝的一下，像有人隔着墙敲木头。林岚的手停在潮表边。她没有看钟楼，只把纸角压得更牢。雨水沿木箱缝往下滴，落进渡口的浅洼，声音细而密。\n\n“药单。”苏砚说。\n\n何芷把折好的单子递过去，没放开手。两人各执一端，像是在确认纸上每个字都能经得住拉扯。林岚看见药名、剂量和诊所收件人的名字。她看不清末尾的小字，便向前挪了半步。\n\n苏砚核过一遍，抬眼问：“药箱封口完整？”\n\n“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”\n\n声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”\n\n“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”\n\n“封桥九点。”岑寂将公文放在木箱上，纸面覆着一层潮气，“议事厅要求今晚交接蓝签账页。公文在此，按程序——”\n\n“公文不是医师的印。”苏砚把通行证转了个方向，“出港要两印。我盖队长印，何医师盖她的。没有第二个印，船不能走。”\n\n岑寂的指尖从公文边沿收回。他仍旧客气：“自然，医师的签字不可代替。若账页随药同行，交接时也请登记。”\n\n林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。\n\n陆行舟把工具袋搁到脚边，没去碰钟表，只盯着通行证：“你们要我证明钟没动过，我可以把工具一件件摆出来。可钟慢多少，不能拿我一句话当证据。”\n\n林岚抬起眼。他先说了钟。旁人没有应声。\n\n“我手里有潮表和怀表。”她说。\n\n话出口时，她听见自己声音比雨声还轻。六个人都看过来。她把袖口往下拉了一寸，没拿出怀表，也没把那页抄本从衣内取出。\n\n“两个来源？”苏砚问。\n\n“两个。”林岚说，“我可以现场核。先把药单、潮表和表盘读数记在通行证背面。钟声不够。”\n\n岑寂眉间没有变化：“为何现在提校时？”\n\n“因为要出航。潮钟是公共时钟，不是潮水本身。”她把潮表翻开，指给苏砚看表格上的时刻，“我只报我能核的。潮钟读数另记，不拿它替代潮表。”\n\n她没有说七分钟。那是她的测量，也是尚待两种来源当面核验的事。她更没有说抄本。那一页会把另一条线带进来，而此刻的每双眼睛都在等一个能被写在纸上的东西。\n\n苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。\n\n陆行舟探身看了一眼，没有伸手：“表针没问题。我没换过钟芯。”\n\n“没人说你换过。”林岚说，“现在只记读数。”\n\n“那昨夜进钟楼的人呢？”陆行舟脱口而出，随即闭了嘴。\n\n岑寂把手从公文上移开。他没有否认，只说：“昨夜我取公文。钟没有被改动。”\n\n林岚看着他的手。纸上只有读数，没有人名。她也没有证据把这句话接成一条指控。苏砚将记录折回去，没问陆行舟，也没要求任何人交出工具。\n\n“交接公文不能代替账页核验。”苏砚说，“若真有账页，要核年月、页码、签章。只凭一页不能定罪。”\n\n“我知道。”何芷说。\n\n她把药箱提到膝边，拇指沿着铅封摸了一圈。铅皮没有裂痕。动作停住时，她望向林岚：“这份单子写的药，是诊所缺的。再耽误，保存时限就少一刻。”\n\n林岚看见她指节被雨水浸得发白。她没有追问药箱，也没问那句“我知道”指的是什么。何芷有自己的边界。她也有。\n\n20:14，苏砚拿出印章。他先按住通行证的边角，确认出港人、船名和货物都在纸上。队长印落下，红色印痕在潮湿处稍稍晕开。他把纸递给何芷。\n\n“药单与药箱由你负责。你确认后再盖。”\n\n何芷接过纸，逐项看完。没有添上账页，也没有替任何人解释。她从衣袋里取出医师印，印面朝下，在另一格按实。双印相邻，界线分明。\n\n岑寂伸手要收公文，何芷却先把通行证递给苏砚。队长将它收入防水套里，才把公文还给文书。“账页若要交接，另立收据。今晚不搜药箱，也不以猜测扣人。”\n\n“我没有请求搜查。”岑寂说。\n\n“那就按你说的程序办。”苏砚答。\n\n林岚看了看自己的记录。潮表、怀表、钟面读数都在。她的抄本仍贴着衣襟，纸边硌着肋骨。那上面的字，今天还不该拿出来。她不愿让一份未核过年月与签章的旧纸，压过眼前的药单。\n\n20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”\n\n何芷把药箱抱紧些，没立刻交过去：“上船前我自己看它落位。”\n\n“行。”叶澄说，“你盯货，我盯水。”\n\n苏砚问林岚：“按你的记录，现在能走吗？”\n\n她望见渡口外的雾。岸灯只照出近处一片湿白，水道看不见尽头。时间并不等于安全，封桥也不等于水路封闭。她能确认的是两种时源的读数，能确认的还有叶澄没有打算冒险走浅滩。她不能替海面作保证。\n\n“可以启航。”林岚说，“照正规航道。记录带上，到了诊所再核一次。”\n\n苏砚点头。“决定记在通行证副联：双印齐备，准许启航，路线不变。”\n\n笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。\n"
+              }
+            },
+            {
+              "issueId": "content:6fcc12f355:09914d99ee77",
+              "category": "timeline",
+              "sourceKey": "chapter:chapter-002.md#c00049",
+              "affectedResourceRefs": [
+                "chapter:chapter-002.md"
+              ],
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "本章20:18已开始解缆准备，20:20启航。设定称20:30低潮始；叶澄称“四十分钟，不会少一分”与不可缩短航程一致，但此前称“低潮半小时后起”若以20:05为当前时刻则对应20:35，和设定的20:30有约五分钟差异。对话可能是估算或指向说话时刻，文本未明确基准，不能据此断定时间线错误。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L3",
+                  "quote": "20:05。",
+                  "quoteOffset": 20,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L17",
+                  "quote": "“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”",
+                  "quoteOffset": 807,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L79",
+                  "quote": "20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”",
+                  "quoteOffset": 5266,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L93",
+                  "quote": "笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。",
+                  "quoteOffset": 6176,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "world:lore",
+                  "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "bindReadVersion": true,
+                  "location": "L6",
+                  "quote": "低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。",
+                  "quoteOffset": 480,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true,
+              "sourceSnapshots": {
+                "chapter:chapter-002.md": "# 第二章 双印\n\n20:05。\n\n钟声从雾里落下来，迟钝的一下，像有人隔着墙敲木头。林岚的手停在潮表边。她没有看钟楼，只把纸角压得更牢。雨水沿木箱缝往下滴，落进渡口的浅洼，声音细而密。\n\n“药单。”苏砚说。\n\n何芷把折好的单子递过去，没放开手。两人各执一端，像是在确认纸上每个字都能经得住拉扯。林岚看见药名、剂量和诊所收件人的名字。她看不清末尾的小字，便向前挪了半步。\n\n苏砚核过一遍，抬眼问：“药箱封口完整？”\n\n“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”\n\n声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”\n\n“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”\n\n“封桥九点。”岑寂将公文放在木箱上，纸面覆着一层潮气，“议事厅要求今晚交接蓝签账页。公文在此，按程序——”\n\n“公文不是医师的印。”苏砚把通行证转了个方向，“出港要两印。我盖队长印，何医师盖她的。没有第二个印，船不能走。”\n\n岑寂的指尖从公文边沿收回。他仍旧客气：“自然，医师的签字不可代替。若账页随药同行，交接时也请登记。”\n\n林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。\n\n陆行舟把工具袋搁到脚边，没去碰钟表，只盯着通行证：“你们要我证明钟没动过，我可以把工具一件件摆出来。可钟慢多少，不能拿我一句话当证据。”\n\n林岚抬起眼。他先说了钟。旁人没有应声。\n\n“我手里有潮表和怀表。”她说。\n\n话出口时，她听见自己声音比雨声还轻。六个人都看过来。她把袖口往下拉了一寸，没拿出怀表，也没把那页抄本从衣内取出。\n\n“两个来源？”苏砚问。\n\n“两个。”林岚说，“我可以现场核。先把药单、潮表和表盘读数记在通行证背面。钟声不够。”\n\n岑寂眉间没有变化：“为何现在提校时？”\n\n“因为要出航。潮钟是公共时钟，不是潮水本身。”她把潮表翻开，指给苏砚看表格上的时刻，“我只报我能核的。潮钟读数另记，不拿它替代潮表。”\n\n她没有说七分钟。那是她的测量，也是尚待两种来源当面核验的事。她更没有说抄本。那一页会把另一条线带进来，而此刻的每双眼睛都在等一个能被写在纸上的东西。\n\n苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。\n\n陆行舟探身看了一眼，没有伸手：“表针没问题。我没换过钟芯。”\n\n“没人说你换过。”林岚说，“现在只记读数。”\n\n“那昨夜进钟楼的人呢？”陆行舟脱口而出，随即闭了嘴。\n\n岑寂把手从公文上移开。他没有否认，只说：“昨夜我取公文。钟没有被改动。”\n\n林岚看着他的手。纸上只有读数，没有人名。她也没有证据把这句话接成一条指控。苏砚将记录折回去，没问陆行舟，也没要求任何人交出工具。\n\n“交接公文不能代替账页核验。”苏砚说，“若真有账页，要核年月、页码、签章。只凭一页不能定罪。”\n\n“我知道。”何芷说。\n\n她把药箱提到膝边，拇指沿着铅封摸了一圈。铅皮没有裂痕。动作停住时，她望向林岚：“这份单子写的药，是诊所缺的。再耽误，保存时限就少一刻。”\n\n林岚看见她指节被雨水浸得发白。她没有追问药箱，也没问那句“我知道”指的是什么。何芷有自己的边界。她也有。\n\n20:14，苏砚拿出印章。他先按住通行证的边角，确认出港人、船名和货物都在纸上。队长印落下，红色印痕在潮湿处稍稍晕开。他把纸递给何芷。\n\n“药单与药箱由你负责。你确认后再盖。”\n\n何芷接过纸，逐项看完。没有添上账页，也没有替任何人解释。她从衣袋里取出医师印，印面朝下，在另一格按实。双印相邻，界线分明。\n\n岑寂伸手要收公文，何芷却先把通行证递给苏砚。队长将它收入防水套里，才把公文还给文书。“账页若要交接，另立收据。今晚不搜药箱，也不以猜测扣人。”\n\n“我没有请求搜查。”岑寂说。\n\n“那就按你说的程序办。”苏砚答。\n\n林岚看了看自己的记录。潮表、怀表、钟面读数都在。她的抄本仍贴着衣襟，纸边硌着肋骨。那上面的字，今天还不该拿出来。她不愿让一份未核过年月与签章的旧纸，压过眼前的药单。\n\n20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”\n\n何芷把药箱抱紧些，没立刻交过去：“上船前我自己看它落位。”\n\n“行。”叶澄说，“你盯货，我盯水。”\n\n苏砚问林岚：“按你的记录，现在能走吗？”\n\n她望见渡口外的雾。岸灯只照出近处一片湿白，水道看不见尽头。时间并不等于安全，封桥也不等于水路封闭。她能确认的是两种时源的读数，能确认的还有叶澄没有打算冒险走浅滩。她不能替海面作保证。\n\n“可以启航。”林岚说，“照正规航道。记录带上，到了诊所再核一次。”\n\n苏砚点头。“决定记在通行证副联：双印齐备，准许启航，路线不变。”\n\n笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。\n",
+                "world:lore": "# 雾港世界设定\n## 地理与时间\n雾港为潮汐岛城，北岸旧渡口、中央钟楼、东侧封桥、西侧灯塔诊所。当前为秋汛第六日，阴雨、能见度不足两百米。所有时间用二十四小时制。\n旧渡口到灯塔水路四十分钟，步行绕北堤九十分钟；钟楼到渡口步行十五分钟。不存在瞬移、飞行、瞬间传信。\n封桥时间为21:00，封桥只关闭东桥，不关闭水路；渡船仍须执照和通行证。\n低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。\n## 制度\n冷藏药出港须巡港队长与医师各盖一印，缺一不可。议事厅文书的公文不能代替医师签字。\n居民不允许强行搜身，须经队长立案和当事人见证；拘捕不能仅凭怀疑。\n潮钟只是公共时钟，不控制潮水、封桥和天气；校时须与机械怀表及潮表两种来源核对。\n## 技术与物资\n只有机械钟、油灯、纸张、蒸汽冷柜，无电报、手机、监控或魔法。船用手摇绞盘，不存在自动驾驶。\n药箱铅封完整，开启外箱会破坏铅封；暗格可在保持铅封时滑出，但外人看不出位置。冷藏药离开冰柜后只能保存六十分钟。\n蓝签账页只是旧账证据，不能凭一页直接定罪。证据需核对年月、页码、签章。\n## 信仰与信息边界\n灯塔守夜人相信海雾会记住名字，这是信仰而非客观超能力。\n角色私密信息不自动共享；只有在场听到或看到具体证据才能成为角色已知事实。\n第1章结束于20:05，六人刚在旧渡口集齐，所有人尚未启航。何芷未说出暗格，林岚未说出七分钟。\n"
+              }
+            },
+            {
+              "issueId": "content:6fcc12f355:c066ef1aac1b",
+              "category": "viewpoint",
+              "sourceKey": "chapter:chapter-002.md#c00018",
+              "affectedResourceRefs": [
+                "chapter:chapter-002.md"
+              ],
+              "severity": "preference",
+              "requestedSeverity": "preference",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "“她从第一章就听见了”作为林岚对既往信息的回想可以成立；但紧接着“任何人都看不出里面另有东西”是全知式确定判断，而非她当下可直接观察到的事实。此处与林岚有限视角存在轻微越界嫌疑。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L25",
+                  "quote": "林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。",
+                  "quoteOffset": 1487,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "style:memory",
+                  "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+                  "bindReadVersion": true,
+                  "location": "L1",
+                  "quote": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。",
+                  "quoteOffset": 0,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "world:lore",
+                  "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "bindReadVersion": true,
+                  "location": "L13",
+                  "quote": "药箱铅封完整，开启外箱会破坏铅封；暗格可在保持铅封时滑出，但外人看不出位置。冷藏药离开冰柜后只能保存六十分钟。",
+                  "quoteOffset": 1083,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true,
+              "sourceSnapshots": {
+                "chapter:chapter-002.md": "# 第二章 双印\n\n20:05。\n\n钟声从雾里落下来，迟钝的一下，像有人隔着墙敲木头。林岚的手停在潮表边。她没有看钟楼，只把纸角压得更牢。雨水沿木箱缝往下滴，落进渡口的浅洼，声音细而密。\n\n“药单。”苏砚说。\n\n何芷把折好的单子递过去，没放开手。两人各执一端，像是在确认纸上每个字都能经得住拉扯。林岚看见药名、剂量和诊所收件人的名字。她看不清末尾的小字，便向前挪了半步。\n\n苏砚核过一遍，抬眼问：“药箱封口完整？”\n\n“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”\n\n声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”\n\n“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”\n\n“封桥九点。”岑寂将公文放在木箱上，纸面覆着一层潮气，“议事厅要求今晚交接蓝签账页。公文在此，按程序——”\n\n“公文不是医师的印。”苏砚把通行证转了个方向，“出港要两印。我盖队长印，何医师盖她的。没有第二个印，船不能走。”\n\n岑寂的指尖从公文边沿收回。他仍旧客气：“自然，医师的签字不可代替。若账页随药同行，交接时也请登记。”\n\n林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。\n\n陆行舟把工具袋搁到脚边，没去碰钟表，只盯着通行证：“你们要我证明钟没动过，我可以把工具一件件摆出来。可钟慢多少，不能拿我一句话当证据。”\n\n林岚抬起眼。他先说了钟。旁人没有应声。\n\n“我手里有潮表和怀表。”她说。\n\n话出口时，她听见自己声音比雨声还轻。六个人都看过来。她把袖口往下拉了一寸，没拿出怀表，也没把那页抄本从衣内取出。\n\n“两个来源？”苏砚问。\n\n“两个。”林岚说，“我可以现场核。先把药单、潮表和表盘读数记在通行证背面。钟声不够。”\n\n岑寂眉间没有变化：“为何现在提校时？”\n\n“因为要出航。潮钟是公共时钟，不是潮水本身。”她把潮表翻开，指给苏砚看表格上的时刻，“我只报我能核的。潮钟读数另记，不拿它替代潮表。”\n\n她没有说七分钟。那是她的测量，也是尚待两种来源当面核验的事。她更没有说抄本。那一页会把另一条线带进来，而此刻的每双眼睛都在等一个能被写在纸上的东西。\n\n苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。\n\n陆行舟探身看了一眼，没有伸手：“表针没问题。我没换过钟芯。”\n\n“没人说你换过。”林岚说，“现在只记读数。”\n\n“那昨夜进钟楼的人呢？”陆行舟脱口而出，随即闭了嘴。\n\n岑寂把手从公文上移开。他没有否认，只说：“昨夜我取公文。钟没有被改动。”\n\n林岚看着他的手。纸上只有读数，没有人名。她也没有证据把这句话接成一条指控。苏砚将记录折回去，没问陆行舟，也没要求任何人交出工具。\n\n“交接公文不能代替账页核验。”苏砚说，“若真有账页，要核年月、页码、签章。只凭一页不能定罪。”\n\n“我知道。”何芷说。\n\n她把药箱提到膝边，拇指沿着铅封摸了一圈。铅皮没有裂痕。动作停住时，她望向林岚：“这份单子写的药，是诊所缺的。再耽误，保存时限就少一刻。”\n\n林岚看见她指节被雨水浸得发白。她没有追问药箱，也没问那句“我知道”指的是什么。何芷有自己的边界。她也有。\n\n20:14，苏砚拿出印章。他先按住通行证的边角，确认出港人、船名和货物都在纸上。队长印落下，红色印痕在潮湿处稍稍晕开。他把纸递给何芷。\n\n“药单与药箱由你负责。你确认后再盖。”\n\n何芷接过纸，逐项看完。没有添上账页，也没有替任何人解释。她从衣袋里取出医师印，印面朝下，在另一格按实。双印相邻，界线分明。\n\n岑寂伸手要收公文，何芷却先把通行证递给苏砚。队长将它收入防水套里，才把公文还给文书。“账页若要交接，另立收据。今晚不搜药箱，也不以猜测扣人。”\n\n“我没有请求搜查。”岑寂说。\n\n“那就按你说的程序办。”苏砚答。\n\n林岚看了看自己的记录。潮表、怀表、钟面读数都在。她的抄本仍贴着衣襟，纸边硌着肋骨。那上面的字，今天还不该拿出来。她不愿让一份未核过年月与签章的旧纸，压过眼前的药单。\n\n20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”\n\n何芷把药箱抱紧些，没立刻交过去：“上船前我自己看它落位。”\n\n“行。”叶澄说，“你盯货，我盯水。”\n\n苏砚问林岚：“按你的记录，现在能走吗？”\n\n她望见渡口外的雾。岸灯只照出近处一片湿白，水道看不见尽头。时间并不等于安全，封桥也不等于水路封闭。她能确认的是两种时源的读数，能确认的还有叶澄没有打算冒险走浅滩。她不能替海面作保证。\n\n“可以启航。”林岚说，“照正规航道。记录带上，到了诊所再核一次。”\n\n苏砚点头。“决定记在通行证副联：双印齐备，准许启航，路线不变。”\n\n笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。\n",
+                "style:memory": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。",
+                "world:lore": "# 雾港世界设定\n## 地理与时间\n雾港为潮汐岛城，北岸旧渡口、中央钟楼、东侧封桥、西侧灯塔诊所。当前为秋汛第六日，阴雨、能见度不足两百米。所有时间用二十四小时制。\n旧渡口到灯塔水路四十分钟，步行绕北堤九十分钟；钟楼到渡口步行十五分钟。不存在瞬移、飞行、瞬间传信。\n封桥时间为21:00，封桥只关闭东桥，不关闭水路；渡船仍须执照和通行证。\n低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。\n## 制度\n冷藏药出港须巡港队长与医师各盖一印，缺一不可。议事厅文书的公文不能代替医师签字。\n居民不允许强行搜身，须经队长立案和当事人见证；拘捕不能仅凭怀疑。\n潮钟只是公共时钟，不控制潮水、封桥和天气；校时须与机械怀表及潮表两种来源核对。\n## 技术与物资\n只有机械钟、油灯、纸张、蒸汽冷柜，无电报、手机、监控或魔法。船用手摇绞盘，不存在自动驾驶。\n药箱铅封完整，开启外箱会破坏铅封；暗格可在保持铅封时滑出，但外人看不出位置。冷藏药离开冰柜后只能保存六十分钟。\n蓝签账页只是旧账证据，不能凭一页直接定罪。证据需核对年月、页码、签章。\n## 信仰与信息边界\n灯塔守夜人相信海雾会记住名字，这是信仰而非客观超能力。\n角色私密信息不自动共享；只有在场听到或看到具体证据才能成为角色已知事实。\n第1章结束于20:05，六人刚在旧渡口集齐，所有人尚未启航。何芷未说出暗格，林岚未说出七分钟。\n"
+              }
+            },
+            {
+              "issueId": "content:6fcc12f355:2350970152e5",
+              "category": "viewpoint/style",
+              "sourceKey": "chapter:chapter-002.md#c00013",
+              "affectedResourceRefs": [
+                "chapter:chapter-002.md"
+              ],
+              "severity": "preference",
+              "requestedSeverity": "preference",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "“声音温和，句子却没有余地”对苏砚话语的概括是林岚可听见的语气与措辞判断，不构成明确内心披露；但“句子却没有余地”略偏作者评述，可考虑更紧贴林岚的现场感受。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L13",
+                  "quote": "“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”",
+                  "quoteOffset": 587,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L15",
+                  "quote": "声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”",
+                  "quoteOffset": 715,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "style:memory",
+                  "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+                  "bindReadVersion": true,
+                  "location": "L1",
+                  "quote": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。",
+                  "quoteOffset": 0,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true,
+              "sourceSnapshots": {
+                "chapter:chapter-002.md": "# 第二章 双印\n\n20:05。\n\n钟声从雾里落下来，迟钝的一下，像有人隔着墙敲木头。林岚的手停在潮表边。她没有看钟楼，只把纸角压得更牢。雨水沿木箱缝往下滴，落进渡口的浅洼，声音细而密。\n\n“药单。”苏砚说。\n\n何芷把折好的单子递过去，没放开手。两人各执一端，像是在确认纸上每个字都能经得住拉扯。林岚看见药名、剂量和诊所收件人的名字。她看不清末尾的小字，便向前挪了半步。\n\n苏砚核过一遍，抬眼问：“药箱封口完整？”\n\n“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”\n\n声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”\n\n“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”\n\n“封桥九点。”岑寂将公文放在木箱上，纸面覆着一层潮气，“议事厅要求今晚交接蓝签账页。公文在此，按程序——”\n\n“公文不是医师的印。”苏砚把通行证转了个方向，“出港要两印。我盖队长印，何医师盖她的。没有第二个印，船不能走。”\n\n岑寂的指尖从公文边沿收回。他仍旧客气：“自然，医师的签字不可代替。若账页随药同行，交接时也请登记。”\n\n林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。\n\n陆行舟把工具袋搁到脚边，没去碰钟表，只盯着通行证：“你们要我证明钟没动过，我可以把工具一件件摆出来。可钟慢多少，不能拿我一句话当证据。”\n\n林岚抬起眼。他先说了钟。旁人没有应声。\n\n“我手里有潮表和怀表。”她说。\n\n话出口时，她听见自己声音比雨声还轻。六个人都看过来。她把袖口往下拉了一寸，没拿出怀表，也没把那页抄本从衣内取出。\n\n“两个来源？”苏砚问。\n\n“两个。”林岚说，“我可以现场核。先把药单、潮表和表盘读数记在通行证背面。钟声不够。”\n\n岑寂眉间没有变化：“为何现在提校时？”\n\n“因为要出航。潮钟是公共时钟，不是潮水本身。”她把潮表翻开，指给苏砚看表格上的时刻，“我只报我能核的。潮钟读数另记，不拿它替代潮表。”\n\n她没有说七分钟。那是她的测量，也是尚待两种来源当面核验的事。她更没有说抄本。那一页会把另一条线带进来，而此刻的每双眼睛都在等一个能被写在纸上的东西。\n\n苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。\n\n陆行舟探身看了一眼，没有伸手：“表针没问题。我没换过钟芯。”\n\n“没人说你换过。”林岚说，“现在只记读数。”\n\n“那昨夜进钟楼的人呢？”陆行舟脱口而出，随即闭了嘴。\n\n岑寂把手从公文上移开。他没有否认，只说：“昨夜我取公文。钟没有被改动。”\n\n林岚看着他的手。纸上只有读数，没有人名。她也没有证据把这句话接成一条指控。苏砚将记录折回去，没问陆行舟，也没要求任何人交出工具。\n\n“交接公文不能代替账页核验。”苏砚说，“若真有账页，要核年月、页码、签章。只凭一页不能定罪。”\n\n“我知道。”何芷说。\n\n她把药箱提到膝边，拇指沿着铅封摸了一圈。铅皮没有裂痕。动作停住时，她望向林岚：“这份单子写的药，是诊所缺的。再耽误，保存时限就少一刻。”\n\n林岚看见她指节被雨水浸得发白。她没有追问药箱，也没问那句“我知道”指的是什么。何芷有自己的边界。她也有。\n\n20:14，苏砚拿出印章。他先按住通行证的边角，确认出港人、船名和货物都在纸上。队长印落下，红色印痕在潮湿处稍稍晕开。他把纸递给何芷。\n\n“药单与药箱由你负责。你确认后再盖。”\n\n何芷接过纸，逐项看完。没有添上账页，也没有替任何人解释。她从衣袋里取出医师印，印面朝下，在另一格按实。双印相邻，界线分明。\n\n岑寂伸手要收公文，何芷却先把通行证递给苏砚。队长将它收入防水套里，才把公文还给文书。“账页若要交接，另立收据。今晚不搜药箱，也不以猜测扣人。”\n\n“我没有请求搜查。”岑寂说。\n\n“那就按你说的程序办。”苏砚答。\n\n林岚看了看自己的记录。潮表、怀表、钟面读数都在。她的抄本仍贴着衣襟，纸边硌着肋骨。那上面的字，今天还不该拿出来。她不愿让一份未核过年月与签章的旧纸，压过眼前的药单。\n\n20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”\n\n何芷把药箱抱紧些，没立刻交过去：“上船前我自己看它落位。”\n\n“行。”叶澄说，“你盯货，我盯水。”\n\n苏砚问林岚：“按你的记录，现在能走吗？”\n\n她望见渡口外的雾。岸灯只照出近处一片湿白，水道看不见尽头。时间并不等于安全，封桥也不等于水路封闭。她能确认的是两种时源的读数，能确认的还有叶澄没有打算冒险走浅滩。她不能替海面作保证。\n\n“可以启航。”林岚说，“照正规航道。记录带上，到了诊所再核一次。”\n\n苏砚点头。“决定记在通行证副联：双印齐备，准许启航，路线不变。”\n\n笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。\n",
+                "style:memory": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "savedResources": [],
+    "reviewFindings": [
+      {
+        "issueId": "content:94897b5a49:b05a5452c440",
+        "category": "viewpoint/continuity",
+        "sourceKey": "chapter:chapter-002.md#c00028",
+        "affectedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "severity": "suspicion",
+        "requestedSeverity": "suspicion",
+        "schemaValid": true,
+        "status": "open",
+        "contradiction": "林岚称“我手里有潮表和怀表”，随后苏砚取出自己的怀表供她核验，和第一章明确怀表仍在林岚袖口的描写不一致；本章又将怀表归于苏砚，所有权或表的指代不清。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-001.md",
+            "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+            "bindReadVersion": true,
+            "location": "L3",
+            "quote": "20:05，六人聚在旧渡口。林岚把潮表压在木箱边，机械怀表还在她袖口。她确认潮钟慢了七分钟，却未开口。",
+            "quoteOffset": 20,
+            "versionSource": "actual_content_read",
+            "currentHash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L31",
+            "quote": "“我手里有潮表和怀表。”她说。",
+            "quoteOffset": 2036,
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L45",
+            "quote": "苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。",
+            "quoteOffset": 2905,
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true,
+        "sourceSnapshots": {
+          "chapter:chapter-001.md": "# 第一章 雾口\n\n20:05，六人聚在旧渡口。林岚把潮表压在木箱边，机械怀表还在她袖口。她确认潮钟慢了七分钟，却未开口。\n\n何芷将铅封完整的冷藏药箱放回冰柜，蓝签账页藏在只有她知道的暗格。苏砚摊开尚未盖印的通行证，要求先核对药单。\n\n叶澄检查船绳，提醒水路四十分钟。陆行舟抱着工具袋，不敢直视队长。岑寂带来议事厅的交接公文，没人看见他此前进过钟楼。\n\n远处钟声响起。林岚看着六人的影子，没有拿出那页抄本。",
+          "chapter:chapter-002.md": "# 第二章 双印\n\n20:05。\n\n钟声从雾里落下来，迟钝的一下，像有人隔着墙敲木头。林岚的手停在潮表边。她没有看钟楼，只把纸角压得更牢。雨水沿木箱缝往下滴，落进渡口的浅洼，声音细而密。\n\n“药单。”苏砚说。\n\n何芷把折好的单子递过去，没放开手。两人各执一端，像是在确认纸上每个字都能经得住拉扯。林岚看见药名、剂量和诊所收件人的名字。她看不清末尾的小字，便向前挪了半步。\n\n苏砚核过一遍，抬眼问：“药箱封口完整？”\n\n“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”\n\n声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”\n\n“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”\n\n“封桥九点。”岑寂将公文放在木箱上，纸面覆着一层潮气，“议事厅要求今晚交接蓝签账页。公文在此，按程序——”\n\n“公文不是医师的印。”苏砚把通行证转了个方向，“出港要两印。我盖队长印，何医师盖她的。没有第二个印，船不能走。”\n\n岑寂的指尖从公文边沿收回。他仍旧客气：“自然，医师的签字不可代替。若账页随药同行，交接时也请登记。”\n\n林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。\n\n陆行舟把工具袋搁到脚边，没去碰钟表，只盯着通行证：“你们要我证明钟没动过，我可以把工具一件件摆出来。可钟慢多少，不能拿我一句话当证据。”\n\n林岚抬起眼。他先说了钟。旁人没有应声。\n\n“我手里有潮表和怀表。”她说。\n\n话出口时，她听见自己声音比雨声还轻。六个人都看过来。她把袖口往下拉了一寸，没拿出怀表，也没把那页抄本从衣内取出。\n\n“两个来源？”苏砚问。\n\n“两个。”林岚说，“我可以现场核。先把药单、潮表和表盘读数记在通行证背面。钟声不够。”\n\n岑寂眉间没有变化：“为何现在提校时？”\n\n“因为要出航。潮钟是公共时钟，不是潮水本身。”她把潮表翻开，指给苏砚看表格上的时刻，“我只报我能核的。潮钟读数另记，不拿它替代潮表。”\n\n她没有说七分钟。那是她的测量，也是尚待两种来源当面核验的事。她更没有说抄本。那一页会把另一条线带进来，而此刻的每双眼睛都在等一个能被写在纸上的东西。\n\n苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。\n\n陆行舟探身看了一眼，没有伸手：“表针没问题。我没换过钟芯。”\n\n“没人说你换过。”林岚说，“现在只记读数。”\n\n“那昨夜进钟楼的人呢？”陆行舟脱口而出，随即闭了嘴。\n\n岑寂把手从公文上移开。他没有否认，只说：“昨夜我取公文。钟没有被改动。”\n\n林岚看着他的手。纸上只有读数，没有人名。她也没有证据把这句话接成一条指控。苏砚将记录折回去，没问陆行舟，也没要求任何人交出工具。\n\n“交接公文不能代替账页核验。”苏砚说，“若真有账页，要核年月、页码、签章。只凭一页不能定罪。”\n\n“我知道。”何芷说。\n\n她把药箱提到膝边，拇指沿着铅封摸了一圈。铅皮没有裂痕。动作停住时，她望向林岚：“这份单子写的药，是诊所缺的。再耽误，保存时限就少一刻。”\n\n林岚看见她指节被雨水浸得发白。她没有追问药箱，也没问那句“我知道”指的是什么。何芷有自己的边界。她也有。\n\n20:14，苏砚拿出印章。他先按住通行证的边角，确认出港人、船名和货物都在纸上。队长印落下，红色印痕在潮湿处稍稍晕开。他把纸递给何芷。\n\n“药单与药箱由你负责。你确认后再盖。”\n\n何芷接过纸，逐项看完。没有添上账页，也没有替任何人解释。她从衣袋里取出医师印，印面朝下，在另一格按实。双印相邻，界线分明。\n\n岑寂伸手要收公文，何芷却先把通行证递给苏砚。队长将它收入防水套里，才把公文还给文书。“账页若要交接，另立收据。今晚不搜药箱，也不以猜测扣人。”\n\n“我没有请求搜查。”岑寂说。\n\n“那就按你说的程序办。”苏砚答。\n\n林岚看了看自己的记录。潮表、怀表、钟面读数都在。她的抄本仍贴着衣襟，纸边硌着肋骨。那上面的字，今天还不该拿出来。她不愿让一份未核过年月与签章的旧纸，压过眼前的药单。\n\n20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”\n\n何芷把药箱抱紧些，没立刻交过去：“上船前我自己看它落位。”\n\n“行。”叶澄说，“你盯货，我盯水。”\n\n苏砚问林岚：“按你的记录，现在能走吗？”\n\n她望见渡口外的雾。岸灯只照出近处一片湿白，水道看不见尽头。时间并不等于安全，封桥也不等于水路封闭。她能确认的是两种时源的读数，能确认的还有叶澄没有打算冒险走浅滩。她不能替海面作保证。\n\n“可以启航。”林岚说，“照正规航道。记录带上，到了诊所再核一次。”\n\n苏砚点头。“决定记在通行证副联：双印齐备，准许启航，路线不变。”\n\n笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。\n"
+        }
+      },
+      {
+        "issueId": "content:6fcc12f355:09914d99ee77",
+        "category": "timeline",
+        "sourceKey": "chapter:chapter-002.md#c00049",
+        "affectedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "severity": "suspicion",
+        "requestedSeverity": "suspicion",
+        "schemaValid": true,
+        "status": "open",
+        "contradiction": "本章20:18已开始解缆准备，20:20启航。设定称20:30低潮始；叶澄称“四十分钟，不会少一分”与不可缩短航程一致，但此前称“低潮半小时后起”若以20:05为当前时刻则对应20:35，和设定的20:30有约五分钟差异。对话可能是估算或指向说话时刻，文本未明确基准，不能据此断定时间线错误。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L3",
+            "quote": "20:05。",
+            "quoteOffset": 20,
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L17",
+            "quote": "“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”",
+            "quoteOffset": 807,
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L79",
+            "quote": "20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”",
+            "quoteOffset": 5266,
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L93",
+            "quote": "笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。",
+            "quoteOffset": 6176,
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "world:lore",
+            "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+            "bindReadVersion": true,
+            "location": "L6",
+            "quote": "低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。",
+            "quoteOffset": 480,
+            "versionSource": "actual_content_read",
+            "currentHash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true,
+        "sourceSnapshots": {
+          "chapter:chapter-002.md": "# 第二章 双印\n\n20:05。\n\n钟声从雾里落下来，迟钝的一下，像有人隔着墙敲木头。林岚的手停在潮表边。她没有看钟楼，只把纸角压得更牢。雨水沿木箱缝往下滴，落进渡口的浅洼，声音细而密。\n\n“药单。”苏砚说。\n\n何芷把折好的单子递过去，没放开手。两人各执一端，像是在确认纸上每个字都能经得住拉扯。林岚看见药名、剂量和诊所收件人的名字。她看不清末尾的小字，便向前挪了半步。\n\n苏砚核过一遍，抬眼问：“药箱封口完整？”\n\n“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”\n\n声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”\n\n“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”\n\n“封桥九点。”岑寂将公文放在木箱上，纸面覆着一层潮气，“议事厅要求今晚交接蓝签账页。公文在此，按程序——”\n\n“公文不是医师的印。”苏砚把通行证转了个方向，“出港要两印。我盖队长印，何医师盖她的。没有第二个印，船不能走。”\n\n岑寂的指尖从公文边沿收回。他仍旧客气：“自然，医师的签字不可代替。若账页随药同行，交接时也请登记。”\n\n林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。\n\n陆行舟把工具袋搁到脚边，没去碰钟表，只盯着通行证：“你们要我证明钟没动过，我可以把工具一件件摆出来。可钟慢多少，不能拿我一句话当证据。”\n\n林岚抬起眼。他先说了钟。旁人没有应声。\n\n“我手里有潮表和怀表。”她说。\n\n话出口时，她听见自己声音比雨声还轻。六个人都看过来。她把袖口往下拉了一寸，没拿出怀表，也没把那页抄本从衣内取出。\n\n“两个来源？”苏砚问。\n\n“两个。”林岚说，“我可以现场核。先把药单、潮表和表盘读数记在通行证背面。钟声不够。”\n\n岑寂眉间没有变化：“为何现在提校时？”\n\n“因为要出航。潮钟是公共时钟，不是潮水本身。”她把潮表翻开，指给苏砚看表格上的时刻，“我只报我能核的。潮钟读数另记，不拿它替代潮表。”\n\n她没有说七分钟。那是她的测量，也是尚待两种来源当面核验的事。她更没有说抄本。那一页会把另一条线带进来，而此刻的每双眼睛都在等一个能被写在纸上的东西。\n\n苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。\n\n陆行舟探身看了一眼，没有伸手：“表针没问题。我没换过钟芯。”\n\n“没人说你换过。”林岚说，“现在只记读数。”\n\n“那昨夜进钟楼的人呢？”陆行舟脱口而出，随即闭了嘴。\n\n岑寂把手从公文上移开。他没有否认，只说：“昨夜我取公文。钟没有被改动。”\n\n林岚看着他的手。纸上只有读数，没有人名。她也没有证据把这句话接成一条指控。苏砚将记录折回去，没问陆行舟，也没要求任何人交出工具。\n\n“交接公文不能代替账页核验。”苏砚说，“若真有账页，要核年月、页码、签章。只凭一页不能定罪。”\n\n“我知道。”何芷说。\n\n她把药箱提到膝边，拇指沿着铅封摸了一圈。铅皮没有裂痕。动作停住时，她望向林岚：“这份单子写的药，是诊所缺的。再耽误，保存时限就少一刻。”\n\n林岚看见她指节被雨水浸得发白。她没有追问药箱，也没问那句“我知道”指的是什么。何芷有自己的边界。她也有。\n\n20:14，苏砚拿出印章。他先按住通行证的边角，确认出港人、船名和货物都在纸上。队长印落下，红色印痕在潮湿处稍稍晕开。他把纸递给何芷。\n\n“药单与药箱由你负责。你确认后再盖。”\n\n何芷接过纸，逐项看完。没有添上账页，也没有替任何人解释。她从衣袋里取出医师印，印面朝下，在另一格按实。双印相邻，界线分明。\n\n岑寂伸手要收公文，何芷却先把通行证递给苏砚。队长将它收入防水套里，才把公文还给文书。“账页若要交接，另立收据。今晚不搜药箱，也不以猜测扣人。”\n\n“我没有请求搜查。”岑寂说。\n\n“那就按你说的程序办。”苏砚答。\n\n林岚看了看自己的记录。潮表、怀表、钟面读数都在。她的抄本仍贴着衣襟，纸边硌着肋骨。那上面的字，今天还不该拿出来。她不愿让一份未核过年月与签章的旧纸，压过眼前的药单。\n\n20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”\n\n何芷把药箱抱紧些，没立刻交过去：“上船前我自己看它落位。”\n\n“行。”叶澄说，“你盯货，我盯水。”\n\n苏砚问林岚：“按你的记录，现在能走吗？”\n\n她望见渡口外的雾。岸灯只照出近处一片湿白，水道看不见尽头。时间并不等于安全，封桥也不等于水路封闭。她能确认的是两种时源的读数，能确认的还有叶澄没有打算冒险走浅滩。她不能替海面作保证。\n\n“可以启航。”林岚说，“照正规航道。记录带上，到了诊所再核一次。”\n\n苏砚点头。“决定记在通行证副联：双印齐备，准许启航，路线不变。”\n\n笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。\n",
+          "world:lore": "# 雾港世界设定\n## 地理与时间\n雾港为潮汐岛城，北岸旧渡口、中央钟楼、东侧封桥、西侧灯塔诊所。当前为秋汛第六日，阴雨、能见度不足两百米。所有时间用二十四小时制。\n旧渡口到灯塔水路四十分钟，步行绕北堤九十分钟；钟楼到渡口步行十五分钟。不存在瞬移、飞行、瞬间传信。\n封桥时间为21:00，封桥只关闭东桥，不关闭水路；渡船仍须执照和通行证。\n低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。\n## 制度\n冷藏药出港须巡港队长与医师各盖一印，缺一不可。议事厅文书的公文不能代替医师签字。\n居民不允许强行搜身，须经队长立案和当事人见证；拘捕不能仅凭怀疑。\n潮钟只是公共时钟，不控制潮水、封桥和天气；校时须与机械怀表及潮表两种来源核对。\n## 技术与物资\n只有机械钟、油灯、纸张、蒸汽冷柜，无电报、手机、监控或魔法。船用手摇绞盘，不存在自动驾驶。\n药箱铅封完整，开启外箱会破坏铅封；暗格可在保持铅封时滑出，但外人看不出位置。冷藏药离开冰柜后只能保存六十分钟。\n蓝签账页只是旧账证据，不能凭一页直接定罪。证据需核对年月、页码、签章。\n## 信仰与信息边界\n灯塔守夜人相信海雾会记住名字，这是信仰而非客观超能力。\n角色私密信息不自动共享；只有在场听到或看到具体证据才能成为角色已知事实。\n第1章结束于20:05，六人刚在旧渡口集齐，所有人尚未启航。何芷未说出暗格，林岚未说出七分钟。\n"
+        }
+      },
+      {
+        "issueId": "content:6fcc12f355:c066ef1aac1b",
+        "category": "viewpoint",
+        "sourceKey": "chapter:chapter-002.md#c00018",
+        "affectedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "severity": "preference",
+        "requestedSeverity": "preference",
+        "schemaValid": true,
+        "status": "open",
+        "contradiction": "“她从第一章就听见了”作为林岚对既往信息的回想可以成立；但紧接着“任何人都看不出里面另有东西”是全知式确定判断，而非她当下可直接观察到的事实。此处与林岚有限视角存在轻微越界嫌疑。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L25",
+            "quote": "林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。",
+            "quoteOffset": 1487,
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "style:memory",
+            "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+            "bindReadVersion": true,
+            "location": "L1",
+            "quote": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。",
+            "quoteOffset": 0,
+            "versionSource": "actual_content_read",
+            "currentHash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "world:lore",
+            "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+            "bindReadVersion": true,
+            "location": "L13",
+            "quote": "药箱铅封完整，开启外箱会破坏铅封；暗格可在保持铅封时滑出，但外人看不出位置。冷藏药离开冰柜后只能保存六十分钟。",
+            "quoteOffset": 1083,
+            "versionSource": "actual_content_read",
+            "currentHash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true,
+        "sourceSnapshots": {
+          "chapter:chapter-002.md": "# 第二章 双印\n\n20:05。\n\n钟声从雾里落下来，迟钝的一下，像有人隔着墙敲木头。林岚的手停在潮表边。她没有看钟楼，只把纸角压得更牢。雨水沿木箱缝往下滴，落进渡口的浅洼，声音细而密。\n\n“药单。”苏砚说。\n\n何芷把折好的单子递过去，没放开手。两人各执一端，像是在确认纸上每个字都能经得住拉扯。林岚看见药名、剂量和诊所收件人的名字。她看不清末尾的小字，便向前挪了半步。\n\n苏砚核过一遍，抬眼问：“药箱封口完整？”\n\n“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”\n\n声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”\n\n“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”\n\n“封桥九点。”岑寂将公文放在木箱上，纸面覆着一层潮气，“议事厅要求今晚交接蓝签账页。公文在此，按程序——”\n\n“公文不是医师的印。”苏砚把通行证转了个方向，“出港要两印。我盖队长印，何医师盖她的。没有第二个印，船不能走。”\n\n岑寂的指尖从公文边沿收回。他仍旧客气：“自然，医师的签字不可代替。若账页随药同行，交接时也请登记。”\n\n林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。\n\n陆行舟把工具袋搁到脚边，没去碰钟表，只盯着通行证：“你们要我证明钟没动过，我可以把工具一件件摆出来。可钟慢多少，不能拿我一句话当证据。”\n\n林岚抬起眼。他先说了钟。旁人没有应声。\n\n“我手里有潮表和怀表。”她说。\n\n话出口时，她听见自己声音比雨声还轻。六个人都看过来。她把袖口往下拉了一寸，没拿出怀表，也没把那页抄本从衣内取出。\n\n“两个来源？”苏砚问。\n\n“两个。”林岚说，“我可以现场核。先把药单、潮表和表盘读数记在通行证背面。钟声不够。”\n\n岑寂眉间没有变化：“为何现在提校时？”\n\n“因为要出航。潮钟是公共时钟，不是潮水本身。”她把潮表翻开，指给苏砚看表格上的时刻，“我只报我能核的。潮钟读数另记，不拿它替代潮表。”\n\n她没有说七分钟。那是她的测量，也是尚待两种来源当面核验的事。她更没有说抄本。那一页会把另一条线带进来，而此刻的每双眼睛都在等一个能被写在纸上的东西。\n\n苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。\n\n陆行舟探身看了一眼，没有伸手：“表针没问题。我没换过钟芯。”\n\n“没人说你换过。”林岚说，“现在只记读数。”\n\n“那昨夜进钟楼的人呢？”陆行舟脱口而出，随即闭了嘴。\n\n岑寂把手从公文上移开。他没有否认，只说：“昨夜我取公文。钟没有被改动。”\n\n林岚看着他的手。纸上只有读数，没有人名。她也没有证据把这句话接成一条指控。苏砚将记录折回去，没问陆行舟，也没要求任何人交出工具。\n\n“交接公文不能代替账页核验。”苏砚说，“若真有账页，要核年月、页码、签章。只凭一页不能定罪。”\n\n“我知道。”何芷说。\n\n她把药箱提到膝边，拇指沿着铅封摸了一圈。铅皮没有裂痕。动作停住时，她望向林岚：“这份单子写的药，是诊所缺的。再耽误，保存时限就少一刻。”\n\n林岚看见她指节被雨水浸得发白。她没有追问药箱，也没问那句“我知道”指的是什么。何芷有自己的边界。她也有。\n\n20:14，苏砚拿出印章。他先按住通行证的边角，确认出港人、船名和货物都在纸上。队长印落下，红色印痕在潮湿处稍稍晕开。他把纸递给何芷。\n\n“药单与药箱由你负责。你确认后再盖。”\n\n何芷接过纸，逐项看完。没有添上账页，也没有替任何人解释。她从衣袋里取出医师印，印面朝下，在另一格按实。双印相邻，界线分明。\n\n岑寂伸手要收公文，何芷却先把通行证递给苏砚。队长将它收入防水套里，才把公文还给文书。“账页若要交接，另立收据。今晚不搜药箱，也不以猜测扣人。”\n\n“我没有请求搜查。”岑寂说。\n\n“那就按你说的程序办。”苏砚答。\n\n林岚看了看自己的记录。潮表、怀表、钟面读数都在。她的抄本仍贴着衣襟，纸边硌着肋骨。那上面的字，今天还不该拿出来。她不愿让一份未核过年月与签章的旧纸，压过眼前的药单。\n\n20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”\n\n何芷把药箱抱紧些，没立刻交过去：“上船前我自己看它落位。”\n\n“行。”叶澄说，“你盯货，我盯水。”\n\n苏砚问林岚：“按你的记录，现在能走吗？”\n\n她望见渡口外的雾。岸灯只照出近处一片湿白，水道看不见尽头。时间并不等于安全，封桥也不等于水路封闭。她能确认的是两种时源的读数，能确认的还有叶澄没有打算冒险走浅滩。她不能替海面作保证。\n\n“可以启航。”林岚说，“照正规航道。记录带上，到了诊所再核一次。”\n\n苏砚点头。“决定记在通行证副联：双印齐备，准许启航，路线不变。”\n\n笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。\n",
+          "style:memory": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。",
+          "world:lore": "# 雾港世界设定\n## 地理与时间\n雾港为潮汐岛城，北岸旧渡口、中央钟楼、东侧封桥、西侧灯塔诊所。当前为秋汛第六日，阴雨、能见度不足两百米。所有时间用二十四小时制。\n旧渡口到灯塔水路四十分钟，步行绕北堤九十分钟；钟楼到渡口步行十五分钟。不存在瞬移、飞行、瞬间传信。\n封桥时间为21:00，封桥只关闭东桥，不关闭水路；渡船仍须执照和通行证。\n低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。\n## 制度\n冷藏药出港须巡港队长与医师各盖一印，缺一不可。议事厅文书的公文不能代替医师签字。\n居民不允许强行搜身，须经队长立案和当事人见证；拘捕不能仅凭怀疑。\n潮钟只是公共时钟，不控制潮水、封桥和天气；校时须与机械怀表及潮表两种来源核对。\n## 技术与物资\n只有机械钟、油灯、纸张、蒸汽冷柜，无电报、手机、监控或魔法。船用手摇绞盘，不存在自动驾驶。\n药箱铅封完整，开启外箱会破坏铅封；暗格可在保持铅封时滑出，但外人看不出位置。冷藏药离开冰柜后只能保存六十分钟。\n蓝签账页只是旧账证据，不能凭一页直接定罪。证据需核对年月、页码、签章。\n## 信仰与信息边界\n灯塔守夜人相信海雾会记住名字，这是信仰而非客观超能力。\n角色私密信息不自动共享；只有在场听到或看到具体证据才能成为角色已知事实。\n第1章结束于20:05，六人刚在旧渡口集齐，所有人尚未启航。何芷未说出暗格，林岚未说出七分钟。\n"
+        }
+      },
+      {
+        "issueId": "content:6fcc12f355:2350970152e5",
+        "category": "viewpoint/style",
+        "sourceKey": "chapter:chapter-002.md#c00013",
+        "affectedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "severity": "preference",
+        "requestedSeverity": "preference",
+        "schemaValid": true,
+        "status": "open",
+        "contradiction": "“声音温和，句子却没有余地”对苏砚话语的概括是林岚可听见的语气与措辞判断，不构成明确内心披露；但“句子却没有余地”略偏作者评述，可考虑更紧贴林岚的现场感受。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L13",
+            "quote": "“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”",
+            "quoteOffset": 587,
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L15",
+            "quote": "声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”",
+            "quoteOffset": 715,
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "style:memory",
+            "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+            "bindReadVersion": true,
+            "location": "L1",
+            "quote": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。",
+            "quoteOffset": 0,
+            "versionSource": "actual_content_read",
+            "currentHash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true,
+        "sourceSnapshots": {
+          "chapter:chapter-002.md": "# 第二章 双印\n\n20:05。\n\n钟声从雾里落下来，迟钝的一下，像有人隔着墙敲木头。林岚的手停在潮表边。她没有看钟楼，只把纸角压得更牢。雨水沿木箱缝往下滴，落进渡口的浅洼，声音细而密。\n\n“药单。”苏砚说。\n\n何芷把折好的单子递过去，没放开手。两人各执一端，像是在确认纸上每个字都能经得住拉扯。林岚看见药名、剂量和诊所收件人的名字。她看不清末尾的小字，便向前挪了半步。\n\n苏砚核过一遍，抬眼问：“药箱封口完整？”\n\n“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”\n\n声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”\n\n“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”\n\n“封桥九点。”岑寂将公文放在木箱上，纸面覆着一层潮气，“议事厅要求今晚交接蓝签账页。公文在此，按程序——”\n\n“公文不是医师的印。”苏砚把通行证转了个方向，“出港要两印。我盖队长印，何医师盖她的。没有第二个印，船不能走。”\n\n岑寂的指尖从公文边沿收回。他仍旧客气：“自然，医师的签字不可代替。若账页随药同行，交接时也请登记。”\n\n林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。\n\n陆行舟把工具袋搁到脚边，没去碰钟表，只盯着通行证：“你们要我证明钟没动过，我可以把工具一件件摆出来。可钟慢多少，不能拿我一句话当证据。”\n\n林岚抬起眼。他先说了钟。旁人没有应声。\n\n“我手里有潮表和怀表。”她说。\n\n话出口时，她听见自己声音比雨声还轻。六个人都看过来。她把袖口往下拉了一寸，没拿出怀表，也没把那页抄本从衣内取出。\n\n“两个来源？”苏砚问。\n\n“两个。”林岚说，“我可以现场核。先把药单、潮表和表盘读数记在通行证背面。钟声不够。”\n\n岑寂眉间没有变化：“为何现在提校时？”\n\n“因为要出航。潮钟是公共时钟，不是潮水本身。”她把潮表翻开，指给苏砚看表格上的时刻，“我只报我能核的。潮钟读数另记，不拿它替代潮表。”\n\n她没有说七分钟。那是她的测量，也是尚待两种来源当面核验的事。她更没有说抄本。那一页会把另一条线带进来，而此刻的每双眼睛都在等一个能被写在纸上的东西。\n\n苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。\n\n陆行舟探身看了一眼，没有伸手：“表针没问题。我没换过钟芯。”\n\n“没人说你换过。”林岚说，“现在只记读数。”\n\n“那昨夜进钟楼的人呢？”陆行舟脱口而出，随即闭了嘴。\n\n岑寂把手从公文上移开。他没有否认，只说：“昨夜我取公文。钟没有被改动。”\n\n林岚看着他的手。纸上只有读数，没有人名。她也没有证据把这句话接成一条指控。苏砚将记录折回去，没问陆行舟，也没要求任何人交出工具。\n\n“交接公文不能代替账页核验。”苏砚说，“若真有账页，要核年月、页码、签章。只凭一页不能定罪。”\n\n“我知道。”何芷说。\n\n她把药箱提到膝边，拇指沿着铅封摸了一圈。铅皮没有裂痕。动作停住时，她望向林岚：“这份单子写的药，是诊所缺的。再耽误，保存时限就少一刻。”\n\n林岚看见她指节被雨水浸得发白。她没有追问药箱，也没问那句“我知道”指的是什么。何芷有自己的边界。她也有。\n\n20:14，苏砚拿出印章。他先按住通行证的边角，确认出港人、船名和货物都在纸上。队长印落下，红色印痕在潮湿处稍稍晕开。他把纸递给何芷。\n\n“药单与药箱由你负责。你确认后再盖。”\n\n何芷接过纸，逐项看完。没有添上账页，也没有替任何人解释。她从衣袋里取出医师印，印面朝下，在另一格按实。双印相邻，界线分明。\n\n岑寂伸手要收公文，何芷却先把通行证递给苏砚。队长将它收入防水套里，才把公文还给文书。“账页若要交接，另立收据。今晚不搜药箱，也不以猜测扣人。”\n\n“我没有请求搜查。”岑寂说。\n\n“那就按你说的程序办。”苏砚答。\n\n林岚看了看自己的记录。潮表、怀表、钟面读数都在。她的抄本仍贴着衣襟，纸边硌着肋骨。那上面的字，今天还不该拿出来。她不愿让一份未核过年月与签章的旧纸，压过眼前的药单。\n\n20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”\n\n何芷把药箱抱紧些，没立刻交过去：“上船前我自己看它落位。”\n\n“行。”叶澄说，“你盯货，我盯水。”\n\n苏砚问林岚：“按你的记录，现在能走吗？”\n\n她望见渡口外的雾。岸灯只照出近处一片湿白，水道看不见尽头。时间并不等于安全，封桥也不等于水路封闭。她能确认的是两种时源的读数，能确认的还有叶澄没有打算冒险走浅滩。她不能替海面作保证。\n\n“可以启航。”林岚说，“照正规航道。记录带上，到了诊所再核一次。”\n\n苏砚点头。“决定记在通行证副联：双印齐备，准许启航，路线不变。”\n\n笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。\n",
+          "style:memory": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。"
+        }
+      }
+    ],
+    "reviewSubmission": {
+      "report": {
+        "issues": [
+          {
+            "sourceKey": "chapter:chapter-002.md#c00028",
+            "affectedResourceRefs": [
+              "chapter:chapter-002.md"
+            ],
+            "category": "viewpoint/continuity",
+            "severity": "suspicion",
+            "contradiction": "林岚称“我手里有潮表和怀表”，随后苏砚取出自己的怀表供她核验，和第一章明确怀表仍在林岚袖口的描写不一致；本章又将怀表归于苏砚，所有权或表的指代不清。",
+            "evidence": [
+              {
+                "resourceRef": "chapter:chapter-001.md",
+                "location": "L3",
+                "quote": "20:05，六人聚在旧渡口。林岚把潮表压在木箱边，机械怀表还在她袖口。她确认潮钟慢了七分钟，却未开口。",
+                "quoteOffset": 20
+              },
+              {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L31",
+                "quote": "“我手里有潮表和怀表。”她说。",
+                "quoteOffset": 2036
+              },
+              {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L45",
+                "quote": "苏砚从腰袋里取出机械怀表。林岚核了表针，又照潮表核下一个时刻。两种读数相合。她把数值报给苏砚，让他写在通行证背面；潮钟的读数则单独列在旁边，标明是钟面所示。笔尖刮过湿纸，留下的字略有洇开。",
+                "quoteOffset": 2905
+              }
+            ],
+            "issueId": "content:94897b5a49:b05a5452c440",
+            "status": "open",
+            "resolution": null
+          },
+          {
+            "sourceKey": "chapter:chapter-002.md#c00049",
+            "affectedResourceRefs": [
+              "chapter:chapter-002.md"
+            ],
+            "category": "timeline",
+            "severity": "suspicion",
+            "contradiction": "本章20:18已开始解缆准备，20:20启航。设定称20:30低潮始；叶澄称“四十分钟，不会少一分”与不可缩短航程一致，但此前称“低潮半小时后起”若以20:05为当前时刻则对应20:35，和设定的20:30有约五分钟差异。对话可能是估算或指向说话时刻，文本未明确基准，不能据此断定时间线错误。",
+            "evidence": [
+              {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "20:05。",
+                "quoteOffset": 20
+              },
+              {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L17",
+                "quote": "“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”",
+                "quoteOffset": 807
+              },
+              {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L79",
+                "quote": "20:18，叶澄站起来，向船上打了个手势。船员没有松开缆绳，只把绳圈从桩上理顺。她朝何芷伸手：“药箱稳放舱中。走正规水道，不抄碎石滩。四十分钟，不会少一分。”",
+                "quoteOffset": 5266
+              },
+              {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L93",
+                "quote": "笔尖写下最后一行。林岚看着墨迹收住，才把潮表合起。何芷仍守着药箱，叶澄握住缆绳，苏砚收好双印通行证。20:20，缆绳从桩上解开。船头转向雾里的正规水道。",
+                "quoteOffset": 6176
+              },
+              {
+                "resourceRef": "world:lore",
+                "location": "L6",
+                "quote": "低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。",
+                "quoteOffset": 480
+              }
+            ],
+            "issueId": "content:6fcc12f355:09914d99ee77",
+            "status": "open",
+            "resolution": null
+          },
+          {
+            "sourceKey": "chapter:chapter-002.md#c00018",
+            "affectedResourceRefs": [
+              "chapter:chapter-002.md"
+            ],
+            "category": "viewpoint",
+            "severity": "preference",
+            "contradiction": "“她从第一章就听见了”作为林岚对既往信息的回想可以成立；但紧接着“任何人都看不出里面另有东西”是全知式确定判断，而非她当下可直接观察到的事实。此处与林岚有限视角存在轻微越界嫌疑。",
+            "evidence": [
+              {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L25",
+                "quote": "林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。",
+                "quoteOffset": 1487
+              },
+              {
+                "resourceRef": "style:memory",
+                "location": "L1",
+                "quote": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。",
+                "quoteOffset": 0
+              },
+              {
+                "resourceRef": "world:lore",
+                "location": "L13",
+                "quote": "药箱铅封完整，开启外箱会破坏铅封；暗格可在保持铅封时滑出，但外人看不出位置。冷藏药离开冰柜后只能保存六十分钟。",
+                "quoteOffset": 1083
+              }
+            ],
+            "issueId": "content:6fcc12f355:c066ef1aac1b",
+            "status": "open",
+            "resolution": null
+          },
+          {
+            "sourceKey": "chapter:chapter-002.md#c00013",
+            "affectedResourceRefs": [
+              "chapter:chapter-002.md"
+            ],
+            "category": "viewpoint/style",
+            "severity": "preference",
+            "contradiction": "“声音温和，句子却没有余地”对苏砚话语的概括是林岚可听见的语气与措辞判断，不构成明确内心披露；但“句子却没有余地”略偏作者评述，可考虑更紧贴林岚的现场感受。",
+            "evidence": [
+              {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L13",
+                "quote": "“完整。”何芷回答，“冷藏药离柜以后只有一小时。要是还要核第二遍，请先说要核什么。”",
+                "quoteOffset": 587
+              },
+              {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L15",
+                "quote": "声音温和，句子却没有余地。苏砚松开药单，转向叶澄：“航程？”",
+                "quoteOffset": 715
+              },
+              {
+                "resourceRef": "style:memory",
+                "location": "L1",
+                "quote": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。",
+                "quoteOffset": 0
+              }
+            ],
+            "issueId": "content:6fcc12f355:2350970152e5",
+            "status": "open",
+            "resolution": null
+          }
+        ],
+        "resolutions": [],
+        "reviews": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "aspects": [
+              "timeline",
+              "viewpoint",
+              "character",
+              "world",
+              "style",
+              "format"
+            ],
+            "conclusion": "发现一处怀表归属/连续性疑点、一处潮汐时间表述的基准疑点，以及两处轻微有限视角或措辞风险。双印流程、药物保存时限的推进、账页信息边界、启航时间与航程设定总体相容；未见确定的强矛盾。",
+            "limitations": [
+              "仅依据提供的sources.lines及资料审查，未检索其他内容。",
+              "未因文本未逐项交代耗时就推断动作无法完成；潮汐对话基准不明确，故列为疑点而非确定矛盾。",
+              "此结论不证明全文无错。"
+            ]
+          }
+        ],
+        "coveredResourceRefs": [
+          "chapter:chapter-002.md"
+        ]
+      },
+      "coverageHashes": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2"
+        },
+        {
+          "resourceRef": "chapter:chapter-001.md",
+          "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+        },
+        {
+          "resourceRef": "outline:master",
+          "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+        },
+        {
+          "resourceRef": "style:memory",
+          "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+        },
+        {
+          "resourceRef": "world:lore",
+          "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+        },
+        {
+          "resourceRef": "character:lin",
+          "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+        }
+      ],
+      "itemId": "29214411084060c5c0ba496e84adf51038335c965e5cb86aee5745ad247d4d9f",
+      "origin": "host_readonly_analysis",
+      "protocolVersion": 3
+    },
+    "narrativeReview": {
+      "status": "completed",
+      "key": "29214411084060c5c0ba496e84adf51038335c965e5cb86aee5745ad247d4d9f",
+      "readOnly": true,
+      "protocolVersion": 3,
+      "threadId": "01a150f2-649d-7c51-b8ee-b90069e9a5de",
+      "turnId": "01a150f2-64d4-7373-a146-825fe6db5fae",
+      "modelId": "gpt-6-luna"
+    },
+    "requestText": "审校当前章节的人物、世界观、时间和林岚第三人称有限视角一致性。读取实际角色资料、世界观、文风、总纲和前章，提交有原文依据的自查分析和问题报告；这里只检查，不修改任何正文或资料。",
+    "taskRequestText": "审校当前章节的人物、世界观、时间和林岚第三人称有限视角一致性。读取实际角色资料、世界观、文风、总纲和前章，提交有原文依据的自查分析和问题报告；这里只检查，不修改任何正文或资料。",
+    "text": "已读取当前章、前章、林岚角色资料、总纲、文风与世界设定；正文和资料均未修改。自查结论：章节时段、渡口场景、双印程序及启航决定总体符合总纲与设定，林岚的谨慎、重证据倾向也基本连贯。独立只读审查已完成，依据原文确认无必修阻断项，并报告以下疑点与偏好：\n\n- **待核实（人物／连续性）**：前章写“机械怀表还在她袖口”，本章林岚称“我手里有潮表和怀表”，随后却由苏砚“从腰袋里取出机械怀表”。怀表归属或指代不清。\n- **待核实（时间）**：设定低潮始于20:30；本章20:05时叶澄说“低潮半小时后起”，基准时刻未明，若指当下则约为20:35。审查将此列为疑点，未据此断定时间线错误。20:20启航及正规水道四十分钟的安排与设定相容。\n- **视角偏好**：“任何人都看不出里面另有东西”是全称判断，略超出林岚当下可直接观察的范围；设定虽说明外人看不出暗格位置，改成更贴近她所见会更稳妥。\n- **文风偏好**：“声音温和，句子却没有余地”属于对话语气的现场判断，不构成明确的视角越界；但略带作者评述感。\n\n以上意见针对已读取的冻结版本；审查说明仅依据指定资料，不代表全文无错。",
+    "memoryBaselines": {
+      "character-memory:cen": {
+        "schemaVersion": 1,
+        "characterId": "cen",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "cen-initial",
+            "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "cen-goal",
+            "summary": "阻止旧账公开但不伤及病人"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:he": {
+        "schemaVersion": 1,
+        "characterId": "he",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "he-initial",
+            "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "he-goal",
+            "summary": "把冷藏药送到灯塔诊所"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lin": {
+        "schemaVersion": 1,
+        "characterId": "lin",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lin-initial",
+            "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lin-goal",
+            "summary": "查出潮钟误差，保护弟弟"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lu": {
+        "schemaVersion": 1,
+        "characterId": "lu",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lu-initial",
+            "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lu-goal",
+            "summary": "修好潮钟并洗清偷芯嫌疑"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:su": {
+        "schemaVersion": 1,
+        "characterId": "su",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "su-initial",
+            "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "su-goal",
+            "summary": "在封桥前合法完成交接"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:ye": {
+        "schemaVersion": 1,
+        "characterId": "ye",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "ye-initial",
+            "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "ye-goal",
+            "summary": "保住执照与船员"
+          }
+        ],
+        "privateMisbeliefs": []
+      }
+    }
+  },
+  {
+    "runId": "run-f42a9bab-b8b5-4176-9515-483bb7c23994",
+    "conversationId": "thread-mvecj73x-3ysfhv",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "error": null,
+    "taskConstraints": {
+      "operation": "review",
+      "targetResourceRefs": [
+        "chapter:chapter-003.md"
+      ],
+      "requiredWriteResourceRefs": [],
+      "memoryUpdateRequired": false,
+      "memoryScopeBound": false,
+      "memoryParticipantCount": null,
+      "participantCharacterRefs": [
+        "character:cen",
+        "character:he",
+        "character:lin",
+        "character:lu",
+        "character:su",
+        "character:ye"
+      ],
+      "participantScopeFixed": true,
+      "requiredReadResourceRefs": [
+        "character:cen",
+        "character:he",
+        "character:lin",
+        "character:lu",
+        "character:su",
+        "character:ye",
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye",
+        "chapter:chapter-001.md",
+        "chapter:chapter-002.md",
+        "chapter:chapter-003.md",
+        "world:lore",
+        "world:places",
+        "timeline:all",
+        "outline:master",
+        "outline:hierarchy",
+        "novel:meta"
+      ],
+      "intentBinding": {
+        "version": 2,
+        "status": "bound",
+        "modelId": "gpt-6-luna",
+        "participantSelection": "all",
+        "participantRequestQuote": "读取六位角色卡与各自原始记忆、前两章及相关世界设定，",
+        "perspectiveRequestQuote": "审校当前章节的人物、世界观、时间和何芷第三人称有限视角一致性。",
+        "reviewAspects": [
+          "timeline",
+          "viewpoint",
+          "character",
+          "world"
+        ]
+      },
+      "chapterWritePolicy": "any",
+      "resourceWritePolicy": "any",
+      "initialChapterResourceRefs": [],
+      "writeScopeBound": false,
+      "atomicMemoryWithChapter": false,
+      "preserveOriginalMemories": false,
+      "wordCountScope": "target_resources",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": null,
+      "maxBodyCjk": null,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "narrativeAuditRequired": true,
+      "narrativePerspective": {
+        "mode": "limited",
+        "focusCharacterRef": "character:he"
+      },
+      "repairRequired": false,
+      "reviewScope": "target_resources",
+      "reviewTargetResourceRefs": [
+        "chapter:chapter-003.md"
+      ],
+      "reviewSourceKinds": [
+        "character",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "review",
+        "targetResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "requiredWriteResourceRefs": [],
+        "memoryUpdateRequired": false,
+        "memoryScopeBound": false,
+        "memoryParticipantCount": null,
+        "participantCharacterRefs": [
+          "character:cen",
+          "character:he",
+          "character:lin",
+          "character:lu",
+          "character:su",
+          "character:ye"
+        ],
+        "participantScopeFixed": true,
+        "requiredReadResourceRefs": [
+          "character:cen",
+          "character:he",
+          "character:lin",
+          "character:lu",
+          "character:su",
+          "character:ye",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye",
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md",
+          "chapter:chapter-003.md",
+          "world:lore",
+          "world:places",
+          "timeline:all",
+          "outline:master",
+          "outline:hierarchy",
+          "novel:meta"
+        ],
+        "intentBinding": {
+          "version": 2,
+          "status": "bound",
+          "modelId": "gpt-6-luna",
+          "participantSelection": "all",
+          "participantRequestQuote": "读取六位角色卡与各自原始记忆、前两章及相关世界设定，",
+          "perspectiveRequestQuote": "审校当前章节的人物、世界观、时间和何芷第三人称有限视角一致性。",
+          "reviewAspects": [
+            "timeline",
+            "viewpoint",
+            "character",
+            "world"
+          ]
+        },
+        "chapterWritePolicy": "any",
+        "resourceWritePolicy": "any",
+        "initialChapterResourceRefs": [],
+        "writeScopeBound": false,
+        "atomicMemoryWithChapter": false,
+        "preserveOriginalMemories": false,
+        "wordCountScope": "target_resources",
+        "wordCountResourceRefs": [],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": null,
+        "maxBodyCjk": null,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "narrativeAuditRequired": true,
+        "narrativePerspective": {
+          "mode": "limited",
+          "focusCharacterRef": "character:he"
+        },
+        "repairRequired": false,
+        "reviewScope": "target_resources",
+        "reviewTargetResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "reviewSourceKinds": [
+          "character",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "no_changes",
+        "committedCount": 0
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "target_resources",
+        "targetResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1502,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-003.md",
+            "hash": "200162ff6c3e66890686b08b16840e8ad31f97f03d95ceb731159f118e067fb3"
+          }
+        ],
+        "currentSavedResourceRefs": [],
+        "observedReadResourceRefs": [
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md",
+          "chapter:chapter-003.md",
+          "world:lore",
+          "world:places",
+          "timeline:all",
+          "outline:master",
+          "outline:hierarchy",
+          "novel:meta",
+          "character:cen",
+          "character-memory:cen",
+          "character:he",
+          "character-memory:he",
+          "character:lin",
+          "character-memory:lin",
+          "character:lu",
+          "character-memory:lu",
+          "character:su",
+          "character-memory:su",
+          "character:ye",
+          "character-memory:ye"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-8126838a-0792-4eb9-99ac-20fe52df9cea",
+          "attemptId": "attempt-eca2dc60-5c3e-421b-80ca-be5ceb9fbcf8",
+          "runId": "run-f42a9bab-b8b5-4176-9515-483bb7c23994",
+          "reportSha256": "5caea9c3c5487521a6b4c0311415f909c18ffa346644341afe2e171d82e546ba",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-003.md"
+          ],
+          "coverageObserved": [
+            "chapter:chapter-001.md",
+            "chapter:chapter-002.md",
+            "chapter:chapter-003.md",
+            "world:lore",
+            "world:places",
+            "timeline:all",
+            "outline:master",
+            "outline:hierarchy",
+            "novel:meta",
+            "character:cen",
+            "character-memory:cen",
+            "character:he",
+            "character-memory:he",
+            "character:lin",
+            "character-memory:lin",
+            "character:lu",
+            "character-memory:lu",
+            "character:su",
+            "character-memory:su",
+            "character:ye",
+            "character-memory:ye"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-003.md",
+              "hash": "200162ff6c3e66890686b08b16840e8ad31f97f03d95ceb731159f118e067fb3"
+            },
+            {
+              "resourceRef": "chapter:chapter-001.md",
+              "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+            },
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "world:places",
+              "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+            },
+            {
+              "resourceRef": "timeline:all",
+              "hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+            },
+            {
+              "resourceRef": "outline:master",
+              "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+            },
+            {
+              "resourceRef": "outline:hierarchy",
+              "hash": "afa14801b02d4436f28503d2a4c6af9af8a42e0d462735bf239d0879134291f0"
+            },
+            {
+              "resourceRef": "novel:meta",
+              "hash": "3264d598115b439354e4a687eaef17426f6883e173c9a3f23f9c9b4541bad480"
+            },
+            {
+              "resourceRef": "character:cen",
+              "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+            },
+            {
+              "resourceRef": "character-memory:cen",
+              "hash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character-memory:he",
+              "hash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "character-memory:lin",
+              "hash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e"
+            },
+            {
+              "resourceRef": "character:lu",
+              "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+            },
+            {
+              "resourceRef": "character-memory:lu",
+              "hash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760"
+            },
+            {
+              "resourceRef": "character:su",
+              "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+            },
+            {
+              "resourceRef": "character-memory:su",
+              "hash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            },
+            {
+              "resourceRef": "character-memory:ye",
+              "hash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe"
+            }
+          ],
+          "versionCurrent": true,
+          "narrativeAudit": {
+            "status": "reported",
+            "errors": [],
+            "reviewedResourceRefs": [
+              "chapter:chapter-003.md"
+            ],
+            "requestedResourceRefs": [
+              "chapter:chapter-003.md"
+            ],
+            "aspects": [
+              "timeline",
+              "viewpoint",
+              "character",
+              "world"
+            ],
+            "limitations": [
+              "结论仅依据提供的sources.lines及列明资料；不代表证明全文无错。",
+              "资料未提供已填写的时间线条目或详细大纲，无法据此检验额外的事件顺序要求（c00493、c00498、c00502）。",
+              "章节未明确交代船员人数、靠桩系缆的具体操作耗时等细节；仅凭未逐项说明不能认定动作不可能完成。"
+            ],
+            "qualityConclusion": "model_reported",
+            "origin": "host_readonly_analysis",
+            "modelId": "gpt-6-luna"
+          },
+          "invalidatedIssueIds": [],
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "not_requested",
+          "blocking": false,
+          "actual": 1502,
+          "minimum": null,
+          "maximum": null,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": null,
+          "acceptedMaximum": null,
+          "withinTolerance": false,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "requiredReads": {
+          "expectedResourceRefs": [
+            "character:cen",
+            "character:he",
+            "character:lin",
+            "character:lu",
+            "character:su",
+            "character:ye",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye",
+            "chapter:chapter-001.md",
+            "chapter:chapter-002.md",
+            "chapter:chapter-003.md",
+            "world:lore",
+            "world:places",
+            "timeline:all",
+            "outline:master",
+            "outline:hierarchy",
+            "novel:meta"
+          ],
+          "missingResourceRefs": []
+        },
+        "writeScope": {
+          "status": "met"
+        },
+        "narrativeAudit": {
+          "status": "reported",
+          "errors": [],
+          "reviewedResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "requestedResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "aspects": [
+            "timeline",
+            "viewpoint",
+            "character",
+            "world"
+          ],
+          "limitations": [
+            "结论仅依据提供的sources.lines及列明资料；不代表证明全文无错。",
+            "资料未提供已填写的时间线条目或详细大纲，无法据此检验额外的事件顺序要求（c00493、c00498、c00502）。",
+            "章节未明确交代船员人数、靠桩系缆的具体操作耗时等细节；仅凭未逐项说明不能认定动作不可能完成。"
+          ],
+          "qualityConclusion": "model_reported",
+          "origin": "host_readonly_analysis",
+          "modelId": "gpt-6-luna"
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": [],
+          "invalidIssueIds": []
+        },
+        "semanticReview": {
+          "status": "reported_clear",
+          "qualityConclusion": "model_reported",
+          "repairRequired": false,
+          "blockingIssues": [],
+          "reportedIssues": []
+        }
+      }
+    },
+    "savedResources": [],
+    "reviewFindings": [],
+    "reviewSubmission": {
+      "report": {
+        "issues": [],
+        "resolutions": [],
+        "reviews": [
+          {
+            "resourceRef": "chapter:chapter-003.md",
+            "aspects": [
+              "timeline",
+              "viewpoint",
+              "character",
+              "world"
+            ],
+            "conclusion": "未发现有充分依据可确认的时间、视角、人物或设定矛盾。章节紧接20:20启航，20:24出现异响、20:28靠近北侧系缆桩，尚未抵达诊所；与章节衔接、四十分钟航程及低潮时刻相容（c00052、c00060、c00079、c00083、c00506、c00508）。焦点为何芷；对其他人物意图的表述保持在可观察行动、言语及何芷的猜测范围内，例如她判断陆行舟的动机仍是不确定的（c00059、c00071）。账页暗格并未被何芷以外的人获知或被叙述揭露；她的担忧与既有保密事实相符（c00071、c00114、c00265、c00266）。船底原因仍未确定，人物明确拒绝妄断（c00063、c00085）。",
+            "limitations": [
+              "结论仅依据提供的sources.lines及列明资料；不代表证明全文无错。",
+              "资料未提供已填写的时间线条目或详细大纲，无法据此检验额外的事件顺序要求（c00493、c00498、c00502）。",
+              "章节未明确交代船员人数、靠桩系缆的具体操作耗时等细节；仅凭未逐项说明不能认定动作不可能完成。"
+            ]
+          }
+        ],
+        "coveredResourceRefs": [
+          "chapter:chapter-003.md"
+        ]
+      },
+      "coverageHashes": [
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "hash": "200162ff6c3e66890686b08b16840e8ad31f97f03d95ceb731159f118e067fb3"
+        },
+        {
+          "resourceRef": "chapter:chapter-001.md",
+          "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+        },
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2"
+        },
+        {
+          "resourceRef": "world:lore",
+          "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+        },
+        {
+          "resourceRef": "world:places",
+          "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+        },
+        {
+          "resourceRef": "timeline:all",
+          "hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        {
+          "resourceRef": "outline:master",
+          "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+        },
+        {
+          "resourceRef": "outline:hierarchy",
+          "hash": "afa14801b02d4436f28503d2a4c6af9af8a42e0d462735bf239d0879134291f0"
+        },
+        {
+          "resourceRef": "novel:meta",
+          "hash": "3264d598115b439354e4a687eaef17426f6883e173c9a3f23f9c9b4541bad480"
+        },
+        {
+          "resourceRef": "character:cen",
+          "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+        },
+        {
+          "resourceRef": "character-memory:cen",
+          "hash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b"
+        },
+        {
+          "resourceRef": "character:he",
+          "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+        },
+        {
+          "resourceRef": "character-memory:he",
+          "hash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff"
+        },
+        {
+          "resourceRef": "character:lin",
+          "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+        },
+        {
+          "resourceRef": "character-memory:lin",
+          "hash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e"
+        },
+        {
+          "resourceRef": "character:lu",
+          "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+        },
+        {
+          "resourceRef": "character-memory:lu",
+          "hash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760"
+        },
+        {
+          "resourceRef": "character:su",
+          "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+        },
+        {
+          "resourceRef": "character-memory:su",
+          "hash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078"
+        },
+        {
+          "resourceRef": "character:ye",
+          "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+        },
+        {
+          "resourceRef": "character-memory:ye",
+          "hash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe"
+        }
+      ],
+      "itemId": "599d142b6e9b9ff3281e58207a9b28b2bc2259651b43ddaf3cc07f4196f6eaf4",
+      "origin": "host_readonly_analysis",
+      "protocolVersion": 3
+    },
+    "narrativeReview": {
+      "status": "completed",
+      "key": "599d142b6e9b9ff3281e58207a9b28b2bc2259651b43ddaf3cc07f4196f6eaf4",
+      "readOnly": true,
+      "protocolVersion": 3,
+      "threadId": "01a150f2-e717-7292-8169-c9f783fe21f8",
+      "turnId": "01a150f2-e757-7d23-8eeb-f87cae43fdc7",
+      "modelId": "gpt-6-luna"
+    },
+    "requestText": "审校当前章节的人物、世界观、时间和何芷第三人称有限视角一致性。读取六位角色卡与各自原始记忆、前两章及相关世界设定，提交实际有依据的分析和问题报告；这里只检查，不修改任何正文或资料。",
+    "taskRequestText": "审校当前章节的人物、世界观、时间和何芷第三人称有限视角一致性。读取六位角色卡与各自原始记忆、前两章及相关世界设定，提交实际有依据的分析和问题报告；这里只检查，不修改任何正文或资料。",
+    "text": "已读取并覆盖六位角色卡及各自原始记忆、前三章、世界设定、地点、时间线、总纲与章节层级；未修改正文或资料。\n\n**审校结论：**独立只读审查未报告问题，语义审查结果为 `reported_clear`。但这不等于证明全文无错。审查资料没有填写时间线条目或详细大纲，因此无法核对额外事件顺序；船员人数和靠桩操作耗时也未明示，不能仅凭省略判定动作不可能完成。\n\n**值得留意的两点：**\n- 用户要求何芷第三人称有限视角。章中“她原以为他只想把自己摘干净”直接进入何芷的推断，属于视角内信息；但同段“至少现在，他在看船，不只看别人脸色”仍是她的观察与判断，不能据此认定叙述越界。叶澄对水道风险的判断也可由何芷听见其言行获知。\n- 药箱于20:20离开渡口，若按既定四十分钟水路抵达诊所，约为21:00，超过离开冰柜后的六十分钟保存时限。第三章尚未写到抵达，且船已停靠检查；这是后续情节需留意的时限约束，当前章节本身未构成明确冲突。",
+    "memoryBaselines": {
+      "character-memory:cen": {
+        "schemaVersion": 1,
+        "characterId": "cen",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "cen-initial",
+            "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "cen-goal",
+            "summary": "阻止旧账公开但不伤及病人"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:he": {
+        "schemaVersion": 1,
+        "characterId": "he",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "he-initial",
+            "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "he-goal",
+            "summary": "把冷藏药送到灯塔诊所"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lin": {
+        "schemaVersion": 1,
+        "characterId": "lin",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lin-initial",
+            "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lin-goal",
+            "summary": "查出潮钟误差，保护弟弟"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lu": {
+        "schemaVersion": 1,
+        "characterId": "lu",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lu-initial",
+            "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lu-goal",
+            "summary": "修好潮钟并洗清偷芯嫌疑"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:su": {
+        "schemaVersion": 1,
+        "characterId": "su",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "su-initial",
+            "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "su-goal",
+            "summary": "在封桥前合法完成交接"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:ye": {
+        "schemaVersion": 1,
+        "characterId": "ye",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "ye-initial",
+            "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "ye-goal",
+            "summary": "保住执照与船员"
+          }
+        ],
+        "privateMisbeliefs": []
+      }
+    }
+  }
+]

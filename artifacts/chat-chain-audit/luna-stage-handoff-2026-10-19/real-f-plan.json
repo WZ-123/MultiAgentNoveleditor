@@ -1,0 +1,13 @@
+{
+  "samples": [
+    "format-accept"
+  ],
+  "sampleInputsUnchangedFrom": "real-e/original-commands.json, first seed and acceptance sample",
+  "reason": "native commit executor cannot see host transaction receipt; parent presents verified formal readback receipt and retains model output in execution history",
+  "scope": "only the positive presentation branch changed; E reject/conflict/stop remain separately retained",
+  "automaticRetries": 0,
+  "eachSamplePreparationLimit": 1,
+  "eachSampleCommitTurnLimit": 1,
+  "model": "gpt-6-luna",
+  "effort": "medium"
+}

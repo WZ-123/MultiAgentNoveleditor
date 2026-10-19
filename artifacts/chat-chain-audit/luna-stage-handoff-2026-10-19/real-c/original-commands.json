@@ -1,0 +1,503 @@
+[
+  {
+    "id": "seed-accept",
+    "action": "seedFormatRegression",
+    "file": "chapter-002.md"
+  },
+  {
+    "id": "format-accept",
+    "action": "turn",
+    "text": "阶段交接格式验证：只让林岚参与，读取 chapter:chapter-002.md 和林岚的主观记忆。仅删除第二章正文中四处字面字符“\\n+”，其余正文逐字保留，正文仍须1500—2000字。将“已核对潮表”作为本轮明确要求的新增事实追加到林岚记忆，正文和记忆在同一批次交我确认，保留原始记忆。",
+    "timeoutMs": 300000,
+    "allowedWriteRefs": [
+      "chapter:chapter-002.md",
+      "character-memory:lin"
+    ],
+    "preparationHandoff": {
+      "text": "交付本次精确修改候选，不执行工具，不声称已保存。\n阶段交接格式验证：只让林岚参与，读取 chapter:chapter-002.md 和林岚的主观记忆。仅删除第二章正文中四处字面字符“\\n+”，其余正文逐字保留，正文仍须1500—2000字。将“已核对潮表”作为本轮明确要求的新增事实追加到林岚记忆，正文和记忆在同一批次交我确认，保留原始记忆。",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "chapter:chapter-002.md"
+                      ]
+                    },
+                    "replacements": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "oldText": {
+                            "type": "string"
+                          },
+                          "newText": {
+                            "type": "string"
+                          },
+                          "all": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "oldText",
+                          "newText",
+                          "all"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "replacements"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "character-memory:lin"
+                      ]
+                    },
+                    "memoryAppend": {
+                      "type": "object",
+                      "properties": {
+                        "factsKnown": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "summary"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "lastUpdatedChapterRef": {
+                          "type": "string",
+                          "enum": [
+                            "chapter:chapter-002.md"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "factsKnown",
+                        "lastUpdatedChapterRef"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "memoryAppend"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "id": "new-decline",
+    "action": "newConversation"
+  },
+  {
+    "id": "seed-decline",
+    "action": "seedFormatRegression",
+    "file": "chapter-002.md"
+  },
+  {
+    "id": "format-decline",
+    "action": "turn",
+    "text": "阶段交接格式验证：只让林岚参与，读取 chapter:chapter-002.md 和林岚的主观记忆。仅删除第二章正文中四处字面字符“\\n+”，其余正文逐字保留，正文仍须1500—2000字。将“已核对潮表”作为本轮明确要求的新增事实追加到林岚记忆，正文和记忆在同一批次交我确认，保留原始记忆。",
+    "timeoutMs": 300000,
+    "allowedWriteRefs": [
+      "chapter:chapter-002.md",
+      "character-memory:lin"
+    ],
+    "preparationHandoff": {
+      "text": "交付本次精确修改候选，不执行工具，不声称已保存。\n阶段交接格式验证：只让林岚参与，读取 chapter:chapter-002.md 和林岚的主观记忆。仅删除第二章正文中四处字面字符“\\n+”，其余正文逐字保留，正文仍须1500—2000字。将“已核对潮表”作为本轮明确要求的新增事实追加到林岚记忆，正文和记忆在同一批次交我确认，保留原始记忆。",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "chapter:chapter-002.md"
+                      ]
+                    },
+                    "replacements": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "oldText": {
+                            "type": "string"
+                          },
+                          "newText": {
+                            "type": "string"
+                          },
+                          "all": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "oldText",
+                          "newText",
+                          "all"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "replacements"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "character-memory:lin"
+                      ]
+                    },
+                    "memoryAppend": {
+                      "type": "object",
+                      "properties": {
+                        "factsKnown": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "summary"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "lastUpdatedChapterRef": {
+                          "type": "string",
+                          "enum": [
+                            "chapter:chapter-002.md"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "factsKnown",
+                        "lastUpdatedChapterRef"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "memoryAppend"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "decline": true
+  },
+  {
+    "id": "new-conflict",
+    "action": "newConversation"
+  },
+  {
+    "id": "format-conflict",
+    "action": "turn",
+    "text": "阶段交接格式验证：只让林岚参与，读取 chapter:chapter-002.md 和林岚的主观记忆。仅删除第二章正文中四处字面字符“\\n+”，其余正文逐字保留，正文仍须1500—2000字。将“已核对潮表”作为本轮明确要求的新增事实追加到林岚记忆，正文和记忆在同一批次交我确认，保留原始记忆。",
+    "timeoutMs": 300000,
+    "allowedWriteRefs": [
+      "chapter:chapter-002.md",
+      "character-memory:lin"
+    ],
+    "preparationHandoff": {
+      "text": "交付本次精确修改候选，不执行工具，不声称已保存。\n阶段交接格式验证：只让林岚参与，读取 chapter:chapter-002.md 和林岚的主观记忆。仅删除第二章正文中四处字面字符“\\n+”，其余正文逐字保留，正文仍须1500—2000字。将“已核对潮表”作为本轮明确要求的新增事实追加到林岚记忆，正文和记忆在同一批次交我确认，保留原始记忆。",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "chapter:chapter-002.md"
+                      ]
+                    },
+                    "replacements": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "oldText": {
+                            "type": "string"
+                          },
+                          "newText": {
+                            "type": "string"
+                          },
+                          "all": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "oldText",
+                          "newText",
+                          "all"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "replacements"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "character-memory:lin"
+                      ]
+                    },
+                    "memoryAppend": {
+                      "type": "object",
+                      "properties": {
+                        "factsKnown": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "summary"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "lastUpdatedChapterRef": {
+                          "type": "string",
+                          "enum": [
+                            "chapter:chapter-002.md"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "factsKnown",
+                        "lastUpdatedChapterRef"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "memoryAppend"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "conflictAfterPreparation": true
+  },
+  {
+    "id": "new-stop",
+    "action": "newConversation"
+  },
+  {
+    "id": "format-stop",
+    "action": "turn",
+    "text": "阶段交接格式验证：只让林岚参与，读取 chapter:chapter-002.md 和林岚的主观记忆。仅删除第二章正文中四处字面字符“\\n+”，其余正文逐字保留，正文仍须1500—2000字。将“已核对潮表”作为本轮明确要求的新增事实追加到林岚记忆，正文和记忆在同一批次交我确认，保留原始记忆。",
+    "timeoutMs": 300000,
+    "allowedWriteRefs": [
+      "chapter:chapter-002.md",
+      "character-memory:lin"
+    ],
+    "preparationHandoff": {
+      "text": "交付本次精确修改候选，不执行工具，不声称已保存。\n阶段交接格式验证：只让林岚参与，读取 chapter:chapter-002.md 和林岚的主观记忆。仅删除第二章正文中四处字面字符“\\n+”，其余正文逐字保留，正文仍须1500—2000字。将“已核对潮表”作为本轮明确要求的新增事实追加到林岚记忆，正文和记忆在同一批次交我确认，保留原始记忆。",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "chapter:chapter-002.md"
+                      ]
+                    },
+                    "replacements": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "oldText": {
+                            "type": "string"
+                          },
+                          "newText": {
+                            "type": "string"
+                          },
+                          "all": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "oldText",
+                          "newText",
+                          "all"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "replacements"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "resourceRef": {
+                      "type": "string",
+                      "enum": [
+                        "character-memory:lin"
+                      ]
+                    },
+                    "memoryAppend": {
+                      "type": "object",
+                      "properties": {
+                        "factsKnown": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "summary"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "lastUpdatedChapterRef": {
+                          "type": "string",
+                          "enum": [
+                            "chapter:chapter-002.md"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "factsKnown",
+                        "lastUpdatedChapterRef"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "resourceRef",
+                    "memoryAppend"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "stopPreparation": true
+  }
+]

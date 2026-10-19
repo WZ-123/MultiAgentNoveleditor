@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "characterId": "cen",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "cen-initial",
+      "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "cen-ch3",
+      "summary": "在船上听见何芷拒绝说明账页，自己提出可先写未核实；到诊所交接时药箱完好，账页未见，他不知道藏处",
+      "sourceChapterRef": "chapter:chapter-003.md"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "cen-ch3",
+      "summary": "被何芷追问是否要收回账页时感到受阻，仍以手续措辞压住急切；药箱顺利交接让他暂松一口气"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "cen-ch3",
+      "summary": "何芷不信他的委托但愿意完成药物交接；他与苏砚仍隔着程序与公文相互试探"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "cen-goal",
+      "summary": "阻止旧账公开但不伤及病人"
+    },
+    {
+      "id": "cen-next-ch3",
+      "summary": "明早向议事厅说明时先写账页未核实，继续避免旧账公开并不妨碍病人用药"
+    }
+  ],
+  "privateMisbeliefs": []
+}

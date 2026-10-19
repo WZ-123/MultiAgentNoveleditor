@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "su",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "su-initial",
+      "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "船20:20启航，何芷持通行证；无灯艇让开，断绳位置已记录；药箱未拆封。",
+      "id": "c2d7160e-c51d-4765-a644-1e5fb73140cb"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "担忧航道安全和合法交接，不愿因猜测滥权。",
+      "id": "4019e4c1-18c5-4dbe-8490-c4715ef56fc0"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "更愿意让陆行舟留在现场观察；仍未取得林岚未说出的钟差信息。",
+      "id": "a4c50b2f-3040-4bae-9854-f88a62de9e09"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "su-goal",
+      "summary": "在封桥前合法完成交接"
+    },
+    {
+      "summary": "抵灯塔先完成药物交接，后查断绳并决定是否立案。",
+      "id": "e26e4ef4-29e0-49af-8f65-10ed5c1eb209"
+    }
+  ],
+  "privateMisbeliefs": []
+}

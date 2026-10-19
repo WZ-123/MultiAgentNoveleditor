@@ -1,0 +1,38 @@
+{
+  "runtime": "0.163.0-alpha.10.2",
+  "source": "local codex app-server generate-json-schema --experimental",
+  "turnStartProperties": [
+    "additionalContext",
+    "approvalPolicy",
+    "approvalsReviewer",
+    "clientUserMessageId",
+    "collaborationMode",
+    "cwd",
+    "cyberAccessProgram",
+    "disabledPluginIds",
+    "effort",
+    "environments",
+    "input",
+    "model",
+    "multiAgentMode",
+    "outputSchema",
+    "parentTurnId",
+    "permissions",
+    "personality",
+    "responsesapiClientMetadata",
+    "rootTurnId",
+    "runtimeWorkspaceRoots",
+    "sandboxPolicy",
+    "serviceTier",
+    "serviceTierForTurn",
+    "summary",
+    "threadId",
+    "toolOutput",
+    "turnTrigger"
+  ],
+  "toolChoiceFieldPresent": false,
+  "candidateToolMethods": [
+    "mcpServer/tool/call"
+  ],
+  "nativeCommitInThisProbe": "model-selected native apply_patch; host verifies exact candidate, uses existing native approval and mutation service; no direct host invocation of native apply_patch API is assumed"
+}

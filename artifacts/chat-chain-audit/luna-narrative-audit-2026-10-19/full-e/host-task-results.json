@@ -1,0 +1,5545 @@
+[
+  {
+    "runId": "run-e5ad5bac-83cc-420f-8563-b6d074791306",
+    "conversationId": "thread-mvea78co-x1odr7",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [],
+      "memoryUpdateRequired": true,
+      "memoryScopeBound": false,
+      "memoryParticipantCount": 6,
+      "participantCharacterRefs": [],
+      "chapterWritePolicy": "new",
+      "resourceWritePolicy": "any",
+      "initialChapterResourceRefs": [
+        "chapter:chapter-001.md",
+        "chapter:chapter-002.md"
+      ],
+      "writeScopeBound": true,
+      "atomicMemoryWithChapter": true,
+      "preserveOriginalMemories": true,
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "narrativeAuditRequired": true,
+      "narrativePerspective": null,
+      "repairRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": false,
+      "goalStatus": "incomplete",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [],
+        "memoryUpdateRequired": true,
+        "memoryScopeBound": false,
+        "memoryParticipantCount": 6,
+        "participantCharacterRefs": [],
+        "chapterWritePolicy": "new",
+        "resourceWritePolicy": "any",
+        "initialChapterResourceRefs": [
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md"
+        ],
+        "writeScopeBound": true,
+        "atomicMemoryWithChapter": true,
+        "preserveOriginalMemories": true,
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "narrativeAuditRequired": true,
+        "narrativePerspective": null,
+        "repairRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "no_changes",
+        "committedCount": 0
+      },
+      "objective": {
+        "status": "incomplete",
+        "unmet": [
+          "memory_scope_unbound",
+          "combined_memory_commit_missing",
+          "word_count_target_missing",
+          "word_count",
+          "no_current_commit",
+          "review_evidence_missing"
+        ]
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [],
+        "readableResources": 0,
+        "bodyChineseCharacterCount": 0,
+        "hashes": [],
+        "currentSavedResourceRefs": [],
+        "observedReadResourceRefs": [
+          "timeline:all",
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md",
+          "character:cen",
+          "character:he",
+          "character:lin",
+          "outline:master",
+          "character:lu",
+          "character:ye",
+          "character:su",
+          "character-memory:he",
+          "character-memory:su",
+          "world:lore",
+          "character-memory:lu",
+          "character-memory:cen",
+          "character-memory:lin",
+          "character-memory:ye",
+          "world:places",
+          "style:memory"
+        ],
+        "fullyReadResourceRefs": [],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-6dcf686c-164d-4b4b-8bee-c074b040a377",
+          "attemptId": "attempt-39ee0f96-df61-4add-a675-975629accaff",
+          "runId": "run-e5ad5bac-83cc-420f-8563-b6d074791306",
+          "reportSha256": "476f0b66b5a8dec0f4104f51d99ab79d0053a7e44c349fbdcc496ede2f44ac16",
+          "parsed": false,
+          "coverageClaimed": [],
+          "coverageObserved": [
+            "timeline:all",
+            "chapter:chapter-001.md",
+            "chapter:chapter-002.md",
+            "character:cen",
+            "character:he",
+            "character:lin",
+            "outline:master",
+            "character:lu",
+            "character:ye",
+            "character:su",
+            "character-memory:he",
+            "character-memory:su",
+            "world:lore",
+            "character-memory:lu",
+            "character-memory:cen",
+            "character-memory:lin",
+            "character-memory:ye",
+            "world:places",
+            "style:memory"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "timeline:all",
+              "hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+            },
+            {
+              "resourceRef": "chapter:chapter-001.md",
+              "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+            },
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99"
+            },
+            {
+              "resourceRef": "character:cen",
+              "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "outline:master",
+              "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+            },
+            {
+              "resourceRef": "character:lu",
+              "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            },
+            {
+              "resourceRef": "character:su",
+              "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+            },
+            {
+              "resourceRef": "character-memory:he",
+              "hash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff"
+            },
+            {
+              "resourceRef": "character-memory:su",
+              "hash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "character-memory:lu",
+              "hash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760"
+            },
+            {
+              "resourceRef": "character-memory:cen",
+              "hash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b"
+            },
+            {
+              "resourceRef": "character-memory:lin",
+              "hash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e"
+            },
+            {
+              "resourceRef": "character-memory:ye",
+              "hash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe"
+            },
+            {
+              "resourceRef": "world:places",
+              "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+            },
+            {
+              "resourceRef": "style:memory",
+              "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+            }
+          ],
+          "versionCurrent": true,
+          "narrativeAudit": null,
+          "invalidatedIssueIds": [],
+          "coverageVerified": false,
+          "evidenceVerified": false,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "below_target",
+          "blocking": false,
+          "actual": 0,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0,
+          "acceptedMinimum": 1500,
+          "acceptedMaximum": 2000,
+          "withinTolerance": false,
+          "belowBy": 1500,
+          "aboveBy": 0
+        },
+        "memoryScope": {
+          "status": "unbound",
+          "participantCharacterRefs": []
+        },
+        "combinedMemoryCommit": {
+          "status": "missing"
+        },
+        "writeScope": {
+          "status": "met"
+        },
+        "review": {
+          "status": "incomplete",
+          "expectedResourceRefs": [],
+          "missingResourceRefs": [],
+          "evidenceVerified": false,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "missing_or_invalid",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": [],
+          "invalidIssueIds": []
+        },
+        "semanticReview": {
+          "status": "unverified",
+          "qualityConclusion": "model_reported",
+          "repairRequired": true,
+          "blockingIssues": [],
+          "reportedIssues": []
+        }
+      }
+    },
+    "savedResources": [],
+    "reviewFindings": [],
+    "reviewSubmission": null,
+    "narrativeReview": null,
+    "requestText": "进入角色驱动模式，在新对话里接续第二章写下一章，1500—2000字。先读取六位角色卡、关系、各自主观记忆、前两章、世界观和总纲。由六人的欲望、顾虑和各自可知信息推动第三章，使用何芷的第三人称有限视角，让隐瞒、试探和行动产生后果；六人均参与，但只有何芷知道暗格藏处，林岚尚未公开七分钟，不得让别人凭空知道。先核对第二章最终状态和时间，遇到旧文矛盾请明确说明采用的衔接，不静默改旧章。药箱冷藏、双印、封桥只关东桥、水路四十分钟等按设定执行。完成当场决定并保存为新章节；把六人的新增已知事实、情绪、关系变化和未决意图分别写入各自记忆，与正文同一批次交我确认，保留各人原始记忆，不能把导演知道的秘密共享给全员。写后自查人物、主观信息边界、世界观和时间，给出实际检查报告。",
+    "taskRequestText": "进入角色驱动模式，在新对话里接续第二章写下一章，1500—2000字。先读取六位角色卡、关系、各自主观记忆、前两章、世界观和总纲。由六人的欲望、顾虑和各自可知信息推动第三章，使用何芷的第三人称有限视角，让隐瞒、试探和行动产生后果；六人均参与，但只有何芷知道暗格藏处，林岚尚未公开七分钟，不得让别人凭空知道。先核对第二章最终状态和时间，遇到旧文矛盾请明确说明采用的衔接，不静默改旧章。药箱冷藏、双印、封桥只关东桥、水路四十分钟等按设定执行。完成当场决定并保存为新章节；把六人的新增已知事实、情绪、关系变化和未决意图分别写入各自记忆，与正文同一批次交我确认，保留各人原始记忆，不能把导演知道的秘密共享给全员。写后自查人物、主观信息边界、世界观和时间，给出实际检查报告。",
+    "text": "当前回合因工具调用限制，尚未完成第三章及六份角色记忆的同批保存，也未进行写后审查；因此不能声称已提交。\n\n已核对的衔接依据：第二章最终状态是20:20，船刚离桩试行，药箱仍在冰柜旁且铅封完整；双印已盖，林岚留在岸上。第三章应从这一刻接续。总纲与前两章在此一致，未发现需要静默修订旧章的矛盾。可按设定让船只走正规水路，航程四十分钟；东桥21:00封闭不影响水路。何芷独知暗格位置，林岚尚未公开七分钟。",
+    "memoryBaselines": {
+      "character-memory:cen": {
+        "schemaVersion": 1,
+        "characterId": "cen",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "cen-initial",
+            "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "cen-goal",
+            "summary": "阻止旧账公开但不伤及病人"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:he": {
+        "schemaVersion": 1,
+        "characterId": "he",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "he-initial",
+            "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "he-goal",
+            "summary": "把冷藏药送到灯塔诊所"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lin": {
+        "schemaVersion": 1,
+        "characterId": "lin",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lin-initial",
+            "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lin-goal",
+            "summary": "查出潮钟误差，保护弟弟"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lu": {
+        "schemaVersion": 1,
+        "characterId": "lu",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lu-initial",
+            "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lu-goal",
+            "summary": "修好潮钟并洗清偷芯嫌疑"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:su": {
+        "schemaVersion": 1,
+        "characterId": "su",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "su-initial",
+            "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "su-goal",
+            "summary": "在封桥前合法完成交接"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:ye": {
+        "schemaVersion": 1,
+        "characterId": "ye",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "ye-initial",
+            "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "ye-goal",
+            "summary": "保住执照与船员"
+          }
+        ],
+        "privateMisbeliefs": []
+      }
+    }
+  },
+  {
+    "runId": "run-f0513711-dad3-4e12-83cc-079ff9238792",
+    "conversationId": "thread-mvea94m5-v0km05",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "edit",
+      "targetResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "requiredWriteResourceRefs": [],
+      "memoryUpdateRequired": false,
+      "memoryScopeBound": false,
+      "memoryParticipantCount": null,
+      "participantCharacterRefs": [],
+      "chapterWritePolicy": "any",
+      "resourceWritePolicy": "targets",
+      "initialChapterResourceRefs": [
+        "chapter:chapter-001.md",
+        "chapter:chapter-002.md"
+      ],
+      "writeScopeBound": true,
+      "atomicMemoryWithChapter": false,
+      "preserveOriginalMemories": false,
+      "wordCountScope": "target_resources",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": null,
+      "maxBodyCjk": null,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "narrativeAuditRequired": false,
+      "narrativePerspective": null,
+      "repairRequired": true,
+      "reviewScope": "target_resources",
+      "reviewTargetResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "reviewSourceKinds": [],
+      "reviewScopeBound": true
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "edit",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "requiredWriteResourceRefs": [],
+        "memoryUpdateRequired": false,
+        "memoryScopeBound": false,
+        "memoryParticipantCount": null,
+        "participantCharacterRefs": [],
+        "chapterWritePolicy": "any",
+        "resourceWritePolicy": "targets",
+        "initialChapterResourceRefs": [
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md"
+        ],
+        "writeScopeBound": true,
+        "atomicMemoryWithChapter": false,
+        "preserveOriginalMemories": false,
+        "wordCountScope": "target_resources",
+        "wordCountResourceRefs": [],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": null,
+        "maxBodyCjk": null,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "narrativeAuditRequired": false,
+        "narrativePerspective": null,
+        "repairRequired": true,
+        "reviewScope": "target_resources",
+        "reviewTargetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewSourceKinds": [],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "1105ee709d8f5ed0349c6c624c1c02a67ba759aca11925b598db02d455d7e3ad",
+          "afterHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+          "nativeItemId": "exec-13466ef3-4e06-41af-be3d-9c8aa14b52fd",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "mode": "replace",
+          "oldHash": "1105ee709d8f5ed0349c6c624c1c02a67ba759aca11925b598db02d455d7e3ad",
+          "newHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+          "chineseCharacterCount": 1507,
+          "bodyChineseCharacterCount": 1502
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 1
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "target_resources",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1502,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "observedReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-9d4bbd97-8d21-424c-8b2f-c9c8d6b0cd9f",
+          "attemptId": "attempt-8b1b98c3-3ae9-4f10-8ad7-ff92e7ca7608",
+          "runId": "run-f0513711-dad3-4e12-83cc-079ff9238792",
+          "reportSha256": "2cb305d057c5b58c92a69725d4d7aae0c09b45775ab168578a00d74b59121eb8",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-002.md"
+          ],
+          "coverageObserved": [
+            "chapter:chapter-002.md"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99"
+            }
+          ],
+          "versionCurrent": true,
+          "narrativeAudit": null,
+          "invalidatedIssueIds": [],
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "not_requested",
+          "blocking": false,
+          "actual": 1502,
+          "minimum": null,
+          "maximum": null,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": null,
+          "acceptedMaximum": null,
+          "withinTolerance": false,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "writeScope": {
+          "status": "met"
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": [],
+          "invalidIssueIds": []
+        },
+        "semanticReview": {
+          "status": "reported_clear",
+          "qualityConclusion": "model_reported",
+          "repairRequired": true,
+          "blockingIssues": [],
+          "reportedIssues": []
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "1105ee709d8f5ed0349c6c624c1c02a67ba759aca11925b598db02d455d7e3ad",
+        "afterHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+        "nativeItemId": "exec-13466ef3-4e06-41af-be3d-9c8aa14b52fd",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "mode": "replace",
+        "oldHash": "1105ee709d8f5ed0349c6c624c1c02a67ba759aca11925b598db02d455d7e3ad",
+        "newHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+        "chineseCharacterCount": 1507,
+        "bodyChineseCharacterCount": 1502
+      }
+    ],
+    "reviewFindings": [],
+    "reviewSubmission": {
+      "report": {
+        "coveredResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "issues": []
+      },
+      "coverageHashes": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99"
+        }
+      ],
+      "itemId": "exec-ec748cb9-f497-4390-8b05-95bb6f137789"
+    },
+    "narrativeReview": null,
+    "requestText": "修改当前章节，使用传统写作模式。清理本章四处字面的反斜杠n加号（\\n+）格式残留，只删除这四处连续字符，其他正文、标点、真实换行一律不改；不要删除章节。保存修改交我确认，读回自查，报告实际保存结果。",
+    "taskRequestText": "修改当前章节，使用传统写作模式。清理本章四处字面的反斜杠n加号（\\n+）格式残留，只删除这四处连续字符，其他正文、标点、真实换行一律不改；不要删除章节。保存修改交我确认，读回自查，报告实际保存结果。",
+    "text": "已对章节正文做精确清理：删除四处字面的 `\\n+`，保留原有真实换行及其余正文不变，也未删除章节。读回自查确认这些残留已清除，章节仍在；正文中文字符数保持 1502。保存后的资源版本已更新。审查未报告问题。",
+    "memoryBaselines": {}
+  },
+  {
+    "runId": "run-1424282d-c8ec-4150-8946-724ed9fab105",
+    "conversationId": "thread-mvea8u98-vppe6w",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "read",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [],
+      "memoryUpdateRequired": false,
+      "memoryScopeBound": false,
+      "memoryParticipantCount": null,
+      "participantCharacterRefs": [],
+      "chapterWritePolicy": "any",
+      "resourceWritePolicy": "any",
+      "initialChapterResourceRefs": [],
+      "writeScopeBound": false,
+      "atomicMemoryWithChapter": false,
+      "preserveOriginalMemories": false,
+      "wordCountScope": "saved_resources",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": null,
+      "maxBodyCjk": null,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": false,
+      "narrativeAuditRequired": false,
+      "narrativePerspective": null,
+      "repairRequired": false,
+      "reviewScope": "observed_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [],
+      "reviewScopeBound": false
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "read",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [],
+        "memoryUpdateRequired": false,
+        "memoryScopeBound": false,
+        "memoryParticipantCount": null,
+        "participantCharacterRefs": [],
+        "chapterWritePolicy": "any",
+        "resourceWritePolicy": "any",
+        "initialChapterResourceRefs": [],
+        "writeScopeBound": false,
+        "atomicMemoryWithChapter": false,
+        "preserveOriginalMemories": false,
+        "wordCountScope": "saved_resources",
+        "wordCountResourceRefs": [],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": null,
+        "maxBodyCjk": null,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": false,
+        "narrativeAuditRequired": false,
+        "narrativePerspective": null,
+        "repairRequired": false,
+        "reviewScope": "observed_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [],
+        "reviewScopeBound": false
+      },
+      "savedResources": [],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "no_changes",
+        "committedCount": 0
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "saved_resources",
+        "targetResourceRefs": [
+          "character-memory:lin",
+          "character-memory:cen",
+          "character-memory:su",
+          "character-memory:ye",
+          "character-memory:he",
+          "character-memory:lu"
+        ],
+        "readableResources": 6,
+        "bodyChineseCharacterCount": 193,
+        "hashes": [
+          {
+            "resourceRef": "character-memory:lin",
+            "hash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e"
+          },
+          {
+            "resourceRef": "character-memory:cen",
+            "hash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b"
+          },
+          {
+            "resourceRef": "character-memory:su",
+            "hash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078"
+          },
+          {
+            "resourceRef": "character-memory:ye",
+            "hash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe"
+          },
+          {
+            "resourceRef": "character-memory:he",
+            "hash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff"
+          },
+          {
+            "resourceRef": "character-memory:lu",
+            "hash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760"
+          }
+        ],
+        "currentSavedResourceRefs": [],
+        "observedReadResourceRefs": [
+          "character-memory:lin",
+          "character-memory:cen",
+          "character-memory:su",
+          "character-memory:ye",
+          "character-memory:he",
+          "character-memory:lu"
+        ],
+        "fullyReadResourceRefs": [
+          "character-memory:lin",
+          "character-memory:cen",
+          "character-memory:su",
+          "character-memory:ye",
+          "character-memory:he",
+          "character-memory:lu"
+        ]
+      },
+      "checks": {
+        "wordCount": {
+          "status": "not_requested",
+          "blocking": false,
+          "actual": 193,
+          "minimum": null,
+          "maximum": null,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": null,
+          "acceptedMaximum": null,
+          "withinTolerance": false,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "writeScope": {
+          "status": "met"
+        }
+      }
+    },
+    "savedResources": [],
+    "reviewFindings": [],
+    "reviewSubmission": null,
+    "narrativeReview": null,
+    "requestText": "读取六人的最新主观记忆，分别说明第三章后各自确定知道的事实和未决意图，再写六人针对下一步交接各一句即时反应。每个人只能使用自己的记忆，不要把他人的秘密当作自己知道的事实。这里只演练和核对，不保存或修改任何资料。",
+    "taskRequestText": "读取六人的最新主观记忆，分别说明第三章后各自确定知道的事实和未决意图，再写六人针对下一步交接各一句即时反应。每个人只能使用自己的记忆，不要把他人的秘密当作自己知道的事实。这里只演练和核对，不保存或修改任何资料。",
+    "text": "已读取六人的最新主观记忆。六份记忆的更新时间都停在第一章，因此它们**不能证明六人已在第三章后获得新信息**；以下只列各自记忆里明确写下的事实、未知和未决意图，不把其他人的秘密移植给他们。\n\n| 人物 | 自己确定知道的事实 | 未决意图 |\n|---|---|---|\n| 岑寂 | 今夜议事厅要收走蓝签账页；不知道账页藏处，也不知道密道口令。 | 阻止旧账公开，同时不伤及病人。 |\n| 何芷 | 她知道药箱暗格里有蓝签账页；记忆注明她尚未透露。 | 把冷藏药送到灯塔诊所。 |\n| 林岚 | 潮钟慢了七分钟；不知道药箱暗格和密道口令。 | 查出潮钟误差，保护弟弟。 |\n| 陆行舟 | 自己没有换过钟芯；不知道潮钟慢了几分钟。 | 修好潮钟并洗清偷芯嫌疑。 |\n| 苏砚 | 通行证须双印；不知道潮钟慢七分钟和药箱暗格。 | 在封桥前合法完成交接。 |\n| 叶澄 | 低潮碎石滩危险；渡口至灯塔航程四十分钟；不知道药箱暗格和潮钟慢七分钟。 | 保住执照与船员。 |\n\n**针对下一步交接的即时反应（演练）**\n\n- **岑寂：**“先把病人安顿好；账页的事，我不能让它变成伤人的借口。”\n- **何芷：**“药得赶在路断前送到灯塔，别让交接耽误了冷藏。”\n- **林岚：**“交接时间得核准，潮钟差着七分钟，不能只看钟面。”\n- **陆行舟：**“我会先查钟，不想再让偷换钟芯的嫌疑跟着我。”\n- **苏砚：**“手续双印齐全再交，封桥前把流程走完。”\n- **叶澄：**“低潮滩不能冒险走；若要去灯塔，就按四十分钟航程安排。”\n\n以上是依据现有记忆作的核对与演练；未读取第三章正文，也未保存或修改任何资料。",
+    "memoryBaselines": {}
+  },
+  {
+    "runId": "run-4420284d-9e1b-4be7-b635-a2ff58793ed5",
+    "conversationId": "thread-mvea5b37-sryo54",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [],
+      "memoryUpdateRequired": false,
+      "memoryScopeBound": false,
+      "memoryParticipantCount": null,
+      "participantCharacterRefs": [],
+      "chapterWritePolicy": "new",
+      "resourceWritePolicy": "any",
+      "initialChapterResourceRefs": [
+        "chapter:chapter-001.md"
+      ],
+      "writeScopeBound": true,
+      "atomicMemoryWithChapter": false,
+      "preserveOriginalMemories": false,
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "narrativeAuditRequired": true,
+      "narrativePerspective": {
+        "mode": "limited",
+        "focusCharacterRef": "character:lin"
+      },
+      "repairRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": false,
+      "goalStatus": "incomplete",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [],
+        "memoryUpdateRequired": false,
+        "memoryScopeBound": false,
+        "memoryParticipantCount": null,
+        "participantCharacterRefs": [],
+        "chapterWritePolicy": "new",
+        "resourceWritePolicy": "any",
+        "initialChapterResourceRefs": [
+          "chapter:chapter-001.md"
+        ],
+        "writeScopeBound": true,
+        "atomicMemoryWithChapter": false,
+        "preserveOriginalMemories": false,
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "narrativeAuditRequired": true,
+        "narrativePerspective": {
+          "mode": "limited",
+          "focusCharacterRef": "character:lin"
+        },
+        "repairRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "style",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "afterHash": "1d5855ba5e8bc6cb7f0993da4627719baa1bf3653838f89bab6722a051cb7978",
+          "nativeItemId": "exec-3d822e5e-14d4-43d4-9bd5-ba4f79b3b0ba",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "mode": "create",
+          "oldHash": null,
+          "newHash": "1d5855ba5e8bc6cb7f0993da4627719baa1bf3653838f89bab6722a051cb7978",
+          "chineseCharacterCount": 1432,
+          "bodyChineseCharacterCount": 1427
+        },
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "1d5855ba5e8bc6cb7f0993da4627719baa1bf3653838f89bab6722a051cb7978",
+          "afterHash": "7df3468684c48c6d3aae4254467f33e35ccb9ed266b8c7814a994fe88086b3ee",
+          "nativeItemId": "exec-7dc56920-70d3-4fe4-81f9-bc63476d3200",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "mode": "replace",
+          "oldHash": "1d5855ba5e8bc6cb7f0993da4627719baa1bf3653838f89bab6722a051cb7978",
+          "newHash": "7df3468684c48c6d3aae4254467f33e35ccb9ed266b8c7814a994fe88086b3ee",
+          "chineseCharacterCount": 1499,
+          "bodyChineseCharacterCount": 1494
+        },
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "7df3468684c48c6d3aae4254467f33e35ccb9ed266b8c7814a994fe88086b3ee",
+          "afterHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+          "nativeItemId": "exec-d3df4d91-b155-48dc-918b-d5fa8355e680",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "mode": "replace",
+          "oldHash": "7df3468684c48c6d3aae4254467f33e35ccb9ed266b8c7814a994fe88086b3ee",
+          "newHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+          "chineseCharacterCount": 1507,
+          "bodyChineseCharacterCount": 1502
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 3
+      },
+      "objective": {
+        "status": "incomplete",
+        "unmet": [
+          "narrative_analysis_missing",
+          "hard_issues_unresolved"
+        ]
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1502,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "observedReadResourceRefs": [
+          "outline:hierarchy",
+          "outline:master",
+          "style:memory",
+          "chapter:chapter-001.md",
+          "character:he",
+          "character:su",
+          "character:ye",
+          "character:lin",
+          "world:lore",
+          "character:lu",
+          "world:places",
+          "character:cen",
+          "chapter:chapter-002.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-c316e777-2205-4df9-af83-3357978af94a",
+          "attemptId": "attempt-ea9f3175-19d2-46c0-8fa6-dd2e537d7859",
+          "runId": "run-4420284d-9e1b-4be7-b635-a2ff58793ed5",
+          "reportSha256": "2940db6c4328a8d6f15b813044b482f4a109bc7ec477bc6e41aa2175fc4d6057",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-002.md"
+          ],
+          "coverageObserved": [
+            "outline:hierarchy",
+            "outline:master",
+            "style:memory",
+            "chapter:chapter-001.md",
+            "character:he",
+            "character:su",
+            "character:ye",
+            "character:lin",
+            "world:lore",
+            "character:lu",
+            "world:places",
+            "character:cen",
+            "chapter:chapter-002.md"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99"
+            },
+            {
+              "resourceRef": "outline:hierarchy",
+              "hash": "afa14801b02d4436f28503d2a4c6af9af8a42e0d462735bf239d0879134291f0"
+            },
+            {
+              "resourceRef": "outline:master",
+              "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+            },
+            {
+              "resourceRef": "style:memory",
+              "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+            },
+            {
+              "resourceRef": "chapter:chapter-001.md",
+              "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character:su",
+              "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "character:lu",
+              "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+            },
+            {
+              "resourceRef": "world:places",
+              "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+            },
+            {
+              "resourceRef": "character:cen",
+              "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+            }
+          ],
+          "versionCurrent": true,
+          "narrativeAudit": {
+            "status": "incomplete",
+            "errors": [
+              "invalid_time_relation:1",
+              "invalid_time_relation:2",
+              "invalid_time_relation:3",
+              "temporal_assertion_unmodeled:2",
+              "temporal_assertion_unmodeled:6",
+              "temporal_assertion_unmodeled:7",
+              "knowledge_assertion_unmodeled:8",
+              "knowledge_assertion_unmodeled:9",
+              "knowledge_assertion_unmodeled:10",
+              "temporal_assertion_unmodeled:11",
+              "temporal_assertion_unmodeled:13",
+              "temporal_assertion_unmodeled:14",
+              "knowledge_assertion_unmodeled:20",
+              "knowledge_assertion_unmodeled:21",
+              "knowledge_assertion_unmodeled:24",
+              "knowledge_assertion_unmodeled:25",
+              "knowledge_assertion_unmodeled:28",
+              "temporal_assertion_unmodeled:29",
+              "knowledge_assertion_unmodeled:29",
+              "knowledge_assertion_unmodeled:31",
+              "knowledge_assertion_unmodeled:32",
+              "knowledge_assertion_unmodeled:34",
+              "knowledge_assertion_unmodeled:35",
+              "temporal_assertion_unmodeled:38",
+              "knowledge_assertion_unmodeled:38",
+              "knowledge_assertion_unmodeled:40",
+              "temporal_assertion_unmodeled:41",
+              "knowledge_assertion_unmodeled:43",
+              "temporal_assertion_unmodeled:45",
+              "knowledge_assertion_unmodeled:49",
+              "temporal_assertion_unmodeled:51",
+              "knowledge_assertion_unmodeled:52",
+              "knowledge_assertion_unmodeled:53",
+              "knowledge_assertion_unmodeled:54",
+              "knowledge_assertion_unmodeled:55",
+              "knowledge_assertion_unmodeled:56",
+              "knowledge_assertion_unmodeled:57",
+              "temporal_assertion_unmodeled:58",
+              "temporal_assertion_unmodeled:59",
+              "knowledge_assertion_unmodeled:61",
+              "knowledge_assertion_unmodeled:62",
+              "temporal_assertion_unmodeled:63",
+              "knowledge_assertion_unmodeled:67",
+              "temporal_assertion_unmodeled:69",
+              "temporal_assertion_unmodeled:70",
+              "knowledge_assertion_unmodeled:72",
+              "knowledge_assertion_unmodeled:73",
+              "knowledge_assertion_unmodeled:74",
+              "knowledge_assertion_unmodeled:75",
+              "temporal_assertion_unmodeled:76",
+              "temporal_assertion_unmodeled:77",
+              "temporal_assertion_unmodeled:78",
+              "knowledge_assertion_unmodeled:79",
+              "clock_assertion_unmodeled:80",
+              "knowledge_assertion_unmodeled:80",
+              "knowledge_assertion_unmodeled:81",
+              "knowledge_assertion_unmodeled:82",
+              "temporal_assertion_unmodeled:83",
+              "knowledge_assertion_unmodeled:83",
+              "knowledge_assertion_unmodeled:84",
+              "clock_assertion_unmodeled:85",
+              "knowledge_assertion_unmodeled:85",
+              "knowledge_assertion_unmodeled:86",
+              "knowledge_assertion_unmodeled:88",
+              "knowledge_assertion_unmodeled:91",
+              "knowledge_assertion_unmodeled:92",
+              "knowledge_assertion_unmodeled:93",
+              "knowledge_assertion_unmodeled:95",
+              "temporal_assertion_unmodeled:96",
+              "knowledge_assertion_unmodeled:96",
+              "knowledge_assertion_unmodeled:98",
+              "knowledge_assertion_unmodeled:100",
+              "knowledge_assertion_unmodeled:101",
+              "knowledge_assertion_unmodeled:102",
+              "temporal_assertion_unmodeled:104",
+              "knowledge_assertion_unmodeled:106",
+              "knowledge_assertion_unmodeled:107",
+              "knowledge_assertion_unmodeled:108",
+              "temporal_assertion_unmodeled:109",
+              "knowledge_assertion_unmodeled:110",
+              "knowledge_assertion_unmodeled:111",
+              "temporal_assertion_unmodeled:113",
+              "temporal_assertion_unmodeled:114",
+              "temporal_assertion_unmodeled:115",
+              "knowledge_assertion_unmodeled:116",
+              "knowledge_assertion_unmodeled:117",
+              "knowledge_assertion_unmodeled:118",
+              "temporal_assertion_unmodeled:119",
+              "knowledge_assertion_unmodeled:120",
+              "knowledge_assertion_unmodeled:121",
+              "temporal_assertion_unmodeled:122",
+              "temporal_assertion_unmodeled:123",
+              "knowledge_assertion_unmodeled:124",
+              "knowledge_assertion_unmodeled:125",
+              "knowledge_assertion_unmodeled:126",
+              "knowledge_assertion_unmodeled:127",
+              "knowledge_assertion_unmodeled:128",
+              "temporal_assertion_unmodeled:131",
+              "knowledge_assertion_unmodeled:132",
+              "knowledge_assertion_unmodeled:134",
+              "knowledge_assertion_unmodeled:135",
+              "knowledge_assertion_unmodeled:136",
+              "temporal_assertion_unmodeled:138",
+              "knowledge_assertion_unmodeled:139",
+              "knowledge_assertion_unmodeled:140",
+              "knowledge_assertion_unmodeled:141",
+              "knowledge_assertion_unmodeled:143",
+              "temporal_assertion_unmodeled:144",
+              "knowledge_assertion_unmodeled:145",
+              "knowledge_assertion_unmodeled:146",
+              "temporal_assertion_unmodeled:147",
+              "temporal_assertion_unmodeled:148",
+              "knowledge_assertion_unmodeled:149",
+              "temporal_assertion_unmodeled:150",
+              "temporal_assertion_unmodeled:151",
+              "knowledge_assertion_unmodeled:152",
+              "knowledge_assertion_unmodeled:153",
+              "knowledge_assertion_unmodeled:155",
+              "knowledge_assertion_unmodeled:157",
+              "knowledge_assertion_unmodeled:159",
+              "knowledge_assertion_unmodeled:161",
+              "knowledge_assertion_unmodeled:162",
+              "knowledge_assertion_unmodeled:163",
+              "knowledge_assertion_unmodeled:164",
+              "temporal_assertion_unmodeled:165",
+              "temporal_assertion_unmodeled:166",
+              "temporal_assertion_unmodeled:167",
+              "temporal_assertion_unmodeled:168",
+              "temporal_assertion_unmodeled:169",
+              "temporal_assertion_unmodeled:171",
+              "temporal_assertion_unmodeled:172",
+              "temporal_assertion_unmodeled:173",
+              "temporal_assertion_unmodeled:174",
+              "temporal_assertion_unmodeled:175",
+              "knowledge_assertion_unmodeled:175",
+              "knowledge_assertion_unmodeled:177",
+              "knowledge_assertion_unmodeled:179",
+              "knowledge_assertion_unmodeled:181",
+              "knowledge_assertion_unmodeled:182",
+              "temporal_assertion_unmodeled:184",
+              "knowledge_assertion_unmodeled:185",
+              "knowledge_assertion_unmodeled:186",
+              "knowledge_assertion_unmodeled:187",
+              "temporal_assertion_unmodeled:188",
+              "knowledge_assertion_unmodeled:188",
+              "knowledge_assertion_unmodeled:189",
+              "knowledge_assertion_unmodeled:190",
+              "knowledge_assertion_unmodeled:192",
+              "knowledge_assertion_unmodeled:193",
+              "knowledge_assertion_unmodeled:194",
+              "temporal_assertion_unmodeled:195",
+              "temporal_assertion_unmodeled:196",
+              "temporal_assertion_unmodeled:197",
+              "temporal_assertion_unmodeled:198",
+              "temporal_assertion_unmodeled:199",
+              "temporal_assertion_unmodeled:201",
+              "knowledge_assertion_unmodeled:202",
+              "temporal_assertion_unmodeled:203",
+              "knowledge_assertion_unmodeled:204",
+              "temporal_assertion_unmodeled:207",
+              "temporal_assertion_unmodeled:208",
+              "knowledge_assertion_unmodeled:209",
+              "knowledge_assertion_unmodeled:210",
+              "temporal_assertion_unmodeled:212",
+              "temporal_assertion_unmodeled:213",
+              "temporal_assertion_unmodeled:214",
+              "knowledge_assertion_unmodeled:215",
+              "temporal_assertion_unmodeled:216",
+              "knowledge_assertion_unmodeled:217",
+              "knowledge_assertion_unmodeled:218",
+              "knowledge_assertion_unmodeled:219",
+              "knowledge_assertion_unmodeled:220",
+              "temporal_assertion_unmodeled:221",
+              "temporal_assertion_unmodeled:222",
+              "knowledge_assertion_unmodeled:223",
+              "knowledge_assertion_unmodeled:224",
+              "knowledge_assertion_unmodeled:225",
+              "knowledge_assertion_unmodeled:226",
+              "temporal_assertion_unmodeled:227",
+              "knowledge_assertion_unmodeled:228"
+            ],
+            "issues": [
+              {
+                "issueId": "knowledge:chapter:chapter-002.md:33dffc0dc7f4",
+                "category": "knowledge",
+                "severity": "hard",
+                "status": "open",
+                "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：何芷知道药箱暗格藏有蓝签账页，林岚不知道暗格所在；本章没有让林岚发现或获知该秘密。。分析明确记为焦点不可获取。",
+                "evidence": [
+                  {
+                    "resourceRef": "character:he",
+                    "location": "L9",
+                    "quote": "\"已知信息\": \"仅她知道药箱暗格有蓝签账页；",
+                    "quoteOffset": 217
+                  },
+                  {
+                    "resourceRef": "chapter:chapter-002.md",
+                    "location": "L11",
+                    "quote": "账页不在交接范围。",
+                    "quoteOffset": 810
+                  },
+                  {
+                    "resourceRef": "chapter:chapter-002.md",
+                    "location": "L39",
+                    "quote": "她确认的是药，",
+                    "quoteOffset": 2728
+                  },
+                  {
+                    "resourceRef": "chapter:chapter-002.md",
+                    "location": "L39",
+                    "quote": "也没有打开铅封。",
+                    "quoteOffset": 2770
+                  }
+                ],
+                "derivedBy": "narrative_constraints"
+              },
+              {
+                "issueId": "knowledge:chapter:chapter-002.md:e6217a6246cc",
+                "category": "knowledge",
+                "severity": "hard",
+                "status": "open",
+                "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：林岚知道自己仍留有一页抄本且尚未拿出；她没有披露内容。。先前知识的依据位于叙述之后或来自本任务写出的记忆。",
+                "evidence": [
+                  {
+                    "resourceRef": "chapter:chapter-002.md",
+                    "location": "L45",
+                    "quote": "她知道自己手里还有一页抄本，",
+                    "quoteOffset": 3379
+                  },
+                  {
+                    "resourceRef": "chapter:chapter-002.md",
+                    "location": "L45",
+                    "quote": "却没有拿出来。",
+                    "quoteOffset": 3421
+                  },
+                  {
+                    "resourceRef": "chapter:chapter-001.md",
+                    "location": "L9",
+                    "quote": "没有拿出那页抄本。",
+                    "quoteOffset": 550
+                  }
+                ],
+                "derivedBy": "narrative_constraints"
+              }
+            ],
+            "unitsRequired": 36,
+            "unitsReviewed": 36,
+            "timePointCount": 2,
+            "assertionsReviewed": 229,
+            "temporalConstraintCount": 4,
+            "knowledgeClaimCount": 16,
+            "qualityConclusion": "evidence_backed_model_extraction",
+            "origin": "host_readonly_analysis",
+            "modelId": "gpt-6-luna"
+          },
+          "invalidatedIssueIds": [],
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": [
+            {
+              "issueId": "content:6fcc12f355:8784bea33eba",
+              "category": "任务约束／篇幅",
+              "sourceKey": "chapter-002-body-length",
+              "severity": "hard",
+              "requestedSeverity": "hard",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "请求要求正文1500—2000字；保存版本正文明显短于1500字。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L1",
+                  "quote": "# 第二章 双印",
+                  "quoteOffset": 0,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L71",
+                  "quote": "缆绳轻轻一颤。",
+                  "quoteOffset": 5456,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "knowledge:chapter:chapter-002.md:33dffc0dc7f4",
+              "category": "knowledge",
+              "sourceKey": null,
+              "severity": "hard",
+              "requestedSeverity": "hard",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：何芷知道药箱暗格藏有蓝签账页，林岚不知道暗格所在；本章没有让林岚发现或获知该秘密。。分析明确记为焦点不可获取。",
+              "evidence": [
+                {
+                  "resourceRef": "character:he",
+                  "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+                  "bindReadVersion": true,
+                  "location": "L9",
+                  "quote": "\"已知信息\": \"仅她知道药箱暗格有蓝签账页；",
+                  "quoteOffset": 217,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L11",
+                  "quote": "账页不在交接范围。",
+                  "quoteOffset": 810,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L39",
+                  "quote": "她确认的是药，",
+                  "quoteOffset": 2728,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L39",
+                  "quote": "也没有打开铅封。",
+                  "quoteOffset": 2770,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "knowledge:chapter:chapter-002.md:e6217a6246cc",
+              "category": "knowledge",
+              "sourceKey": null,
+              "severity": "hard",
+              "requestedSeverity": "hard",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：林岚知道自己仍留有一页抄本且尚未拿出；她没有披露内容。。先前知识的依据位于叙述之后或来自本任务写出的记忆。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L45",
+                  "quote": "她知道自己手里还有一页抄本，",
+                  "quoteOffset": 3379,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L45",
+                  "quote": "却没有拿出来。",
+                  "quoteOffset": 3421,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-001.md",
+                  "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "bindReadVersion": true,
+                  "location": "L9",
+                  "quote": "没有拿出那页抄本。",
+                  "quoteOffset": 550,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            }
+          ]
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "met",
+          "blocking": false,
+          "actual": 1502,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0,
+          "acceptedMinimum": 1500,
+          "acceptedMaximum": 2000,
+          "withinTolerance": true,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "writeScope": {
+          "status": "met"
+        },
+        "narrativeAudit": {
+          "status": "incomplete",
+          "errors": [
+            "invalid_time_relation:1",
+            "invalid_time_relation:2",
+            "invalid_time_relation:3",
+            "temporal_assertion_unmodeled:2",
+            "temporal_assertion_unmodeled:6",
+            "temporal_assertion_unmodeled:7",
+            "knowledge_assertion_unmodeled:8",
+            "knowledge_assertion_unmodeled:9",
+            "knowledge_assertion_unmodeled:10",
+            "temporal_assertion_unmodeled:11",
+            "temporal_assertion_unmodeled:13",
+            "temporal_assertion_unmodeled:14",
+            "knowledge_assertion_unmodeled:20",
+            "knowledge_assertion_unmodeled:21",
+            "knowledge_assertion_unmodeled:24",
+            "knowledge_assertion_unmodeled:25",
+            "knowledge_assertion_unmodeled:28",
+            "temporal_assertion_unmodeled:29",
+            "knowledge_assertion_unmodeled:29",
+            "knowledge_assertion_unmodeled:31",
+            "knowledge_assertion_unmodeled:32",
+            "knowledge_assertion_unmodeled:34",
+            "knowledge_assertion_unmodeled:35",
+            "temporal_assertion_unmodeled:38",
+            "knowledge_assertion_unmodeled:38",
+            "knowledge_assertion_unmodeled:40",
+            "temporal_assertion_unmodeled:41",
+            "knowledge_assertion_unmodeled:43",
+            "temporal_assertion_unmodeled:45",
+            "knowledge_assertion_unmodeled:49",
+            "temporal_assertion_unmodeled:51",
+            "knowledge_assertion_unmodeled:52",
+            "knowledge_assertion_unmodeled:53",
+            "knowledge_assertion_unmodeled:54",
+            "knowledge_assertion_unmodeled:55",
+            "knowledge_assertion_unmodeled:56",
+            "knowledge_assertion_unmodeled:57",
+            "temporal_assertion_unmodeled:58",
+            "temporal_assertion_unmodeled:59",
+            "knowledge_assertion_unmodeled:61",
+            "knowledge_assertion_unmodeled:62",
+            "temporal_assertion_unmodeled:63",
+            "knowledge_assertion_unmodeled:67",
+            "temporal_assertion_unmodeled:69",
+            "temporal_assertion_unmodeled:70",
+            "knowledge_assertion_unmodeled:72",
+            "knowledge_assertion_unmodeled:73",
+            "knowledge_assertion_unmodeled:74",
+            "knowledge_assertion_unmodeled:75",
+            "temporal_assertion_unmodeled:76",
+            "temporal_assertion_unmodeled:77",
+            "temporal_assertion_unmodeled:78",
+            "knowledge_assertion_unmodeled:79",
+            "clock_assertion_unmodeled:80",
+            "knowledge_assertion_unmodeled:80",
+            "knowledge_assertion_unmodeled:81",
+            "knowledge_assertion_unmodeled:82",
+            "temporal_assertion_unmodeled:83",
+            "knowledge_assertion_unmodeled:83",
+            "knowledge_assertion_unmodeled:84",
+            "clock_assertion_unmodeled:85",
+            "knowledge_assertion_unmodeled:85",
+            "knowledge_assertion_unmodeled:86",
+            "knowledge_assertion_unmodeled:88",
+            "knowledge_assertion_unmodeled:91",
+            "knowledge_assertion_unmodeled:92",
+            "knowledge_assertion_unmodeled:93",
+            "knowledge_assertion_unmodeled:95",
+            "temporal_assertion_unmodeled:96",
+            "knowledge_assertion_unmodeled:96",
+            "knowledge_assertion_unmodeled:98",
+            "knowledge_assertion_unmodeled:100",
+            "knowledge_assertion_unmodeled:101",
+            "knowledge_assertion_unmodeled:102",
+            "temporal_assertion_unmodeled:104",
+            "knowledge_assertion_unmodeled:106",
+            "knowledge_assertion_unmodeled:107",
+            "knowledge_assertion_unmodeled:108",
+            "temporal_assertion_unmodeled:109",
+            "knowledge_assertion_unmodeled:110",
+            "knowledge_assertion_unmodeled:111",
+            "temporal_assertion_unmodeled:113",
+            "temporal_assertion_unmodeled:114",
+            "temporal_assertion_unmodeled:115",
+            "knowledge_assertion_unmodeled:116",
+            "knowledge_assertion_unmodeled:117",
+            "knowledge_assertion_unmodeled:118",
+            "temporal_assertion_unmodeled:119",
+            "knowledge_assertion_unmodeled:120",
+            "knowledge_assertion_unmodeled:121",
+            "temporal_assertion_unmodeled:122",
+            "temporal_assertion_unmodeled:123",
+            "knowledge_assertion_unmodeled:124",
+            "knowledge_assertion_unmodeled:125",
+            "knowledge_assertion_unmodeled:126",
+            "knowledge_assertion_unmodeled:127",
+            "knowledge_assertion_unmodeled:128",
+            "temporal_assertion_unmodeled:131",
+            "knowledge_assertion_unmodeled:132",
+            "knowledge_assertion_unmodeled:134",
+            "knowledge_assertion_unmodeled:135",
+            "knowledge_assertion_unmodeled:136",
+            "temporal_assertion_unmodeled:138",
+            "knowledge_assertion_unmodeled:139",
+            "knowledge_assertion_unmodeled:140",
+            "knowledge_assertion_unmodeled:141",
+            "knowledge_assertion_unmodeled:143",
+            "temporal_assertion_unmodeled:144",
+            "knowledge_assertion_unmodeled:145",
+            "knowledge_assertion_unmodeled:146",
+            "temporal_assertion_unmodeled:147",
+            "temporal_assertion_unmodeled:148",
+            "knowledge_assertion_unmodeled:149",
+            "temporal_assertion_unmodeled:150",
+            "temporal_assertion_unmodeled:151",
+            "knowledge_assertion_unmodeled:152",
+            "knowledge_assertion_unmodeled:153",
+            "knowledge_assertion_unmodeled:155",
+            "knowledge_assertion_unmodeled:157",
+            "knowledge_assertion_unmodeled:159",
+            "knowledge_assertion_unmodeled:161",
+            "knowledge_assertion_unmodeled:162",
+            "knowledge_assertion_unmodeled:163",
+            "knowledge_assertion_unmodeled:164",
+            "temporal_assertion_unmodeled:165",
+            "temporal_assertion_unmodeled:166",
+            "temporal_assertion_unmodeled:167",
+            "temporal_assertion_unmodeled:168",
+            "temporal_assertion_unmodeled:169",
+            "temporal_assertion_unmodeled:171",
+            "temporal_assertion_unmodeled:172",
+            "temporal_assertion_unmodeled:173",
+            "temporal_assertion_unmodeled:174",
+            "temporal_assertion_unmodeled:175",
+            "knowledge_assertion_unmodeled:175",
+            "knowledge_assertion_unmodeled:177",
+            "knowledge_assertion_unmodeled:179",
+            "knowledge_assertion_unmodeled:181",
+            "knowledge_assertion_unmodeled:182",
+            "temporal_assertion_unmodeled:184",
+            "knowledge_assertion_unmodeled:185",
+            "knowledge_assertion_unmodeled:186",
+            "knowledge_assertion_unmodeled:187",
+            "temporal_assertion_unmodeled:188",
+            "knowledge_assertion_unmodeled:188",
+            "knowledge_assertion_unmodeled:189",
+            "knowledge_assertion_unmodeled:190",
+            "knowledge_assertion_unmodeled:192",
+            "knowledge_assertion_unmodeled:193",
+            "knowledge_assertion_unmodeled:194",
+            "temporal_assertion_unmodeled:195",
+            "temporal_assertion_unmodeled:196",
+            "temporal_assertion_unmodeled:197",
+            "temporal_assertion_unmodeled:198",
+            "temporal_assertion_unmodeled:199",
+            "temporal_assertion_unmodeled:201",
+            "knowledge_assertion_unmodeled:202",
+            "temporal_assertion_unmodeled:203",
+            "knowledge_assertion_unmodeled:204",
+            "temporal_assertion_unmodeled:207",
+            "temporal_assertion_unmodeled:208",
+            "knowledge_assertion_unmodeled:209",
+            "knowledge_assertion_unmodeled:210",
+            "temporal_assertion_unmodeled:212",
+            "temporal_assertion_unmodeled:213",
+            "temporal_assertion_unmodeled:214",
+            "knowledge_assertion_unmodeled:215",
+            "temporal_assertion_unmodeled:216",
+            "knowledge_assertion_unmodeled:217",
+            "knowledge_assertion_unmodeled:218",
+            "knowledge_assertion_unmodeled:219",
+            "knowledge_assertion_unmodeled:220",
+            "temporal_assertion_unmodeled:221",
+            "temporal_assertion_unmodeled:222",
+            "knowledge_assertion_unmodeled:223",
+            "knowledge_assertion_unmodeled:224",
+            "knowledge_assertion_unmodeled:225",
+            "knowledge_assertion_unmodeled:226",
+            "temporal_assertion_unmodeled:227",
+            "knowledge_assertion_unmodeled:228"
+          ],
+          "issues": [
+            {
+              "issueId": "knowledge:chapter:chapter-002.md:33dffc0dc7f4",
+              "category": "knowledge",
+              "severity": "hard",
+              "status": "open",
+              "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：何芷知道药箱暗格藏有蓝签账页，林岚不知道暗格所在；本章没有让林岚发现或获知该秘密。。分析明确记为焦点不可获取。",
+              "evidence": [
+                {
+                  "resourceRef": "character:he",
+                  "location": "L9",
+                  "quote": "\"已知信息\": \"仅她知道药箱暗格有蓝签账页；",
+                  "quoteOffset": 217
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L11",
+                  "quote": "账页不在交接范围。",
+                  "quoteOffset": 810
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L39",
+                  "quote": "她确认的是药，",
+                  "quoteOffset": 2728
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L39",
+                  "quote": "也没有打开铅封。",
+                  "quoteOffset": 2770
+                }
+              ],
+              "derivedBy": "narrative_constraints"
+            },
+            {
+              "issueId": "knowledge:chapter:chapter-002.md:e6217a6246cc",
+              "category": "knowledge",
+              "severity": "hard",
+              "status": "open",
+              "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：林岚知道自己仍留有一页抄本且尚未拿出；她没有披露内容。。先前知识的依据位于叙述之后或来自本任务写出的记忆。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L45",
+                  "quote": "她知道自己手里还有一页抄本，",
+                  "quoteOffset": 3379
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L45",
+                  "quote": "却没有拿出来。",
+                  "quoteOffset": 3421
+                },
+                {
+                  "resourceRef": "chapter:chapter-001.md",
+                  "location": "L9",
+                  "quote": "没有拿出那页抄本。",
+                  "quoteOffset": 550
+                }
+              ],
+              "derivedBy": "narrative_constraints"
+            }
+          ],
+          "unitsRequired": 36,
+          "unitsReviewed": 36,
+          "timePointCount": 2,
+          "assertionsReviewed": 229,
+          "temporalConstraintCount": 4,
+          "knowledgeClaimCount": 16,
+          "qualityConclusion": "evidence_backed_model_extraction",
+          "origin": "host_readonly_analysis",
+          "modelId": "gpt-6-luna"
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": [],
+          "invalidIssueIds": []
+        },
+        "semanticReview": {
+          "status": "open_hard_issues",
+          "qualityConclusion": "model_reported",
+          "repairRequired": true,
+          "blockingIssues": [
+            {
+              "issueId": "content:6fcc12f355:8784bea33eba",
+              "category": "任务约束／篇幅",
+              "sourceKey": "chapter-002-body-length",
+              "severity": "hard",
+              "requestedSeverity": "hard",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "请求要求正文1500—2000字；保存版本正文明显短于1500字。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L1",
+                  "quote": "# 第二章 双印",
+                  "quoteOffset": 0,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L71",
+                  "quote": "缆绳轻轻一颤。",
+                  "quoteOffset": 5456,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "knowledge:chapter:chapter-002.md:33dffc0dc7f4",
+              "category": "knowledge",
+              "sourceKey": null,
+              "severity": "hard",
+              "requestedSeverity": "hard",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：何芷知道药箱暗格藏有蓝签账页，林岚不知道暗格所在；本章没有让林岚发现或获知该秘密。。分析明确记为焦点不可获取。",
+              "evidence": [
+                {
+                  "resourceRef": "character:he",
+                  "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+                  "bindReadVersion": true,
+                  "location": "L9",
+                  "quote": "\"已知信息\": \"仅她知道药箱暗格有蓝签账页；",
+                  "quoteOffset": 217,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L11",
+                  "quote": "账页不在交接范围。",
+                  "quoteOffset": 810,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L39",
+                  "quote": "她确认的是药，",
+                  "quoteOffset": 2728,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L39",
+                  "quote": "也没有打开铅封。",
+                  "quoteOffset": 2770,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "knowledge:chapter:chapter-002.md:e6217a6246cc",
+              "category": "knowledge",
+              "sourceKey": null,
+              "severity": "hard",
+              "requestedSeverity": "hard",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：林岚知道自己仍留有一页抄本且尚未拿出；她没有披露内容。。先前知识的依据位于叙述之后或来自本任务写出的记忆。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L45",
+                  "quote": "她知道自己手里还有一页抄本，",
+                  "quoteOffset": 3379,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L45",
+                  "quote": "却没有拿出来。",
+                  "quoteOffset": 3421,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-001.md",
+                  "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "bindReadVersion": true,
+                  "location": "L9",
+                  "quote": "没有拿出那页抄本。",
+                  "quoteOffset": 550,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            }
+          ],
+          "reportedIssues": [
+            {
+              "issueId": "content:6fcc12f355:8784bea33eba",
+              "category": "任务约束／篇幅",
+              "sourceKey": "chapter-002-body-length",
+              "severity": "hard",
+              "requestedSeverity": "hard",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "请求要求正文1500—2000字；保存版本正文明显短于1500字。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L1",
+                  "quote": "# 第二章 双印",
+                  "quoteOffset": 0,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L71",
+                  "quote": "缆绳轻轻一颤。",
+                  "quoteOffset": 5456,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "knowledge:chapter:chapter-002.md:33dffc0dc7f4",
+              "category": "knowledge",
+              "sourceKey": null,
+              "severity": "hard",
+              "requestedSeverity": "hard",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：何芷知道药箱暗格藏有蓝签账页，林岚不知道暗格所在；本章没有让林岚发现或获知该秘密。。分析明确记为焦点不可获取。",
+              "evidence": [
+                {
+                  "resourceRef": "character:he",
+                  "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+                  "bindReadVersion": true,
+                  "location": "L9",
+                  "quote": "\"已知信息\": \"仅她知道药箱暗格有蓝签账页；",
+                  "quoteOffset": 217,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L11",
+                  "quote": "账页不在交接范围。",
+                  "quoteOffset": 810,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L39",
+                  "quote": "她确认的是药，",
+                  "quoteOffset": 2728,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L39",
+                  "quote": "也没有打开铅封。",
+                  "quoteOffset": 2770,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "knowledge:chapter:chapter-002.md:e6217a6246cc",
+              "category": "knowledge",
+              "sourceKey": null,
+              "severity": "hard",
+              "requestedSeverity": "hard",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：林岚知道自己仍留有一页抄本且尚未拿出；她没有披露内容。。先前知识的依据位于叙述之后或来自本任务写出的记忆。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L45",
+                  "quote": "她知道自己手里还有一页抄本，",
+                  "quoteOffset": 3379,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "bindReadVersion": true,
+                  "location": "L45",
+                  "quote": "却没有拿出来。",
+                  "quoteOffset": 3421,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-001.md",
+                  "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "bindReadVersion": true,
+                  "location": "L9",
+                  "quote": "没有拿出那页抄本。",
+                  "quoteOffset": 550,
+                  "versionSource": "actual_content_read",
+                  "currentHash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            }
+          ]
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "afterHash": "1d5855ba5e8bc6cb7f0993da4627719baa1bf3653838f89bab6722a051cb7978",
+        "nativeItemId": "exec-3d822e5e-14d4-43d4-9bd5-ba4f79b3b0ba",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "mode": "create",
+        "oldHash": null,
+        "newHash": "1d5855ba5e8bc6cb7f0993da4627719baa1bf3653838f89bab6722a051cb7978",
+        "chineseCharacterCount": 1432,
+        "bodyChineseCharacterCount": 1427
+      },
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "1d5855ba5e8bc6cb7f0993da4627719baa1bf3653838f89bab6722a051cb7978",
+        "afterHash": "7df3468684c48c6d3aae4254467f33e35ccb9ed266b8c7814a994fe88086b3ee",
+        "nativeItemId": "exec-7dc56920-70d3-4fe4-81f9-bc63476d3200",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "mode": "replace",
+        "oldHash": "1d5855ba5e8bc6cb7f0993da4627719baa1bf3653838f89bab6722a051cb7978",
+        "newHash": "7df3468684c48c6d3aae4254467f33e35ccb9ed266b8c7814a994fe88086b3ee",
+        "chineseCharacterCount": 1499,
+        "bodyChineseCharacterCount": 1494
+      },
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "7df3468684c48c6d3aae4254467f33e35ccb9ed266b8c7814a994fe88086b3ee",
+        "afterHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+        "nativeItemId": "exec-d3df4d91-b155-48dc-918b-d5fa8355e680",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "mode": "replace",
+        "oldHash": "7df3468684c48c6d3aae4254467f33e35ccb9ed266b8c7814a994fe88086b3ee",
+        "newHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+        "chineseCharacterCount": 1507,
+        "bodyChineseCharacterCount": 1502
+      }
+    ],
+    "reviewFindings": [
+      {
+        "issueId": "content:6fcc12f355:8784bea33eba",
+        "category": "任务约束／篇幅",
+        "sourceKey": "chapter-002-body-length",
+        "severity": "hard",
+        "requestedSeverity": "hard",
+        "schemaValid": true,
+        "status": "open",
+        "contradiction": "请求要求正文1500—2000字；保存版本正文明显短于1500字。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "bindReadVersion": true,
+            "location": "L1",
+            "quote": "# 第二章 双印",
+            "quoteOffset": 0,
+            "versionSource": "actual_content_read",
+            "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "bindReadVersion": true,
+            "location": "L71",
+            "quote": "缆绳轻轻一颤。",
+            "quoteOffset": 5456,
+            "versionSource": "actual_content_read",
+            "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true
+      },
+      {
+        "issueId": "knowledge:chapter:chapter-002.md:33dffc0dc7f4",
+        "category": "knowledge",
+        "sourceKey": null,
+        "severity": "hard",
+        "requestedSeverity": "hard",
+        "schemaValid": true,
+        "status": "open",
+        "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：何芷知道药箱暗格藏有蓝签账页，林岚不知道暗格所在；本章没有让林岚发现或获知该秘密。。分析明确记为焦点不可获取。",
+        "evidence": [
+          {
+            "resourceRef": "character:he",
+            "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+            "bindReadVersion": true,
+            "location": "L9",
+            "quote": "\"已知信息\": \"仅她知道药箱暗格有蓝签账页；",
+            "quoteOffset": 217,
+            "versionSource": "actual_content_read",
+            "currentHash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "bindReadVersion": true,
+            "location": "L11",
+            "quote": "账页不在交接范围。",
+            "quoteOffset": 810,
+            "versionSource": "actual_content_read",
+            "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "bindReadVersion": true,
+            "location": "L39",
+            "quote": "她确认的是药，",
+            "quoteOffset": 2728,
+            "versionSource": "actual_content_read",
+            "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "bindReadVersion": true,
+            "location": "L39",
+            "quote": "也没有打开铅封。",
+            "quoteOffset": 2770,
+            "versionSource": "actual_content_read",
+            "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true
+      },
+      {
+        "issueId": "knowledge:chapter:chapter-002.md:e6217a6246cc",
+        "category": "knowledge",
+        "sourceKey": null,
+        "severity": "hard",
+        "requestedSeverity": "hard",
+        "schemaValid": true,
+        "status": "open",
+        "contradiction": "有限视角中的确定叙述缺少焦点人物在该处已获知的依据：林岚知道自己仍留有一页抄本且尚未拿出；她没有披露内容。。先前知识的依据位于叙述之后或来自本任务写出的记忆。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "bindReadVersion": true,
+            "location": "L45",
+            "quote": "她知道自己手里还有一页抄本，",
+            "quoteOffset": 3379,
+            "versionSource": "actual_content_read",
+            "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "bindReadVersion": true,
+            "location": "L45",
+            "quote": "却没有拿出来。",
+            "quoteOffset": 3421,
+            "versionSource": "actual_content_read",
+            "currentHash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-001.md",
+            "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+            "bindReadVersion": true,
+            "location": "L9",
+            "quote": "没有拿出那页抄本。",
+            "quoteOffset": 550,
+            "versionSource": "actual_content_read",
+            "currentHash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true
+      }
+    ],
+    "reviewSubmission": {
+      "report": {
+        "analysis": {
+          "perspective": {
+            "mode": "limited",
+            "focusCharacterRef": "character:lin"
+          },
+          "units": [
+            {
+              "unitId": "chapter:chapter-002.md:L1-1",
+              "time": "none",
+              "perspective": "observable"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L3-3",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L5-5",
+              "time": "explicit_time",
+              "perspective": "observable"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L7-7",
+              "time": "none",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L9-9",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L11-11",
+              "time": "none",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L13-13",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L15-15",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L17-17",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L19-19",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L21-21",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L23-23",
+              "time": "none",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L25-25",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L27-27",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L29-29",
+              "time": "none",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L31-31",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L33-33",
+              "time": "none",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L35-35",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L37-37",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L39-39",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L41-41",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L43-43",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L45-45",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L47-47",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L49-49",
+              "time": "none",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L51-51",
+              "time": "none",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L53-53",
+              "time": "none",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L55-55",
+              "time": "none",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L57-57",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L59-59",
+              "time": "none",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L61-61",
+              "time": "none",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L63-63",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L65-65",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L67-67",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L69-69",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            },
+            {
+              "unitId": "chapter:chapter-002.md:L71-71",
+              "time": "explicit_time",
+              "perspective": "access_check"
+            }
+          ],
+          "timeConclusion": "第二章正文时刻从20:05到20:20，明确跨度15分钟。双印完成后，林岚在20:20决定空船离桩试行；船况确认后再取药，正规水道航程为40分钟。药物60分钟时限在开柜取药后才开始计时。没有抵达灯塔。正文未达到请求的1500—2000字，属于明确的任务要求未满足。",
+          "timePoints": [
+            {
+              "id": "ch2_start",
+              "seconds": 72300,
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "20:05，",
+                "quoteOffset": 20
+              }
+            },
+            {
+              "id": "ch2_end",
+              "seconds": 73200,
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L67",
+                "quote": "20:20，",
+                "quoteOffset": 4814
+              }
+            }
+          ],
+          "timeRelations": [
+            {
+              "from": "ch2_start",
+              "to": "ch2_end",
+              "minSeconds": 900,
+              "maxSeconds": 900,
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L3",
+                  "quote": "20:05，",
+                  "quoteOffset": 20
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L67",
+                  "quote": "20:20，",
+                  "quoteOffset": 4814
+                }
+              ]
+            },
+            {
+              "from": "departure",
+              "to": "clinic_arrival",
+              "minSeconds": 2400,
+              "maxSeconds": 2400,
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L27",
+                  "quote": "四十分钟，",
+                  "quoteOffset": 2035
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L63",
+                  "quote": "正规水道要四十分钟。",
+                  "quoteOffset": 4441
+                }
+              ]
+            },
+            {
+              "from": "medicine_removed_from_cold_storage",
+              "to": "medicine_delivery",
+              "minSeconds": 0,
+              "maxSeconds": 3600,
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L9",
+                  "quote": "出港后六十分钟内必须送到冷处。",
+                  "quoteOffset": 667
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L57",
+                  "quote": "六十分钟从开柜取药才算。",
+                  "quoteOffset": 4183
+                }
+              ]
+            },
+            {
+              "from": "dual_stamp_complete",
+              "to": "empty_vessel_departure_test",
+              "minSeconds": 0,
+              "maxSeconds": null,
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L39",
+                  "quote": "随后她在医师栏盖下印章，",
+                  "quoteOffset": 2794
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L41",
+                  "quote": "才在队长栏按印。",
+                  "quoteOffset": 2895
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L69",
+                  "quote": "“先空船离桩试行。",
+                  "quoteOffset": 4965
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L71",
+                  "quote": "双印已经完成，",
+                  "quoteOffset": 5132
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L71",
+                  "quote": "船也开始离开木桩；",
+                  "quoteOffset": 5153
+                }
+              ]
+            }
+          ],
+          "knowledge": [
+            {
+              "fact": "林岚在第一章已确认潮钟慢七分钟，但当时没有说出；第二章她再次用怀表、潮表核验并仍未向众人展示怀表。",
+              "mode": "established",
+              "focusAccess": "supported",
+              "accessBasis": "prior",
+              "claim": {
+                "resourceRef": "chapter:chapter-001.md",
+                "location": "L3",
+                "quote": "她确认潮钟慢了七分钟，",
+                "quoteOffset": 115
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L69",
+                  "quote": "”她说，",
+                  "quoteOffset": 4953
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L69",
+                  "quote": "“先空船离桩试行。",
+                  "quoteOffset": 4965
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L69",
+                  "quote": "走正规水道，",
+                  "quoteOffset": 5019
+                }
+              ],
+              "explanation": "焦点人物自己的既有知识与本章行为一致；正文没有让其他角色因此获知七分钟。"
+            },
+            {
+              "fact": "何芷知道药箱暗格藏有蓝签账页，林岚不知道暗格所在；本章没有让林岚发现或获知该秘密。",
+              "mode": "established",
+              "focusAccess": "unsupported",
+              "accessBasis": "none",
+              "claim": {
+                "resourceRef": "character:he",
+                "location": "L9",
+                "quote": "\"已知信息\": \"仅她知道药箱暗格有蓝签账页；",
+                "quoteOffset": 217
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L11",
+                  "quote": "账页不在交接范围。",
+                  "quoteOffset": 810
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L39",
+                  "quote": "她确认的是药，",
+                  "quoteOffset": 2728
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L39",
+                  "quote": "也没有打开铅封。",
+                  "quoteOffset": 2770
+                }
+              ],
+              "explanation": "交接范围被明确限定，且何芷确认药品而非公文，也未开启铅封；林岚对账页的推断没有越过已知信息边界。"
+            },
+            {
+              "fact": "岑寂称议事厅今夜要收走蓝签账页；这在本章是人物陈述，不等同于叙述者独立确认的事实。",
+              "mode": "reported",
+              "focusAccess": "supported",
+              "accessBasis": "observation",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L13",
+                "quote": "岑寂把公文往前推了半寸：“议事厅今夜要收走蓝签账页。",
+                "quoteOffset": 842
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L13",
+                  "quote": "岑寂把公文往前推了半寸：“议事厅今夜要收走蓝签账页。",
+                  "quoteOffset": 842
+                }
+              ],
+              "explanation": "林岚在场听见岑寂说话。"
+            },
+            {
+              "fact": "岑寂似乎早料到苏砚的回应；“像是”保留了焦点人物对其神态的推测，不确认为岑寂内心事实。",
+              "mode": "inference",
+              "focusAccess": "supported",
+              "accessBasis": "inference",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L17",
+                "quote": "像是早料到这一句。",
+                "quoteOffset": 1098
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L17",
+                  "quote": "像是早料到这一句。",
+                  "quoteOffset": 1098
+                }
+              ],
+              "explanation": "措辞明确为推测，叙述未转入岑寂内心。"
+            },
+            {
+              "fact": "何芷声称药箱刚放回冰柜、铅封完整，并称出港后须在六十分钟内送到冷处；这些内容在场被林岚听见，属于何芷的陈述。",
+              "mode": "reported",
+              "focusAccess": "supported",
+              "accessBasis": "observation",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L9",
+                "quote": "“箱子刚放回冰柜。",
+                "quoteOffset": 607
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L9",
+                  "quote": "“铅封完整。",
+                  "quoteOffset": 649
+                }
+              ],
+              "explanation": "引语提供信息，但陈述本身不是对箱内情形的独立验证。"
+            },
+            {
+              "fact": "林岚观察到何芷手指冻白、袖口有水痕；何芷没有碰药箱。",
+              "mode": "observed",
+              "focusAccess": "supported",
+              "accessBasis": "observation",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L7",
+                "quote": "她没碰药箱，",
+                "quoteOffset": 485
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L7",
+                  "quote": "林岚注意到她的手指冻得发白，",
+                  "quoteOffset": 536
+                }
+              ],
+              "explanation": "文本明确写为林岚所见。"
+            },
+            {
+              "fact": "林岚认为何芷说的是病人而不是账页，并认为她没有理由把两件事混为一谈；这是林岚的判断，不是对何芷动机的全知确认。",
+              "mode": "inference",
+              "focusAccess": "supported",
+              "accessBasis": "inference",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L35",
+                "quote": "何芷说的是病人，",
+                "quoteOffset": 2481
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L35",
+                  "quote": "她没理由把两件事并在一起。",
+                  "quoteOffset": 2520
+                }
+              ],
+              "explanation": "以焦点人物判断呈现，保留其推断性质。"
+            },
+            {
+              "fact": "陆行舟声称绳没问题、绞盘能用，并否认自己动过钟芯；其说法没有在当下获得独立证实。",
+              "mode": "reported",
+              "focusAccess": "supported",
+              "accessBasis": "observation",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L21",
+                "quote": "嘴里嘟囔：“绳没问题。",
+                "quoteOffset": 1480
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L21",
+                  "quote": "别再说我动了钟芯，",
+                  "quoteOffset": 1513
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L21",
+                  "quote": "绞盘能用。",
+                  "quoteOffset": 1612
+                }
+              ],
+              "explanation": "林岚听见了这段话；不将人物辩解升级为客观事实。"
+            },
+            {
+              "fact": "林岚看见苏砚的目光在陆行舟工具袋上停留，但没有下令搜查；她认为不搜查是对的，因为怀疑不是证据。",
+              "mode": "observed",
+              "focusAccess": "supported",
+              "accessBasis": "observation",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L25",
+                "quote": "她看见苏砚的目光在他工具袋上停了一瞬，",
+                "quoteOffset": 1712
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L25",
+                  "quote": "却没有下令搜查。",
+                  "quoteOffset": 1769
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L25",
+                  "quote": "怀疑不是证据，",
+                  "quoteOffset": 1808
+                }
+              ],
+              "explanation": "动作是现场观察；“那是对的”是林岚的判断。"
+            },
+            {
+              "fact": "叶澄称昨夜听到船底异响、今日尚未下水试，不能判定是否故障，并提出先听一遍；异响原因仍未知。",
+              "mode": "reported",
+              "focusAccess": "supported",
+              "accessBasis": "observation",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L31",
+                "quote": "“昨夜听见过，",
+                "quoteOffset": 2156
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L31",
+                  "quote": "我不能拿一个响声当故障，",
+                  "quoteOffset": 2201
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L31",
+                  "quote": "也不能说它不存在。",
+                  "quoteOffset": 2237
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L31",
+                  "quote": "就先听它一遍。",
+                  "quoteOffset": 2291
+                }
+              ],
+              "explanation": "叶澄明确把故障判断留作未决事项。"
+            },
+            {
+              "fact": "何芷当场表示信任叶澄的操船判断，并说若船不适航药就留在冰柜；她也称灯塔有人等药。",
+              "mode": "reported",
+              "focusAccess": "supported",
+              "accessBasis": "observation",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L33",
+                "quote": "只盯着叶澄：“我信你的手。",
+                "quoteOffset": 2341
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L33",
+                  "quote": "你若说船不适航，",
+                  "quoteOffset": 2380
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L33",
+                  "quote": "但灯塔那边有人等药。",
+                  "quoteOffset": 2428
+                }
+              ],
+              "explanation": "林岚听见这些话；其中有人等药是何芷的陈述。"
+            },
+            {
+              "fact": "何芷在医师栏盖印，苏砚核对封签号与单据后在队长栏按印；双印完成，通行证有效。",
+              "mode": "observed",
+              "focusAccess": "supported",
+              "accessBasis": "observation",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L39",
+                "quote": "随后她在医师栏盖下印章，",
+                "quoteOffset": 2794
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L41",
+                  "quote": "才在队长栏按印。",
+                  "quoteOffset": 2895
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L41",
+                  "quote": "两枚印并列，",
+                  "quoteOffset": 2919
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L41",
+                  "quote": "他将证件交给叶澄：“通行有效。",
+                  "quoteOffset": 2967
+                }
+              ],
+              "explanation": "林岚在场可观察盖印过程；苏砚对通行有效的表述也被听见。"
+            },
+            {
+              "fact": "叶澄说异响不能在岸上确定，提出让船离桩空载试行，并说六十分钟从开柜取药才起算；何芷答应计时。",
+              "mode": "reported",
+              "focusAccess": "supported",
+              "accessBasis": "observation",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "脸上没有松快：“异响没法在岸上定。",
+                "quoteOffset": 4063
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L57",
+                  "quote": "空载试一段。",
+                  "quoteOffset": 4144
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L57",
+                  "quote": "六十分钟从开柜取药才算。",
+                  "quoteOffset": 4183
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L59",
+                  "quote": "何芷点头：“我来计时。",
+                  "quoteOffset": 4224
+                }
+              ],
+              "explanation": "试行方案和计时约定均在场公开。"
+            },
+            {
+              "fact": "林岚听见船底细微木响，但不能分辨是水拍船板还是叶澄所说的异声；她没有替叶澄下结论。",
+              "mode": "uncertain",
+              "focusAccess": "supported",
+              "accessBasis": "observation",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L65",
+                "quote": "船底传来细微的木响。",
+                "quoteOffset": 4551
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L65",
+                  "quote": "林岚分不清是水拍船板，",
+                  "quoteOffset": 4581
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L65",
+                  "quote": "她没有替她下结论。",
+                  "quoteOffset": 4644
+                }
+              ],
+              "explanation": "文本明确保留声音来源的不确定性。"
+            },
+            {
+              "fact": "到20:20林岚决定启航，但具体方案为空船离桩试行，确认船况后再取药；药箱仍在冰柜旁且铅封完好，船开始离桩。",
+              "mode": "established",
+              "focusAccess": "supported",
+              "accessBasis": "observation",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L69",
+                "quote": "“决定启航。",
+                "quoteOffset": 4935
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L69",
+                  "quote": "“先空船离桩试行。",
+                  "quoteOffset": 4965
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L69",
+                  "quote": "船况确认后再取药。",
+                  "quoteOffset": 4992
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L71",
+                  "quote": "船也开始离开木桩；",
+                  "quoteOffset": 5153
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L71",
+                  "quote": "药箱仍留在冰柜旁，",
+                  "quoteOffset": 5180
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L71",
+                  "quote": "铅封完好。",
+                  "quoteOffset": 5207
+                }
+              ],
+              "explanation": "决定与随后可观察到的船、药箱状态一致；并未声称药已交付或抵达诊所。"
+            },
+            {
+              "fact": "林岚知道自己仍留有一页抄本且尚未拿出；她没有披露内容。",
+              "mode": "established",
+              "focusAccess": "supported",
+              "accessBasis": "prior",
+              "claim": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L45",
+                "quote": "她知道自己手里还有一页抄本，",
+                "quoteOffset": 3379
+              },
+              "grounds": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "location": "L45",
+                  "quote": "却没有拿出来。",
+                  "quoteOffset": 3421
+                },
+                {
+                  "resourceRef": "chapter:chapter-001.md",
+                  "location": "L9",
+                  "quote": "没有拿出那页抄本。",
+                  "quoteOffset": 550
+                }
+              ],
+              "explanation": "延续第一章已知秘密，没有让其他角色无依据获知抄本内容。"
+            }
+          ],
+          "assertions": [
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L1",
+                "quote": "# 第二章 双印",
+                "quoteOffset": 0
+              }
+            },
+            {
+              "kind": "clock",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "20:05，",
+                "quoteOffset": 20
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "钟声落尽，",
+                "quoteOffset": 28
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "雾仍压在旧渡口的木桩间。",
+                "quoteOffset": 43
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "林岚把潮表挪到灯下，",
+                "quoteOffset": 79
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "纸角被雨气卷起。",
+                "quoteOffset": 109
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "她用怀表对了一遍，",
+                "quoteOffset": 133
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "又看渡口墙上那只潮钟。",
+                "quoteOffset": 160
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "钟面慢。",
+                "quoteOffset": 193
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "七分钟。",
+                "quoteOffset": 205
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "她把结论压在舌根，",
+                "quoteOffset": 217
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L3",
+                "quote": "先看桌上的通行证。",
+                "quoteOffset": 244
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L5",
+                "quote": "苏砚没有催谁。",
+                "quoteOffset": 273
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L5",
+                "quote": "他把药单平铺，",
+                "quoteOffset": 294
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L5",
+                "quote": "逐项对照箱外的封签号。",
+                "quoteOffset": 315
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L5",
+                "quote": "“药名、数量、去向。",
+                "quoteOffset": 348
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L5",
+                "quote": "何医师，",
+                "quoteOffset": 378
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L5",
+                "quote": "请你核对。",
+                "quoteOffset": 390
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L5",
+                "quote": "”",
+                "quoteOffset": 405
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L7",
+                "quote": "何芷报得很慢。",
+                "quoteOffset": 410
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L7",
+                "quote": "冷藏针剂、止血剂，",
+                "quoteOffset": 431
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L7",
+                "quote": "都是送往灯塔诊所。",
+                "quoteOffset": 458
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L7",
+                "quote": "她没碰药箱，",
+                "quoteOffset": 485
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L7",
+                "quote": "只用指尖压住药单一角。",
+                "quoteOffset": 503
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L7",
+                "quote": "林岚注意到她的手指冻得发白，",
+                "quoteOffset": 536
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L7",
+                "quote": "袖口有一小片水痕。",
+                "quoteOffset": 578
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L9",
+                "quote": "“箱子刚放回冰柜。",
+                "quoteOffset": 607
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L9",
+                "quote": "”何芷说，",
+                "quoteOffset": 634
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L9",
+                "quote": "“铅封完整。",
+                "quoteOffset": 649
+              }
+            },
+            {
+              "kind": "duration_knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L9",
+                "quote": "出港后六十分钟内必须送到冷处。",
+                "quoteOffset": 667
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L9",
+                "quote": "”",
+                "quoteOffset": 712
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L11",
+                "quote": "“药单上写了三盒，",
+                "quoteOffset": 717
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L11",
+                "quote": "封签登记也是三盒。",
+                "quoteOffset": 744
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L11",
+                "quote": "”苏砚说，",
+                "quoteOffset": 771
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L11",
+                "quote": "“我只核对这些。",
+                "quoteOffset": 786
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L11",
+                "quote": "账页不在交接范围。",
+                "quoteOffset": 810
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L11",
+                "quote": "”",
+                "quoteOffset": 837
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L13",
+                "quote": "岑寂把公文往前推了半寸：“议事厅今夜要收走蓝签账页。",
+                "quoteOffset": 842
+              }
+            },
+            {
+              "kind": "ordering_knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L13",
+                "quote": "若相关物件随药一并交接，",
+                "quoteOffset": 920
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L13",
+                "quote": "手续可以——”",
+                "quoteOffset": 956
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L15",
+                "quote": "“公文不能替医师签字。",
+                "quoteOffset": 979
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L15",
+                "quote": "”苏砚截住他，",
+                "quoteOffset": 1012
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L15",
+                "quote": "声音不高，",
+                "quoteOffset": 1033
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L15",
+                "quote": "“也不能替药箱作证。",
+                "quoteOffset": 1048
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L15",
+                "quote": "”",
+                "quoteOffset": 1078
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L17",
+                "quote": "岑寂点头，",
+                "quoteOffset": 1083
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L17",
+                "quote": "像是早料到这一句。",
+                "quoteOffset": 1098
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L17",
+                "quote": "“自然。",
+                "quoteOffset": 1125
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L17",
+                "quote": "只是提醒，",
+                "quoteOffset": 1137
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L17",
+                "quote": "拖延也会留下记录。",
+                "quoteOffset": 1152
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L17",
+                "quote": "”",
+                "quoteOffset": 1179
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L19",
+                "quote": "林岚望向潮表。",
+                "quoteOffset": 1184
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L19",
+                "quote": "她看见潮针已逼近低潮线。",
+                "quoteOffset": 1205
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L19",
+                "quote": "外头能见度不到两百米，",
+                "quoteOffset": 1241
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L19",
+                "quote": "水面上连对岸的灯都只剩一团灰。",
+                "quoteOffset": 1274
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L19",
+                "quote": "她没有把怀表拿出来给众人看。",
+                "quoteOffset": 1319
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L19",
+                "quote": "此刻他们要决定的是药能不能走，",
+                "quoteOffset": 1361
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L19",
+                "quote": "不是钟为什么慢。",
+                "quoteOffset": 1406
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L21",
+                "quote": "陆行舟蹲在船边，",
+                "quoteOffset": 1432
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L21",
+                "quote": "检查绞盘的棘齿，",
+                "quoteOffset": 1456
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L21",
+                "quote": "嘴里嘟囔：“绳没问题。",
+                "quoteOffset": 1480
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L21",
+                "quote": "别再说我动了钟芯，",
+                "quoteOffset": 1513
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L21",
+                "quote": "我连钟楼门都没——”他顿住，",
+                "quoteOffset": 1540
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L21",
+                "quote": "朝苏砚看去，",
+                "quoteOffset": 1582
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L21",
+                "quote": "“总之，",
+                "quoteOffset": 1600
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L21",
+                "quote": "绞盘能用。",
+                "quoteOffset": 1612
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L21",
+                "quote": "”",
+                "quoteOffset": 1627
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L23",
+                "quote": "“没人问钟芯。",
+                "quoteOffset": 1632
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L23",
+                "quote": "”林岚说。",
+                "quoteOffset": 1653
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L25",
+                "quote": "陆行舟抿住嘴，",
+                "quoteOffset": 1670
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L25",
+                "quote": "继续拧紧螺栓。",
+                "quoteOffset": 1691
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L25",
+                "quote": "她看见苏砚的目光在他工具袋上停了一瞬，",
+                "quoteOffset": 1712
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L25",
+                "quote": "却没有下令搜查。",
+                "quoteOffset": 1769
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L25",
+                "quote": "那是对的。",
+                "quoteOffset": 1793
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L25",
+                "quote": "怀疑不是证据，",
+                "quoteOffset": 1808
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L25",
+                "quote": "船也不能因此多等一刻。",
+                "quoteOffset": 1829
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L27",
+                "quote": "叶澄走到船头，",
+                "quoteOffset": 1864
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L27",
+                "quote": "试了试缆绳。",
+                "quoteOffset": 1885
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L27",
+                "quote": "她把手掌贴在船舷，",
+                "quoteOffset": 1903
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L27",
+                "quote": "仿佛在听木板里面的回声。",
+                "quoteOffset": 1930
+              }
+            },
+            {
+              "kind": "clock_knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L27",
+                "quote": "“低潮半小时后起。",
+                "quoteOffset": 1966
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L27",
+                "quote": "碎石滩不拖重船。",
+                "quoteOffset": 1993
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L27",
+                "quote": "走正规水道，",
+                "quoteOffset": 2017
+              }
+            },
+            {
+              "kind": "duration_knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L27",
+                "quote": "四十分钟，",
+                "quoteOffset": 2035
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L27",
+                "quote": "快不了。",
+                "quoteOffset": 2050
+              }
+            },
+            {
+              "kind": "clock_knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L27",
+                "quote": "封桥九点关的是东桥，",
+                "quoteOffset": 2062
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L27",
+                "quote": "不是水路。",
+                "quoteOffset": 2092
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L27",
+                "quote": "”",
+                "quoteOffset": 2107
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L29",
+                "quote": "“你听见船底异响？",
+                "quoteOffset": 2112
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L29",
+                "quote": "”何芷问。",
+                "quoteOffset": 2139
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L31",
+                "quote": "“昨夜听见过，",
+                "quoteOffset": 2156
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L31",
+                "quote": "今日还没下水试。",
+                "quoteOffset": 2177
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L31",
+                "quote": "我不能拿一个响声当故障，",
+                "quoteOffset": 2201
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L31",
+                "quote": "也不能说它不存在。",
+                "quoteOffset": 2237
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L31",
+                "quote": "”叶澄说，",
+                "quoteOffset": 2264
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L31",
+                "quote": "“要走，",
+                "quoteOffset": 2279
+              }
+            },
+            {
+              "kind": "ordering_knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L31",
+                "quote": "就先听它一遍。",
+                "quoteOffset": 2291
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L31",
+                "quote": "”",
+                "quoteOffset": 2312
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L33",
+                "quote": "何芷没有看岑寂，",
+                "quoteOffset": 2317
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L33",
+                "quote": "只盯着叶澄：“我信你的手。",
+                "quoteOffset": 2341
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L33",
+                "quote": "你若说船不适航，",
+                "quoteOffset": 2380
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L33",
+                "quote": "药就留在冰柜里。",
+                "quoteOffset": 2404
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L33",
+                "quote": "但灯塔那边有人等药。",
+                "quoteOffset": 2428
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L33",
+                "quote": "”",
+                "quoteOffset": 2458
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L35",
+                "quote": "林岚看着她。",
+                "quoteOffset": 2463
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L35",
+                "quote": "何芷说的是病人，",
+                "quoteOffset": 2481
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L35",
+                "quote": "不是账页。",
+                "quoteOffset": 2505
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L35",
+                "quote": "她没理由把两件事并在一起。",
+                "quoteOffset": 2520
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L37",
+                "quote": "“通行证须双印。",
+                "quoteOffset": 2561
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L37",
+                "quote": "”苏砚把印泥盒打开，",
+                "quoteOffset": 2585
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L37",
+                "quote": "“我可以盖队印。",
+                "quoteOffset": 2615
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L37",
+                "quote": "医师自定。",
+                "quoteOffset": 2639
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L37",
+                "quote": "”",
+                "quoteOffset": 2654
+              }
+            },
+            {
+              "kind": "duration",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L39",
+                "quote": "何芷沉默了一会儿。",
+                "quoteOffset": 2659
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L39",
+                "quote": "她伸手将药单拉近，",
+                "quoteOffset": 2686
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L39",
+                "quote": "逐行再读。",
+                "quoteOffset": 2713
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L39",
+                "quote": "她确认的是药，",
+                "quoteOffset": 2728
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L39",
+                "quote": "不是交接公文；",
+                "quoteOffset": 2749
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L39",
+                "quote": "也没有打开铅封。",
+                "quoteOffset": 2770
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L39",
+                "quote": "随后她在医师栏盖下印章，",
+                "quoteOffset": 2794
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L39",
+                "quote": "边缘清楚，",
+                "quoteOffset": 2830
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L39",
+                "quote": "没有拖墨。",
+                "quoteOffset": 2845
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L41",
+                "quote": "苏砚核对封签号与单据，",
+                "quoteOffset": 2862
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L41",
+                "quote": "才在队长栏按印。",
+                "quoteOffset": 2895
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L41",
+                "quote": "两枚印并列，",
+                "quoteOffset": 2919
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L41",
+                "quote": "纸张被潮气浸得微软。",
+                "quoteOffset": 2937
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L41",
+                "quote": "他将证件交给叶澄：“通行有效。",
+                "quoteOffset": 2967
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L41",
+                "quote": "船况由船主确认，",
+                "quoteOffset": 3012
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L41",
+                "quote": "启航与否不由这张纸替你决定。",
+                "quoteOffset": 3036
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L41",
+                "quote": "”",
+                "quoteOffset": 3078
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L43",
+                "quote": "“这话我爱听。",
+                "quoteOffset": 3083
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L43",
+                "quote": "”叶澄解开缆绳，",
+                "quoteOffset": 3104
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L43",
+                "quote": "却没把绳头放下，",
+                "quoteOffset": 3128
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L43",
+                "quote": "“只是我先说，",
+                "quoteOffset": 3152
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L43",
+                "quote": "低潮时不碰碎石滩。",
+                "quoteOffset": 3173
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L43",
+                "quote": "规矩是规矩，",
+                "quoteOffset": 3200
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L43",
+                "quote": "船底也有底线。",
+                "quoteOffset": 3218
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L43",
+                "quote": "”",
+                "quoteOffset": 3239
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L45",
+                "quote": "钟楼方向传来一声迟钝的钟响。",
+                "quoteOffset": 3244
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L45",
+                "quote": "林岚本能地数着那声音与怀表的间隔。",
+                "quoteOffset": 3286
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L45",
+                "quote": "七分钟仍在那里，",
+                "quoteOffset": 3337
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L45",
+                "quote": "像一根细刺。",
+                "quoteOffset": 3361
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L45",
+                "quote": "她知道自己手里还有一页抄本，",
+                "quoteOffset": 3379
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L45",
+                "quote": "却没有拿出来。",
+                "quoteOffset": 3421
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L45",
+                "quote": "此刻把它摊开，",
+                "quoteOffset": 3442
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L45",
+                "quote": "只会让所有人的目光转向纸，",
+                "quoteOffset": 3463
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L45",
+                "quote": "而不是药箱、潮水和船。",
+                "quoteOffset": 3502
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L47",
+                "quote": "苏砚把盖好的证件夹进防水套。",
+                "quoteOffset": 3537
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L47",
+                "quote": "岑寂伸手，",
+                "quoteOffset": 3579
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L47",
+                "quote": "似乎要接，",
+                "quoteOffset": 3594
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L47",
+                "quote": "又在半途停住。",
+                "quoteOffset": 3609
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L47",
+                "quote": "“既已完成交接，",
+                "quoteOffset": 3630
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L47",
+                "quote": "是否由我带回公文——”",
+                "quoteOffset": 3654
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L49",
+                "quote": "“药还没交到灯塔。",
+                "quoteOffset": 3689
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L49",
+                "quote": "”何芷说，",
+                "quoteOffset": 3716
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L49",
+                "quote": "“我随船。",
+                "quoteOffset": 3731
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L49",
+                "quote": "”",
+                "quoteOffset": 3746
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L51",
+                "quote": "“我也去。",
+                "quoteOffset": 3751
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L51",
+                "quote": "”林岚说。",
+                "quoteOffset": 3766
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L53",
+                "quote": "苏砚看她一眼：“你的测量依据呢？",
+                "quoteOffset": 3783
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L53",
+                "quote": "”",
+                "quoteOffset": 3831
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L55",
+                "quote": "她没有答。",
+                "quoteOffset": 3836
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L55",
+                "quote": "怀表在袖口里硌着腕骨。",
+                "quoteOffset": 3851
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L55",
+                "quote": "那是她的事，",
+                "quoteOffset": 3884
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L55",
+                "quote": "还没到该说的时候。",
+                "quoteOffset": 3902
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "叶澄解下最后一道缆绳，",
+                "quoteOffset": 3931
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "把绳圈放在桩上。",
+                "quoteOffset": 3964
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "船身轻轻撞了一下木阶。",
+                "quoteOffset": 3988
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "她先探身检查舷下，",
+                "quoteOffset": 4021
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "再收回手，",
+                "quoteOffset": 4048
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "脸上没有松快：“异响没法在岸上定。",
+                "quoteOffset": 4063
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "要判断，",
+                "quoteOffset": 4114
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "得让船离桩，",
+                "quoteOffset": 4126
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "空载试一段。",
+                "quoteOffset": 4144
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "冷藏箱先不搬，",
+                "quoteOffset": 4162
+              }
+            },
+            {
+              "kind": "duration_knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "六十分钟从开柜取药才算。",
+                "quoteOffset": 4183
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L57",
+                "quote": "”",
+                "quoteOffset": 4219
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L59",
+                "quote": "何芷点头：“我来计时。",
+                "quoteOffset": 4224
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L59",
+                "quote": "”",
+                "quoteOffset": 4257
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L61",
+                "quote": "“你们可以走。",
+                "quoteOffset": 4262
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L61",
+                "quote": "”苏砚说，",
+                "quoteOffset": 4283
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L61",
+                "quote": "“我的队印只保证手续，",
+                "quoteOffset": 4298
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L61",
+                "quote": "不替船况担保。",
+                "quoteOffset": 4331
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L61",
+                "quote": "”",
+                "quoteOffset": 4352
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L63",
+                "quote": "林岚把通行证看了一遍。",
+                "quoteOffset": 4357
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L63",
+                "quote": "两枚印都在。",
+                "quoteOffset": 4390
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L63",
+                "quote": "钟慢七分钟，",
+                "quoteOffset": 4408
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L63",
+                "quote": "低潮将至，",
+                "quoteOffset": 4426
+              }
+            },
+            {
+              "kind": "duration_knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L63",
+                "quote": "正规水道要四十分钟。",
+                "quoteOffset": 4441
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L63",
+                "quote": "她把这些事实一一放好，",
+                "quoteOffset": 4471
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L63",
+                "quote": "没有让其中任何一项冒充另一项。",
+                "quoteOffset": 4504
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L65",
+                "quote": "船底传来细微的木响。",
+                "quoteOffset": 4551
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L65",
+                "quote": "林岚分不清是水拍船板，",
+                "quoteOffset": 4581
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L65",
+                "quote": "还是叶澄所说的异声。",
+                "quoteOffset": 4614
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L65",
+                "quote": "她没有替她下结论。",
+                "quoteOffset": 4644
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L65",
+                "quote": "叶澄俯身听了片刻，",
+                "quoteOffset": 4671
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L65",
+                "quote": "抬手示意别动绞盘。",
+                "quoteOffset": 4698
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L65",
+                "quote": "雨线在灯下斜着掠过，",
+                "quoteOffset": 4725
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L65",
+                "quote": "落到通行证边缘，",
+                "quoteOffset": 4755
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L65",
+                "quote": "苏砚及时把防水套合拢。",
+                "quoteOffset": 4779
+              }
+            },
+            {
+              "kind": "clock",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L67",
+                "quote": "20:20，",
+                "quoteOffset": 4814
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L67",
+                "quote": "叶澄收紧掌中的缆绳，",
+                "quoteOffset": 4822
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L67",
+                "quote": "等着最后一句话。",
+                "quoteOffset": 4852
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L67",
+                "quote": "林岚看向何芷，",
+                "quoteOffset": 4876
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L67",
+                "quote": "又看向那只仍封着的药箱。",
+                "quoteOffset": 4897
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L69",
+                "quote": "“决定启航。",
+                "quoteOffset": 4935
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L69",
+                "quote": "”她说，",
+                "quoteOffset": 4953
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L69",
+                "quote": "“先空船离桩试行。",
+                "quoteOffset": 4965
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L69",
+                "quote": "船况确认后再取药。",
+                "quoteOffset": 4992
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L69",
+                "quote": "走正规水道，",
+                "quoteOffset": 5019
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L69",
+                "quote": "不碰碎石滩。",
+                "quoteOffset": 5037
+              }
+            },
+            {
+              "kind": "none",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L69",
+                "quote": "”",
+                "quoteOffset": 5055
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "叶澄应了一声，",
+                "quoteOffset": 5060
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "放开缆绳。",
+                "quoteOffset": 5081
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "苏砚把通行证交到她手里。",
+                "quoteOffset": 5096
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "双印已经完成，",
+                "quoteOffset": 5132
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "船也开始离开木桩；",
+                "quoteOffset": 5153
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "药箱仍留在冰柜旁，",
+                "quoteOffset": 5180
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "铅封完好。",
+                "quoteOffset": 5207
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "林岚没有上船，",
+                "quoteOffset": 5222
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "也没有转身离开。",
+                "quoteOffset": 5243
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "她站在岸边看着绳索入水，",
+                "quoteOffset": 5267
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "等叶澄报出船底的声音。",
+                "quoteOffset": 5303
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "手表的秒针仍走得稳，",
+                "quoteOffset": 5336
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "潮钟却慢着。",
+                "quoteOffset": 5366
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "两种刻度各有来处，",
+                "quoteOffset": 5384
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "她暂时只把它们记在心里。",
+                "quoteOffset": 5411
+              }
+            },
+            {
+              "kind": "ordering",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "雾里，",
+                "quoteOffset": 5447
+              }
+            },
+            {
+              "kind": "knowledge",
+              "evidence": {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "缆绳轻轻一颤。",
+                "quoteOffset": 5456
+              }
+            }
+          ]
+        },
+        "issues": [
+          {
+            "sourceKey": "chapter-002-body-length",
+            "category": "任务约束／篇幅",
+            "severity": "hard",
+            "contradiction": "请求要求正文1500—2000字；保存版本正文明显短于1500字。",
+            "evidence": [
+              {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L1",
+                "quote": "# 第二章 双印",
+                "quoteOffset": 0
+              },
+              {
+                "resourceRef": "chapter:chapter-002.md",
+                "location": "L71",
+                "quote": "缆绳轻轻一颤。",
+                "quoteOffset": 5456
+              }
+            ],
+            "issueId": "content:6fcc12f355:8784bea33eba",
+            "status": "open",
+            "resolution": null
+          }
+        ],
+        "resolutions": [],
+        "coveredResourceRefs": [
+          "chapter:chapter-002.md"
+        ]
+      },
+      "coverageHashes": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "hash": "cf67fd5e3b6940f7abd0acdd1c774ebfcb0dbd07915426973a0ddf29247e0f99"
+        },
+        {
+          "resourceRef": "outline:hierarchy",
+          "hash": "afa14801b02d4436f28503d2a4c6af9af8a42e0d462735bf239d0879134291f0"
+        },
+        {
+          "resourceRef": "outline:master",
+          "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+        },
+        {
+          "resourceRef": "style:memory",
+          "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+        },
+        {
+          "resourceRef": "chapter:chapter-001.md",
+          "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+        },
+        {
+          "resourceRef": "character:he",
+          "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+        },
+        {
+          "resourceRef": "character:su",
+          "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+        },
+        {
+          "resourceRef": "character:ye",
+          "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+        },
+        {
+          "resourceRef": "character:lin",
+          "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+        },
+        {
+          "resourceRef": "world:lore",
+          "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+        },
+        {
+          "resourceRef": "character:lu",
+          "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+        },
+        {
+          "resourceRef": "world:places",
+          "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+        },
+        {
+          "resourceRef": "character:cen",
+          "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+        }
+      ],
+      "itemId": "48d3846de690a3b0e7d80597047f58b72ad6406d4645d2fe3b5655673404ddc5",
+      "origin": "host_readonly_analysis"
+    },
+    "narrativeReview": {
+      "status": "completed",
+      "key": "48d3846de690a3b0e7d80597047f58b72ad6406d4645d2fe3b5655673404ddc5",
+      "readOnly": true,
+      "protocolVersion": 1,
+      "threadId": "01a150b6-4b07-79e2-a37d-94360821e1c0",
+      "turnId": "01a150b6-4b27-76a1-a589-f6608aec9c2c",
+      "modelId": "gpt-6-luna"
+    },
+    "requestText": "用传统写作模式续写第二章，保存为新章节。请先读取六人的角色设定、世界观、大纲、文风和前章，以林岚为第三人称有限视角，从20:05写到20:20，在旧渡口完成双印和是否启航的决定，正文1500—2000字。遵守角色秘密的信息边界，不凭空共享暗格或七分钟。写后自查人物、世界观、时间和视角，若有违背本次要求之处在本次任务内修正，再给出有实际资料依据的审校结果。",
+    "taskRequestText": "用传统写作模式续写第二章，保存为新章节。请先读取六人的角色设定、世界观、大纲、文风和前章，以林岚为第三人称有限视角，从20:05写到20:20，在旧渡口完成双印和是否启航的决定，正文1500—2000字。遵守角色秘密的信息边界，不凭空共享暗格或七分钟。写后自查人物、世界观、时间和视角，若有违背本次要求之处在本次任务内修正，再给出有实际资料依据的审校结果。",
+    "text": "已保存第二章《双印》为新章节，正文 1502 字。场景从 20:05 推进至 20:20，在旧渡口完成双印，并决定先让空船离桩试行、确认船况后再取药；林岚没有获知暗格秘密，也未透露七分钟误差。\n\n审校工具未通过：它仍报告篇幅不足及有限视角信息依据问题，叙事审计也未完成。因此目前不能称本章已通过自查，修复和复审尚未完成。",
+    "memoryBaselines": {
+      "character-memory:cen": {
+        "schemaVersion": 1,
+        "characterId": "cen",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "cen-initial",
+            "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "cen-goal",
+            "summary": "阻止旧账公开但不伤及病人"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:he": {
+        "schemaVersion": 1,
+        "characterId": "he",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "he-initial",
+            "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "he-goal",
+            "summary": "把冷藏药送到灯塔诊所"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lin": {
+        "schemaVersion": 1,
+        "characterId": "lin",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lin-initial",
+            "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lin-goal",
+            "summary": "查出潮钟误差，保护弟弟"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lu": {
+        "schemaVersion": 1,
+        "characterId": "lu",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lu-initial",
+            "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lu-goal",
+            "summary": "修好潮钟并洗清偷芯嫌疑"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:su": {
+        "schemaVersion": 1,
+        "characterId": "su",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "su-initial",
+            "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "su-goal",
+            "summary": "在封桥前合法完成交接"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:ye": {
+        "schemaVersion": 1,
+        "characterId": "ye",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "ye-initial",
+            "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "ye-goal",
+            "summary": "保住执照与船员"
+          }
+        ],
+        "privateMisbeliefs": []
+      }
+    }
+  }
+]

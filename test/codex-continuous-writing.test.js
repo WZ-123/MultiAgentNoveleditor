@@ -34,9 +34,10 @@ async function run() {
     { fileName: 'chapter-002.md', content: '# 第二章 回声\n\n长廊比记忆里更窄。林澈沿着墙上的旧刻痕走到尽头，发现那封未寄出的信仍压在玻璃下。\n\n他没有拆信，只把带来的钥匙放在旁边。身后的脚步停住，两个人隔着一层倒影点了点头。' },
     { fileName: 'chapter-003.md', content: '# 第三章 天亮\n\n风从破窗吹进来，纸页一张张翻过。林澈守到天色发白，终于在末页看见自己的名字。\n\n他合上册子，替走廊熄了灯。院门外已有早市的叫卖声，他走出去，没有回头。' },
   ];
+  let authorRequests=0;
   const fake = await createFakeResponsesServer({
     respond(_body, requests) {
-      const scene = scenes[requests.length - 1];
+      const scene = scenes[authorRequests++];
       return scene
         ? { customToolName: 'apply_patch', input: addChapterPatch(scene.fileName, scene.content) }
         : { text: '三个完整场景均已在同一回合中逐章保存。' };
@@ -78,7 +79,9 @@ async function run() {
     });
     const completed = await terminal;
 
-    assert.equal(fake.requests.length, 4, 'one native turn must continue after each of three saves');
+    const intentRequests=fake.requests.filter(request=>JSON.stringify(request.body.input).includes('解析用户本次任务的范围'));
+    assert.equal(intentRequests.length,1);
+    assert.equal(fake.requests.length-intentRequests.length, 4, 'one author turn must continue after each of three saves without writer retries');
     assert.equal(events.filter((event) => event.type === 'confirmation_requested').length, 0, 'authorized new chapters should not pause for repeated approval');
     const committed = events.filter((event) => event.type === 'item_completed' && event.committedResources?.length);
     assert.equal(committed.length, 3, 'each complete scene must be committed and read back before the next one');

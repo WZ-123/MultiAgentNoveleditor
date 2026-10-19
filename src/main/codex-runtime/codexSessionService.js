@@ -18,10 +18,11 @@ const { CodexProcessManager } = require('./processManager');
 const { createDeepSeekNoReasoningBridge } = require('./deepseekNoReasoningBridge');
 const { collectNativeNovelChanges, resourceRefFromRelativePath, resourceRelativePath, syncNativeNovelWorkspace } = require('./nativeNovelWorkspace');
 const { developmentCacheRoot } = require('./runtimeManifest');
-const { TaskLedger, normalizeTaskConstraints } = require('./taskLedger');
+const { TaskLedger, normalizeTaskConstraints, plainText } = require('./taskLedger');
 const { evaluateTaskResult } = require('./taskCompletion');
 const { prepareTaskContinuation } = require('./taskContinuation');
-const { invalidateForResources, recordReview } = require('./reviewLedger');
+const { invalidateForResources, assessReview, recordReview, mergeReviewFindings } = require('./reviewLedger');
+const { bindRequirements, deriveRequirements } = require('./taskRequirements');
 const { contractError, hash: contentHash } = require('./contracts');
 const { getAuthorization, revokeAuthorization, setAuthorization, withAuthorization } = require('./writingAuthorization');
 const { getProgress, saveProgress } = require('./writingProgress');
@@ -69,6 +70,7 @@ function additionalContext(payload, editorSnapshot, workspaceRoot = '') {
     taskConstraints: { kind: 'application', value: JSON.stringify(constraints) },
     ...(payload.continuation ? { taskContinuation: { kind: 'application', value: JSON.stringify({
       sourceRunId: payload.continuation.sourceRunId, savedResources: payload.continuation.savedResources,
+      unmet: payload.continuation.unmet, checks: payload.continuation.checks,
       instruction: '继续原任务的未完成部分。先读取正式资源并核对保存哈希；保留已完成内容，字数在容差内无需为凑字重写。所有新修改仍按当前批准规则提交。',
     }) } } : {}),
   };
@@ -159,6 +161,7 @@ function projectNotification(message, run) {
   const method = String(message?.method || '');
   const params = message?.params || {};
   const base = { runId: run.runId, conversationId: run.conversationId, threadId: run.threadId, turnId: run.turnId || resultId(params, 'turn') || null };
+  if(run.purpose)Object.assign(base,{purpose:run.purpose,parentRunId:run.parentRunId,modelId:run.modelId});
   if (method === 'turn/started') return { ...base, type: 'turn_started' };
   if (method === 'item/agentMessage/delta') return { ...base, type: 'text_delta', delta: String(params.delta || '') };
   if (method === 'item/started') return { ...base, type: 'item_started', item: clone(params.item || null) };
@@ -192,8 +195,10 @@ class CodexSessionService extends EventEmitter {
     this.ledger = new TaskLedger();
     this.runRecords = new Map();
     this.startPromises = new Map();
+    this.intentControllers = new Map();
     this.checkpointTimers = new Map();
     this.recoveryPromise = null;
+    this.stopNarrativeReviewJobs=require('./narrativeReviewJobs').attachJobHost(this);
     chatHistory.setBranchMutationGuard(({ threadId }) => {
       if (this.threadRuns.has(String(threadId))) throw contractError('对话正在启动或运行，请先停止任务', 'chat_turn_active');
     });
@@ -374,7 +379,7 @@ class CodexSessionService extends EventEmitter {
       baseInstructions: includeMcp
         ? '你是小说创作工作台中的 Codex。自行理解需求、管理上下文、使用显式提供的 Skill，并在适合时使用原生 subagent。小说 MCP server 标识是 novel_tools；直接调用它提供的 list_novel_resources、read_novel_resource、report_writing_progress 等命名工具，不得用通用 list_mcp_resources、list_mcp_resource_templates 或 read_mcp_resource 探测 server、读取 Skill 或代替小说工具。每类资源最多列举一次，已知 resourceRef 时直接读取，独立读取应在同一轮并行发起；不得读取与当前任务无关或已知为空的资源。只通过 novel_tools 读取小说资料；不得使用 shell、插件或网页工具。修改小说时只使用 Codex 原生 apply_patch 编辑 nativeWorkspace 中的映射文件；nativeWorkspace 本身就是补丁根目录，补丁路径必须是映射相对路径（如 chapters/chapter-001.md），绝不添加 novel/、nativeWorkspace 名或绝对路径前缀。原生 fileChange 由宿主按项目授权决定自动批准或展示差异；不得调用自定义写入工具，也不得声称提交完成前已写入真实小说。functions.exec 只能编排真实工具调用，禁止用代码循环、模板或字符串拼接生成小说正文。长篇任务以完整场景或章节为单位创作；先用 report_writing_progress 报告当前章节，自然落点后提交，提交成功后在同一回合继续下一场景或章节，直到本次内容目标完成。不得按固定字数切段，也不能把全部生成延迟到回合末尾。'
         : '你是小说创作工作台中的 Codex。当前是普通文本对话，没有挂载小说资料工具或写作 Skill；直接回答用户，不要尝试读取、修改或声称已读取小说项目。',
-      developerInstructions: '应用只提供资源标识、映射路径与版本信息，不替你检索或裁剪上下文。范围不清时直接询问用户。不要暴露思维链。',
+      developerInstructions: '应用只提供资源标识、映射路径与版本信息，不替你检索或裁剪上下文。先读取可获取的依据；普通剧情选择、衔接和写法属于已授权的创作工作，采用合理方案并说明依据。仅在确有无法从现有资料确定、且会改变用户授权范围的必要信息时询问用户，不为常规创作决定重复索取许可。不要暴露思维链。',
       config,
     });
     const threadId = resultId(result, 'thread');
@@ -410,7 +415,7 @@ class CodexSessionService extends EventEmitter {
     const toolMode = payload.includeMcp === false ? 'text' : 'tools';
     // Older DeepSeek threads may retain incompatible code-mode tool history.
     const transportVersion = route.connection.templateId === 'deepseek' ? ':native-functions-v1' : '';
-    const bindingFingerprint = `${route.fingerprint}${transportVersion}:${toolMode}`;
+    const bindingFingerprint = `${route.fingerprint}${transportVersion}:${toolMode}:writing-tools-v11`;
     const reusable = prior?.schemaVersion === 1
       && prior.providerFingerprint === bindingFingerprint
       && String(prior.novelId || '') === String(payload.novelId || '');
@@ -488,9 +493,10 @@ class CodexSessionService extends EventEmitter {
         return clone(durable);
       }
       if (!String(payload.text || '').trim()) throw new Error('消息不能为空');
-      payload = await prepareTaskContinuation(payload);
+      payload = await prepareTaskContinuation(await deriveRequirements(payload));
       taskId = String(payload.taskId || payload.userMessageId || runId);
       Object.assign(record, { taskId, attemptId, taskConstraints: normalizeTaskConstraints(payload.taskConstraints),
+        requestText:String(payload.text||''),taskRequestText:payload.continuation?.taskRequestText||String(payload.text||''),
         continuedFromRunId: payload.continuation?.sourceRunId || null, editScope: clone(payload.editScope || { mode: 'unrestricted' }) });
       if (payload.persistence === 'chat') {
         await chatHistory.ensureUserMessage(conversationId, payload.novelId, { id: payload.userMessageId, text: String(payload.text).trim() });
@@ -544,7 +550,9 @@ class CodexSessionService extends EventEmitter {
     const route = await modelConfig.activeRoute();
     await this.ledger.record(runId, 'route_selected', { connectionId: route.connection.id, connectionKind: route.connection.kind, modelId: route.model.id, reasoningEffort: route.reasoningEffort });
     if (route.connection.kind === 'codexSubscription') {
-      const login = await this.accountStatus({ refreshToken: true });
+      // The official runtime owns token expiry/refresh. Do not force credential
+      // rotation on every writing turn (especially across isolated runtimes).
+      const login = await this.accountStatus();
       if (login.account?.type !== 'chatgpt') throw contractError('Codex 订阅账户不可用，请重新登录', 'codex_login_required', { stage: 'authentication' });
     }
     const taskConstraints = normalizeTaskConstraints(payload.taskConstraints);
@@ -562,6 +570,9 @@ class CodexSessionService extends EventEmitter {
     if (history && String(history.novelId || '') !== String(payload.novelId || '')) throw contractError('对话不属于目标小说', 'conversation_project_mismatch');
     const entry = payload.novelId ? await novels.getNovelById(payload.novelId) : null;
     if (payload.novelId && !entry) throw new Error('小说项目不存在');
+    if (entry && novelToolTask) await bindRequirements(entry, taskConstraints, text);
+    const runRecord = this.runRecords.get(runId);
+    if (runRecord) runRecord.taskConstraints = taskConstraints;
     if (entry && novelToolTask) {
       const existingRunId = this.projectRuns.get(String(entry.id));
       if (existingRunId && existingRunId !== runId) {
@@ -595,6 +606,25 @@ class CodexSessionService extends EventEmitter {
     }
     const editor = { resourceRef, baseHash, selection: restricted ? { start, end } : null };
     if (restricted) taskConstraints.allowedWriteResourceRefs = [resourceRef];
+    if(entry&&novelToolTask&&['unspecified','write','edit','roleplay','review','read','outline'].includes(taskConstraints.operation)&&(taskConstraints.intentBinding?.status!=='bound'||taskConstraints.intentBinding?.version!==2||taskConstraints.operation==='unspecified'&&!taskConstraints.intentBinding?.operation)) {
+      const {intentInput,bindTaskIntent}=require('./taskIntent');
+      const original=payload.continuation?.taskRequestText||text;
+      const input=await intentInput(entry,original,taskConstraints);
+      if(runRecord?.cancelRequested)throw contractError('任务范围解析已取消','turn_interrupted');
+      const controller=new AbortController();this.intentControllers.set(runId,controller);
+      try {
+        if(runRecord){runRecord.taskConstraints={...taskConstraints,intentBinding:{status:'resolving'}};await this._persistRecord(runRecord);this._emitEvent({type:'run_state',runId,conversationId});}
+        if(controller.signal.aborted||runRecord?.cancelRequested)throw contractError('任务范围解析已取消','turn_interrupted');
+        const response=await this.runOneShot({text:input.text,outputSchema:input.schema,readOnly:true,purpose:'task_intent',parentRunId:runId,route,abortSignal:controller.signal});
+        Object.assign(taskConstraints,bindTaskIntent(taskConstraints,JSON.parse(response.text),{text:original,descriptors:input.descriptors,modelId:response.modelId,unavailable:input.unavailable}));
+        await bindRequirements(entry,taskConstraints,original);
+      } catch(error) {
+        if(controller.signal.aborted||runRecord?.cancelRequested)throw contractError('任务范围解析已取消','turn_interrupted');
+        throw error;
+      } finally {this.intentControllers.delete(runId);}
+      if(runRecord?.cancelRequested)throw contractError('任务范围解析已取消','turn_interrupted');
+      if(runRecord){runRecord.taskConstraints=taskConstraints;await this._persistRecord(runRecord);}
+    }
     const writingOperation = !!entry && novelToolTask;
     const initialBodyCjk = writingOperation ? await novelBodyCjk(entry) : 0;
     const priorProgress = writingOperation ? await getProgress({ novelId: entry.id, conversationId }) : null;
@@ -602,9 +632,13 @@ class CodexSessionService extends EventEmitter {
     const run = {
       runId, conversationId, threadId, turnId: '', userMessageId: String(payload.userMessageId || ''), text: '', items: [],
       taskId, attemptId, taskConstraints, skillName: String(payload.skillName || ''), persistence: payload.persistence || 'chat', entry, workspace,
+      route,
+      requestText:text,taskRequestText:payload.continuation?.taskRequestText || text,
       continuedFromRunId: payload.continuation?.sourceRunId || null, reusedSavedResources: payload.continuation?.savedResources || [],
       nativeFileItems: new Map(), approvedFileItems: new Map(), userRejectedFileItems: new Set(), completedFileItems: new Set(), committedResources: [], interruptionRequested: false,
       selectionState: editor.selection ? { resourceRef, content: editorContent, range: editor.selection } : null,
+      reviewFindings:payload.continuation?.reviewFindings || [],
+      memoryBaselines: payload.continuation?.memoryBaselines || ((taskConstraints.preserveOriginalMemories||taskConstraints.narrativeAuditRequired) ? Object.fromEntries([...(workspace?.snapshots.keys() || [])].filter(ref=>ref.startsWith('character-memory:')).map(ref=>[ref,JSON.parse(workspace.snapshots.get(ref).content)])) : {}),
       progress: writingOperation ? {
         schemaVersion: 1, novelId: String(entry.id), conversationId, runId, phase: 'waiting-model', currentResourceRef: resourceRef || null,
         totalSavedBodyCjk: initialBodyCjk, initialTotalBodyCjk: initialBodyCjk, runNetBodyCjk: 0, lastSavedAt: priorProgress?.lastSavedAt || null, startedAtMs, elapsedMs: 0,
@@ -620,8 +654,11 @@ class CodexSessionService extends EventEmitter {
     if (conversationId) this.threadRuns.set(conversationId, runId);
     if (run.progress) await this._updateProgress(run);
     const input = [{ type: 'text', text }];
-    if (payload.skillName && novelToolTask) {
-      const name = String(payload.skillName);
+    const selectedSkills = [...new Set([payload.skillName,
+      ...(['write', 'edit'].includes(taskConstraints.operation) ? ['mana-fiction-writing'] : []),
+      ...(taskConstraints.reviewRequired ? ['mana-consistency-review'] : [])].filter(Boolean))];
+    for (const selectedSkill of novelToolTask ? selectedSkills : []) {
+      const name = String(selectedSkill);
       if (!BUILTIN_SKILLS.has(name) && !/^mana-user-[a-z0-9._-]+$/u.test(name)) throw new Error('Skill 不存在或未启用');
       const skill = await skillsStore.getSkill(name);
       if (!skill || skill.enabled === false) throw new Error('Skill 不存在或未启用');
@@ -631,15 +668,16 @@ class CodexSessionService extends EventEmitter {
       input.push({ type: 'skill', name, path: skillPath });
     }
     try {
-      const result = await this._startNativeTurn({
+      if(runRecord?.cancelRequested||run.interruptionRequested)throw contractError('启动已取消','turn_interrupted');
+      const nativeTurnParams = {
         threadId,
-        input,
         model: route.model.id,
         ...(route.reasoningEffort ? { effort: route.reasoningEffort } : {}),
         approvalPolicy: workspace ? 'on-request' : 'never',
         additionalContext: additionalContext({ ...payload, taskConstraints }, editor, workspace?.root || ''),
         ...(payload.outputSchema ? { outputSchema: payload.outputSchema } : {}),
-      });
+      };
+      const result = await this._startNativeTurn({...nativeTurnParams,input});
       run.turnId = resultId(result, 'turn');
       if (!run.turnId) throw new Error('Codex App Server 未返回 turnId');
       if (run.interruptionRequested) await this.interrupt({ runId });
@@ -651,10 +689,11 @@ class CodexSessionService extends EventEmitter {
   }
 
   async interrupt({ runId }) {
+    this.intentControllers.get(String(runId))?.abort();
     const run = this.activeRuns.get(String(runId));
     if (!run) {
       const record = this.runRecords.get(String(runId));
-      if (record?.status === 'starting') { record.cancelRequested = true; return { interrupted: true, starting: true }; }
+      if (record?.status === 'starting') { record.cancelRequested = true;this.intentControllers.get(String(runId))?.abort(); return { interrupted: true, starting: true }; }
       return { interrupted: false };
     }
     run.interruptionRequested = true;
@@ -716,10 +755,18 @@ class CodexSessionService extends EventEmitter {
       const record = this.runRecords.get(pending.run.runId);
       const previous = record && { status: record.status, confirmation: record.confirmation };
       if (record) { record.status = 'running'; record.confirmation = null; record.version++; }
+      const previousCommits = pending.run.pendingNativeCommits;
+      const previousStage = pending.run.preparationStage && { ...pending.run.preparationStage };
+      if (accept) pending.run.pendingNativeCommits = [...new Set([...(previousCommits || []), pending.itemId])];
+      else if (pending.run.preparationStage) {
+        pending.run.preparationStage.phase = 'rejected'; pending.run.preparationStage.revision++;
+      }
       try { await this._checkpointRun(pending.run.runId); }
       catch (error) {
         if (record && this.pendingConfirmations.get(key) === pending && !pending.run.interruptionRequested && !pending.run.finalizing) {
           Object.assign(record, previous); record.version++;
+          pending.run.pendingNativeCommits = previousCommits;
+          if (previousStage) Object.assign(pending.run.preparationStage, previousStage);
         }
         throw error;
       }
@@ -807,7 +854,7 @@ class CodexSessionService extends EventEmitter {
   }
 
   async refreshSubscriptionModels({ expectedRevision } = {}) {
-    const account = await this.accountStatus({ refreshToken: true });
+    const account = await this.accountStatus();
     if (account.account?.type !== 'chatgpt') {
       const error = new Error('请先登录 Codex 订阅账户');
       error.code = 'codex_login_required';
@@ -926,12 +973,12 @@ class CodexSessionService extends EventEmitter {
     }
   }
 
-  async runOneShot({ text, skillName, outputSchema, novelId, abortSignal } = {}) {
-    const route = await modelConfig.activeRoute();
+  async runOneShot({ text, skillName, outputSchema, novelId, abortSignal,readOnly=false,purpose=null,parentRunId=null,route:selectedRoute,onStarted } = {}) {
+    const route = selectedRoute || await modelConfig.activeRoute();
     if ((skillName || novelId) && route.model.verification.tools !== 'ok') throw contractError('当前模型仅用于聊天，小说工具需验证通过后使用', 'model_tools_unavailable');
     const runId = `one-shot-${crypto.randomUUID()}`;
-    const threadId = await this._startThread(route, { runId, novelId: novelId || '', includeMcp: route.model.verification.tools === 'ok' });
-    const run = { runId, conversationId: '', threadId, turnId: '', userMessageId: '', text: '', items: [], persistence: 'one-shot', nativeFileItems: new Map(), userRejectedFileItems: new Set() };
+    const threadId = await this._startThread(route, { runId, novelId: novelId || '', includeMcp: !readOnly&&route.model.verification.tools === 'ok',disableAgents:readOnly });
+    const run = { runId, conversationId: '', threadId, turnId: '', userMessageId: '', text: '', items: [], persistence: 'one-shot', nativeFileItems: new Map(), userRejectedFileItems: new Set(),purpose,parentRunId,modelId:route.model.id };
     this.activeRuns.set(runId, run);
     let timer;
     let onEvent;
@@ -961,10 +1008,11 @@ class CodexSessionService extends EventEmitter {
       const started = await this._startNativeTurn({ threadId, input, model: route.model.id, ...(route.reasoningEffort ? { effort: route.reasoningEffort } : {}), approvalPolicy: 'never', ...(outputSchema ? { outputSchema } : {}) });
       run.turnId = resultId(started, 'turn');
       if (!run.turnId) throw new Error('Codex App Server 未返回 turnId');
+      if(onStarted)await onStarted({runId,threadId,turnId:run.turnId,modelId:route.model.id,purpose});
       abortSignal?.addEventListener?.('abort', abort, { once: true });
       if (abortSignal?.aborted) abort();
       await terminal;
-      return { text: run.text, items: clone(run.items), threadId, turnId: run.turnId };
+      return { text: run.text, items: clone(run.items), threadId, turnId: run.turnId,modelId:route.model.id };
     } finally {
       clearTimeout(timer);
       if (onEvent) this.off('event', onEvent);
@@ -1022,6 +1070,17 @@ class CodexSessionService extends EventEmitter {
     if (run && itemId) run.nativeFileItems.set(itemId, { ...(run.nativeFileItems.get(itemId) || {}), ...clone(params) });
   }
 
+  async _rejectNativeApproval(run, itemId, error) {
+    const failure = { itemId, code: error.code || 'unverifiable_native_diff', message: error.message, stage: 'approval-validation' };
+    run.nativeValidationErrors ||= [];
+    run.nativeValidationErrors.push(failure);
+    await this.ledger.record(run.runId, 'native_validation_failed', failure);
+    const record = this.runRecords.get(run.runId);
+    if (record) record.nativeValidationErrors = clone(run.nativeValidationErrors);
+    this._emitEvent({ type: 'run_state', runId: run.runId, conversationId: run.conversationId });
+    throw contractError(error.message, failure.code, { stage: failure.stage, itemId });
+  }
+
   async _handleServerRequest(method, params = {}, message = {}) {
     // Native tool output may reach the model before the host has committed it.
     // Finish earlier fileChange notifications before authorizing another patch.
@@ -1037,7 +1096,19 @@ class CodexSessionService extends EventEmitter {
     const cached = run.nativeFileItems.get(itemId) || null;
     let nativeChanges;
     try { nativeChanges = validateNativeFileChanges(run.workspace.root, cached?.changes || params.fileChanges); }
-    catch (error) { throw contractError(error.message, error.code || 'tool_scope_denied', { stage: 'approval-validation', itemId }); }
+    catch (error) { return this._rejectNativeApproval(run, itemId, error); }
+    try { require('./writingScope').assertWriteScope(run.taskConstraints,nativeChanges.map(change=>change.resourceRef)); }
+    catch(error) { return this._rejectNativeApproval(run,itemId,error); }
+    if (['write','edit'].includes(run.taskConstraints.operation) && !run.taskConstraints.allowResourceDeletion
+      && nativeChanges.some(change=>change.kind?.type==='delete')) {
+      return this._rejectNativeApproval(run,itemId,contractError('本次写作或修改请求不包含整项删除；请使用更新补丁保留资源。','task_delete_not_requested'));
+    }
+    if (run.taskConstraints.atomicMemoryWithChapter && ![...(run.committedResources || []), ...(run.reusedSavedResources || [])].some(resource => resource.resourceRef.startsWith('chapter:'))) {
+      const refs = new Set(nativeChanges.filter(change=>change.kind?.type!=='delete').map(change=>change.resourceRef));
+      if (![...refs].some(ref=>ref.startsWith('chapter:')) || run.taskConstraints.requiredWriteResourceRefs.some(ref=>!refs.has(ref))) {
+        return this._rejectNativeApproval(run,itemId,contractError('本次要求正文与角色记忆在同一补丁提交；请将章节和全部所需记忆一起准备并确认。','combined_memory_commit_required'));
+      }
+    }
     const allowed = new Set(run.taskConstraints.allowedWriteResourceRefs);
     if (allowed.size) {
       const outside = nativeChanges.filter((change) => !allowed.has(change.resourceRef)).map((change) => change.resourceRef);
@@ -1047,9 +1118,13 @@ class CodexSessionService extends EventEmitter {
     let nextSelectionState = run.selectionState;
     try {
       evidence = evidenceForNativeChanges(run.workspace, nativeChanges);
-      for (const change of evidence) nextSelectionState = assertSelectionChange(nextSelectionState, change);
+      await require('./writingPreparationStage').assertCommitCandidate(run,evidence);
+      for (const change of evidence) {
+        nextSelectionState = assertSelectionChange(nextSelectionState, change);
+        if(run.memoryBaselines?.[change.resourceRef]) require('./memoryBaseline').assertMemoryBaseline(run.memoryBaselines[change.resourceRef],change.afterContent==null?null:JSON.parse(change.afterContent));
+      }
     } catch (error) {
-      throw contractError(error.message, error.code || 'unverifiable_native_diff', { stage: 'approval-validation', itemId });
+      return this._rejectNativeApproval(run, itemId, error);
     }
     const fingerprint = nativeChangeFingerprint(nativeChanges);
     const currentResourceRef = evidence.find((change) => change.resourceRef.startsWith('chapter:'))?.resourceRef || run.progress?.currentResourceRef || null;
@@ -1059,6 +1134,9 @@ class CodexSessionService extends EventEmitter {
       await this.ledger.record(run.runId, 'confirmation_resolved', { confirmationId, itemId, decision: 'accept', automatic: true, authorizationVersion: authorization.version });
       if (run.interruptionRequested || run.finalizing || this.activeRuns.get(run.runId) !== run) return { decision: 'cancel' };
       await this._updateProgress(run, { phase: 'tool-running', currentResourceRef });
+      if (run.interruptionRequested || run.finalizing || this.activeRuns.get(run.runId) !== run) return { decision: 'cancel' };
+      run.pendingNativeCommits = [...new Set([...(run.pendingNativeCommits || []), itemId])];
+      await this._checkpointRun(run.runId);
       if (run.interruptionRequested || run.finalizing || this.activeRuns.get(run.runId) !== run) return { decision: 'cancel' };
       run.approvedFileItems.set(itemId, {
         nativeChanges, fingerprint, evidence, nextSelectionState, authorization,
@@ -1090,6 +1168,7 @@ class CodexSessionService extends EventEmitter {
     if (run.completedFileItems.has(itemId)) return null;
     const approval = run.approvedFileItems.get(itemId);
     if (!approval || approval.consumed) throw contractError('补丁完成事件没有对应的有效批准', 'unapproved_native_change', { stage: 'commit', itemId });
+    await require('./writingPreparationStage').assertCommitCandidate(run,approval.evidence);
     let completedNativeChanges;
     try {
       completedNativeChanges = validateNativeFileChanges(run.workspace.root, Array.isArray(completedChanges) && completedChanges.length ? completedChanges : approval.nativeChanges);
@@ -1142,7 +1221,7 @@ class CodexSessionService extends EventEmitter {
     run.completedFileItems.add(itemId);
     const committedStart = run.committedResources.length;
     run.committedResources.push(...committed.resources.map(resource => ({
-      ...resource, mode: changes.find(change => change.resourceRef === resource.resourceRef)?.mode,
+      ...resource, nativeItemId: itemId, nativeBatchResourceRefs: committed.resources.map(item=>item.resourceRef), mode: changes.find(change => change.resourceRef === resource.resourceRef)?.mode,
     })));
     await this._checkpointRun(run.runId);
     // Each approved native patch is a transaction. Preserve the mirror's text
@@ -1164,12 +1243,15 @@ class CodexSessionService extends EventEmitter {
       const change = changes.find((item) => item.resourceRef === resource.resourceRef);
       const current = change.mode === 'delete' ? null : await readResource(run.entry, resource.resourceRef);
       resources.push({
-        ...resource, mode: change.mode, oldHash: change.baseHash || null, newHash: current?.sourceHash || null,
+        ...resource, nativeItemId: itemId, nativeBatchResourceRefs: committed.resources.map(item=>item.resourceRef), mode: change.mode, oldHash: change.baseHash || null, newHash: current?.sourceHash || null,
         chineseCharacterCount: current ? chineseCharacterCount(current.content) : 0,
         bodyChineseCharacterCount: current ? bodyChineseCharacterCount(current.content) : 0,
       });
     }
     run.committedResources.splice(committedStart, committed.resources.length, ...resources);
+    run.pendingNativeCommits = (run.pendingNativeCommits || []).filter(id=>id!==itemId);
+    await require('./writingPreparationStage').settleStage(run,'completed');
+    await this._checkpointRun(run.runId);
     const invalidatedReviewIssues = await invalidateForResources(run.entry, resources);
     await this.ledger.record(run.runId, 'commit_completed', { itemId, resources });
     if (run.progress) {
@@ -1228,8 +1310,10 @@ class CodexSessionService extends EventEmitter {
         isTool ? (event.type === 'item_started' ? 'tool_started' : 'tool_completed') : (event.type === 'item_started' ? 'native_item_started' : 'native_item_completed'),
         { itemId, itemType, ok: event.item?.status !== 'failed', output: event.type === 'item_completed' ? clone(event.item?.output || event.item?.result || null) : undefined });
     }
-    if (event.type === 'item_completed' && event.item?.status === 'failed') {
-      const failure = { code: 'tool_execution_failed', message: event.item?.error?.message || `${event.item?.type || '工具'}执行失败`, stage: 'tool', itemId: event.item?.id || null, savedResources: run.committedResources };
+    if (event.type === 'item_completed' && event.item?.status === 'failed' && event.item?.type !== 'mcpToolCall') {
+      const failure = { code: 'tool_execution_failed', message: event.item?.error?.message || plainText(event.item?.result || event.item?.output)
+        || (event.item?.type === 'fileChange' ? '文件补丁执行失败，本次补丁未保存；此前已提交的修改仍保留。' : '工具执行失败，未收到具体原因；请查看工具记录。'),
+        stage: 'tool', itemId: event.item?.id || null, savedResources: run.committedResources };
       await this.processManager?.request('turn/interrupt', { threadId: run.threadId, turnId: run.turnId }).catch(() => {});
       event = { ...event, type: 'turn_failed', error: failure.message, failure };
     }
@@ -1244,9 +1328,38 @@ class CodexSessionService extends EventEmitter {
         event = { ...event, type: 'turn_failed', error: failure.message, failure };
       }
     }
+    if(event.type==='item_completed' && event.item?.tool==='prepare_novel_patch' && event.item.result?.structuredContent?.ok) {
+      const prepared=event.item.result.structuredContent;
+      run.taskConstraints=await require('./writingScope').bindCandidateScope(run.entry,run.taskConstraints,{participantCharacterRefs:prepared.taskScope?.participantCharacterRefs?.length?prepared.taskScope.participantCharacterRefs:undefined,resourceRefs:prepared.resources.map(resource=>resource.resourceRef)});
+      if(prepared.taskScope?.narrativePerspective)run.taskConstraints.narrativePerspective=prepared.taskScope.narrativePerspective;
+      await this.ledger.record(run.runId,'writing_scope_bound',{participantCharacterRefs:run.taskConstraints.participantCharacterRefs,requiredWriteResourceRefs:run.taskConstraints.requiredWriteResourceRefs});
+      await this._checkpointRun(run.runId);
+    }
+    if (event.type === 'item_completed' && /check_writing_task/u.test(String(event.item?.tool || '')) && event.item.status === 'completed') {
+      const report = itemArguments(event.item)?.report;
+      if (report && !event.item.result?.structuredContent?.hostedReview) {
+        const assessed = await assessReview(run.entry, { ...run, text: '```json\n' + JSON.stringify(report) + '\n```' });
+        run.reviewFindings=mergeReviewFindings(run.reviewFindings,assessed);
+        run.reviewSubmission = { report, coverageHashes: assessed.coverageHashes, itemId: event.item.id };
+      }
+    }
     if (['turn_completed', 'turn_failed', 'turn_interrupted'].includes(event.type)) {
-      if (event.type === 'turn_completed' && (run.skillName === 'mana-consistency-review' || run.taskConstraints?.operation === 'review') && run.entry) {
-        run.reviewRecord = await recordReview(run.entry, run);
+      if(event.type==='turn_completed') {
+        const finals=run.items.filter(item=>item.type==='agentMessage'&&item.phase==='final_answer'&&item.text).map(item=>item.text);
+        if(finals.length) {
+          run.activityText=run.items.filter(item=>item.type==='agentMessage'&&item.phase==='commentary').map(item=>item.text).join('\n\n');
+          run.text=finals.join('\n\n');
+        }
+      }
+      if (event.type === 'turn_completed' && (run.skillName === 'mana-consistency-review' || run.taskConstraints?.reviewRequired) && run.entry) {
+        const text = run.text;
+        const explicitReport = /"(?:coveredResourceRefs|issues)"/u.test(text);
+        const reviewContext = run.reviewSubmission && (!explicitReport || run.reviewSubmission.origin==='host_readonly_analysis')
+          ? { ...run, text: '```json\n' + JSON.stringify(run.reviewSubmission.report) + '\n```', expectedCoverageHashes: run.reviewSubmission.coverageHashes,
+            resolutionAuthority:run.reviewSubmission.origin==='host_readonly_analysis'?'independent_review':null }
+          : { ...run, text };
+        run.reviewRecord = await recordReview(run.entry,reviewContext);
+        run.reviewFindings=mergeReviewFindings(run.reviewFindings,run.reviewRecord);
         event = { ...event, reviewRecord: run.reviewRecord };
       }
       await this._finalizeRun(run, event);
@@ -1265,6 +1378,7 @@ class CodexSessionService extends EventEmitter {
     const run = this.activeRuns.get(runId);
     if (!run) return;
     this.activeRuns.delete(runId);
+    require('./narrativeReviewJobs').removeRunJobs(runId).catch(()=>{});
     this._cancelConfirmations(runId);
     if (run.conversationId && this.threadRuns.get(run.conversationId) === runId) this.threadRuns.delete(run.conversationId);
     clearTimeout(this.checkpointTimers.get(runId));
@@ -1285,6 +1399,7 @@ class CodexSessionService extends EventEmitter {
   }
 
   async dispose() {
+    this.stopNarrativeReviewJobs?.();
     await this._failAll(new Error('应用运行时已停止'));
     await this.processManager?.stop();
     await this.providerBridge?.close();

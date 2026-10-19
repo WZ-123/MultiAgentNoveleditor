@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "cen",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "cen-initial",
+      "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "cen-ch3-fact",
+      "summary": "在渡口见到叶澄从船底取出新裂木片；应苏砚请求在证物袋旁签名作见证。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "cen-ch3-emotion",
+      "summary": "何芷拒绝让他代签药物收讫，使他感到被隔在程序之外，仍克制未再逼近药箱。"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "cen-ch3-rel",
+      "summary": "苏砚要求他为木片作见证，他最终签名；与苏砚形成有限程序合作，仍试探何芷。"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "cen-goal",
+      "summary": "阻止旧账公开但不伤及病人"
+    },
+    {
+      "id": "cen-ch3-intent",
+      "summary": "带文书赴灯塔交接，避免旧账公开而不耽误病人。"
+    }
+  ],
+  "privateMisbeliefs": []
+}

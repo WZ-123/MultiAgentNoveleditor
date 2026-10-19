@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lin",
+  "lastUpdatedChapterRef": "chapter:chapter-002.md",
+  "factsKnown": [
+    {
+      "id": "lin-initial",
+      "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "已核对潮表",
+      "id": "257bdb01-2ef5-4e84-8dcc-7e9bd62eafa2"
+    }
+  ],
+  "emotionalMemory": [],
+  "relationshipDeltas": [],
+  "unresolvedIntentions": [
+    {
+      "id": "lin-goal",
+      "summary": "查出潮钟误差，保护弟弟"
+    },
+    {
+      "id": "concurrent-edit",
+      "summary": "并发用户编辑，必须保留"
+    }
+  ],
+  "privateMisbeliefs": []
+}

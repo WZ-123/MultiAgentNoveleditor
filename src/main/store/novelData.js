@@ -481,8 +481,23 @@ function emptyCharacterMemory(characterId) {
 
 function characterMemoryPath(novelDir, characterId) {
   const np = novelPaths(novelDir);
-  const safeId = _cleanStr(characterId).replace(/[^\w.\-\u4e00-\u9fff]/gu, '_');
-  return path.join(np.characters, `${safeId}.memory.json`);
+  const id = _cleanStr(characterId);
+  if (!id || id.includes('..') || /[\\/\0]/u.test(id)) throw new Error('characterMemory.characterId invalid');
+  // A separate namespace avoids collisions with legacy lossy filenames and cards.
+  return path.join(np.characters, '.memories', `${createHash('sha256').update(id).digest('hex')}.json`);
+}
+
+async function storedCharacterMemory(novelDir, characterId) {
+  const id = _cleanStr(characterId);
+  const memory = await readJson(characterMemoryPath(novelDir, id), null);
+  if (memory) {
+    if (memory.characterId !== id) throw new Error(`角色记忆身份不匹配：${id}`);
+    return memory;
+  }
+  const legacy = path.join(novelPaths(novelDir).characters, `${id.replace(/[^\w.\-\u4e00-\u9fff]/gu, '_')}.memory.json`);
+  const previous = await readJson(legacy, null);
+  // Never borrow another character's legacy file, even if the sanitized IDs collide.
+  return previous?.characterId === id ? previous : null;
 }
 
 function normalizeCharacterMemory(memory, characterId) {
@@ -500,22 +515,19 @@ function normalizeCharacterMemory(memory, characterId) {
 }
 
 async function readCharacterMemory(novelDir, characterId) {
-  const file = characterMemoryPath(novelDir, characterId);
-  const memory = await readJson(file, null);
+  const memory = await storedCharacterMemory(novelDir, characterId);
   return normalizeCharacterMemory(memory, characterId);
 }
 
 async function characterMemoryExists(novelDir, characterId) {
-  try {
-    await fs.access(characterMemoryPath(novelDir, characterId));
-    return true;
-  } catch {
-    return false;
-  }
+  return !!(await storedCharacterMemory(novelDir, characterId));
 }
 
 async function deleteCharacterMemory(novelDir, characterId) {
   await deleteFile(characterMemoryPath(novelDir, characterId));
+  const id = _cleanStr(characterId);
+  const legacy = path.join(novelPaths(novelDir).characters, `${id.replace(/[^\w.\-\u4e00-\u9fff]/gu, '_')}.memory.json`);
+  if ((await readJson(legacy, null))?.characterId === id) await deleteFile(legacy);
 }
 
 function mergeMemoryArray(existing, incoming, keyPrefix) {
@@ -1221,7 +1233,7 @@ async function readSummary(novelDir, chapterRef) {
   const np = novelPaths(novelDir);
   const safe = String(chapterRef).replace(/[^\w.-]/g, '_');
   try { return await fs.readFile(path.join(np.summaries, `${safe}.md`), 'utf8'); }
-  catch { return ''; }
+  catch (error) { if (error.code === 'ENOENT') return ''; throw error; }
 }
 
 // ---------------- Style memory ----------------
@@ -2390,7 +2402,7 @@ async function readWorld(novelDir) {
   try {
     const data = await readJson(np.worldPlaces, null);
     if (data?.places) places = data.places;
-  } catch { /* ignore */ }
+  } catch (error) { if (error.code !== 'ENOENT') throw error; }
   return { lore, places };
 }
 

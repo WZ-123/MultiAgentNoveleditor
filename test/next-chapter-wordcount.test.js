@@ -63,8 +63,8 @@ async function main() {
       assert.equal(result.persistence.status, 'saved');
       assert.equal(result.checks.wordCount.blocking, false);
     });
-    await test('bounded range honors both 5 percent boundaries and never rolls back a save', async () => {
-      for (const [count, status] of [[2849, 'below_target'], [2850, 'met'], [4200, 'met'], [4201, 'over_target']]) {
+    await test('explicit range honors exact requested boundaries and never rolls back a save', async () => {
+      for (const [count, status] of [[2850, 'below_target'], [2999, 'below_target'], [3000, 'met'], [4000, 'met'], [4001, 'over_target'], [4200, 'over_target']]) {
         next = await save(nextRef, count);
         const result = await evaluate(parse('写下一章，3000—4000字'), [next]);
         assert.equal(result.checks.wordCount.status, status);
@@ -118,7 +118,7 @@ async function main() {
     await test('an empty first attempt can bind the chapter saved by a continuation', async () => {
       const first = await evaluate(parse('写下一章，3000字'));
       assert.deepEqual(first.constraints.wordCountResourceRefs, []);
-      next = await save(nextRef, 2850);
+      next = await save(nextRef, 3000);
       const continued = await evaluate(JSON.parse(JSON.stringify(first.constraints)), [next]);
       assert.equal(continued.goalVerified, true);
       assert.deepEqual(continued.constraints.wordCountResourceRefs, [nextRef]);
@@ -145,10 +145,10 @@ async function main() {
       let result = await evaluate(payload.taskConstraints, [other], { reusedSavedResources: payload.continuation.savedResources });
       assert.equal(result.checks.wordCount.actual, 100);
       assert.equal(result.goalVerified, false);
-      const expanded = await save(nextRef, 2850, 'replace');
+      const expanded = await save(nextRef, 3000, 'replace');
       result = await evaluate(payload.taskConstraints, [expanded], { reusedSavedResources: payload.continuation.savedResources });
       assert.equal(result.goalVerified, true);
-      assert.equal(result.checks.wordCount.actual, 2850);
+      assert.equal(result.checks.wordCount.actual, 3000);
       source = { ...source, runId: 'second', savedResources: [expanded], taskResult: { ...result, goalVerified: false, goalStatus: 'incomplete' } };
       payload = await continueTask();
       result = await evaluate(payload.taskConstraints, [], { reusedSavedResources: payload.continuation.savedResources });

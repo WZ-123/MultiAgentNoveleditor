@@ -1,0 +1,227 @@
+{
+  "latestRealDirectory": "full-j",
+  "realModel": "gpt-6-luna",
+  "effort": "medium",
+  "acceptance": "latest full workflow FAILED; original counterexamples still FAILED",
+  "automaticChecks": {
+    "unitFiles": 37,
+    "unitLog": "unit-delivery.log",
+    "writingUiCases": 19,
+    "writingUiLog": "ui-delivery.log",
+    "nativeUiPhases": 2,
+    "nativeUiLog": "chat-ui-delivery.log",
+    "viteLog": "build-operation.log"
+  },
+  "runs": [
+    {
+      "directory": "full-f",
+      "runId": "run-421fd6ac-e7a8-4f6d-878f-f0c2cd489f39",
+      "operation": "write",
+      "status": "completed",
+      "goalStatus": "completed",
+      "bodyCjk": 1579,
+      "savedResourceChanges": 11,
+      "nativeBatches": 2,
+      "unmet": [],
+      "openIssues": [
+        {
+          "severity": "suspicion",
+          "category": "character"
+        },
+        {
+          "severity": "suspicion",
+          "category": "character"
+        },
+        {
+          "severity": "suspicion",
+          "category": "character"
+        }
+      ]
+    },
+    {
+      "directory": "full-f",
+      "runId": "run-12af2f58-5ae6-447e-af7d-aba58a60419c",
+      "operation": "edit",
+      "status": "completed",
+      "goalStatus": "completed",
+      "bodyCjk": 1570,
+      "savedResourceChanges": 1,
+      "nativeBatches": 1,
+      "unmet": [],
+      "openIssues": []
+    },
+    {
+      "directory": "full-f",
+      "runId": "run-100b79b0-a65f-43b3-80c2-4e21819325d8",
+      "operation": "read",
+      "status": "failed",
+      "goalStatus": null,
+      "bodyCjk": null,
+      "savedResourceChanges": 0,
+      "nativeBatches": 0,
+      "unmet": null,
+      "openIssues": []
+    },
+    {
+      "directory": "full-f",
+      "runId": "run-eaa324c5-96cf-495d-813c-51b4d45638c8",
+      "operation": "write",
+      "status": "completed",
+      "goalStatus": "completed",
+      "bodyCjk": 1570,
+      "savedResourceChanges": 5,
+      "nativeBatches": 5,
+      "unmet": [],
+      "openIssues": []
+    },
+    {
+      "directory": "memory-h",
+      "runId": "run-3b8e0734-9ae1-4b6d-990c-c55f48616ebf",
+      "operation": "read",
+      "status": "completed",
+      "goalStatus": "completed",
+      "bodyCjk": 2326,
+      "savedResourceChanges": 0,
+      "nativeBatches": 0,
+      "unmet": [],
+      "openIssues": []
+    },
+    {
+      "directory": "full-i",
+      "runId": "run-07b8c718-2561-431b-aea5-a05a7629a657",
+      "operation": "edit",
+      "status": "completed",
+      "goalStatus": "incomplete",
+      "bodyCjk": 1512,
+      "savedResourceChanges": 1,
+      "nativeBatches": 1,
+      "unmet": [
+        "narrative_review_not_run",
+        "narrative_review_incomplete",
+        "review_evidence_missing"
+      ],
+      "openIssues": []
+    },
+    {
+      "directory": "full-i",
+      "runId": "run-a7b077a9-0b46-4381-aa3c-1d1db5682fc2",
+      "operation": "write",
+      "status": "completed",
+      "goalStatus": "completed",
+      "bodyCjk": 1512,
+      "savedResourceChanges": 2,
+      "nativeBatches": 2,
+      "unmet": [],
+      "openIssues": [
+        {
+          "severity": "suspicion",
+          "category": "viewpoint"
+        },
+        {
+          "severity": "suspicion",
+          "category": "timeline"
+        }
+      ]
+    },
+    {
+      "directory": "full-i",
+      "runId": "run-74c6f887-8893-4338-a3a7-85e19a8502fc",
+      "operation": "write",
+      "status": "completed",
+      "goalStatus": "incomplete",
+      "bodyCjk": 1477,
+      "savedResourceChanges": 7,
+      "nativeBatches": 1,
+      "unmet": [
+        "word_count"
+      ],
+      "openIssues": [
+        {
+          "severity": "suspicion",
+          "category": "continuity/timeline"
+        },
+        {
+          "severity": "suspicion",
+          "category": "viewpoint"
+        },
+        {
+          "severity": "suspicion",
+          "category": "character knowledge"
+        },
+        {
+          "severity": "suspicion",
+          "category": "character knowledge"
+        }
+      ]
+    },
+    {
+      "directory": "full-j",
+      "runId": "run-5f648428-2a15-4f7b-8d44-7aa9a0ceac8e",
+      "operation": "write",
+      "status": "completed",
+      "goalStatus": "incomplete",
+      "bodyCjk": 1310,
+      "savedResourceChanges": 2,
+      "nativeBatches": 2,
+      "unmet": [
+        "word_count",
+        "hard_issues_unresolved",
+        "review_evidence_missing"
+      ],
+      "openIssues": [
+        {
+          "severity": "hard",
+          "category": "timeline/continuity"
+        },
+        {
+          "severity": "suspicion",
+          "category": "viewpoint"
+        }
+      ]
+    },
+    {
+      "directory": "full-j",
+      "runId": "run-04fb7611-5b22-43e1-b221-0c999a8ae220",
+      "operation": "edit",
+      "status": "completed",
+      "goalStatus": "completed",
+      "bodyCjk": 1310,
+      "savedResourceChanges": 1,
+      "nativeBatches": 1,
+      "unmet": [],
+      "openIssues": []
+    },
+    {
+      "directory": "full-j",
+      "runId": "run-9e89c110-db5f-4a9a-98d0-6028698f65dd",
+      "operation": "write",
+      "status": "completed",
+      "goalStatus": "incomplete",
+      "bodyCjk": 0,
+      "savedResourceChanges": 0,
+      "nativeBatches": 0,
+      "unmet": [
+        "combined_memory_commit_missing",
+        "word_count_target_missing",
+        "word_count",
+        "no_current_commit",
+        "required_writes_missing",
+        "review_evidence_missing"
+      ],
+      "openIssues": []
+    }
+  ],
+  "privateRuntimesStillPresent": [],
+  "sourceBoundary": {
+    "fullJFrozenFiles": 189,
+    "deltas": [
+      {
+        "file": "src/main/codex-runtime/codexSessionService.js",
+        "matchesFrozenAfterReversingOnlyCancellationGuard": true,
+        "frozenSha256": "08d742dd6f6c1ef1ca068191007e13b570d734cfc3a6ffe96a3dc835acaaeabe",
+        "currentSha256": "87ce69ebfc1588ddca9ffec11b4c0246a725bbc8b77d463ebe4dfe29b1eb5d42"
+      }
+    ],
+    "validation": "cancel-handoff-before.log reproduces dispatch; cancel-handoff-after.log and final unit/UI validate rejection before author starts"
+  }
+}

@@ -238,7 +238,7 @@ async function runCodexNativeUiE2E(win) {
   await waitFor(win, `document.querySelector('[data-testid="codex-confirmation-card"]')`);
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes('确认写入')).click()`);
   await waitText(win, '本回合已保存短稿，目标仍未完成。');
-  await waitFor(win, `document.querySelector('[data-testid="continue-task"]') && [...document.querySelectorAll('[data-testid="task-word-count"]')].at(-1)?.innerText.includes('容差 5%') && [...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('目标尚未完成')`);
+  await waitFor(win, `document.querySelector('[data-testid="continue-task"]') && [...document.querySelectorAll('[data-testid="task-word-count"]')].at(-1)?.innerText.includes('容差 0%') && [...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('目标尚未完成')`);
   if (await novelData.readChapter(novel.dir, 'chapter-007.md') !== '灯亮在雨中的小院。\n') throw new Error('shortfall rolled back a legal save');
   await screenshot(win, 'task-completion-shortfall-saved.png');
   await win.webContents.reload();
@@ -250,17 +250,17 @@ async function runCodexNativeUiE2E(win) {
   await waitFor(win, `document.querySelector('[data-testid="codex-confirmation-card"]')`);
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes('确认写入')).click()`);
   await waitText(win, '继续任务已补足，原有内容保留。');
-  await waitFor(win, `!document.querySelector('[data-testid="continue-task"]') && [...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('检查通过')`);
+  await waitFor(win, `!document.querySelector('[data-testid="continue-task"]') && [...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('执行证据齐全')`);
   const continuedContent = await novelData.readChapter(novel.dir, 'chapter-007.md');
-  if (!continuedContent.startsWith('灯亮在雨中的小院。\n') || continuedContent.length < 950) throw new Error('continuation overwrote the prior saved content');
+  if (!continuedContent.startsWith('灯亮在雨中的小院。\n') || continuedContent.length < 1000) throw new Error('continuation overwrote the prior saved content');
   for (const [name, content] of preserved) if (await novelData.readChapter(novel.dir, name) !== content) throw new Error('continuation changed already finished chapter ' + name);
   await screenshot(win, 'task-completion-continued.png');
   await sendWithSkill(win, '读取当前章节：任务阅读验收', '');
   await waitText(win, '读取章节已完成。');
-  await waitFor(win, `[...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('检查通过')`);
+  await waitFor(win, `[...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('执行证据齐全')`);
   await sendWithSkill(win, '审校：任务审校验收', 'mana-consistency-review');
   await waitText(win, '审校报告已生成。');
-  await waitFor(win, `[...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('检查通过') && [...document.querySelectorAll('[data-testid="task-content-review"]')].at(-1)?.innerText.includes('待评阅')`);
+  await waitFor(win, `[...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('执行证据齐全') && [...document.querySelectorAll('[data-testid="task-review-status"]')].at(-1)?.innerText.includes('已核验')`);
   // Existing book text exceeds 1000 characters; it cannot satisfy this new chapter.
   const beforeNextChapter = await Promise.all(['chapter-001.md','chapter-002.md','chapter-003.md','chapter-004.md','chapter-005.md','chapter-006.md','chapter-007.md'].map(async name => [name, await novelData.readChapter(novel.dir, name)]));
   await sendWithSkill(win, '写下一章，1000字：任务新章范围验收', 'mana-fiction-writing');
@@ -278,7 +278,7 @@ async function runCodexNativeUiE2E(win) {
   await waitFor(win, `document.querySelector('[data-testid="codex-confirmation-card"]')`);
   await win.webContents.executeJavaScript(`[...document.querySelectorAll('[data-testid="codex-confirmation-card"] button')].find(b=>b.innerText.includes('确认写入')).click()`);
   await waitText(win, '新章继续已补足1000字。');
-  await waitFor(win, `!document.querySelector('[data-testid="continue-task"]') && [...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('检查通过')`);
+  await waitFor(win, `!document.querySelector('[data-testid="continue-task"]') && [...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('执行证据齐全')`);
   if (await novelData.readChapter(novel.dir, 'chapter-008.md') !== '新'.repeat(100) + '\n' + '续'.repeat(900) + '\n') throw new Error('continued new chapter is incorrect');
   for (const [name, content] of beforeNextChapter) if (await novelData.readChapter(novel.dir, name) !== content) throw new Error('new chapter task modified an earlier chapter ' + name);
   await screenshot(win, 'editor-workflow-new-chapter-continued.png');

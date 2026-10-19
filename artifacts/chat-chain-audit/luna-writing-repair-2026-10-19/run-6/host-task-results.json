@@ -1,0 +1,1187 @@
+[
+  {
+    "runId": "run-6d4b39e2-b2ea-4ffb-a8f3-ca3e80bd1de9",
+    "conversationId": "thread-mve4r9oy-uh9bxd",
+    "novelId": "novel-mve4d0ut-bf0f0t",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "edit",
+      "targetResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "requiredWriteResourceRefs": [],
+      "atomicMemoryWithChapter": false,
+      "wordCountScope": "target_resources",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": null,
+      "maxBodyCjk": null,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "reviewScope": "target_resources",
+      "reviewTargetResourceRefs": [
+        "chapter:chapter-002.md"
+      ],
+      "reviewSourceKinds": [],
+      "reviewScopeBound": true
+    },
+    "repairAttempt": 1,
+    "reviewItemOffset": 9,
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "edit",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "requiredWriteResourceRefs": [],
+        "atomicMemoryWithChapter": false,
+        "wordCountScope": "target_resources",
+        "wordCountResourceRefs": [],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": null,
+        "maxBodyCjk": null,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "reviewScope": "target_resources",
+        "reviewTargetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewSourceKinds": [],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "aebfcaaea90aec44b9b09fb94041a63b46770cc3a0d6483fbe1c3c9ec9492902",
+          "afterHash": "3cf5aca15d709c373503c5d6da30b538b3f0d8155eaf169393b33d1236d1ff67",
+          "nativeItemId": "exec-8af8df49-7e6c-4266-9a13-5f0ff03f1c05",
+          "mode": "replace",
+          "oldHash": "aebfcaaea90aec44b9b09fb94041a63b46770cc3a0d6483fbe1c3c9ec9492902",
+          "newHash": "3cf5aca15d709c373503c5d6da30b538b3f0d8155eaf169393b33d1236d1ff67",
+          "chineseCharacterCount": 1687,
+          "bodyChineseCharacterCount": 1682
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 1
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "target_resources",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1682,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "3cf5aca15d709c373503c5d6da30b538b3f0d8155eaf169393b33d1236d1ff67"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "observedReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-16ec4d5c-e572-4929-b94e-92954f371913",
+          "attemptId": "attempt-a0452d57-9ac4-4f36-afe6-2bd6b946f353",
+          "runId": "run-6d4b39e2-b2ea-4ffb-a8f3-ca3e80bd1de9",
+          "reportSha256": "2cb305d057c5b58c92a69725d4d7aae0c09b45775ab168578a00d74b59121eb8",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-002.md"
+          ],
+          "coverageObserved": [
+            "chapter:chapter-002.md"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "3cf5aca15d709c373503c5d6da30b538b3f0d8155eaf169393b33d1236d1ff67"
+            }
+          ],
+          "versionCurrent": true,
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "not_requested",
+          "blocking": false,
+          "actual": 1682,
+          "minimum": null,
+          "maximum": null,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": null,
+          "acceptedMaximum": null,
+          "withinTolerance": false,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": []
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "aebfcaaea90aec44b9b09fb94041a63b46770cc3a0d6483fbe1c3c9ec9492902",
+        "afterHash": "3cf5aca15d709c373503c5d6da30b538b3f0d8155eaf169393b33d1236d1ff67",
+        "nativeItemId": "exec-8af8df49-7e6c-4266-9a13-5f0ff03f1c05",
+        "mode": "replace",
+        "oldHash": "aebfcaaea90aec44b9b09fb94041a63b46770cc3a0d6483fbe1c3c9ec9492902",
+        "newHash": "3cf5aca15d709c373503c5d6da30b538b3f0d8155eaf169393b33d1236d1ff67",
+        "chineseCharacterCount": 1687,
+        "bodyChineseCharacterCount": 1682
+      }
+    ],
+    "error": null
+  },
+  {
+    "runId": "run-03354a7f-dfb9-4ef6-950b-64a4e716b77d",
+    "conversationId": "thread-mve4g95v-fpg0ql",
+    "novelId": "novel-mve4d0ut-bf0f0t",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "atomicMemoryWithChapter": true,
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "repairAttempt": 1,
+    "reviewItemOffset": 39,
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "atomicMemoryWithChapter": true,
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "afterHash": "9c4cb28c0c869ee645e738d878fe15e8e71519f2a381361b7884ffddbe19a86c",
+          "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+          "mode": "create",
+          "oldHash": null,
+          "newHash": "9c4cb28c0c869ee645e738d878fe15e8e71519f2a381361b7884ffddbe19a86c",
+          "chineseCharacterCount": 1978,
+          "bodyChineseCharacterCount": 1973
+        },
+        {
+          "resourceRef": "character-memory:cen",
+          "beforeHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+          "afterHash": "b9e4e162590d0dfbd83a616d2ab555da610970a43d399f3fc95c49b777dbc667",
+          "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+          "mode": "replace",
+          "oldHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+          "newHash": "b9e4e162590d0dfbd83a616d2ab555da610970a43d399f3fc95c49b777dbc667",
+          "chineseCharacterCount": 137,
+          "bodyChineseCharacterCount": 137
+        },
+        {
+          "resourceRef": "character-memory:he",
+          "beforeHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+          "afterHash": "0031298297c706a055724e2c1b7ac71783e5439790d5a0b52691ace0032282a5",
+          "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+          "mode": "replace",
+          "oldHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+          "newHash": "0031298297c706a055724e2c1b7ac71783e5439790d5a0b52691ace0032282a5",
+          "chineseCharacterCount": 136,
+          "bodyChineseCharacterCount": 136
+        },
+        {
+          "resourceRef": "character-memory:lin",
+          "beforeHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+          "afterHash": "8eaa782edd599b0971741b94998a62f4a09a6b1f7ea2f6109c657f1dc3ee2caf",
+          "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+          "mode": "replace",
+          "oldHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+          "newHash": "8eaa782edd599b0971741b94998a62f4a09a6b1f7ea2f6109c657f1dc3ee2caf",
+          "chineseCharacterCount": 139,
+          "bodyChineseCharacterCount": 139
+        },
+        {
+          "resourceRef": "character-memory:lu",
+          "beforeHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+          "afterHash": "64e3a01e0356c453b31fd788f1b57893c7b0319ac72c358bf3ac86460edefb5e",
+          "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+          "mode": "replace",
+          "oldHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+          "newHash": "64e3a01e0356c453b31fd788f1b57893c7b0319ac72c358bf3ac86460edefb5e",
+          "chineseCharacterCount": 133,
+          "bodyChineseCharacterCount": 133
+        },
+        {
+          "resourceRef": "character-memory:su",
+          "beforeHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+          "afterHash": "b1a90f696788e689372a879550dff34d7455e9490c38d3016b261d83acca5f36",
+          "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+          "mode": "replace",
+          "oldHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+          "newHash": "b1a90f696788e689372a879550dff34d7455e9490c38d3016b261d83acca5f36",
+          "chineseCharacterCount": 118,
+          "bodyChineseCharacterCount": 118
+        },
+        {
+          "resourceRef": "character-memory:ye",
+          "beforeHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+          "afterHash": "b36541334b0941834c62d35ea8239fc7bfc4ba9465fe5a8c4fad8ab1d754366b",
+          "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+          "mode": "replace",
+          "oldHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+          "newHash": "b36541334b0941834c62d35ea8239fc7bfc4ba9465fe5a8c4fad8ab1d754366b",
+          "chineseCharacterCount": 140,
+          "bodyChineseCharacterCount": 140
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "9c4cb28c0c869ee645e738d878fe15e8e71519f2a381361b7884ffddbe19a86c",
+          "afterHash": "2a5bf484ab6ce9d6542a677cdb97dbfc0411fc2b1cebceace74fc716b49e4809",
+          "nativeItemId": "exec-87afae91-6d4e-4499-abeb-b4834c86b85b",
+          "mode": "replace",
+          "oldHash": "9c4cb28c0c869ee645e738d878fe15e8e71519f2a381361b7884ffddbe19a86c",
+          "newHash": "2a5bf484ab6ce9d6542a677cdb97dbfc0411fc2b1cebceace74fc716b49e4809",
+          "chineseCharacterCount": 1953,
+          "bodyChineseCharacterCount": 1948
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "2a5bf484ab6ce9d6542a677cdb97dbfc0411fc2b1cebceace74fc716b49e4809",
+          "afterHash": "4af00214af039b29444f8b9f9a2576106e65efc721d25a0839cae7583ae6db91",
+          "nativeItemId": "exec-81ee529d-811a-41ce-8802-7f0ac0bb15e7",
+          "mode": "replace",
+          "oldHash": "2a5bf484ab6ce9d6542a677cdb97dbfc0411fc2b1cebceace74fc716b49e4809",
+          "newHash": "4af00214af039b29444f8b9f9a2576106e65efc721d25a0839cae7583ae6db91",
+          "chineseCharacterCount": 1916,
+          "bodyChineseCharacterCount": 1911
+        },
+        {
+          "resourceRef": "character-memory:he",
+          "beforeHash": "0031298297c706a055724e2c1b7ac71783e5439790d5a0b52691ace0032282a5",
+          "afterHash": "baf1ed7db62d13fddff19fb473831b4b107ee0d1af93bbf86d1eb75603e4dd0e",
+          "nativeItemId": "exec-81ee529d-811a-41ce-8802-7f0ac0bb15e7",
+          "mode": "replace",
+          "oldHash": "0031298297c706a055724e2c1b7ac71783e5439790d5a0b52691ace0032282a5",
+          "newHash": "baf1ed7db62d13fddff19fb473831b4b107ee0d1af93bbf86d1eb75603e4dd0e",
+          "chineseCharacterCount": 176,
+          "bodyChineseCharacterCount": 176
+        },
+        {
+          "resourceRef": "character-memory:lin",
+          "beforeHash": "8eaa782edd599b0971741b94998a62f4a09a6b1f7ea2f6109c657f1dc3ee2caf",
+          "afterHash": "aae6cf61b6cde5507ecc771b075ad3170339457eb1f661dd0c12372b25b09327",
+          "nativeItemId": "exec-caf7e02b-f2f5-47d5-8d10-ac43e63d05a8",
+          "mode": "replace",
+          "oldHash": "8eaa782edd599b0971741b94998a62f4a09a6b1f7ea2f6109c657f1dc3ee2caf",
+          "newHash": "aae6cf61b6cde5507ecc771b075ad3170339457eb1f661dd0c12372b25b09327",
+          "chineseCharacterCount": 168,
+          "bodyChineseCharacterCount": 168
+        },
+        {
+          "resourceRef": "character-memory:su",
+          "beforeHash": "b1a90f696788e689372a879550dff34d7455e9490c38d3016b261d83acca5f36",
+          "afterHash": "c628bd6ddd0f85b684805aaee0c75971f6f4ac78fa7d6d0f2caa7a9ba7f8a977",
+          "nativeItemId": "exec-caf7e02b-f2f5-47d5-8d10-ac43e63d05a8",
+          "mode": "replace",
+          "oldHash": "b1a90f696788e689372a879550dff34d7455e9490c38d3016b261d83acca5f36",
+          "newHash": "c628bd6ddd0f85b684805aaee0c75971f6f4ac78fa7d6d0f2caa7a9ba7f8a977",
+          "chineseCharacterCount": 147,
+          "bodyChineseCharacterCount": 147
+        },
+        {
+          "resourceRef": "character-memory:ye",
+          "beforeHash": "b36541334b0941834c62d35ea8239fc7bfc4ba9465fe5a8c4fad8ab1d754366b",
+          "afterHash": "52f58d9b2120e404a62b42ae95538ed433d057a0dde666ff2c7af7528b12435a",
+          "nativeItemId": "exec-caf7e02b-f2f5-47d5-8d10-ac43e63d05a8",
+          "mode": "replace",
+          "oldHash": "b36541334b0941834c62d35ea8239fc7bfc4ba9465fe5a8c4fad8ab1d754366b",
+          "newHash": "52f58d9b2120e404a62b42ae95538ed433d057a0dde666ff2c7af7528b12435a",
+          "chineseCharacterCount": 177,
+          "bodyChineseCharacterCount": 177
+        },
+        {
+          "resourceRef": "character-memory:he",
+          "beforeHash": "baf1ed7db62d13fddff19fb473831b4b107ee0d1af93bbf86d1eb75603e4dd0e",
+          "afterHash": "964e995a17d3aa6aa94d36e6348aec778f89c17b77189e489be5149498276bcd",
+          "nativeItemId": "exec-0d16229d-3858-4ebb-a359-4c84174734d1",
+          "mode": "replace",
+          "oldHash": "baf1ed7db62d13fddff19fb473831b4b107ee0d1af93bbf86d1eb75603e4dd0e",
+          "newHash": "964e995a17d3aa6aa94d36e6348aec778f89c17b77189e489be5149498276bcd",
+          "chineseCharacterCount": 176,
+          "bodyChineseCharacterCount": 176
+        },
+        {
+          "resourceRef": "character-memory:lin",
+          "beforeHash": "aae6cf61b6cde5507ecc771b075ad3170339457eb1f661dd0c12372b25b09327",
+          "afterHash": "80bf41a64c44f7271a5f0c530728a46a0c7e1c118a42597876bb8490ba06bcf3",
+          "nativeItemId": "exec-0d16229d-3858-4ebb-a359-4c84174734d1",
+          "mode": "replace",
+          "oldHash": "aae6cf61b6cde5507ecc771b075ad3170339457eb1f661dd0c12372b25b09327",
+          "newHash": "80bf41a64c44f7271a5f0c530728a46a0c7e1c118a42597876bb8490ba06bcf3",
+          "chineseCharacterCount": 168,
+          "bodyChineseCharacterCount": 168
+        },
+        {
+          "resourceRef": "character-memory:su",
+          "beforeHash": "c628bd6ddd0f85b684805aaee0c75971f6f4ac78fa7d6d0f2caa7a9ba7f8a977",
+          "afterHash": "e2b96c9c9a5ad2fa20e41582bf79d1a0adf24d6a37bec8bfd550c8ff775c18bb",
+          "nativeItemId": "exec-0d16229d-3858-4ebb-a359-4c84174734d1",
+          "mode": "replace",
+          "oldHash": "c628bd6ddd0f85b684805aaee0c75971f6f4ac78fa7d6d0f2caa7a9ba7f8a977",
+          "newHash": "e2b96c9c9a5ad2fa20e41582bf79d1a0adf24d6a37bec8bfd550c8ff775c18bb",
+          "chineseCharacterCount": 147,
+          "bodyChineseCharacterCount": 147
+        },
+        {
+          "resourceRef": "character-memory:ye",
+          "beforeHash": "52f58d9b2120e404a62b42ae95538ed433d057a0dde666ff2c7af7528b12435a",
+          "afterHash": "9ef7edf9a8ed54b58042888757671837798780cb36c8a200117391adbbd05b85",
+          "nativeItemId": "exec-0d16229d-3858-4ebb-a359-4c84174734d1",
+          "mode": "replace",
+          "oldHash": "52f58d9b2120e404a62b42ae95538ed433d057a0dde666ff2c7af7528b12435a",
+          "newHash": "9ef7edf9a8ed54b58042888757671837798780cb36c8a200117391adbbd05b85",
+          "chineseCharacterCount": 177,
+          "bodyChineseCharacterCount": 177
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 17
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1911,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-003.md",
+            "hash": "4af00214af039b29444f8b9f9a2576106e65efc721d25a0839cae7583ae6db91"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "observedReadResourceRefs": [
+          "timeline:all",
+          "outline:hierarchy",
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md",
+          "character:cen",
+          "character:he",
+          "character:lu",
+          "outline:master",
+          "character:lin",
+          "character:ye",
+          "character:su",
+          "character-memory:cen",
+          "character-memory:lu",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:su",
+          "character-memory:ye",
+          "world:places",
+          "world:lore",
+          "chapter:chapter-003.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-a26ab9b8-1f6e-44e8-b3ef-88185116f539",
+          "attemptId": "attempt-5ed122a5-c002-49e0-9ef9-5f2a8be06c05",
+          "runId": "run-03354a7f-dfb9-4ef6-950b-64a4e716b77d",
+          "reportSha256": "41ea9a881fff945da9411dfde998af05fd4cfa75c888bd2cfa3d916e235ffac0",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye",
+            "world:lore",
+            "character:cen",
+            "character:he",
+            "character:lin",
+            "character:lu",
+            "character:su",
+            "character:ye"
+          ],
+          "coverageObserved": [
+            "character:cen",
+            "chapter:chapter-003.md",
+            "character:he",
+            "character:lin",
+            "character:lu",
+            "character:ye",
+            "character:su",
+            "character-memory:he",
+            "character-memory:cen",
+            "character-memory:ye",
+            "character-memory:lin",
+            "character-memory:su",
+            "character-memory:lu",
+            "world:lore"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-003.md",
+              "hash": "4af00214af039b29444f8b9f9a2576106e65efc721d25a0839cae7583ae6db91"
+            },
+            {
+              "resourceRef": "character-memory:cen",
+              "hash": "b9e4e162590d0dfbd83a616d2ab555da610970a43d399f3fc95c49b777dbc667"
+            },
+            {
+              "resourceRef": "character-memory:he",
+              "hash": "964e995a17d3aa6aa94d36e6348aec778f89c17b77189e489be5149498276bcd"
+            },
+            {
+              "resourceRef": "character-memory:lin",
+              "hash": "80bf41a64c44f7271a5f0c530728a46a0c7e1c118a42597876bb8490ba06bcf3"
+            },
+            {
+              "resourceRef": "character-memory:lu",
+              "hash": "64e3a01e0356c453b31fd788f1b57893c7b0319ac72c358bf3ac86460edefb5e"
+            },
+            {
+              "resourceRef": "character-memory:su",
+              "hash": "e2b96c9c9a5ad2fa20e41582bf79d1a0adf24d6a37bec8bfd550c8ff775c18bb"
+            },
+            {
+              "resourceRef": "character-memory:ye",
+              "hash": "9ef7edf9a8ed54b58042888757671837798780cb36c8a200117391adbbd05b85"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "character:cen",
+              "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "character:lu",
+              "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+            },
+            {
+              "resourceRef": "character:su",
+              "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            }
+          ],
+          "versionCurrent": true,
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "met",
+          "blocking": false,
+          "actual": 1911,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": 1425,
+          "acceptedMaximum": 2100,
+          "withinTolerance": true,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "requiredWrites": {
+          "expectedResourceRefs": [
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "missingResourceRefs": []
+        },
+        "combinedMemoryCommit": {
+          "status": "met"
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": []
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "afterHash": "9c4cb28c0c869ee645e738d878fe15e8e71519f2a381361b7884ffddbe19a86c",
+        "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+        "mode": "create",
+        "oldHash": null,
+        "newHash": "9c4cb28c0c869ee645e738d878fe15e8e71519f2a381361b7884ffddbe19a86c",
+        "chineseCharacterCount": 1978,
+        "bodyChineseCharacterCount": 1973
+      },
+      {
+        "resourceRef": "character-memory:cen",
+        "beforeHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+        "afterHash": "b9e4e162590d0dfbd83a616d2ab555da610970a43d399f3fc95c49b777dbc667",
+        "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+        "mode": "replace",
+        "oldHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+        "newHash": "b9e4e162590d0dfbd83a616d2ab555da610970a43d399f3fc95c49b777dbc667",
+        "chineseCharacterCount": 137,
+        "bodyChineseCharacterCount": 137
+      },
+      {
+        "resourceRef": "character-memory:he",
+        "beforeHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+        "afterHash": "0031298297c706a055724e2c1b7ac71783e5439790d5a0b52691ace0032282a5",
+        "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+        "mode": "replace",
+        "oldHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+        "newHash": "0031298297c706a055724e2c1b7ac71783e5439790d5a0b52691ace0032282a5",
+        "chineseCharacterCount": 136,
+        "bodyChineseCharacterCount": 136
+      },
+      {
+        "resourceRef": "character-memory:lin",
+        "beforeHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+        "afterHash": "8eaa782edd599b0971741b94998a62f4a09a6b1f7ea2f6109c657f1dc3ee2caf",
+        "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+        "mode": "replace",
+        "oldHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+        "newHash": "8eaa782edd599b0971741b94998a62f4a09a6b1f7ea2f6109c657f1dc3ee2caf",
+        "chineseCharacterCount": 139,
+        "bodyChineseCharacterCount": 139
+      },
+      {
+        "resourceRef": "character-memory:lu",
+        "beforeHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+        "afterHash": "64e3a01e0356c453b31fd788f1b57893c7b0319ac72c358bf3ac86460edefb5e",
+        "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+        "mode": "replace",
+        "oldHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+        "newHash": "64e3a01e0356c453b31fd788f1b57893c7b0319ac72c358bf3ac86460edefb5e",
+        "chineseCharacterCount": 133,
+        "bodyChineseCharacterCount": 133
+      },
+      {
+        "resourceRef": "character-memory:su",
+        "beforeHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+        "afterHash": "b1a90f696788e689372a879550dff34d7455e9490c38d3016b261d83acca5f36",
+        "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+        "mode": "replace",
+        "oldHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+        "newHash": "b1a90f696788e689372a879550dff34d7455e9490c38d3016b261d83acca5f36",
+        "chineseCharacterCount": 118,
+        "bodyChineseCharacterCount": 118
+      },
+      {
+        "resourceRef": "character-memory:ye",
+        "beforeHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+        "afterHash": "b36541334b0941834c62d35ea8239fc7bfc4ba9465fe5a8c4fad8ab1d754366b",
+        "nativeItemId": "exec-04fc640a-20e1-4e02-9387-f8f68b5ccf4a",
+        "mode": "replace",
+        "oldHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+        "newHash": "b36541334b0941834c62d35ea8239fc7bfc4ba9465fe5a8c4fad8ab1d754366b",
+        "chineseCharacterCount": 140,
+        "bodyChineseCharacterCount": 140
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "9c4cb28c0c869ee645e738d878fe15e8e71519f2a381361b7884ffddbe19a86c",
+        "afterHash": "2a5bf484ab6ce9d6542a677cdb97dbfc0411fc2b1cebceace74fc716b49e4809",
+        "nativeItemId": "exec-87afae91-6d4e-4499-abeb-b4834c86b85b",
+        "mode": "replace",
+        "oldHash": "9c4cb28c0c869ee645e738d878fe15e8e71519f2a381361b7884ffddbe19a86c",
+        "newHash": "2a5bf484ab6ce9d6542a677cdb97dbfc0411fc2b1cebceace74fc716b49e4809",
+        "chineseCharacterCount": 1953,
+        "bodyChineseCharacterCount": 1948
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "2a5bf484ab6ce9d6542a677cdb97dbfc0411fc2b1cebceace74fc716b49e4809",
+        "afterHash": "4af00214af039b29444f8b9f9a2576106e65efc721d25a0839cae7583ae6db91",
+        "nativeItemId": "exec-81ee529d-811a-41ce-8802-7f0ac0bb15e7",
+        "mode": "replace",
+        "oldHash": "2a5bf484ab6ce9d6542a677cdb97dbfc0411fc2b1cebceace74fc716b49e4809",
+        "newHash": "4af00214af039b29444f8b9f9a2576106e65efc721d25a0839cae7583ae6db91",
+        "chineseCharacterCount": 1916,
+        "bodyChineseCharacterCount": 1911
+      },
+      {
+        "resourceRef": "character-memory:he",
+        "beforeHash": "0031298297c706a055724e2c1b7ac71783e5439790d5a0b52691ace0032282a5",
+        "afterHash": "baf1ed7db62d13fddff19fb473831b4b107ee0d1af93bbf86d1eb75603e4dd0e",
+        "nativeItemId": "exec-81ee529d-811a-41ce-8802-7f0ac0bb15e7",
+        "mode": "replace",
+        "oldHash": "0031298297c706a055724e2c1b7ac71783e5439790d5a0b52691ace0032282a5",
+        "newHash": "baf1ed7db62d13fddff19fb473831b4b107ee0d1af93bbf86d1eb75603e4dd0e",
+        "chineseCharacterCount": 176,
+        "bodyChineseCharacterCount": 176
+      },
+      {
+        "resourceRef": "character-memory:lin",
+        "beforeHash": "8eaa782edd599b0971741b94998a62f4a09a6b1f7ea2f6109c657f1dc3ee2caf",
+        "afterHash": "aae6cf61b6cde5507ecc771b075ad3170339457eb1f661dd0c12372b25b09327",
+        "nativeItemId": "exec-caf7e02b-f2f5-47d5-8d10-ac43e63d05a8",
+        "mode": "replace",
+        "oldHash": "8eaa782edd599b0971741b94998a62f4a09a6b1f7ea2f6109c657f1dc3ee2caf",
+        "newHash": "aae6cf61b6cde5507ecc771b075ad3170339457eb1f661dd0c12372b25b09327",
+        "chineseCharacterCount": 168,
+        "bodyChineseCharacterCount": 168
+      },
+      {
+        "resourceRef": "character-memory:su",
+        "beforeHash": "b1a90f696788e689372a879550dff34d7455e9490c38d3016b261d83acca5f36",
+        "afterHash": "c628bd6ddd0f85b684805aaee0c75971f6f4ac78fa7d6d0f2caa7a9ba7f8a977",
+        "nativeItemId": "exec-caf7e02b-f2f5-47d5-8d10-ac43e63d05a8",
+        "mode": "replace",
+        "oldHash": "b1a90f696788e689372a879550dff34d7455e9490c38d3016b261d83acca5f36",
+        "newHash": "c628bd6ddd0f85b684805aaee0c75971f6f4ac78fa7d6d0f2caa7a9ba7f8a977",
+        "chineseCharacterCount": 147,
+        "bodyChineseCharacterCount": 147
+      },
+      {
+        "resourceRef": "character-memory:ye",
+        "beforeHash": "b36541334b0941834c62d35ea8239fc7bfc4ba9465fe5a8c4fad8ab1d754366b",
+        "afterHash": "52f58d9b2120e404a62b42ae95538ed433d057a0dde666ff2c7af7528b12435a",
+        "nativeItemId": "exec-caf7e02b-f2f5-47d5-8d10-ac43e63d05a8",
+        "mode": "replace",
+        "oldHash": "b36541334b0941834c62d35ea8239fc7bfc4ba9465fe5a8c4fad8ab1d754366b",
+        "newHash": "52f58d9b2120e404a62b42ae95538ed433d057a0dde666ff2c7af7528b12435a",
+        "chineseCharacterCount": 177,
+        "bodyChineseCharacterCount": 177
+      },
+      {
+        "resourceRef": "character-memory:he",
+        "beforeHash": "baf1ed7db62d13fddff19fb473831b4b107ee0d1af93bbf86d1eb75603e4dd0e",
+        "afterHash": "964e995a17d3aa6aa94d36e6348aec778f89c17b77189e489be5149498276bcd",
+        "nativeItemId": "exec-0d16229d-3858-4ebb-a359-4c84174734d1",
+        "mode": "replace",
+        "oldHash": "baf1ed7db62d13fddff19fb473831b4b107ee0d1af93bbf86d1eb75603e4dd0e",
+        "newHash": "964e995a17d3aa6aa94d36e6348aec778f89c17b77189e489be5149498276bcd",
+        "chineseCharacterCount": 176,
+        "bodyChineseCharacterCount": 176
+      },
+      {
+        "resourceRef": "character-memory:lin",
+        "beforeHash": "aae6cf61b6cde5507ecc771b075ad3170339457eb1f661dd0c12372b25b09327",
+        "afterHash": "80bf41a64c44f7271a5f0c530728a46a0c7e1c118a42597876bb8490ba06bcf3",
+        "nativeItemId": "exec-0d16229d-3858-4ebb-a359-4c84174734d1",
+        "mode": "replace",
+        "oldHash": "aae6cf61b6cde5507ecc771b075ad3170339457eb1f661dd0c12372b25b09327",
+        "newHash": "80bf41a64c44f7271a5f0c530728a46a0c7e1c118a42597876bb8490ba06bcf3",
+        "chineseCharacterCount": 168,
+        "bodyChineseCharacterCount": 168
+      },
+      {
+        "resourceRef": "character-memory:su",
+        "beforeHash": "c628bd6ddd0f85b684805aaee0c75971f6f4ac78fa7d6d0f2caa7a9ba7f8a977",
+        "afterHash": "e2b96c9c9a5ad2fa20e41582bf79d1a0adf24d6a37bec8bfd550c8ff775c18bb",
+        "nativeItemId": "exec-0d16229d-3858-4ebb-a359-4c84174734d1",
+        "mode": "replace",
+        "oldHash": "c628bd6ddd0f85b684805aaee0c75971f6f4ac78fa7d6d0f2caa7a9ba7f8a977",
+        "newHash": "e2b96c9c9a5ad2fa20e41582bf79d1a0adf24d6a37bec8bfd550c8ff775c18bb",
+        "chineseCharacterCount": 147,
+        "bodyChineseCharacterCount": 147
+      },
+      {
+        "resourceRef": "character-memory:ye",
+        "beforeHash": "52f58d9b2120e404a62b42ae95538ed433d057a0dde666ff2c7af7528b12435a",
+        "afterHash": "9ef7edf9a8ed54b58042888757671837798780cb36c8a200117391adbbd05b85",
+        "nativeItemId": "exec-0d16229d-3858-4ebb-a359-4c84174734d1",
+        "mode": "replace",
+        "oldHash": "52f58d9b2120e404a62b42ae95538ed433d057a0dde666ff2c7af7528b12435a",
+        "newHash": "9ef7edf9a8ed54b58042888757671837798780cb36c8a200117391adbbd05b85",
+        "chineseCharacterCount": 177,
+        "bodyChineseCharacterCount": 177
+      }
+    ],
+    "error": null
+  },
+  {
+    "runId": "run-78bfd10b-602e-4897-8a7d-6d357525fb34",
+    "conversationId": "thread-mve4dhss-kj6uwe",
+    "novelId": "novel-mve4d0ut-bf0f0t",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [],
+      "atomicMemoryWithChapter": false,
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "repairAttempt": 1,
+    "reviewItemOffset": 36,
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [],
+        "atomicMemoryWithChapter": false,
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "style",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "afterHash": "012f9c4700a70f96a2168aaafc9375c17a862f96f82f595de5f7d1d79f035302",
+          "nativeItemId": "exec-6db3dfff-c53a-4b15-a34c-f645e2b24466",
+          "mode": "create",
+          "oldHash": null,
+          "newHash": "012f9c4700a70f96a2168aaafc9375c17a862f96f82f595de5f7d1d79f035302",
+          "chineseCharacterCount": 1685,
+          "bodyChineseCharacterCount": 1680
+        },
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "012f9c4700a70f96a2168aaafc9375c17a862f96f82f595de5f7d1d79f035302",
+          "afterHash": "3cf5aca15d709c373503c5d6da30b538b3f0d8155eaf169393b33d1236d1ff67",
+          "nativeItemId": "exec-9fdea409-9320-4847-88e9-6dfb8a5f1c61",
+          "mode": "replace",
+          "oldHash": "012f9c4700a70f96a2168aaafc9375c17a862f96f82f595de5f7d1d79f035302",
+          "newHash": "3cf5aca15d709c373503c5d6da30b538b3f0d8155eaf169393b33d1236d1ff67",
+          "chineseCharacterCount": 1687,
+          "bodyChineseCharacterCount": 1682
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 2
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1682,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "3cf5aca15d709c373503c5d6da30b538b3f0d8155eaf169393b33d1236d1ff67"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "observedReadResourceRefs": [
+          "outline:hierarchy",
+          "outline:master",
+          "character:he",
+          "character:lu",
+          "character:lin",
+          "character:ye",
+          "character:cen",
+          "character:su",
+          "chapter:chapter-001.md",
+          "style:memory",
+          "world:lore",
+          "world:places",
+          "chapter:chapter-002.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-171bdb64-7ac7-4a59-98fb-c744ab48cbd2",
+          "attemptId": "attempt-1597c832-c0ae-4bbe-a190-9743dc40e45f",
+          "runId": "run-78bfd10b-602e-4897-8a7d-6d357525fb34",
+          "reportSha256": "43ff6548da9809ed5b55aab41907a64427ff7a529679ddce81807ebf3622c685",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-002.md",
+            "chapter:chapter-001.md",
+            "character:cen",
+            "character:he",
+            "character:lin",
+            "character:lu",
+            "character:su",
+            "character:ye",
+            "world:lore",
+            "world:places",
+            "outline:master",
+            "style:memory"
+          ],
+          "coverageObserved": [
+            "chapter:chapter-001.md",
+            "style:memory",
+            "chapter:chapter-002.md",
+            "character:lin",
+            "character:cen",
+            "character:su",
+            "character:he",
+            "outline:master",
+            "character:ye",
+            "character:lu",
+            "world:lore",
+            "world:places"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "3cf5aca15d709c373503c5d6da30b538b3f0d8155eaf169393b33d1236d1ff67"
+            },
+            {
+              "resourceRef": "chapter:chapter-001.md",
+              "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+            },
+            {
+              "resourceRef": "character:cen",
+              "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "character:lu",
+              "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+            },
+            {
+              "resourceRef": "character:su",
+              "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "world:places",
+              "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+            },
+            {
+              "resourceRef": "outline:master",
+              "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+            },
+            {
+              "resourceRef": "style:memory",
+              "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+            }
+          ],
+          "versionCurrent": true,
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "met",
+          "blocking": false,
+          "actual": 1682,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": 1425,
+          "acceptedMaximum": 2100,
+          "withinTolerance": true,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": []
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "afterHash": "012f9c4700a70f96a2168aaafc9375c17a862f96f82f595de5f7d1d79f035302",
+        "nativeItemId": "exec-6db3dfff-c53a-4b15-a34c-f645e2b24466",
+        "mode": "create",
+        "oldHash": null,
+        "newHash": "012f9c4700a70f96a2168aaafc9375c17a862f96f82f595de5f7d1d79f035302",
+        "chineseCharacterCount": 1685,
+        "bodyChineseCharacterCount": 1680
+      },
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "012f9c4700a70f96a2168aaafc9375c17a862f96f82f595de5f7d1d79f035302",
+        "afterHash": "3cf5aca15d709c373503c5d6da30b538b3f0d8155eaf169393b33d1236d1ff67",
+        "nativeItemId": "exec-9fdea409-9320-4847-88e9-6dfb8a5f1c61",
+        "mode": "replace",
+        "oldHash": "012f9c4700a70f96a2168aaafc9375c17a862f96f82f595de5f7d1d79f035302",
+        "newHash": "3cf5aca15d709c373503c5d6da30b538b3f0d8155eaf169393b33d1236d1ff67",
+        "chineseCharacterCount": 1687,
+        "bodyChineseCharacterCount": 1682
+      }
+    ],
+    "error": null
+  }
+]

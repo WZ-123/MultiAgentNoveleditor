@@ -1,0 +1,25 @@
+{
+  "reason": "real-a found missing input version transfer; original failed samples retained",
+  "real-b": {
+    "samples": [
+      "original accept request once"
+    ],
+    "purpose": "recheck unchanged original 1500–2000 request after version binding fix; count gate cannot be bypassed"
+  },
+  "real-c": {
+    "samples": [
+      "format-accept",
+      "format-decline",
+      "format-conflict",
+      "format-stop"
+    ],
+    "purpose": "separate exact-edit positive/negative protocol controls; cannot replace or pass the original new-writing sample",
+    "fixtureSource": "full-f/traditional-format-cleanup-readback.json, historical bytes used only as test input",
+    "minimum": 1500,
+    "maximum": 2000,
+    "toleranceRatio": 0
+  },
+  "model": "gpt-6-luna",
+  "effort": "medium",
+  "automaticGenerationRetries": 0
+}

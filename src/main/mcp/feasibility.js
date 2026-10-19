@@ -17,6 +17,7 @@ const SPEED_KMH = {
   car: 60,
   train: 200,
   plane: 800,
+  boat: 10,
   magic: 1e9, // basically instant — caller must be explicit
 };
 
@@ -74,27 +75,53 @@ function distanceBetweenPlaceNames(placeA, placeB, placesMap) {
   return haversineKm(a, b);
 }
 
-function checkFeasibility(eventA, eventB, { transport = 'walk' } = {}) {
-  const speed = SPEED_KMH[transport] ?? SPEED_KMH.walk;
-  const tA = eventA?.when ? new Date(eventA.when).getTime() : null;
-  const tB = eventB?.when ? new Date(eventB.when).getTime() : null;
-  if (tA == null || tB == null || Number.isNaN(tA) || Number.isNaN(tB)) {
-    return { feasible: true, reason: 'missing timestamps; cannot evaluate', hours: 0, neededHours: 0, distanceKm: null };
+function eventTime(value) {
+  if (typeof value !== 'string') return null;
+  const clock = value.normalize('NFKC').match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/u);
+  if (clock) {
+    const [h,m,s]=clock.slice(1).map(v=>Number(v||0));
+    return h<24 && m<60 && s<60 ? {kind:'clock',ms:(h*3600+m*60+s)*1000} : null;
   }
-  const hours = Math.abs(tB - tA) / 36e5;
+  if (!/^\d{4}-\d{2}-\d{2}T/u.test(value)) return null;
+  const ms=Date.parse(value);
+  return Number.isFinite(ms)?{kind:'dated',ms}:null;
+}
+function checkFeasibility(eventA, eventB, { transport = 'walk', minimumTravelMinutes, clockReadings } = {}) {
+  const travel = checkTravelFeasibility(eventA,eventB,{transport,minimumTravelMinutes});
+  if(clockReadings == null)return travel;
+  if(!Array.isArray(clockReadings)||!clockReadings.length)return {...travel,status:'unknown',feasible:null,reason:'clockReadings must contain actual/displayed timestamps and a signed canonical offset'};
+  const clockChecks=clockReadings.map(reading=>{
+    const actual=eventTime(reading?.actualTime),displayed=eventTime(reading?.displayedTime);
+    if(!actual||!displayed||actual.kind!==displayed.kind||!Number.isFinite(reading.offsetMinutes))return {...reading,status:'unknown',feasible:null,reason:'use compatible actual/displayed timestamps and signed offsetMinutes; dates required across midnight'};
+    const observedOffsetMinutes=(displayed.ms-actual.ms)/60000;
+    const feasible=Math.abs(observedOffsetMinutes-reading.offsetMinutes)<1e-6;
+    return {...reading,observedOffsetMinutes,status:feasible?'feasible':'infeasible',feasible,reason:feasible?'clock reading agrees with supplied offset':'displayed minus actual time differs from supplied offset'};
+  });
+  const impossible=travel.feasible===false||clockChecks.some(reading=>reading.feasible===false);
+  const unknown=travel.feasible==null||clockChecks.some(reading=>reading.feasible==null);
+  return {...travel,clockChecks,status:impossible?'infeasible':unknown?'unknown':'feasible',feasible:impossible?false:unknown?null:true,
+    reason:clockChecks.some(reading=>reading.feasible===false)?'clock offset contradicts supplied timestamps':clockChecks.some(reading=>reading.feasible==null)?'clock comparison is not verified':travel.reason};
+}
+function checkTravelFeasibility(eventA, eventB, { transport = 'walk', minimumTravelMinutes } = {}) {
+  const unknown = reason => ({ status:'unknown', feasible:null, reason, hours:null, neededHours:null, distanceKm:null });
+  const a=eventTime(eventA?.when), b=eventTime(eventB?.when);
+  if (!a || !b || a.kind!==b.kind) return unknown('missing or incompatible timestamps; use same-day HH:mm or dated ISO timestamps');
+  const hours = (b.ms-a.ms) / 36e5;
+  if(hours<0) return {status:'infeasible',feasible:false,reason:'eventB is earlier than eventA; specify dates for overnight travel',hours,neededHours:null,distanceKm:null};
   const dist = distanceBetween(eventA, eventB);
-  if (dist == null) {
-    return { feasible: true, reason: 'unknown distance; assumed feasible', hours, neededHours: 0, distanceKm: null };
-  }
-  const neededHours = dist / speed;
+  if(minimumTravelMinutes!=null && (!Number.isFinite(minimumTravelMinutes)||minimumTravelMinutes<0)) return unknown('minimumTravelMinutes must be a nonnegative number from canonical evidence');
+  if(minimumTravelMinutes==null && (!Number.isFinite(dist)||dist<0)) return unknown('unknown distance and no canonical minimumTravelMinutes; cannot evaluate');
+  if(minimumTravelMinutes==null && !Object.hasOwn(SPEED_KMH,transport)) return unknown('unknown transport');
+  const neededHours = minimumTravelMinutes!=null ? minimumTravelMinutes/60 : dist/SPEED_KMH[transport];
+  const basis = minimumTravelMinutes!=null ? 'canonical_duration' : 'estimated_speed';
   if (hours + 1e-6 < neededHours) {
     return {
-      feasible: false,
-      reason: `Need ${neededHours.toFixed(2)}h to travel ${dist.toFixed(1)}km by ${transport}, only ${hours.toFixed(2)}h elapsed`,
+      status:'infeasible', feasible: false, basis,
+      reason: `Need ${neededHours.toFixed(2)}h, only ${hours.toFixed(2)}h elapsed`,
       hours, neededHours, distanceKm: dist,
     };
   }
-  return { feasible: true, reason: 'within transport time budget', hours, neededHours, distanceKm: dist };
+  return { status:'feasible', feasible: true, basis, reason: 'within supplied time budget', hours, neededHours, distanceKm: dist };
 }
 
 module.exports = { checkFeasibility, SPEED_KMH, placesToMap, distanceBetweenPlaceNames };

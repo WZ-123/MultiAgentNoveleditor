@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lin",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lin-initial",
+      "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "在船上报出潮表二十点二十七；船底三次异响后停靠外堤，苏砚回渡口带陆行舟。",
+      "id": "fad710dd-74aa-47ee-9820-34b80618bf6c"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "因苏砚追问时间而戒备，仍坚持只报告读数。",
+      "id": "ec364886-7b4b-495d-9780-ddda30e4d330"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "苏砚接受她要求按实际间隔计时，有限认可她的测量。",
+      "id": "443040f9-1291-4e3e-b73d-6581ec9ec47b"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lin-goal",
+      "summary": "查出潮钟误差，保护弟弟"
+    },
+    {
+      "summary": "记录苏砚往返时间并继续核对潮表，不公开怀表误差。",
+      "id": "e92cb45b-9ea6-46b6-a945-f4286573dfc9"
+    }
+  ],
+  "privateMisbeliefs": []
+}

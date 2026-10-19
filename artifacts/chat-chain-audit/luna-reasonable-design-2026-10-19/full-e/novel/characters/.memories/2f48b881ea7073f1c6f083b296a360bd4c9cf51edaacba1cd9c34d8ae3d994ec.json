@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lin",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lin-initial",
+      "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "20:27怀表读数被苏砚按“怀表所示”记录；船因擦痕暂缓离港，明早拟核钟楼记录。",
+      "id": "c5f4f275-2a96-4c1a-94f8-8f2cccebdb53"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "因时间记录未被混作钟楼时刻而稍安；仍担心隐瞒七分钟将损害可信度。",
+      "id": "3f003717-c131-44b4-8e4e-63a2e64365fd"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "苏砚愿按她要求注明时间来源，合作稍增；仍未向众人公开钟差。",
+      "id": "42c4f518-5484-4f6d-92dc-096e337bc0fa"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lin-goal",
+      "summary": "查出潮钟误差，保护弟弟"
+    },
+    {
+      "summary": "在合适时机拿出证据说明潮钟慢七分钟，并查明弟弟相关抄本。",
+      "id": "d6a7f977-2769-4766-a696-32db9a33f9fe"
+    }
+  ],
+  "privateMisbeliefs": []
+}

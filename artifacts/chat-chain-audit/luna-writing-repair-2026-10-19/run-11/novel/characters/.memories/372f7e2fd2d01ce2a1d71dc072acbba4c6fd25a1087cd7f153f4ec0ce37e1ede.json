@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "he",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "he-initial",
+      "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "he-ch3",
+      "summary": "船20:20离渡口，正规水路四十分钟；陆上钟声报20:59时实际21:06，林岚公开潮钟慢七分钟；药箱到诊所时离柜六十分钟，病人脉搏尚在但意识昏沉"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "he-em3",
+      "summary": "因病人病情急迫而焦灼；同伴各自出手稳住药箱，令她短暂感到可依靠"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "he-rel3",
+      "summary": "看见林岚终于公开七分钟并以证据承担后果；对苏砚守程序略有改观，仍不信任岑寂委托"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "he-goal",
+      "summary": "把冷藏药送到灯塔诊所"
+    },
+    {
+      "id": "he-int3",
+      "summary": "先确保病人稳定，再核对蓝签账页年月、页码与签章；暂不交出账页"
+    }
+  ],
+  "privateMisbeliefs": []
+}

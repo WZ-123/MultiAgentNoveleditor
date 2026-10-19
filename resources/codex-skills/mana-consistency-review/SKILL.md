@@ -1,10 +1,16 @@
 ---
 name: mana-consistency-review
-description: Review character, world, timeline, POV, style and paragraph function against cited novel resources.
+description: Review fiction against actual character, world, timeline, POV and style evidence.
 ---
 
 # 一致性审查
 
-审查必须基于实际读取的资源及其 hash。区分硬冲突、可疑点和纯偏好；正文与总纲不同时先报告资料版本分歧，不默认把总纲当成正文事实。硬冲突必须给出至少两项互相矛盾的 `resourceRef`、hash、原文位置和矛盾说明；缺少证据时标为“未验证”。时间移动问题调用 `check_timeline_feasibility`。
+检查当前正式正文和实际资料。按 taskConstraints 的目标、视角及必读集合执行；可用 read_writing_context 一次读取绑定资料，公共资料与各角色主观记忆保持各自归属。任务开始前记忆与本任务新增结果分开，新增结果不能证明此前已知。
 
-三章以内的审查由当前线程一次并行读取所需资源后直接完成；在 code mode 中可以通过 `functions.exec` 调用已暴露的 `novel_tools`，不得用 shell或通用 MCP 探测。不要输出读取计划、过程分析或自言自语。每个问题使用稳定 ID，格式为 `类别:资源:事实键`，并记录 `severity`（hard/suspicion/preference）、`status`（open/closed）、证据和受影响资源。纯偏好不得阻断交付。报告末尾必须附一个 `json` 代码块，内容为 `{ "coveredResourceRefs": [...], "issues": [...] }`；每条 issue 使用 `issueId/category/severity/status/contradiction/evidence`，每项 evidence 使用 `resourceRef/hash/location/quote`。若没有问题，issues 为空数组。只有运行时明确暴露原生 subagent、用户明确要求委派且审查范围超过三章时，才可并行交给 subagent 再由当前线程合并去重。只在用户要求修复时生成修改，并统一走确认写入；关闭问题只重读其证据依赖，局部修改不自动重审全书。
+保存并读回后调用 check_writing_task；纯审校也调用该工具。工具对冻结版本执行一次独立只读审查，按请求列出具体问题、原文依据、检查结论与限制。同一冻结版本含失败结果缓存，不自动重试。作者自报空列表不能替代独立审查，不填写逐句分类或全局证明表。引文与版本核验不代表全文无错。
+
+区分确定冲突、待核实疑点与偏好；人物声称、焦点推断、内省、现场新获知不等于叙述确认属实。按原文及设定核对耗时、时间和信息传递。单句也可能足以说明冲突，不凑引文数量。数值明确时可调用 check_timeline_feasibility，缺依据返回unknown，不能当作可行。
+
+要求修复时，在当前授权内修订、原生批准并读回，再检查新版本。已知问题保留同一身份和受影响范围，不能换引文、改严重度或提交空报告消除。独立审查关闭fixed须引用原问题证据及实际改动后的依据；只改标题不能证明原问题已修。疑点与限制如实报告，不因引文数量自动升级为必修错误。
+
+最终说明实际保存、审查意见和未完成项。仅非正文资料且不要求独立审查的旧接口可提交coveredResourceRefs/issues报告；不要用旧接口替代正文自查。

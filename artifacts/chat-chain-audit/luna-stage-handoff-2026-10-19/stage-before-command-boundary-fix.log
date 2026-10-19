@@ -1,0 +1,13 @@
+PASS preparation-stage one native child completes while parent and project ownership stay active; same preparation implementation produces atomic candidate
+PASS preparation-stage durable candidate survives module reload, old timestamp and more than eight other candidates; retrieval never increments revision
+PASS preparation-stage host and MCP processes cannot overwrite each other or drop candidates during concurrent checkpoints
+Error: 原生提交阶段只能取回本阶段冻结的候选，不能重新起稿或修改
+    at fail (/Users/potablewater/Desktop/MultiAgentNovelAssistant/src/main/mcp/writingTools.js:16:55)
+    at prepareNovelPatch (/Users/potablewater/Desktop/MultiAgentNovelAssistant/src/main/mcp/writingTools.js:82:140)
+    at async tool.handler (/Users/potablewater/Desktop/MultiAgentNovelAssistant/src/main/mcp/writingTools.js:267:19)
+    at async /Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation-stage.test.js:85:29
+    at async test (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation-stage.test.js:21:31)
+    at async main (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation-stage.test.js:83:5) {
+  code: 'preparation_frozen',
+  details: undefined
+}

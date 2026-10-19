@@ -38,6 +38,7 @@ async function run() {
     const terminal = new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('native mutation loop timed out')), 60_000);
       service.on('event', function onEvent(event) {
+        if(event.runId!=='mutation-loop')return;
         if (event.type === 'confirmation_requested') service.resolveConfirmation({ confirmationId: event.confirmationId, accept: true });
         if (!['turn_completed', 'turn_failed', 'turn_interrupted'].includes(event.type)) return;
         clearTimeout(timer); service.off('event', onEvent);

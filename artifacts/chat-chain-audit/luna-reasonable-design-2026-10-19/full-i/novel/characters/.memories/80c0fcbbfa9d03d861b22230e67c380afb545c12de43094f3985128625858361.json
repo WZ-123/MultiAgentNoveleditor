@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lu",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lu-initial",
+      "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "船底异响来自舱内松动木桶而非已见漏水；他当众绑紧桶箍，众人看见。",
+      "id": "c5b4b5b6-5d95-40f5-9ea9-ab9555825d79"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "被限制检查令他不快，但修好松桶后得到继续留在船上的位置。",
+      "id": "0d9a47ca-4b97-4d59-ab6b-963b89a13d93"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "以实际修理回应苏砚的怀疑，暂获有限信任。",
+      "id": "0f170839-fa91-4e25-b398-527269f153f0"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lu-goal",
+      "summary": "修好潮钟并洗清偷芯嫌疑"
+    },
+    {
+      "summary": "继续观察船况，也想找机会说明自己未换钟芯。",
+      "id": "21a2082f-7b1c-4522-ac52-509b6dae8c93"
+    }
+  ],
+  "privateMisbeliefs": []
+}

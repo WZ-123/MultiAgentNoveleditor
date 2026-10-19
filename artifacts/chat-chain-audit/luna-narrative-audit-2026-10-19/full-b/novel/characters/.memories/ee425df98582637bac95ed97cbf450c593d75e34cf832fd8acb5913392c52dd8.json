@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "ye",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "ye-initial",
+      "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "正规水路上听见船底三次钝响，已将船系在外堤桩上等待检查。",
+      "id": "a64b8322-f98e-4c08-9b81-82e5b6c63e79"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "担心绞盘故障危及船员与执照，不愿因欠何芷人情强行赶航。",
+      "id": "f60fd344-dd17-4eca-9807-f4bfa1a2d57a"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "何芷没有以人情逼她继续航行，彼此信任略增。",
+      "id": "0c65c435-955a-41e7-8f53-bafe172165e6"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "ye-goal",
+      "summary": "保住执照与船员"
+    },
+    {
+      "summary": "待陆行舟检查绞盘后判断是否继续走正规航道。",
+      "id": "a266f45a-8fd5-4824-b054-5f1c61eb1a72"
+    }
+  ],
+  "privateMisbeliefs": []
+}

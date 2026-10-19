@@ -1,0 +1,191 @@
+✖ a preparation checkpoint failure releases its cancellation controller and preserves the original error (0.682625ms)
+✖ stopping during context delivery prevents the preparation model call (148.104541ms)
+✖ stopping during the handoff checkpoint cannot return native commit input (217.604875ms)
+✖ a review request already aborted before entry does not enqueue an inference (103.367291ms)
+✖ late review success after stop cannot mutate the parent or publish a completed review (463.904334ms)
+✖ late review failure after stop cannot mutate the parent or publish a completed review (463.770209ms)
+✖ a canonical source changed during assessment cannot become a successful review (311.949875ms)
+✖ stopping while the task catalogue loads prevents even the intent model request (290.293375ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 0
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2001.902041
+
+✖ failing tests:
+
+test at test/writing-lifecycle-boundaries.test.js:54:1
+✖ a preparation checkpoint failure releases its cancellation controller and preserves the original error (0.682625ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-lifecycle-boundaries.test.js:61:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/writing-lifecycle-boundaries.test.js:65:1
+✖ stopping during context delivery prevents the preparation model call (148.104541ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-lifecycle-boundaries.test.js:78:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/writing-lifecycle-boundaries.test.js:82:1
+✖ stopping during the handoff checkpoint cannot return native commit input (217.604875ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-lifecycle-boundaries.test.js:92:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: [Function (anonymous)],
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at test/writing-lifecycle-boundaries.test.js:95:1
+✖ a review request already aborted before entry does not enqueue an inference (103.367291ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'fbc08d6d8c8f6fc3a5e0d56515384245bcca55b94fdb8a700ec8c5cab1179074.json'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-lifecycle-boundaries.test.js:100:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Array],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test/writing-lifecycle-boundaries.test.js:104:3
+✖ late review success after stop cannot mutate the parent or publish a completed review (463.904334ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + {
+  +   coverageHashes: [
+  +     {
+  +       hash: '9cc9f10df0383c13f5e467d0b80ce9630ae685c643df0e3a8055172670a6fba3',
+  +       resourceRef: 'chapter:chapter-001.md'
+  +     }
+  +   ],
+  +   itemId: 'fbc08d6d8c8f6fc3a5e0d56515384245bcca55b94fdb8a700ec8c5cab1179074',
+  +   origin: 'host_readonly_analysis',
+  +   protocolVersion: 4,
+  +   report: {
+  +     coveredResourceRefs: [
+  +       'chapter:chapter-001.md'
+  +     ],
+  +     issues: [],
+  +     resolutions: [],
+  +     reviews: [
+  +       {
+  +         aspects: [
+  +           'timeline'
+  +         ],
+  +         conclusion: '边界测试夹具。',
+  +         limitations: [],
+  +         resourceRef: 'chapter:chapter-001.md'
+  +       }
+  +     ]
+  +   }
+  + }
+  - undefined
+  
+      at TestContext.<anonymous> (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-lifecycle-boundaries.test.js:119:12)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Object],
+    expected: undefined,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/writing-lifecycle-boundaries.test.js:104:3
+✖ late review failure after stop cannot mutate the parent or publish a completed review (463.770209ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   error: 'late failure',
+  +   key: 'fbc08d6d8c8f6fc3a5e0d56515384245bcca55b94fdb8a700ec8c5cab1179074',
+  +   readOnly: true,
+  +   status: 'failed'
+  -   status: 'cancelled'
+    }
+  
+      at TestContext.<anonymous> (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-lifecycle-boundaries.test.js:121:12)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Object],
+    expected: [Object],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at test/writing-lifecycle-boundaries.test.js:127:1
+✖ a canonical source changed during assessment cannot become a successful review (311.949875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  true !== false
+  
+      at TestContext.<anonymous> (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-lifecycle-boundaries.test.js:137:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/writing-lifecycle-boundaries.test.js:143:1
+✖ stopping while the task catalogue loads prevents even the intent model request (290.293375ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-lifecycle-boundaries.test.js:164:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

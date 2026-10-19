@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "cen",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "cen-initial",
+      "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "听见苏砚决定工具只在陆行舟同意时登记，且不得凭怀疑拘捕；知道陆行舟自称昨夜见他从钟楼侧门出来抱纸，但陆行舟明确说不知他做了什么。",
+      "id": "ecba0aae-51e1-49d8-ad3b-e6903b8df9e0"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "被陆行舟当众指出昨夜进钟楼后保持礼貌，但感到自己的公文与行动受到审视。",
+      "id": "1e435d81-2eab-4a87-886c-2daf00c050ca"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "与陆行舟的互信进一步恶化；林岚质疑公文证明力，关系更谨慎。",
+      "id": "6e5fe91e-ef79-4bed-93ed-dfa412f3a358"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "cen-goal",
+      "summary": "阻止旧账公开但不伤及病人"
+    },
+    {
+      "summary": "向议事厅报告延迟，仍想阻止旧账公开并避免病人受损。",
+      "id": "662a4c4a-4495-478f-9384-23372077729e"
+    }
+  ],
+  "privateMisbeliefs": []
+}

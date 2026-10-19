@@ -1,0 +1,36 @@
+{
+  "privateTermFalsePositive": {
+    "expected": "no risk: unrelated elapsed duration",
+    "actualRiskCount": 1
+  },
+  "offSceneDisclosureFalseNegative": {
+    "expected": "risk: focal absent from disclosure",
+    "actualRiskCount": 0
+  },
+  "reportedDocumentFalsePositive": {
+    "expected": "no direct narrator head hop: focal reads an uncertain document",
+    "actualRiskCount": 1
+  },
+  "openVerifiedHardIssue": {
+    "request": "修改 chapter:chapter-001.md，写后自查世界观，发现违背设定必须在本任务修好后交付。",
+    "inferredOperation": "edit",
+    "reviewRequired": true,
+    "issueVerified": true,
+    "status": "open",
+    "objective": {
+      "status": "met",
+      "unmet": []
+    },
+    "goalVerified": true,
+    "qualityConclusion": "not_evaluated"
+  },
+  "namedSubsetMemoryBinding": {
+    "requestedCharacters": [
+      "甲川",
+      "乙禾"
+    ],
+    "otherProjectCharacters": 1,
+    "actualRequiredWriteRefs": [],
+    "actualAtomicMemoryWithChapter": false
+  }
+}

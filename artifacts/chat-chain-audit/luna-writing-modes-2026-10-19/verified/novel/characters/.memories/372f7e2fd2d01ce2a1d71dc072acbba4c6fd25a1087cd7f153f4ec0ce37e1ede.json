@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "characterId": "he",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "he-initial",
+      "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "he-ch3",
+      "summary": "药箱于20:20离柜，21:03在灯塔诊所交接；双印、铅封和药品点数无误，途中漂木缠绳被叶澄钩起，湿绳交苏砚封存，停船检查三分钟",
+      "sourceChapterRef": "chapter:chapter-003.md"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "he-ch3",
+      "summary": "担心隐瞒被程序照出；苏砚没有搜她，使她承认他的程序并非只针对自己，但仍不愿交出账页"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "he-ch3",
+      "summary": "对苏砚的程序多了一分理解但未完全信任；信任叶澄稳稳操船，仍不信岑寂的委托"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "he-goal",
+      "summary": "把冷藏药送到灯塔诊所"
+    },
+    {
+      "id": "he-next-ch3",
+      "summary": "守住暗格里的蓝签账页，按约确保药物送达后再决定如何应对明日追问"
+    }
+  ],
+  "privateMisbeliefs": []
+}

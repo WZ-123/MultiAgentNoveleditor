@@ -1,0 +1,475 @@
+[
+  {
+    "runId": "run-a21bb5d1-a1ab-4f68-a11f-2b46faa4cde4",
+    "conversationId": "thread-mve3yq1z-uqfir6",
+    "novelId": "novel-mve3yglt-hk45ab",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [],
+      "atomicMemoryWithChapter": false,
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "repairAttempt": 0,
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [],
+        "atomicMemoryWithChapter": false,
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "style",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "afterHash": "e1dbd6b6c67ebffc06084eaf25844a3b9bbecb5acb1a049b1f082f58f2435775",
+          "nativeItemId": "exec-22c1d029-a81b-4b6e-9403-60761fb41354",
+          "mode": "create",
+          "oldHash": null,
+          "newHash": "e1dbd6b6c67ebffc06084eaf25844a3b9bbecb5acb1a049b1f082f58f2435775",
+          "chineseCharacterCount": 1631,
+          "bodyChineseCharacterCount": 1626
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 1
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1626,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "e1dbd6b6c67ebffc06084eaf25844a3b9bbecb5acb1a049b1f082f58f2435775"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "observedReadResourceRefs": [
+          "style:memory",
+          "outline:master",
+          "character:lin",
+          "character:cen",
+          "character:he",
+          "character:su",
+          "character:ye",
+          "character:lu",
+          "chapter:chapter-001.md",
+          "world:lore",
+          "world:places",
+          "chapter:chapter-002.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-417f3406-304e-4d62-acaa-ebe50cb41134",
+          "attemptId": "attempt-8b6bc652-e448-445a-ac57-700d81ecbdae",
+          "runId": "run-a21bb5d1-a1ab-4f68-a11f-2b46faa4cde4",
+          "reportSha256": "83d94df537288f386a86d995403b85873fd60cfb7c87a0d76a2df842cf098b47",
+          "parsed": true,
+          "coverageClaimed": [
+            "character:cen",
+            "character:he",
+            "character:lin",
+            "character:lu",
+            "character:su",
+            "character:ye",
+            "world:lore",
+            "world:places",
+            "outline:master",
+            "style:memory",
+            "chapter:chapter-001.md",
+            "chapter:chapter-002.md"
+          ],
+          "coverageObserved": [
+            "style:memory",
+            "outline:master",
+            "character:lin",
+            "character:cen",
+            "character:he",
+            "character:su",
+            "character:ye",
+            "character:lu",
+            "chapter:chapter-001.md",
+            "world:lore",
+            "world:places",
+            "chapter:chapter-002.md"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "character:cen",
+              "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "character:lu",
+              "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+            },
+            {
+              "resourceRef": "character:su",
+              "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "world:places",
+              "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+            },
+            {
+              "resourceRef": "outline:master",
+              "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+            },
+            {
+              "resourceRef": "style:memory",
+              "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+            },
+            {
+              "resourceRef": "chapter:chapter-001.md",
+              "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+            },
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "e1dbd6b6c67ebffc06084eaf25844a3b9bbecb5acb1a049b1f082f58f2435775"
+            }
+          ],
+          "versionCurrent": true,
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "met",
+          "blocking": false,
+          "actual": 1626,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": 1425,
+          "acceptedMaximum": 2100,
+          "withinTolerance": true,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": []
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "afterHash": "e1dbd6b6c67ebffc06084eaf25844a3b9bbecb5acb1a049b1f082f58f2435775",
+        "nativeItemId": "exec-22c1d029-a81b-4b6e-9403-60761fb41354",
+        "mode": "create",
+        "oldHash": null,
+        "newHash": "e1dbd6b6c67ebffc06084eaf25844a3b9bbecb5acb1a049b1f082f58f2435775",
+        "chineseCharacterCount": 1631,
+        "bodyChineseCharacterCount": 1626
+      }
+    ],
+    "error": null
+  },
+  {
+    "runId": "run-833ec398-3250-41bf-be62-75fc6750d288",
+    "conversationId": "thread-mve40ra2-w8vr2p",
+    "novelId": "novel-mve3yglt-hk45ab",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [],
+      "atomicMemoryWithChapter": false,
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "repairAttempt": 0,
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": false,
+      "goalStatus": "incomplete",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [],
+        "atomicMemoryWithChapter": false,
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "no_changes",
+        "committedCount": 0
+      },
+      "objective": {
+        "status": "incomplete",
+        "unmet": [
+          "word_count_target_missing",
+          "word_count",
+          "no_current_commit",
+          "review_evidence_missing"
+        ]
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [],
+        "readableResources": 0,
+        "bodyChineseCharacterCount": 0,
+        "hashes": [],
+        "currentSavedResourceRefs": [],
+        "observedReadResourceRefs": [
+          "timeline:all",
+          "chapter:chapter-002.md",
+          "chapter:chapter-001.md",
+          "outline:master",
+          "character:he",
+          "character:ye",
+          "character:cen",
+          "character:lu",
+          "character:su",
+          "character:lin",
+          "character-memory:lu",
+          "character-memory:cen",
+          "character-memory:lin",
+          "character-memory:ye",
+          "character-memory:he",
+          "character-memory:su",
+          "world:places",
+          "world:lore"
+        ],
+        "fullyReadResourceRefs": [],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-3ca07830-1468-43bc-be56-f99c9b0699c0",
+          "attemptId": "attempt-18bc765c-5a57-4a4a-98fc-61dfd1271746",
+          "runId": "run-833ec398-3250-41bf-be62-75fc6750d288",
+          "reportSha256": "76d0af9bb1089470b158804790b062aa4945fbe2cc03d75fb6b0f580a2accbd1",
+          "parsed": false,
+          "coverageClaimed": [],
+          "coverageObserved": [
+            "timeline:all",
+            "chapter:chapter-002.md",
+            "chapter:chapter-001.md",
+            "outline:master",
+            "character:he",
+            "character:ye",
+            "character:cen",
+            "character:lu",
+            "character:su",
+            "character:lin",
+            "character-memory:lu",
+            "character-memory:cen",
+            "character-memory:lin",
+            "character-memory:ye",
+            "character-memory:he",
+            "character-memory:su",
+            "world:places",
+            "world:lore"
+          ],
+          "coverageHashes": [],
+          "versionCurrent": true,
+          "coverageVerified": false,
+          "evidenceVerified": false,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "below_target",
+          "blocking": false,
+          "actual": 0,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": 1425,
+          "acceptedMaximum": 2100,
+          "withinTolerance": false,
+          "belowBy": 1500,
+          "aboveBy": 0
+        },
+        "review": {
+          "status": "incomplete",
+          "expectedResourceRefs": [],
+          "missingResourceRefs": [],
+          "evidenceVerified": false,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "missing_or_invalid",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": [
+            "character",
+            "world"
+          ]
+        }
+      }
+    },
+    "savedResources": [],
+    "error": null
+  }
+]

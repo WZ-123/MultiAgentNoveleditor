@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lu",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lu-initial",
+      "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "lu-ch3-fact",
+      "summary": "航程中听到一次船底刮擦，见到船帮白痕和木屑；未能确定来自漂木还是船体。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "lu-ch3-emotion",
+      "summary": "因苏砚按住自己避免探身落水而不快，但接受其安全顾虑。"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "lu-ch3-rel",
+      "summary": "叶澄允许他记录木屑而不隐瞒不确定性，技术互信略有增加。"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lu-goal",
+      "summary": "修好潮钟并洗清偷芯嫌疑"
+    },
+    {
+      "id": "lu-ch3-intent",
+      "summary": "留在灯塔复查船底，查明刮擦来源并洗清工具相关猜疑。"
+    }
+  ],
+  "privateMisbeliefs": []
+}

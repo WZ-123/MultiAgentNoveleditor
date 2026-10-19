@@ -23,9 +23,16 @@ function requireNovel(ctx) {
   if (!ctx?.novel?.id || !ctx?.novelDir) throw new Error('请先打开小说项目');
   return { id: ctx.novel.id, dir: ctx.novelDir };
 }
+function missingResource(error, resourceRef) {
+  if (error.code !== 'ENOENT' && error.details?.reason !== 'resource_not_found') throw error;
+  return textResult({ resourceRef, workspacePath: resourceRelativePath(resourceRef), exists: false, code: 'resource_not_found',
+    recoverable: true, message: `未找到小说资源：${resourceRef}。可列出或搜索现有资料；用户要求创建时可新建对应映射文件。` });
+}
 const resourceKinds = { type: 'array', items: { type: 'string', enum: ['novel', 'chapter', 'chapter-summary', 'character', 'character-memory', 'world', 'outline', 'timeline', 'asset', 'style'] } };
+const timelineEventSchema = { type:'object', properties:{ when:{type:'string',description:'Same-day HH:mm, or dated ISO timestamp for overnight events'}, where:{anyOf:[{type:'string'},{type:'object',properties:{lat:{type:'number'},lng:{type:'number'},name:{type:'string'}}}]}, physical:{type:'object',properties:{distanceKmTo:{type:'object',additionalProperties:{type:'number',minimum:0}}}} }, required:['when','where'], additionalProperties:false };
 
 const TOOLS = [
+  ...require('./writingTools').WRITING_TOOLS,
   {
     name: 'connection_probe',
     description: 'Deterministic no-op used only to verify a complete Responses tool loop.',
@@ -44,15 +51,12 @@ const TOOLS = [
   {
     name: 'read_novel_resource',
     description: 'Read one exact novel resource and return its complete-resource hash and deterministic counts. A missing resource returns exists=false without a hash; create it with native apply_patch if the user requested creation. Use mode="metadata" for hash/count only. Use startLine/endLine for exact 1-based original line ranges when patch context is needed. Byte pagination remains available for compatibility.',
-    inputSchema: { type: 'object', properties: { resourceRef: { type: 'string' }, mode: { type: 'string', enum: ['content', 'metadata'] }, offset: { type: 'integer', minimum: 0 }, limit: { type: 'integer', minimum: 1, maximum: 262144 }, startLine: { type: 'integer', minimum: 1 }, endLine: { type: 'integer', minimum: 1 } }, required: ['resourceRef'], additionalProperties: false },
+    inputSchema: { type: 'object', properties: { resourceRef: { type: 'string' }, mode: { type: 'string', enum: ['content', 'metadata'] }, offset: { type: 'integer', minimum: 0 }, limit: { type: 'integer', minimum: 1, maximum: 262144 }, startLine: { type: 'integer', minimum: 1 }, endLine: { type: 'integer', minimum: 1 }, includeLineNumbers: { type: 'boolean', description: 'With startLine/endLine, include numberedContent for evidence locations. content remains exact original text.' } }, required: ['resourceRef'], additionalProperties: false },
     async handler(args, ctx) {
       let resource;
       try { resource = await readResource(requireNovel(ctx), args.resourceRef); }
       catch (error) {
-        if (error.code !== 'ENOENT') throw error;
-        // Absence is a normal lookup outcome before creating a chapter. Do not
-        // report a failed MCP call that makes the host interrupt the whole turn.
-        return textResult({ resourceRef: args.resourceRef, workspacePath: resourceRelativePath(args.resourceRef), exists: false, code: 'resource_not_found', message: '资源尚不存在；如用户要求创建，请使用原生 apply_patch 新建对应文件。' });
+        return missingResource(error, args.resourceRef);
       }
       const bytes = Buffer.from(resource.content, 'utf8');
       const base = { resourceRef: resource.resourceRef, workspacePath: resourceRelativePath(resource.resourceRef), kind: resource.kind, hash: resource.sourceHash, chineseCharacterCount: chineseCharacterCount(resource.content), bodyChineseCharacterCount: bodyChineseCharacterCount(resource.content), totalBytes: bytes.length };
@@ -61,7 +65,8 @@ const TOOLS = [
         const lines = resource.content.split('\n');
         const startLine = Math.max(1, Number(args.startLine) || 1);
         const endLine = Math.min(lines.length, Math.max(startLine, Number(args.endLine) || startLine));
-        return textResult({ ...base, mode: 'content', startLine, endLine, totalLines: lines.length, content: lines.slice(startLine - 1, endLine).join('\n') });
+        return textResult({ ...base, mode: 'content', startLine, endLine, totalLines: lines.length, content: lines.slice(startLine - 1, endLine).join('\n'),
+          ...(args.includeLineNumbers ? { numberedContent: lines.slice(startLine - 1, endLine).map((line, index) => `L${startLine + index}: ${line}`).join('\n') } : {}) });
       }
       const limit = Math.min(262144, Math.max(1, Number(args.limit) || 65536));
       const slice = utf8Page(bytes, args.offset, limit);
@@ -100,10 +105,7 @@ const TOOLS = [
       let resource;
       try { resource = await readResource(requireNovel(ctx), args.resourceRef); }
       catch (error) {
-        if (error.code !== 'ENOENT') throw error;
-        // Absence is a normal lookup outcome before creating a chapter. Do not
-        // report a failed MCP call that makes the host interrupt the whole turn.
-        return textResult({ resourceRef: args.resourceRef, workspacePath: resourceRelativePath(args.resourceRef), exists: false, code: 'resource_not_found', message: '资源尚不存在；如用户要求创建，请使用原生 apply_patch 新建对应文件。' });
+        return missingResource(error, args.resourceRef);
       }
       return textResult({ resourceRef: args.resourceRef, hash: resource.sourceHash, ...scanDeAiPatterns({ resourceRef: args.resourceRef, content: resource.content, baseContentHash: resource.sourceHash }) });
     },
@@ -119,11 +121,19 @@ const TOOLS = [
   },
   {
     name: 'check_timeline_feasibility',
-    description: 'Deterministically check whether travel between two timestamped events is physically feasible.',
-    inputSchema: { type: 'object', properties: { eventA: { type: 'object' }, eventB: { type: 'object' }, transport: { type: 'string', enum: ['walk', 'run', 'horse', 'car', 'train', 'plane', 'magic'] } }, required: ['eventA', 'eventB'], additionalProperties: false },
-    async handler(args) { return textResult(checkFeasibility(args.eventA, args.eventB, { transport: args.transport })); },
+    description: 'Check elapsed time against canonical travel/work duration or estimated distance/speed. Events use when/where, not time/location. Set minimumTravelMinutes from an actually read world/scene rule when available; no distance or duration returns unknown, never assumed feasible. HH:mm assumes the same day; overnight events require dated timestamps. Estimated speed does not prove world-specific feasibility. For inaccurate clocks include clockReadings with actualTime, displayedTime and signed canonical offsetMinutes (fast positive, slow negative); travel feasibility cannot override a clock contradiction.',
+    inputSchema: { type: 'object', properties: { eventA: timelineEventSchema, eventB: timelineEventSchema, minimumTravelMinutes:{type:'number',minimum:0,description:'Minimum duration in minutes from canonical evidence; supports boat routes and work durations without invented distances'}, transport: { type: 'string', enum: ['walk', 'run', 'horse', 'car', 'train', 'plane', 'boat', 'magic'] },clockReadings:{type:'array',minItems:1,items:{type:'object',properties:{actualTime:{type:'string'},displayedTime:{type:'string'},offsetMinutes:{type:'number',description:'Canonical displayed minus actual minutes. Fast is positive, slow is negative; use dated timestamps across midnight.'}},required:['actualTime','displayedTime','offsetMinutes'],additionalProperties:false}} }, required: ['eventA', 'eventB'], additionalProperties: false },
+    async handler(args) { return textResult(checkFeasibility(args.eventA, args.eventB, { transport: args.transport, minimumTravelMinutes:args.minimumTravelMinutes,clockReadings:args.clockReadings })); },
   },
 ];
+
+const resourceReader=TOOLS.find(tool=>tool.name==='read_novel_resource');
+const readHandler=resourceReader.handler;
+resourceReader.handler=async(args,ctx)=>{
+  const result=await readHandler(args,ctx);
+  await require('./readVersionReceipts').rememberReadVersion(ctx,result.structuredContent);
+  return result;
+};
 
 function getToolByName(name) { return TOOLS.find((tool) => tool.name === name) || null; }
 

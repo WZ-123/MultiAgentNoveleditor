@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "su",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "su-initial",
+      "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "船底两次异响，叶澄判断不可盲目前行或回头；六人同意靠北侧系缆桩检查，受损则回渡口。",
+      "id": "c288cd3f-455a-4704-a1fd-ca1b96de7528"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "担忧药物时限与船员安全冲突，选择先查明船况。",
+      "id": "98f8d835-4809-4a56-9905-5a10e1017450"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "接受叶澄的航行判断，并以书面条件明确后续路线。",
+      "id": "92ab8b66-452e-4fb7-aead-a3fd873062f0"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "su-goal",
+      "summary": "在封桥前合法完成交接"
+    },
+    {
+      "summary": "查验船腹并确保通行证与药品安全。",
+      "id": "f760439d-6527-4dd1-a51f-91e4c89d6cb4"
+    }
+  ],
+  "privateMisbeliefs": []
+}

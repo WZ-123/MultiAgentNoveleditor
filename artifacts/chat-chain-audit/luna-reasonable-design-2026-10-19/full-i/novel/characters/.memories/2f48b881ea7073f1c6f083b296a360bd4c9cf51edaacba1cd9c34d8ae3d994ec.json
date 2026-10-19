@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lin",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lin-initial",
+      "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "航船依正航道继续；20:30低潮，20:35听到钟声，来源未核，她只报告方向判断而未用钟声定时。",
+      "id": "047953d1-5fad-4b0e-89ac-275bba69f766"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "苏砚记录未核事实而不逼她解释，让她略感可合作。",
+      "id": "213f7321-0154-45d2-bf9a-b95d8e7bf8fc"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "与苏砚在谨慎记录上形成有限配合，仍未公开七分钟及抄本。",
+      "id": "87df6ced-ca6a-4677-ba1b-2484fb3eca5b"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lin-goal",
+      "summary": "查出潮钟误差，保护弟弟"
+    },
+    {
+      "summary": "继续核对潮表与钟声来源，保护弟弟并避免凭未经核实的时间行动。",
+      "id": "71039b18-30a2-4887-9de7-ca4c31b8f195"
+    }
+  ],
+  "privateMisbeliefs": []
+}

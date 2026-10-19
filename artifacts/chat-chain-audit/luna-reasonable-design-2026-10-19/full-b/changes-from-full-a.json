@@ -1,0 +1,12 @@
+{
+  "changedProductionFiles": [
+    "src/main/mcp/writingTools.js",
+    "src/main/codex-runtime/taskIntent.js",
+    "src/main/codex-runtime/narrativeAudit.js"
+  ],
+  "reasons": [
+    "exclude absent virtual sources from mandatory read catalogue",
+    "apply prose aspects only to chapter prose while retaining every memory review",
+    "return measured candidate length deficits without blocking partial saves"
+  ]
+}

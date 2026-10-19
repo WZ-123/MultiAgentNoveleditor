@@ -16,6 +16,8 @@
 | 反馈表单与同步状态 UI | `npm test -- test:feedback:ui` |
 | 编辑保存、切项目、卷节恢复 UI | `npm test -- test:editor-workflow:ui` |
 | 任务完成状态与容差 | `npm test -- test:task-completion` |
+| 写作资料、阶段取消、审校证据与模型截断 | `npm test -- test:writing-workflow` |
+| 写作完整用户流程与错误恢复 | `npm test -- test:writing-workflow:ui` |
 | 原生模型链测试 | `npm test -- test:codex-native` |
 | 资源事务测试 | `npm test -- test:mcp-mutations` |
 | 原生 UI 流程 | `npm test -- test:ui-e2e` |
@@ -23,6 +25,8 @@
 | 导入 UI | `npm test -- test:import-saga:ui` |
 | 安全扫描 | `node scripts/run-maintenance-script.js security:scan:current` |
 | 构建发布包 | `npm run build` 或平台 build 脚本 |
+
+2026-10-19写作主干集成复核：主集合新增`writing-lifecycle-boundaries.test.js`，覆盖候选检查点失败、交付/交接中停止、目录加载中停止、预先取消审查、迟到成功/失败及评估后资料版本变化。写作UI新增独立审查停止后的终态及正式正文不变检查；可设置`MANA_WRITING_UI_EVIDENCE_DIR`将本轮截图单独存档。当前结果为50文件单元、21组写作UI及原生聊天两阶段通过，实际范围和限制见[集成审计](../artifacts/chat-chain-audit/report.md#写作重构主干集成复核2026-10-19)。
 
 `npm test` 需要测试名称。`npm run build` 是发布构建，不是单纯 Vite 编译。真实供应商测试可能使用账号和费用，不能与本机 Fake Provider 测试混为一谈。实际服务端口取脚本输出；测试启动客户端前关闭音频。
 
@@ -67,6 +71,15 @@
 - `npm test -- test:chat-chain:live`：小规模真实模型读取、确认保存、拒绝。默认复用已有 live acceptance 配置；可用 `MANA_LIVE_CONFIG_ROOT` 指向已有配置目录。只复制配置到临时隔离目录，结束清理，不修改原配置或真实小说。缺少配置时失败，不用模拟服务冒充。
 
 实际本轮证据及限制见 [聊天链审计报告](../artifacts/chat-chain-audit/report.md#实施记录2026-09-22)。
+
+
+## 当前写作职责修复的验证入口（2026-10-19）
+
+主集合新增writing-intent-context.test.js（包含R2正反例、真实隔离资料、问题状态队列与ID分配），narrative-audit.test.js改测来源/接口边界，不再把预制语义图当正确性证明。可单独运行 `node test/writing-intent-context.test.js`、`node test/narrative-audit.test.js`，完整集合仍为 `npm test -- test:unit`。
+
+写作UI与原生聊天UI使用确定性服务、实际App Server、生产渲染器/IPC和原生批准；范围解析的只读请求与作者请求分别计数，不能把任一子任务终态当成父任务完成。真实模型用test/live-writing-modes-host.cjs的隔离小说和原始请求，失败的角色前置任务会阻止后续记忆演练，不能用后续独立请求冒充整链通过。测试客户端始终静音。
+
+当前轮次、冻结源码、结果与未通过内容见[修复记录](../artifacts/chat-chain-audit/report.md#按r2审计实施职责修复2026-10-19)。自动回归通过不覆盖模型漏报、实际正文质量或打包运行时；不得凭报告格式齐全宣称已发布或已完整修复。
 
 ## 导入安全回归（2026-10-19，独立树）
 

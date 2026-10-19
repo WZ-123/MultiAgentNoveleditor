@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "characterId": "lu",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "lu-initial",
+      "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "lu-ch3",
+      "summary": "听见船底异响后想取钩杆查看，受苏砚询问、经叶澄钩出湿绳；辨认绳头非本船绳股，能认出旧钟楼常用绞法但不能证明是谁绑的；将绳段交苏砚封存",
+      "sourceChapterRef": "chapter:chapter-003.md"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "lu-ch3",
+      "summary": "被苏砚先行拦问而恼火，也因能拿出可辨认的绳结感到稍能自证；谨慎避免把猜测说成证据"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "lu-ch3",
+      "summary": "仍担心苏砚怀疑自己，但把湿绳交其封存；与叶澄在处置船况上配合，未再争辩"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "lu-goal",
+      "summary": "修好潮钟并洗清偷芯嫌疑"
+    },
+    {
+      "id": "lu-next-ch3",
+      "summary": "等候湿绳检查结果，以可验证证据洗清嫌疑，不把绞法判断当作指认"
+    }
+  ],
+  "privateMisbeliefs": []
+}

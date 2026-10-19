@@ -3,7 +3,7 @@
 const fsp = require('node:fs/promises');
 const path = require('node:path');
 const novelData = require('../store/novelData');
-const { novelPaths } = require('../store/paths');
+const { novelPaths, outlineChapterPath } = require('../store/paths');
 const { parseFrontmatter } = require('../store/frontmatter');
 const { assertChapterName } = require('../store/resourceIdentity');
 const { hash, contractError } = require('../codex-runtime/contracts');
@@ -175,8 +175,7 @@ async function readResource(entry, resourceRef) {
   const parsed = parseResourceRef(resourceRef);
   let value;
   if (parsed.kind === 'novel') {
-    try { value = JSON.parse(await fsp.readFile(path.join(entry.dir, 'novel.json'), 'utf8')); }
-    catch { value = { id: entry.id, title: entry.title || entry.name || '' }; }
+    value = JSON.parse(await fsp.readFile(path.join(entry.dir, 'novel.json'), 'utf8'));
   } else if (parsed.kind === 'chapter') {
     // The editor treats a missing file as an empty draft. Resource and
     // transaction reads must distinguish absence from an existing empty file.
@@ -184,9 +183,10 @@ async function readResource(entry, resourceRef) {
     const { metadata, body } = parseFrontmatter(raw);
     value = metadata ? body : raw;
   }
-  else if (parsed.kind === 'chapter-summary') value = await novelData.readSummary(entry.dir, parsed.key);
+  else if (parsed.kind === 'chapter-summary') value = await fsp.readFile(path.join(novelPaths(entry.dir).summaries, `${parsed.key}.md`), 'utf8');
   else if (parsed.kind === 'character') value = await novelData.readCharacter(entry.dir, parsed.key);
-  else if (parsed.kind === 'character-memory') value = await novelData.readCharacterMemory(entry.dir, parsed.key);
+  else if (parsed.kind === 'character-memory') value = await novelData.characterMemoryExists(entry.dir, parsed.key)
+    ? await novelData.readCharacterMemory(entry.dir, parsed.key) : null;
   else if (parsed.kind === 'asset') value = await novelData.readAsset(entry.dir, parsed.key);
   else if (parsed.kind === 'timeline') value = await novelData.listTimeline(entry.dir);
   else if (parsed.kind === 'timeline-event') value = (await novelData.listTimeline(entry.dir)).find((item) => String(item.id) === parsed.key) || null;
@@ -194,12 +194,12 @@ async function readResource(entry, resourceRef) {
   else if (parsed.kind === 'outline' && parsed.key === 'nodes') value = await novelData.readOutlineNodes(entry.dir);
   else if (parsed.kind === 'outline' && parsed.key === 'hierarchy') value = await novelData.listOutlineHierarchy(entry.dir);
   else if (parsed.kind === 'outline' && parsed.key === 'master') value = await novelData.readOutlineMaster(entry.dir);
-  else if (parsed.kind === 'outline' && parsed.key === 'chapter') value = await novelData.readOutlineChapter(entry.dir, parsed.volumeIndex, parsed.sectionIndex, parsed.chapterIndex);
+  else if (parsed.kind === 'outline' && parsed.key === 'chapter') value = await fsp.readFile(outlineChapterPath(entry.dir, parsed.volumeIndex, parsed.sectionIndex, parsed.chapterIndex), 'utf8');
   else if (parsed.kind === 'world') {
     const world = await novelData.readWorld(entry.dir);
     value = parsed.key === 'lore' ? world?.lore || '' : world?.places || [];
   }
-  if (value == null) throw contractError(`novel resource does not exist: ${resourceRef}`, 'context_incomplete');
+  if (value == null) throw contractError(`小说资源不存在：${resourceRef}`, 'context_incomplete', { reason: 'resource_not_found', resourceRef });
   const content = typeof value === 'string' ? value : stableJson(value);
   return {
     novelId: String(entry.id),

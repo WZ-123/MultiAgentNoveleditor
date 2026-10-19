@@ -47,6 +47,7 @@ async function run() {
   assert.equal(second.content.includes('\ufffd'), false);
   assert.equal(first.content + second.content, '甲乙');
   assert.deepEqual(TOOLS.filter((tool) => tool.name !== 'connection_probe').map((tool) => tool.name), [
+    'read_writing_context', 'prepare_novel_patch', 'check_writing_task',
     'list_novel_resources', 'read_novel_resource', 'search_novel_resources', 'report_writing_progress',
     'scan_de_ai_patterns',
     'check_de_ai_minimality', 'check_timeline_feasibility',
@@ -108,7 +109,10 @@ async function run() {
     const plainTerminal = waitTerminal(service, 'plain-novel-chat');
     await service.startTurn({ runId: 'plain-novel-chat', conversationId: thread.id, persistence: 'chat', novelId: novel.id, userMessageId: plainUser.id, text: plainUser.text });
     await plainTerminal;
-    assert.equal(chatFake.requests.length, plainBefore + 1, 'plain chat must complete in one physical provider request');
+    const plainRequests=chatFake.requests.slice(plainBefore);
+    const plainIntent=plainRequests.filter(request=>JSON.stringify(request.body.input).includes('解析用户本次任务的范围'));
+    assert.equal(plainIntent.length,1,'unrecognized project intent must be interpreted once');
+    assert.equal(plainRequests.length-plainIntent.length,1,'plain chat has one author request, without hidden recovery');
     assert.equal(chatFake.requests.at(-1).body.tools.some((tool) => /novel_tools|list_novel_resources/u.test(String(tool.name || ''))), true, 'project chat must expose novel MCP tools without an explicit Skill');
     const textBinding = (await chatHistory.getThread(thread.id)).codexBinding;
 
@@ -118,7 +122,10 @@ async function run() {
     const toolTerminal = waitTerminal(service, 'tool-novel-chat');
     await service.startTurn({ runId: 'tool-novel-chat', conversationId: thread.id, persistence: 'chat', novelId: novel.id, userMessageId: toolUser.id, text: toolUser.text, skillName: 'mana-fiction-writing' });
     await toolTerminal;
-    assert.equal(chatFake.requests.length, toolBefore + 1, 'fixture tool turn must not add an application-side workflow loop');
+    const toolRequests=chatFake.requests.slice(toolBefore);
+    const intentRequests=toolRequests.filter(request=>JSON.stringify(request.body.input).includes('解析用户本次任务的范围'));
+    assert.equal(intentRequests.length,1,'the scope is interpreted once before authoring');
+    assert.equal(toolRequests.length-intentRequests.length,1,'the author turn still has one provider request, with no workflow retry');
     const exposedToolNames = chatFake.requests.at(-1).body.tools.map((tool) => String(tool.name || tool.function?.name || ''));
     assert.equal(exposedToolNames.includes('mcp__novel_tools'), true, `explicit writing Skill must expose the novel MCP namespace: ${JSON.stringify(exposedToolNames)}`);
     const toolBinding = (await chatHistory.getThread(thread.id)).codexBinding;

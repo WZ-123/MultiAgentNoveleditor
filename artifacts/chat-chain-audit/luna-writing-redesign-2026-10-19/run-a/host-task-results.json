@@ -1,0 +1,1825 @@
+[
+  {
+    "runId": "run-ea4bc643-9553-4b21-aafd-ae374baa6f73",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [],
+      "memoryUpdateRequired": false,
+      "memoryScopeBound": false,
+      "memoryParticipantCount": null,
+      "participantCharacterRefs": [],
+      "chapterWritePolicy": "new",
+      "resourceWritePolicy": "any",
+      "initialChapterResourceRefs": [
+        "chapter:chapter-001.md"
+      ],
+      "writeScopeBound": true,
+      "atomicMemoryWithChapter": false,
+      "preserveOriginalMemories": false,
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "repairRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [],
+        "memoryUpdateRequired": false,
+        "memoryScopeBound": false,
+        "memoryParticipantCount": null,
+        "participantCharacterRefs": [],
+        "chapterWritePolicy": "new",
+        "resourceWritePolicy": "any",
+        "initialChapterResourceRefs": [
+          "chapter:chapter-001.md"
+        ],
+        "writeScopeBound": true,
+        "atomicMemoryWithChapter": false,
+        "preserveOriginalMemories": false,
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "repairRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "style",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "afterHash": "8eed71b98f35f3de9cda6852225b15b64ff9392e85a7b28d13657a479ec0a489",
+          "nativeItemId": "exec-b80427b1-41b1-438b-8558-3d998674f2ec",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "mode": "create",
+          "oldHash": null,
+          "newHash": "8eed71b98f35f3de9cda6852225b15b64ff9392e85a7b28d13657a479ec0a489",
+          "chineseCharacterCount": 1547,
+          "bodyChineseCharacterCount": 1542
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 1
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1542,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "8eed71b98f35f3de9cda6852225b15b64ff9392e85a7b28d13657a479ec0a489"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "observedReadResourceRefs": [
+          "outline:hierarchy",
+          "outline:master",
+          "chapter:chapter-001.md",
+          "style:memory",
+          "character:cen",
+          "character:lu",
+          "character:lin",
+          "character:ye",
+          "character:he",
+          "character:su",
+          "world:lore",
+          "world:places",
+          "chapter:chapter-002.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-b61b5802-f80a-43a9-9dcd-70b1b95eb3b1",
+          "attemptId": "attempt-87043660-2dea-4e29-8e22-08550e6c34a1",
+          "runId": "run-ea4bc643-9553-4b21-aafd-ae374baa6f73",
+          "reportSha256": "43ff6548da9809ed5b55aab41907a64427ff7a529679ddce81807ebf3622c685",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-002.md",
+            "chapter:chapter-001.md",
+            "character:cen",
+            "character:he",
+            "character:lin",
+            "character:lu",
+            "character:su",
+            "character:ye",
+            "world:lore",
+            "world:places",
+            "outline:master",
+            "style:memory"
+          ],
+          "coverageObserved": [
+            "outline:hierarchy",
+            "outline:master",
+            "chapter:chapter-001.md",
+            "style:memory",
+            "character:cen",
+            "character:lu",
+            "character:lin",
+            "character:ye",
+            "character:he",
+            "character:su",
+            "world:lore",
+            "world:places",
+            "chapter:chapter-002.md"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "8eed71b98f35f3de9cda6852225b15b64ff9392e85a7b28d13657a479ec0a489"
+            },
+            {
+              "resourceRef": "chapter:chapter-001.md",
+              "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+            },
+            {
+              "resourceRef": "character:cen",
+              "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "character:lu",
+              "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+            },
+            {
+              "resourceRef": "character:su",
+              "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "world:places",
+              "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+            },
+            {
+              "resourceRef": "outline:master",
+              "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+            },
+            {
+              "resourceRef": "style:memory",
+              "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+            }
+          ],
+          "versionCurrent": true,
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "met",
+          "blocking": false,
+          "actual": 1542,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0,
+          "acceptedMinimum": 1500,
+          "acceptedMaximum": 2000,
+          "withinTolerance": true,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "writeScope": {
+          "status": "met"
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "chapter:chapter-002.md"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": []
+        },
+        "semanticReview": {
+          "status": "reported_clear",
+          "qualityConclusion": "model_reported",
+          "repairRequired": true,
+          "blockingIssues": [],
+          "reportedIssues": []
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-002.md",
+        "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "afterHash": "8eed71b98f35f3de9cda6852225b15b64ff9392e85a7b28d13657a479ec0a489",
+        "nativeItemId": "exec-b80427b1-41b1-438b-8558-3d998674f2ec",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-002.md"
+        ],
+        "mode": "create",
+        "oldHash": null,
+        "newHash": "8eed71b98f35f3de9cda6852225b15b64ff9392e85a7b28d13657a479ec0a489",
+        "chineseCharacterCount": 1547,
+        "bodyChineseCharacterCount": 1542
+      }
+    ],
+    "reviewFindings": [],
+    "memoryBaselines": {}
+  },
+  {
+    "runId": "run-8c51a868-cbb0-43c5-9660-0ffe584a9e1a",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "memoryUpdateRequired": true,
+      "memoryScopeBound": true,
+      "memoryParticipantCount": 6,
+      "participantCharacterRefs": [
+        "character:cen",
+        "character:he",
+        "character:lin",
+        "character:lu",
+        "character:su",
+        "character:ye"
+      ],
+      "chapterWritePolicy": "new",
+      "resourceWritePolicy": "any",
+      "initialChapterResourceRefs": [
+        "chapter:chapter-001.md",
+        "chapter:chapter-002.md"
+      ],
+      "writeScopeBound": true,
+      "atomicMemoryWithChapter": true,
+      "preserveOriginalMemories": true,
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "repairRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": false,
+      "goalStatus": "incomplete",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "memoryUpdateRequired": true,
+        "memoryScopeBound": true,
+        "memoryParticipantCount": 6,
+        "participantCharacterRefs": [
+          "character:cen",
+          "character:he",
+          "character:lin",
+          "character:lu",
+          "character:su",
+          "character:ye"
+        ],
+        "chapterWritePolicy": "new",
+        "resourceWritePolicy": "any",
+        "initialChapterResourceRefs": [
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md"
+        ],
+        "writeScopeBound": true,
+        "atomicMemoryWithChapter": true,
+        "preserveOriginalMemories": true,
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "repairRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+          "afterHash": "57938fb5aa614de3ac1224e544ae9ca59fd77a62175d6a846a3d2ff44dc465a5",
+          "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "create",
+          "oldHash": null,
+          "newHash": "57938fb5aa614de3ac1224e544ae9ca59fd77a62175d6a846a3d2ff44dc465a5",
+          "chineseCharacterCount": 1353,
+          "bodyChineseCharacterCount": 1348
+        },
+        {
+          "resourceRef": "character-memory:cen",
+          "beforeHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+          "afterHash": "86b63545245f7919ebc40d175367cd4c409f74ce235af986eb4ec504d4565082",
+          "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+          "newHash": "86b63545245f7919ebc40d175367cd4c409f74ce235af986eb4ec504d4565082",
+          "chineseCharacterCount": 147,
+          "bodyChineseCharacterCount": 147
+        },
+        {
+          "resourceRef": "character-memory:he",
+          "beforeHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+          "afterHash": "5ce9618ac480c242a22b792963590eaac540fc14eff9774752432a50560417f2",
+          "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+          "newHash": "5ce9618ac480c242a22b792963590eaac540fc14eff9774752432a50560417f2",
+          "chineseCharacterCount": 137,
+          "bodyChineseCharacterCount": 137
+        },
+        {
+          "resourceRef": "character-memory:lin",
+          "beforeHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+          "afterHash": "5e9972ee195523982a53d9e1bfd0d699c78cc3e8e41e1330416dd8e62b87fd2a",
+          "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+          "newHash": "5e9972ee195523982a53d9e1bfd0d699c78cc3e8e41e1330416dd8e62b87fd2a",
+          "chineseCharacterCount": 143,
+          "bodyChineseCharacterCount": 143
+        },
+        {
+          "resourceRef": "character-memory:lu",
+          "beforeHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+          "afterHash": "f148b014c5926fd791a53613e2ca03d11806ed44656105d3ca21ca4b1b8088b2",
+          "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+          "newHash": "f148b014c5926fd791a53613e2ca03d11806ed44656105d3ca21ca4b1b8088b2",
+          "chineseCharacterCount": 146,
+          "bodyChineseCharacterCount": 146
+        },
+        {
+          "resourceRef": "character-memory:su",
+          "beforeHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+          "afterHash": "0f895f59741955cf68ec80bff351facf6ec31c99604389e0577efc524a722ad2",
+          "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+          "newHash": "0f895f59741955cf68ec80bff351facf6ec31c99604389e0577efc524a722ad2",
+          "chineseCharacterCount": 145,
+          "bodyChineseCharacterCount": 145
+        },
+        {
+          "resourceRef": "character-memory:ye",
+          "beforeHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+          "afterHash": "081b9b9b6652603fee07ef22d72e1bfea747a16e36ab80fc9c0d80c920b32b20",
+          "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "mode": "replace",
+          "oldHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+          "newHash": "081b9b9b6652603fee07ef22d72e1bfea747a16e36ab80fc9c0d80c920b32b20",
+          "chineseCharacterCount": 142,
+          "bodyChineseCharacterCount": 142
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "57938fb5aa614de3ac1224e544ae9ca59fd77a62175d6a846a3d2ff44dc465a5",
+          "afterHash": "d1d155367b9ba19606550e4accf37b6126b9da065346c399b69e2f4bf156b4b7",
+          "nativeItemId": "exec-8a520bc6-fd72-4002-b6e1-806932490aff",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "mode": "replace",
+          "oldHash": "57938fb5aa614de3ac1224e544ae9ca59fd77a62175d6a846a3d2ff44dc465a5",
+          "newHash": "d1d155367b9ba19606550e4accf37b6126b9da065346c399b69e2f4bf156b4b7",
+          "chineseCharacterCount": 1442,
+          "bodyChineseCharacterCount": 1437
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "d1d155367b9ba19606550e4accf37b6126b9da065346c399b69e2f4bf156b4b7",
+          "afterHash": "49257521c3e819bbadf79f19698c2484c1ba2046553cb1a554f1c86cb0cb12e5",
+          "nativeItemId": "exec-5fec5cfd-de3b-4577-8f69-2734f196a439",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "mode": "replace",
+          "oldHash": "d1d155367b9ba19606550e4accf37b6126b9da065346c399b69e2f4bf156b4b7",
+          "newHash": "49257521c3e819bbadf79f19698c2484c1ba2046553cb1a554f1c86cb0cb12e5",
+          "chineseCharacterCount": 1476,
+          "bodyChineseCharacterCount": 1471
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "49257521c3e819bbadf79f19698c2484c1ba2046553cb1a554f1c86cb0cb12e5",
+          "afterHash": "5c3e97e8ede3c90ff10b80284709e43fc40fff0dcda70afa88b66bbc76e42673",
+          "nativeItemId": "exec-c1f2e7b0-7b8c-4467-820b-715969a20770",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "mode": "replace",
+          "oldHash": "49257521c3e819bbadf79f19698c2484c1ba2046553cb1a554f1c86cb0cb12e5",
+          "newHash": "5c3e97e8ede3c90ff10b80284709e43fc40fff0dcda70afa88b66bbc76e42673",
+          "chineseCharacterCount": 1494,
+          "bodyChineseCharacterCount": 1489
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "5c3e97e8ede3c90ff10b80284709e43fc40fff0dcda70afa88b66bbc76e42673",
+          "afterHash": "916978402d7a91aab2b048d3a69eed8a44daf319efdf21f221b6c5ea706e2dc6",
+          "nativeItemId": "exec-1e9422ed-1c62-4ea1-bd26-d2dd26a17ad6",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "mode": "replace",
+          "oldHash": "5c3e97e8ede3c90ff10b80284709e43fc40fff0dcda70afa88b66bbc76e42673",
+          "newHash": "916978402d7a91aab2b048d3a69eed8a44daf319efdf21f221b6c5ea706e2dc6",
+          "chineseCharacterCount": 1499,
+          "bodyChineseCharacterCount": 1494
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "916978402d7a91aab2b048d3a69eed8a44daf319efdf21f221b6c5ea706e2dc6",
+          "afterHash": "b796b27676afdd983697b75df9801787b0db8a32b13aa3abf56efb31e3452962",
+          "nativeItemId": "exec-dd5d81bf-f9e2-4598-a56c-55ac2cb5f321",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "mode": "replace",
+          "oldHash": "916978402d7a91aab2b048d3a69eed8a44daf319efdf21f221b6c5ea706e2dc6",
+          "newHash": "b796b27676afdd983697b75df9801787b0db8a32b13aa3abf56efb31e3452962",
+          "chineseCharacterCount": 1503,
+          "bodyChineseCharacterCount": 1498
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "b796b27676afdd983697b75df9801787b0db8a32b13aa3abf56efb31e3452962",
+          "afterHash": "e719a411963c64895c5f0e542622a61fee1161dbc6735a19de5eda51d7b06e52",
+          "nativeItemId": "exec-8853bb4c-7cef-4f27-a087-c62795b99ad9",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "mode": "replace",
+          "oldHash": "b796b27676afdd983697b75df9801787b0db8a32b13aa3abf56efb31e3452962",
+          "newHash": "e719a411963c64895c5f0e542622a61fee1161dbc6735a19de5eda51d7b06e52",
+          "chineseCharacterCount": 1504,
+          "bodyChineseCharacterCount": 1499
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "beforeHash": "e719a411963c64895c5f0e542622a61fee1161dbc6735a19de5eda51d7b06e52",
+          "afterHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+          "nativeItemId": "exec-f2b4d794-fc51-4ca4-a2ab-68c30edf3472",
+          "nativeBatchResourceRefs": [
+            "chapter:chapter-003.md"
+          ],
+          "mode": "replace",
+          "oldHash": "e719a411963c64895c5f0e542622a61fee1161dbc6735a19de5eda51d7b06e52",
+          "newHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+          "chineseCharacterCount": 1505,
+          "bodyChineseCharacterCount": 1500
+        }
+      ],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "saved",
+        "committedCount": 14
+      },
+      "objective": {
+        "status": "incomplete",
+        "unmet": [
+          "review_evidence_missing"
+        ]
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "readableResources": 1,
+        "bodyChineseCharacterCount": 1500,
+        "hashes": [
+          {
+            "resourceRef": "chapter:chapter-003.md",
+            "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327"
+          }
+        ],
+        "currentSavedResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "observedReadResourceRefs": [
+          "timeline:all",
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md",
+          "outline:master",
+          "character:cen",
+          "character:lin",
+          "character:he",
+          "character:lu",
+          "character:ye",
+          "style:memory",
+          "character-memory:he",
+          "character-memory:lu",
+          "character-memory:cen",
+          "character-memory:su",
+          "character-memory:lin",
+          "character-memory:ye",
+          "character:su",
+          "world:places",
+          "world:lore",
+          "chapter:chapter-003.md"
+        ],
+        "fullyReadResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-4647093f-2cc9-4725-8d1e-aa258e5fa9df",
+          "attemptId": "attempt-fb2155d2-b9a5-45a5-abcc-3b42f60bce25",
+          "runId": "run-8c51a868-cbb0-43c5-9660-0ffe584a9e1a",
+          "reportSha256": "076e267680615c6195b66d9f5ee4cdbbf9a423319a6d639970db521e523cb54f",
+          "parsed": true,
+          "coverageClaimed": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "coverageObserved": [
+            "timeline:all",
+            "chapter:chapter-001.md",
+            "chapter:chapter-002.md",
+            "outline:master",
+            "character:cen",
+            "character:lin",
+            "character:he",
+            "character:lu",
+            "character:ye",
+            "style:memory",
+            "character-memory:he",
+            "character-memory:lu",
+            "character-memory:cen",
+            "character-memory:su",
+            "character-memory:lin",
+            "character-memory:ye",
+            "character:su",
+            "world:places",
+            "world:lore",
+            "chapter:chapter-003.md"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "chapter:chapter-003.md",
+              "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327"
+            },
+            {
+              "resourceRef": "character-memory:cen",
+              "hash": "86b63545245f7919ebc40d175367cd4c409f74ce235af986eb4ec504d4565082"
+            },
+            {
+              "resourceRef": "character-memory:he",
+              "hash": "5ce9618ac480c242a22b792963590eaac540fc14eff9774752432a50560417f2"
+            },
+            {
+              "resourceRef": "character-memory:lin",
+              "hash": "5e9972ee195523982a53d9e1bfd0d699c78cc3e8e41e1330416dd8e62b87fd2a"
+            },
+            {
+              "resourceRef": "character-memory:lu",
+              "hash": "f148b014c5926fd791a53613e2ca03d11806ed44656105d3ca21ca4b1b8088b2"
+            },
+            {
+              "resourceRef": "character-memory:su",
+              "hash": "0f895f59741955cf68ec80bff351facf6ec31c99604389e0577efc524a722ad2"
+            },
+            {
+              "resourceRef": "character-memory:ye",
+              "hash": "081b9b9b6652603fee07ef22d72e1bfea747a16e36ab80fc9c0d80c920b32b20"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            }
+          ],
+          "versionCurrent": true,
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": [
+            {
+              "issueId": "pov:chapter-003:he-limited",
+              "category": "pov",
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "status": "open",
+              "contradiction": "视角以何芷观察为限。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-003.md",
+                  "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "bindReadVersion": true,
+                  "location": "L21",
+                  "quote": "何芷坐在药箱旁，手掌贴着箱盖。她闻到冷柜散出的药味，混着潮湿木头气。病人等着药，账页却隔着一层薄板贴在她心里；她不愿让这两件事变成同一笔交易。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 1063,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "character:he",
+                  "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+                  "bindReadVersion": true,
+                  "location": "L4-L11",
+                  "quote": "\"name\": \"何芷\",\n  \"role\": \"医师\",\n  \"personality\": \"温和但边界坚定，以具体症状说服人\",\n  \"attributes\": {\n    \"欲望\": \"把冷藏药送到灯塔诊所\",\n    \"已知信息\": \"仅她知道药箱暗格有蓝签账页；她尚未透露\",\n    \"隐瞒事实\": \"蓝签账页藏在药箱暗格\",",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 40,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "knowledge:chapter-003:secrets",
+              "category": "character_knowledge",
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "status": "open",
+              "contradiction": "保留七分钟和暗格秘密，目击者陈述有明确限界。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-003.md",
+                  "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "bindReadVersion": true,
+                  "location": "L31",
+                  "quote": "苏砚把灯举低，照出水面一串细碎泡沫。林岚盯着浮标的摆幅。她知道钟楼慢七分钟，可没有说。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 1495,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "character:lin",
+                  "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18",
+                  "bindReadVersion": true,
+                  "location": "L8-L10",
+                  "quote": "\"欲望\": \"查出潮钟误差，保护弟弟\",\n    \"已知信息\": \"只知道潮钟慢了七分钟；不知道药箱暗格和密道口令\",\n    \"隐瞒事实\": \"保留一页抄本，未告诉任何人\"",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 170,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "world:chapter-003:route-materials",
+              "category": "world_consistency",
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "status": "open",
+              "contradiction": "船照设定正规航路、不抄滩；冷藏药箱保持铅封。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-003.md",
+                  "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "bindReadVersion": true,
+                  "location": "L39",
+                  "quote": "她不肯让他们为查一个猜测把航程拖没：“靠浮标查，不进碎石滩。药箱现在仍冷着。”",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 2136,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "world:lore",
+                  "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "bindReadVersion": true,
+                  "location": "L5-L6",
+                  "quote": "封桥时间为21:00，封桥只关闭东桥，不关闭水路；渡船仍须执照和通行证。\n低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 381,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "timeline:chapter-003:continuity",
+              "category": "timeline",
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "status": "open",
+              "contradiction": "本章从第二章20:20启航决定紧接，异响时间合理且航程未缩短。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-003.md",
+                  "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "bindReadVersion": true,
+                  "location": "L3",
+                  "quote": "20:20，缆绳松开时，何芷仍站在冰柜旁。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 20,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-003.md",
+                  "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "bindReadVersion": true,
+                  "location": "L65",
+                  "quote": "“船能走。”叶澄说，“但这段耽误了。继续按四十分钟算，从现在抵岸还要三十多分钟；走正规航道，不抄滩。”",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 3971,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "character:ye",
+                  "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce",
+                  "bindReadVersion": true,
+                  "location": "L4-L10",
+                  "quote": "\"name\": \"叶澄\",\n  \"role\": \"摆渡人\",\n  \"personality\": \"敏锐、务实，说话带水路术语\",\n  \"attributes\": {\n    \"欲望\": \"保住执照与船员\",\n    \"已知信息\": \"知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟\",",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 40,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            }
+          ]
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "met",
+          "blocking": false,
+          "actual": 1500,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0,
+          "acceptedMinimum": 1500,
+          "acceptedMaximum": 2000,
+          "withinTolerance": true,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "memoryScope": {
+          "status": "bound",
+          "participantCharacterRefs": [
+            "character:cen",
+            "character:he",
+            "character:lin",
+            "character:lu",
+            "character:su",
+            "character:ye"
+          ]
+        },
+        "requiredWrites": {
+          "expectedResourceRefs": [
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "missingResourceRefs": []
+        },
+        "combinedMemoryCommit": {
+          "status": "met"
+        },
+        "writeScope": {
+          "status": "met"
+        },
+        "review": {
+          "status": "incomplete",
+          "expectedResourceRefs": [
+            "chapter:chapter-003.md",
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": [
+            "character",
+            "world"
+          ]
+        },
+        "semanticReview": {
+          "status": "unverified",
+          "qualityConclusion": "model_reported",
+          "repairRequired": true,
+          "blockingIssues": [],
+          "reportedIssues": [
+            {
+              "issueId": "pov:chapter-003:he-limited",
+              "category": "pov",
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "status": "open",
+              "contradiction": "视角以何芷观察为限。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-003.md",
+                  "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "bindReadVersion": true,
+                  "location": "L21",
+                  "quote": "何芷坐在药箱旁，手掌贴着箱盖。她闻到冷柜散出的药味，混着潮湿木头气。病人等着药，账页却隔着一层薄板贴在她心里；她不愿让这两件事变成同一笔交易。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 1063,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "character:he",
+                  "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+                  "bindReadVersion": true,
+                  "location": "L4-L11",
+                  "quote": "\"name\": \"何芷\",\n  \"role\": \"医师\",\n  \"personality\": \"温和但边界坚定，以具体症状说服人\",\n  \"attributes\": {\n    \"欲望\": \"把冷藏药送到灯塔诊所\",\n    \"已知信息\": \"仅她知道药箱暗格有蓝签账页；她尚未透露\",\n    \"隐瞒事实\": \"蓝签账页藏在药箱暗格\",",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 40,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "knowledge:chapter-003:secrets",
+              "category": "character_knowledge",
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "status": "open",
+              "contradiction": "保留七分钟和暗格秘密，目击者陈述有明确限界。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-003.md",
+                  "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "bindReadVersion": true,
+                  "location": "L31",
+                  "quote": "苏砚把灯举低，照出水面一串细碎泡沫。林岚盯着浮标的摆幅。她知道钟楼慢七分钟，可没有说。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 1495,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "character:lin",
+                  "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18",
+                  "bindReadVersion": true,
+                  "location": "L8-L10",
+                  "quote": "\"欲望\": \"查出潮钟误差，保护弟弟\",\n    \"已知信息\": \"只知道潮钟慢了七分钟；不知道药箱暗格和密道口令\",\n    \"隐瞒事实\": \"保留一页抄本，未告诉任何人\"",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 170,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "world:chapter-003:route-materials",
+              "category": "world_consistency",
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "status": "open",
+              "contradiction": "船照设定正规航路、不抄滩；冷藏药箱保持铅封。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-003.md",
+                  "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "bindReadVersion": true,
+                  "location": "L39",
+                  "quote": "她不肯让他们为查一个猜测把航程拖没：“靠浮标查，不进碎石滩。药箱现在仍冷着。”",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 2136,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "world:lore",
+                  "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "bindReadVersion": true,
+                  "location": "L5-L6",
+                  "quote": "封桥时间为21:00，封桥只关闭东桥，不关闭水路；渡船仍须执照和通行证。\n低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 381,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "timeline:chapter-003:continuity",
+              "category": "timeline",
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "status": "open",
+              "contradiction": "本章从第二章20:20启航决定紧接，异响时间合理且航程未缩短。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-003.md",
+                  "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "bindReadVersion": true,
+                  "location": "L3",
+                  "quote": "20:20，缆绳松开时，何芷仍站在冰柜旁。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 20,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-003.md",
+                  "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "bindReadVersion": true,
+                  "location": "L65",
+                  "quote": "“船能走。”叶澄说，“但这段耽误了。继续按四十分钟算，从现在抵岸还要三十多分钟；走正规航道，不抄滩。”",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 3971,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "character:ye",
+                  "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce",
+                  "bindReadVersion": true,
+                  "location": "L4-L10",
+                  "quote": "\"name\": \"叶澄\",\n  \"role\": \"摆渡人\",\n  \"personality\": \"敏锐、务实，说话带水路术语\",\n  \"attributes\": {\n    \"欲望\": \"保住执照与船员\",\n    \"已知信息\": \"知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟\",",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 40,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            }
+          ]
+        }
+      }
+    },
+    "savedResources": [
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+        "afterHash": "57938fb5aa614de3ac1224e544ae9ca59fd77a62175d6a846a3d2ff44dc465a5",
+        "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "create",
+        "oldHash": null,
+        "newHash": "57938fb5aa614de3ac1224e544ae9ca59fd77a62175d6a846a3d2ff44dc465a5",
+        "chineseCharacterCount": 1353,
+        "bodyChineseCharacterCount": 1348
+      },
+      {
+        "resourceRef": "character-memory:cen",
+        "beforeHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+        "afterHash": "86b63545245f7919ebc40d175367cd4c409f74ce235af986eb4ec504d4565082",
+        "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "b02709b82c271a985cc45091dd73b836202263b9ac49eacaa9acbeeb7a9f068b",
+        "newHash": "86b63545245f7919ebc40d175367cd4c409f74ce235af986eb4ec504d4565082",
+        "chineseCharacterCount": 147,
+        "bodyChineseCharacterCount": 147
+      },
+      {
+        "resourceRef": "character-memory:he",
+        "beforeHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+        "afterHash": "5ce9618ac480c242a22b792963590eaac540fc14eff9774752432a50560417f2",
+        "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "0e71782aeaacf456cb1254fcf30afe04630b1daf60a8a2add8f3c898e60ff3ff",
+        "newHash": "5ce9618ac480c242a22b792963590eaac540fc14eff9774752432a50560417f2",
+        "chineseCharacterCount": 137,
+        "bodyChineseCharacterCount": 137
+      },
+      {
+        "resourceRef": "character-memory:lin",
+        "beforeHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+        "afterHash": "5e9972ee195523982a53d9e1bfd0d699c78cc3e8e41e1330416dd8e62b87fd2a",
+        "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+        "newHash": "5e9972ee195523982a53d9e1bfd0d699c78cc3e8e41e1330416dd8e62b87fd2a",
+        "chineseCharacterCount": 143,
+        "bodyChineseCharacterCount": 143
+      },
+      {
+        "resourceRef": "character-memory:lu",
+        "beforeHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+        "afterHash": "f148b014c5926fd791a53613e2ca03d11806ed44656105d3ca21ca4b1b8088b2",
+        "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "28ec892968bd9a24d45a733424a1b5a15b861b7ced16721dd4ce41f3187ae760",
+        "newHash": "f148b014c5926fd791a53613e2ca03d11806ed44656105d3ca21ca4b1b8088b2",
+        "chineseCharacterCount": 146,
+        "bodyChineseCharacterCount": 146
+      },
+      {
+        "resourceRef": "character-memory:su",
+        "beforeHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+        "afterHash": "0f895f59741955cf68ec80bff351facf6ec31c99604389e0577efc524a722ad2",
+        "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "31711929cfe4a14531d50cfbb3d1c5514d9fbced2cca2a7ae8211bb996c89078",
+        "newHash": "0f895f59741955cf68ec80bff351facf6ec31c99604389e0577efc524a722ad2",
+        "chineseCharacterCount": 145,
+        "bodyChineseCharacterCount": 145
+      },
+      {
+        "resourceRef": "character-memory:ye",
+        "beforeHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+        "afterHash": "081b9b9b6652603fee07ef22d72e1bfea747a16e36ab80fc9c0d80c920b32b20",
+        "nativeItemId": "exec-03ea5ed7-1536-4ebb-8271-59ea09f6b898",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md",
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "mode": "replace",
+        "oldHash": "c352fe8b5b712322b44103aa01dead2d3417129fb18c777e227d5fc22632d0fe",
+        "newHash": "081b9b9b6652603fee07ef22d72e1bfea747a16e36ab80fc9c0d80c920b32b20",
+        "chineseCharacterCount": 142,
+        "bodyChineseCharacterCount": 142
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "57938fb5aa614de3ac1224e544ae9ca59fd77a62175d6a846a3d2ff44dc465a5",
+        "afterHash": "d1d155367b9ba19606550e4accf37b6126b9da065346c399b69e2f4bf156b4b7",
+        "nativeItemId": "exec-8a520bc6-fd72-4002-b6e1-806932490aff",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "mode": "replace",
+        "oldHash": "57938fb5aa614de3ac1224e544ae9ca59fd77a62175d6a846a3d2ff44dc465a5",
+        "newHash": "d1d155367b9ba19606550e4accf37b6126b9da065346c399b69e2f4bf156b4b7",
+        "chineseCharacterCount": 1442,
+        "bodyChineseCharacterCount": 1437
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "d1d155367b9ba19606550e4accf37b6126b9da065346c399b69e2f4bf156b4b7",
+        "afterHash": "49257521c3e819bbadf79f19698c2484c1ba2046553cb1a554f1c86cb0cb12e5",
+        "nativeItemId": "exec-5fec5cfd-de3b-4577-8f69-2734f196a439",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "mode": "replace",
+        "oldHash": "d1d155367b9ba19606550e4accf37b6126b9da065346c399b69e2f4bf156b4b7",
+        "newHash": "49257521c3e819bbadf79f19698c2484c1ba2046553cb1a554f1c86cb0cb12e5",
+        "chineseCharacterCount": 1476,
+        "bodyChineseCharacterCount": 1471
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "49257521c3e819bbadf79f19698c2484c1ba2046553cb1a554f1c86cb0cb12e5",
+        "afterHash": "5c3e97e8ede3c90ff10b80284709e43fc40fff0dcda70afa88b66bbc76e42673",
+        "nativeItemId": "exec-c1f2e7b0-7b8c-4467-820b-715969a20770",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "mode": "replace",
+        "oldHash": "49257521c3e819bbadf79f19698c2484c1ba2046553cb1a554f1c86cb0cb12e5",
+        "newHash": "5c3e97e8ede3c90ff10b80284709e43fc40fff0dcda70afa88b66bbc76e42673",
+        "chineseCharacterCount": 1494,
+        "bodyChineseCharacterCount": 1489
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "5c3e97e8ede3c90ff10b80284709e43fc40fff0dcda70afa88b66bbc76e42673",
+        "afterHash": "916978402d7a91aab2b048d3a69eed8a44daf319efdf21f221b6c5ea706e2dc6",
+        "nativeItemId": "exec-1e9422ed-1c62-4ea1-bd26-d2dd26a17ad6",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "mode": "replace",
+        "oldHash": "5c3e97e8ede3c90ff10b80284709e43fc40fff0dcda70afa88b66bbc76e42673",
+        "newHash": "916978402d7a91aab2b048d3a69eed8a44daf319efdf21f221b6c5ea706e2dc6",
+        "chineseCharacterCount": 1499,
+        "bodyChineseCharacterCount": 1494
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "916978402d7a91aab2b048d3a69eed8a44daf319efdf21f221b6c5ea706e2dc6",
+        "afterHash": "b796b27676afdd983697b75df9801787b0db8a32b13aa3abf56efb31e3452962",
+        "nativeItemId": "exec-dd5d81bf-f9e2-4598-a56c-55ac2cb5f321",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "mode": "replace",
+        "oldHash": "916978402d7a91aab2b048d3a69eed8a44daf319efdf21f221b6c5ea706e2dc6",
+        "newHash": "b796b27676afdd983697b75df9801787b0db8a32b13aa3abf56efb31e3452962",
+        "chineseCharacterCount": 1503,
+        "bodyChineseCharacterCount": 1498
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "b796b27676afdd983697b75df9801787b0db8a32b13aa3abf56efb31e3452962",
+        "afterHash": "e719a411963c64895c5f0e542622a61fee1161dbc6735a19de5eda51d7b06e52",
+        "nativeItemId": "exec-8853bb4c-7cef-4f27-a087-c62795b99ad9",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "mode": "replace",
+        "oldHash": "b796b27676afdd983697b75df9801787b0db8a32b13aa3abf56efb31e3452962",
+        "newHash": "e719a411963c64895c5f0e542622a61fee1161dbc6735a19de5eda51d7b06e52",
+        "chineseCharacterCount": 1504,
+        "bodyChineseCharacterCount": 1499
+      },
+      {
+        "resourceRef": "chapter:chapter-003.md",
+        "beforeHash": "e719a411963c64895c5f0e542622a61fee1161dbc6735a19de5eda51d7b06e52",
+        "afterHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+        "nativeItemId": "exec-f2b4d794-fc51-4ca4-a2ab-68c30edf3472",
+        "nativeBatchResourceRefs": [
+          "chapter:chapter-003.md"
+        ],
+        "mode": "replace",
+        "oldHash": "e719a411963c64895c5f0e542622a61fee1161dbc6735a19de5eda51d7b06e52",
+        "newHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+        "chineseCharacterCount": 1505,
+        "bodyChineseCharacterCount": 1500
+      }
+    ],
+    "reviewFindings": [
+      {
+        "issueId": "pov:chapter-003:he-limited",
+        "category": "pov",
+        "severity": "suspicion",
+        "requestedSeverity": "suspicion",
+        "status": "open",
+        "contradiction": "视角以何芷观察为限。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-003.md",
+            "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+            "bindReadVersion": true,
+            "location": "L21",
+            "quote": "何芷坐在药箱旁，手掌贴着箱盖。她闻到冷柜散出的药味，混着潮湿木头气。病人等着药，账页却隔着一层薄板贴在她心里；她不愿让这两件事变成同一笔交易。",
+            "versionSource": "actual_content_read",
+            "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 1063,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "character:he",
+            "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+            "bindReadVersion": true,
+            "location": "L4-L11",
+            "quote": "\"name\": \"何芷\",\n  \"role\": \"医师\",\n  \"personality\": \"温和但边界坚定，以具体症状说服人\",\n  \"attributes\": {\n    \"欲望\": \"把冷藏药送到灯塔诊所\",\n    \"已知信息\": \"仅她知道药箱暗格有蓝签账页；她尚未透露\",\n    \"隐瞒事实\": \"蓝签账页藏在药箱暗格\",",
+            "versionSource": "actual_content_read",
+            "currentHash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 40,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true
+      },
+      {
+        "issueId": "knowledge:chapter-003:secrets",
+        "category": "character_knowledge",
+        "severity": "suspicion",
+        "requestedSeverity": "suspicion",
+        "status": "open",
+        "contradiction": "保留七分钟和暗格秘密，目击者陈述有明确限界。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-003.md",
+            "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+            "bindReadVersion": true,
+            "location": "L31",
+            "quote": "苏砚把灯举低，照出水面一串细碎泡沫。林岚盯着浮标的摆幅。她知道钟楼慢七分钟，可没有说。",
+            "versionSource": "actual_content_read",
+            "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 1495,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "character:lin",
+            "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18",
+            "bindReadVersion": true,
+            "location": "L8-L10",
+            "quote": "\"欲望\": \"查出潮钟误差，保护弟弟\",\n    \"已知信息\": \"只知道潮钟慢了七分钟；不知道药箱暗格和密道口令\",\n    \"隐瞒事实\": \"保留一页抄本，未告诉任何人\"",
+            "versionSource": "actual_content_read",
+            "currentHash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 170,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true
+      },
+      {
+        "issueId": "world:chapter-003:route-materials",
+        "category": "world_consistency",
+        "severity": "suspicion",
+        "requestedSeverity": "suspicion",
+        "status": "open",
+        "contradiction": "船照设定正规航路、不抄滩；冷藏药箱保持铅封。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-003.md",
+            "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+            "bindReadVersion": true,
+            "location": "L39",
+            "quote": "她不肯让他们为查一个猜测把航程拖没：“靠浮标查，不进碎石滩。药箱现在仍冷着。”",
+            "versionSource": "actual_content_read",
+            "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 2136,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "world:lore",
+            "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+            "bindReadVersion": true,
+            "location": "L5-L6",
+            "quote": "封桥时间为21:00，封桥只关闭东桥，不关闭水路；渡船仍须执照和通行证。\n低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。",
+            "versionSource": "actual_content_read",
+            "currentHash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 381,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true
+      },
+      {
+        "issueId": "timeline:chapter-003:continuity",
+        "category": "timeline",
+        "severity": "suspicion",
+        "requestedSeverity": "suspicion",
+        "status": "open",
+        "contradiction": "本章从第二章20:20启航决定紧接，异响时间合理且航程未缩短。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-003.md",
+            "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+            "bindReadVersion": true,
+            "location": "L3",
+            "quote": "20:20，缆绳松开时，何芷仍站在冰柜旁。",
+            "versionSource": "actual_content_read",
+            "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 20,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-003.md",
+            "hash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+            "bindReadVersion": true,
+            "location": "L65",
+            "quote": "“船能走。”叶澄说，“但这段耽误了。继续按四十分钟算，从现在抵岸还要三十多分钟；走正规航道，不抄滩。”",
+            "versionSource": "actual_content_read",
+            "currentHash": "f38770bbf715205754869dfbccef6a5091475aeb15c3a4a07ba0f43b181a3327",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 3971,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "character:ye",
+            "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce",
+            "bindReadVersion": true,
+            "location": "L4-L10",
+            "quote": "\"name\": \"叶澄\",\n  \"role\": \"摆渡人\",\n  \"personality\": \"敏锐、务实，说话带水路术语\",\n  \"attributes\": {\n    \"欲望\": \"保住执照与船员\",\n    \"已知信息\": \"知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟\",",
+            "versionSource": "actual_content_read",
+            "currentHash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 40,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true
+      }
+    ],
+    "memoryBaselines": {
+      "character-memory:cen": {
+        "schemaVersion": 1,
+        "characterId": "cen",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "cen-initial",
+            "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "cen-goal",
+            "summary": "阻止旧账公开但不伤及病人"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:he": {
+        "schemaVersion": 1,
+        "characterId": "he",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "he-initial",
+            "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "he-goal",
+            "summary": "把冷藏药送到灯塔诊所"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lin": {
+        "schemaVersion": 1,
+        "characterId": "lin",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lin-initial",
+            "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lin-goal",
+            "summary": "查出潮钟误差，保护弟弟"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lu": {
+        "schemaVersion": 1,
+        "characterId": "lu",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lu-initial",
+            "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lu-goal",
+            "summary": "修好潮钟并洗清偷芯嫌疑"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:su": {
+        "schemaVersion": 1,
+        "characterId": "su",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "su-initial",
+            "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "su-goal",
+            "summary": "在封桥前合法完成交接"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:ye": {
+        "schemaVersion": 1,
+        "characterId": "ye",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "ye-initial",
+            "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "ye-goal",
+            "summary": "保住执照与船员"
+          }
+        ],
+        "privateMisbeliefs": []
+      }
+    }
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "samples": [
+    "format-accept",
+    "format-decline",
+    "format-conflict",
+    "format-stop"
+  ],
+  "sampleInputsUnchangedFrom": "real-c/original-commands.json",
+  "reason": "Fix external-command validation incorrectly rejecting internal retrieval rebuild; no model prompt or sample acceptance changed",
+  "automaticRetries": 0,
+  "eachSamplePreparationLimit": 1,
+  "eachSampleCommitTurnLimit": 1,
+  "model": "gpt-6-luna",
+  "effort": "medium"
+}

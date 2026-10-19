@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "su",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "su-initial",
+      "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "船底异响查明为拖链缠木桩；陆行舟报告昨夜目击岑寂进钟楼但不知其行动；岑寂称取公文。",
+      "id": "1c971e70-c95f-452b-832d-7e1227272891"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "在怀疑陆行舟时仍克制未立案，选择记录证词而非搜身。",
+      "id": "b1ec17d6-8826-472c-a8e6-7ad3556a2feb"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "陆行舟在其面前公开工具并提供目击，程序性信任略增；要求岑寂明早当众核验封口。",
+      "id": "8d873319-7365-4265-8a69-abbe3ce29a9f"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "su-goal",
+      "summary": "在封桥前合法完成交接"
+    },
+    {
+      "summary": "抵达后完成合法交接，明早核验岑寂公文封口。",
+      "id": "77bc413c-c8a9-4180-8b86-55b5bd358a69"
+    }
+  ],
+  "privateMisbeliefs": []
+}

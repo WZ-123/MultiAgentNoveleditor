@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "characterId": "he",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "he-initial",
+      "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "he-ch3-fact",
+      "summary": "船于21:05抵灯塔泊口；药箱仍在渡口冷柜，决定与苏砚、林岚返回取药。"
+    },
+    {
+      "id": "he-ch3-time-correction",
+      "summary": "时间核对修正：船从20:20离开渡口，20:32刮擦后减速复查五分钟，21:05抵灯塔；旧记载20:59为初稿误差，不作为最终事实。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "he-ch3-emotion",
+      "summary": "等待使她焦灼；确认叶澄承认不确定后，对其操船判断稍安心。"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "he-ch3-rel",
+      "summary": "坚持药与账页分开，愿与苏砚同行取药，合作但仍保留秘密。"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "he-goal",
+      "summary": "把冷藏药送到灯塔诊所"
+    },
+    {
+      "id": "he-ch3-intent",
+      "summary": "六十分钟内完成取药并交给诊所；账页须核验年月、页码、签章后再决定是否交出。"
+    }
+  ],
+  "privateMisbeliefs": []
+}

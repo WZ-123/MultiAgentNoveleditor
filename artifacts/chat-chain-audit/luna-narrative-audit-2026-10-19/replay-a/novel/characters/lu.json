@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "lu",
+  "name": "陆行舟",
+  "role": "钟匠",
+  "personality": "嘴快但操作谨慎，遇证据才认错",
+  "attributes": {
+    "欲望": "修好潮钟并洗清偷芯嫌疑",
+    "已知信息": "知道自己没有换过钟芯；不知道慢了几分钟",
+    "隐瞒事实": "看到岑寂昨夜进过钟楼，但不知做了什么",
+    "关系": "怕苏砚拘捕，愿向林岚展示工具"
+  },
+  "relationships": [
+    {
+      "with": "lin",
+      "type": "怕苏砚拘捕，愿向林岚展示工具"
+    },
+    {
+      "with": "su",
+      "type": "怕苏砚拘捕，愿向林岚展示工具"
+    },
+    {
+      "with": "he",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "ye",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "cen",
+      "type": "认识但无私下信息共享"
+    }
+  ],
+  "aliases": [],
+  "faction": "",
+  "gender": "",
+  "age": "",
+  "sourceWork": "",
+  "originalName": "",
+  "bio": "",
+  "appearance": "",
+  "background": "",
+  "quotes": ""
+}

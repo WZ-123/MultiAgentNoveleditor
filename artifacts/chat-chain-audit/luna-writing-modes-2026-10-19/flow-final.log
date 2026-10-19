@@ -1,0 +1,42 @@
+
+> multi-agent-novel-assistant@0.0.9 test
+> node scripts/run-test-script.js test:writing-workflow:ui
+
+vite v8.2.2 building client environment for production...
+transforming...
+✓ 3735 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                  1.29 kB │ gzip:   0.55 kB
+dist/assets/index-Cqi6xNWA.css                 463.40 kB │ gzip:  47.48 kB
+dist/assets/rolldown-runtime-hePW80VL.js         0.71 kB │ gzip:   0.42 kB
+dist/assets/LanguageSettings-Da_X8e7O.js         1.39 kB │ gzip:   0.66 kB
+dist/assets/AppSettingsPanel-D6pcSEfJ.js         1.52 kB │ gzip:   0.96 kB
+dist/assets/SearchSettings-BGiR-_7D.js           3.68 kB │ gzip:   1.82 kB
+dist/assets/StorageSettings-Bc_QgMDd.js          4.44 kB │ gzip:   1.51 kB
+dist/assets/SkillSettings-BrwZSGud.js            4.56 kB │ gzip:   1.67 kB
+dist/assets/OfflineSyncDialog-Bc9yIPbx.js        4.77 kB │ gzip:   1.93 kB
+dist/assets/SearchPanel-DlnZJ9q2.js              4.91 kB │ gzip:   1.93 kB
+dist/assets/NovelDataBrowser-CNz-nvKe.js         7.49 kB │ gzip:   2.41 kB
+dist/assets/LanRemoteSettings-DrhO_-jq.js        9.31 kB │ gzip:   2.97 kB
+dist/assets/ImportMergePanel-BgaXCSje.js        13.62 kB │ gzip:   3.96 kB
+dist/assets/vendor-diff-BflPwFzc.js             19.01 kB │ gzip:   6.31 kB
+dist/assets/ProviderSettingsPanel-D2PuXTmw.js   27.48 kB │ gzip:   8.65 kB
+dist/assets/ImportNovelPanel-D-SRvTzo.js        35.16 kB │ gzip:   9.22 kB
+dist/assets/DataTabContent-DCYq-fOH.js          51.40 kB │ gzip:  13.09 kB
+dist/assets/vendor-misc-B2dMrqYV.js             91.01 kB │ gzip:  30.47 kB
+dist/assets/index-CXJDIvlW.js                  154.26 kB │ gzip:  50.59 kB
+dist/assets/vendor-markdown-Og84yWAm.js        161.49 kB │ gzip:  48.51 kB
+dist/assets/vendor-react-BH0rCosz.js           179.43 kB │ gzip:  56.81 kB
+dist/assets/vendor-editor-CINcjdpy.js          537.28 kB │ gzip: 185.62 kB
+
+✓ built in 828ms
+TEST_PASS actual character edit save preserves relationships with formal readback
+TEST_PASS natural roleplay prompt mounts role skill and saves memory with approval
+TEST_PASS whole review with one chapter stays incomplete
+TEST_PASS continuation retains frozen review scope and completes full read/report coverage
+TEST_PASS missing character is a normal query result and model recovers in the same turn
+TEST_PASS formal chapter save does not satisfy requested post-write review
+TEST_PASS post-write review continuation preserves formal save and completes evidence
+TEST_PASS malformed read parameters return actual recoverable query error
+TEST_PASS editing cannot propose whole-resource deletion as a patch workaround

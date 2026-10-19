@@ -1,0 +1,14 @@
+PASS preparation four literal escape fragments are removed without transcribing the source or changing other bytes
+PASS preparation stale hash, absent context, ambiguous replacement and no-op are rejected
+PASS preparation retrieving an actually committed candidate is idempotent and never reports a false stale-version repair
+PASS preparation one prepared patch contains a new chapter and six lossless subjective-memory appends
+PASS preparation scope, duplicate targets and symlink mirrors cannot bypass approval boundaries
+PASS preparation preflight does not write a ledger or claim success from metadata or missing saves
+PASS preparation preflight and final assessment still reject invented quotes, wrong lines and stale report versions
+PASS preparation empty source only accepts unambiguous insertion; nonempty unanchored patches remain rejected
+PASS preparation same-batch memory requirement needs real native transaction identity, not just all resource names
+PASS preparation MCP readers wait for the host commit checkpoint and never return a pending old version
+PASS preparation participant identities bind selected memories without interpreting prose keywords as a save gate
+PASS preparation timeline arithmetic checks inaccurate clock readings separately from a feasible travel budget
+PASS preparation original memories are immutable while task-created entries can be corrected in place without draft metadata
+writing-preparation: ok (13 scenarios)

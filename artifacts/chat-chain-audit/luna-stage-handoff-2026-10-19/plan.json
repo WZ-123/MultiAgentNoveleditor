@@ -1,0 +1,32 @@
+{
+  "scope": "候选准备阶段→现有原生工具、批准、正式提交及读回的协议验证；尚未路由到普通产品写作流程",
+  "model": "gpt-6-luna",
+  "effort": "medium",
+  "predeclaredSamples": [
+    "accept",
+    "decline",
+    "conflict",
+    "stop"
+  ],
+  "maxPreparationsPerSample": 1,
+  "maxCommitTurnsPerSample": 1,
+  "wordCount": {
+    "minimum": 1500,
+    "maximum": 2000,
+    "toleranceRatio": 0
+  },
+  "acceptance": [
+    "exact candidate canonical bytes equal formal readback",
+    "chapter and memory share native item and batch receipt",
+    "parent remains active after preparation child completes",
+    "reject/conflict/stop cannot save candidate",
+    "all failures retained"
+  ],
+  "notCovered": [
+    "traditional or role mode end-to-end",
+    "semantic self review",
+    "six actor isolation",
+    "restart continuation UI"
+  ],
+  "sampleFile": "real-a/commands.json"
+}

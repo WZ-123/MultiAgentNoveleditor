@@ -45,6 +45,10 @@ async function run() {
   assert.equal(originalToolName('read_novel_resource', [{ name: 'mcp__novel_tools__read_novel_resource' }]), 'mcp__novel_tools__read_novel_resource');
   assert.deepEqual(originalToolCall('novel_read_novel_resource', [{ name: 'read_novel_resource', namespace: 'mcp__novel_tools' }]), { name: 'read_novel_resource', namespace: 'mcp__novel_tools' });
   assert.deepEqual(originalToolCall('read_novel_resource', []), { name: 'read_novel_resource', namespace: 'mcp__novel_tools' });
+  for (const tool of require('../src/main/mcp/tools').TOOLS) {
+    assert.deepEqual(originalToolCall(tool.name, []), { name: tool.name, namespace: 'mcp__novel_tools' }, `all declared novel tools retain their namespace: ${tool.name}`);
+  }
+  assert.deepEqual(normalizeChatToolCall({ function: { name: 'read_writing_context', arguments: '{"novelId":"extra"}' } }), { name: 'read_writing_context', arguments: '{}' });
   assert.equal(responsesToolsToChatTools([{ type: 'function', name: 'read_novel_resource', namespace: 'mcp__novel_tools' }])[0].function.name, 'novel_read_novel_resource');
   assert.deepEqual(responsesToolsToChatTools([{ type: 'function', name: 'read_novel_resource', input_schema: { type: 'object', required: ['resourceRef'] } }])[0].function.parameters.required, ['resourceRef']);
   assert.deepEqual(normalizeChatToolCall({ function: { name: 'read_novel_resource', arguments: '{"arguments":"{\\"resourceRef\\":\\"chapter:chapter-007.md\\"}"}' } }), { name: 'read_novel_resource', arguments: '{"resourceRef":"chapter:chapter-007.md"}' });
@@ -66,7 +70,7 @@ async function run() {
     model: 'deepseek-v4-flash', reasoning: { effort: 'none' }, max_output_tokens: 6000, tools: [{ type: 'function' }, { type: 'function' }, { type: 'function' }],
     input: [{ type: 'message', role: 'user', content: [{ type: 'input_text', text: '<name>mana-consistency-review</name>' }] }],
   });
-  assert.equal(consistencyRequest.max_output_tokens, 1200);
+  assert.equal(consistencyRequest.max_output_tokens, 6000);
   assert.equal(upstreamTimeoutMs({ input: [{ type: 'message', content: '<name>mana-consistency-review</name>' }] }), CONSISTENCY_REVIEW_TIMEOUT_MS);
   assert.equal(upstreamTimeoutMs({ input: [{ type: 'message', content: '写正文' }] }), DEEPSEEK_UPSTREAM_TIMEOUT_MS);
   assert.deepEqual(normalizeChatToolCall({ function: { name: 'read_novel_resource', arguments: '{"resourceRef":"{\\"resourceRef\\":\\"world:lore\\"}"}' } }), { name: 'read_novel_resource', arguments: '{"resourceRef":"world:lore"}' });
@@ -89,6 +93,7 @@ async function run() {
       response.write(`data: ${JSON.stringify({ choices: [{ delta: { content: '正' } }] })}\n\n`);
       setTimeout(() => {
         response.write(`data: ${JSON.stringify({ choices: [{ delta: { content: '文' } }], usage: { prompt_tokens: 10, completion_tokens: 2, total_tokens: 12 } })}\n\n`);
+        response.write('data: ' + JSON.stringify({ choices: [{ delta: {}, finish_reason: 'stop' }] }) + '\n\n');
         response.end('data: [DONE]\n\n');
       }, 20);
       return;

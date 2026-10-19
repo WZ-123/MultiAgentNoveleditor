@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "characterId": "su",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "su-initial",
+      "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "su-ch3-fact",
+      "summary": "21:05抵灯塔；东桥21:00封闭但水路未关闭，药箱仍在渡口冷柜。"
+    },
+    {
+      "id": "su-ch3-time-correction",
+      "summary": "时间核对修正：20:20离开旧渡口，21:05抵灯塔；原记载20:59为初稿误差，不作为最终事实。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "su-ch3-emotion",
+      "summary": "因船底异响和延误提高警惕，仍须保障病人用药。"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "su-ch3-rel",
+      "summary": "约束岑寂只记录亲见事实；与何芷、林岚共同承担返程取药。"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "su-goal",
+      "summary": "在封桥前合法完成交接"
+    },
+    {
+      "id": "su-ch3-intent",
+      "summary": "与何芷、林岚立即返渡口取药，确保双印交接和药箱时限。"
+    }
+  ],
+  "privateMisbeliefs": []
+}

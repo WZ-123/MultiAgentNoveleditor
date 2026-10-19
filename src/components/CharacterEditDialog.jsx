@@ -39,7 +39,10 @@ export function CharacterEditDialog({ character, saving = false, onCancel, onSav
   const [draft, setDraft] = useState(() => ({
     ...character,
     aliasesText: Array.isArray(character.aliases) ? character.aliases.join('、') : String(character.aliases || ''),
-    relationshipRows: Array.isArray(character.relationships) ? character.relationships.map((item) => ({ ...item })) : [],
+    relationshipRows: Array.isArray(character.relationships) ? character.relationships.map((item) => ({ ...item }))
+      : Object.entries(character.relationships || {}).map(([withId, value]) => typeof value === 'object' && value !== null
+        ? { ...value, with: value.with || withId, type: value.type || value.summary || '' }
+        : { with: withId, type: String(value ?? '') }),
     skinRows: Array.isArray(character.skins) ? character.skins.map((item) => ({ ...item })) : [],
     attributeRows: Object.entries(character.attributes || {}).map(([key, value]) => ({ key, value: String(value ?? '') })),
   }));
@@ -64,10 +67,11 @@ export function CharacterEditDialog({ character, saving = false, onCancel, onSav
       name,
       aliases: splitList(draft.aliasesText),
       relationships: draft.relationshipRows
-        .map((item) => ({ with: String(item.with || '').trim(), type: String(item.type || '').trim() }))
+        .map((item) => ({ ...item, with: String(item.with || '').trim(), type: String(item.type || '').trim() }))
         .filter((item) => item.with || item.type),
       skins: draft.skinRows
         .map((item) => ({
+          ...item,
           name: String(item.name || '').trim(),
           outfit: String(item.outfit || '').trim(),
           story: String(item.story || '').trim(),

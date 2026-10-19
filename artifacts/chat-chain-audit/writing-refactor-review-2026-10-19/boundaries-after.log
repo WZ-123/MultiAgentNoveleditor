@@ -1,0 +1,16 @@
+✔ a preparation checkpoint failure releases its cancellation controller and preserves the original error (0.432292ms)
+✔ stopping during context delivery prevents the preparation model call (158.972875ms)
+✔ stopping during the handoff checkpoint cannot return native commit input (231.201583ms)
+✔ a review request already aborted before entry does not enqueue an inference (101.831209ms)
+✔ late review success after stop cannot mutate the parent or publish a completed review (463.23675ms)
+✔ late review failure after stop cannot mutate the parent or publish a completed review (458.784417ms)
+✔ a canonical source changed during assessment cannot become a successful review (314.311959ms)
+✔ stopping while the task catalogue loads prevents even the intent model request (247.285541ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1978.04075

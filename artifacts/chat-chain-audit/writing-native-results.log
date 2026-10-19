@@ -1,0 +1,6 @@
+NATIVE canonical-reading: turn_completed
+NATIVE roleplay-persist-memory: turn_completed
+NATIVE missing-character-read: turn_failed / mcpToolCall执行失败
+NATIVE whole-review-one-chapter: turn_completed
+NATIVE write-requested-self-review: turn_completed
+NATIVE deepseek-length-limit-reported-completed: reproduced

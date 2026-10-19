@@ -1,0 +1,210 @@
+{
+  "date": "2026-10-18",
+  "evidence": "isolated production functions; no live model or UI",
+  "checks": [
+    {
+      "name": "baseline-canonical-context-readable",
+      "evidence": {
+        "readable": [
+          "character:lin",
+          "character-memory:lin",
+          "world:lore",
+          "world:places",
+          "style:memory",
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md"
+        ],
+        "totalResources": 14
+      }
+    },
+    {
+      "name": "whole-novel-review-accepts-one-of-two-chapters",
+      "evidence": {
+        "requested": "审校全书的人物和世界观一致性",
+        "constraints": {
+          "operation": "review",
+          "wordCountScope": "whole_novel",
+          "targetResourceRefs": [],
+          "allowedWriteResourceRefs": [],
+          "minBodyCjk": null,
+          "maxBodyCjk": null,
+          "wordCountToleranceRatio": 0.05,
+          "completionEvidence": [],
+          "prohibitRepetition": false,
+          "requiresCompleteEnding": false
+        },
+        "actualChapters": 2,
+        "acceptedRefs": [
+          "chapter:chapter-001.md"
+        ],
+        "goalVerified": true
+      }
+    },
+    {
+      "name": "review-report-can-omit-a-fully-read-resource",
+      "evidence": {
+        "fullyRead": [
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md"
+        ],
+        "coveredInReport": [
+          "chapter:chapter-001.md"
+        ],
+        "goalVerified": true
+      }
+    },
+    {
+      "name": "invented-quotes-and-locations-marked-verified",
+      "evidence": {
+        "noReadTools": true,
+        "issue": {
+          "issueId": "world:door:state",
+          "category": "world",
+          "severity": "hard",
+          "requestedSeverity": "hard",
+          "status": "open",
+          "contradiction": "伪造引文声称矛盾",
+          "evidence": [
+            {
+              "resourceRef": "chapter:chapter-001.md",
+              "hash": "f9c1054cd487c0501a9e2e273a3a57c0123b9d90ffa524b70d4e4296037903a5",
+              "location": "第99999行",
+              "quote": "本书不存在的原文证据",
+              "currentHash": "f9c1054cd487c0501a9e2e273a3a57c0123b9d90ffa524b70d4e4296037903a5",
+              "sourceCurrent": true
+            },
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "adc6f8873c8cecf2351e5986720b8608331fbe8c770204188830c32547c87f54",
+              "location": "第99999行",
+              "quote": "本书不存在的原文证据",
+              "currentHash": "adc6f8873c8cecf2351e5986720b8608331fbe8c770204188830c32547c87f54",
+              "sourceCurrent": true
+            }
+          ],
+          "verified": true
+        },
+        "coverageVerified": false
+      }
+    },
+    {
+      "name": "missing-resource-contract-inconsistent-by-kind",
+      "evidence": [
+        {
+          "ref": "chapter:chapter-999.md",
+          "exists": false
+        },
+        {
+          "ref": "character:missing",
+          "throws": true,
+          "code": "context_incomplete",
+          "message": "novel resource does not exist: character:missing"
+        },
+        {
+          "ref": "character-memory:missing",
+          "mode": "content",
+          "content": "{\n  \"schemaVersion\": 1,\n  \"characterId\": \"missing\",\n  \"lastUpdatedChapterRef\": \"\",\n  \"factsKnown\": [],\n  \"emotionalMemory\": [],\n  \"relationshipDeltas\": [],\n  \"unresolvedIntentions\": [],\n  \"privateMisbeliefs\": []\n}"
+        },
+        {
+          "ref": "asset:missing",
+          "throws": true,
+          "code": "context_incomplete",
+          "message": "novel resource does not exist: asset:missing"
+        },
+        {
+          "ref": "outline:chapter:99:99:99",
+          "mode": "content",
+          "content": ""
+        }
+      ]
+    },
+    {
+      "name": "character-dialog-save-erases-object-relationships",
+      "evidence": {
+        "before": {
+          "su": "互相信任，但尚未告知旧案真相"
+        },
+        "after": [],
+        "onlyAction": "open existing character and save unchanged",
+        "layer": "actual component callbacks + formal store readback"
+      }
+    },
+    {
+      "name": "character-memory-id-normalization-can-overwrite-other-character",
+      "evidence": {
+        "requested": "character-memory:lin+a",
+        "returnedCharacterId": "lin_a",
+        "factsKnown": [
+          {
+            "summary": "乙的记忆"
+          }
+        ]
+      }
+    },
+    {
+      "name": "natural-language-review-and-roleplay-constraints-unrecognized",
+      "evidence": [
+        {
+          "text": "帮我检查全文的人物一致性",
+          "constraints": {
+            "operation": "unspecified",
+            "wordCountScope": "whole_novel",
+            "targetResourceRefs": [],
+            "allowedWriteResourceRefs": [],
+            "minBodyCjk": null,
+            "maxBodyCjk": null,
+            "wordCountToleranceRatio": 0.05,
+            "completionEvidence": [],
+            "prohibitRepetition": false,
+            "requiresCompleteEnding": false
+          }
+        },
+        {
+          "text": "对全书进行一致性审查",
+          "constraints": {
+            "operation": "unspecified",
+            "wordCountScope": "whole_novel",
+            "targetResourceRefs": [],
+            "allowedWriteResourceRefs": [],
+            "minBodyCjk": null,
+            "maxBodyCjk": null,
+            "wordCountToleranceRatio": 0.05,
+            "completionEvidence": [],
+            "prohibitRepetition": false,
+            "requiresCompleteEnding": false
+          }
+        },
+        {
+          "text": "进入角色驱动模式，继续写下一章",
+          "constraints": {
+            "operation": "unspecified",
+            "wordCountScope": "new_writing",
+            "targetResourceRefs": [],
+            "allowedWriteResourceRefs": [],
+            "minBodyCjk": null,
+            "maxBodyCjk": null,
+            "wordCountToleranceRatio": 0.05,
+            "completionEvidence": [],
+            "prohibitRepetition": false,
+            "requiresCompleteEnding": false
+          }
+        },
+        {
+          "text": "写下一章，写完自查人物与世界观冲突",
+          "constraints": {
+            "operation": "write",
+            "wordCountScope": "new_writing",
+            "targetResourceRefs": [],
+            "allowedWriteResourceRefs": [],
+            "minBodyCjk": null,
+            "maxBodyCjk": null,
+            "wordCountToleranceRatio": 0.05,
+            "completionEvidence": [],
+            "prohibitRepetition": false,
+            "requiresCompleteEnding": false
+          }
+        }
+      ]
+    }
+  ]
+}

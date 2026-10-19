@@ -1,0 +1,152 @@
+TEST_PASS delayed save preserves typing and advances only saved baseline
+TEST_PASS overlapping manual/autosave writes serialize with successful predecessor base
+TEST_PASS debounced closure uses fresh saved baseline rather than typing-time base
+TEST_PASS failed writes preserve draft and do not poison queue
+TEST_PASS explicit verified base is not silently rebased
+TEST_PASS successful AI replacement applies only if editor has not changed
+TEST_PASS late project response cannot alter other project editor
+TEST_PASS switch flush waits for disk and cancels only source-project debounce
+TEST_PASS typing during switch flush is saved before reset
+TEST_PASS typing during structure flush is saved before project reset
+TEST_PASS failed structure write remains a switch barrier until retry succeeds
+TEST_PASS failed switch flush leaves source draft visible
+TEST_PASS manual flush cancels debounce and preserves typing during save
+TEST_PASS restore cancels stale debounce and follows pending save
+TEST_PASS restore preserves typing made after the restore request
+TEST_PASS project keys isolate simultaneous chapter writes
+TEST_SUMMARY 16/16 passed, 0 failed
+TEST_DONE
+TEST_PASS CSS1_ipc_save_returns_normalized_snapshot: saveChapter IPC now returns title/displayName metadata alongside the file result
+TEST_PASS CSS2_renderer_reconciles_after_save: manual save, autosave, and close-tab save all reapply the canonical title/displayName snapshot
+
+TEST_SUMMARY 2/2 passed, 0 failed
+TEST_DONE
+novel structure persistence: ok (disk round trips, empty groups, duplicate titles, legacy recovery, no loss)
+PASS next-chapter new-chapter intent does not match updating chapters or negated new writes
+PASS next-chapter actual parser does not count 100000 old words toward a 3000-word next chapter
+PASS next-chapter explicit range honors exact requested boundaries and never rolls back a save
+PASS next-chapter unrelated existing chapter edits do not satisfy new writing
+PASS next-chapter no writes, stale hashes, missing creates and deleted chapters cannot count
+PASS next-chapter current chapter and explicit whole-novel targets remain distinct
+PASS next-chapter generic writing and legacy constraints count saved chapters, never every chapter
+PASS next-chapter an empty first attempt can bind the chapter saved by a continuation
+PASS next-chapter create followed by replacement retains new-chapter identity
+PASS next-chapter persisted continuation binds original chapter and excludes unrelated later saves
+next-chapter-wordcount: ok (10 scenarios)
+(node:49430) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/potablewater/Desktop/MultiAgentNovelAssistant/test/chat-feedback-payload.test.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/potablewater/Desktop/MultiAgentNovelAssistant/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS CFP1_context_mode_includes_recent_tool_calls_and_checkpoint
+PASS CFP2_opinion_mode_omits_logs_and_sensitive_context
+PASS CFP3_default_omits_tool_inputs_results_and_body_even_with_screenshot
+PASS CFP4_context_mode_bounds_messages_and_includes_native_tool_records
+PASS FS1_submitFeedback_has_sync_metadata
+PASS FS2_updateSyncMeta_updates_status_and_index
+PASS FS3_listPendingForSync_filters_correctly
+PASS FS4_recoverStuckSyncing_resets_to_pending
+PASS FS5_computeNextRetryAt_exponential_backoff
+PASS FS6_classifyError_network_errors
+PASS FS7_classifyError_feishu_errors
+PASS FS8_fieldMapper_maps_payload_correctly
+PASS FS9_syncLock_acquire_release
+PASS FS10_fieldMapper_attachment_field
+PASS feedback-security invalid IDs rejected across storage and IPC
+PASS feedback-security duplicate concurrent submissions retain first record and attachment
+PASS feedback-security parallel records retained in index
+PASS feedback-security failed publication leaves no partial record and can be retried
+[feedbackSync] Sent feedback fb-mabc1234-abc123 to Feishu record fixture-record
+PASS feedback-security safe legacy records remain readable and syncable
+PASS feedback-security attachment names cannot escape or silently replace each other
+PASS feedback-security record and index symlinks rejected without touching targets
+PASS feedback-security forged attachment paths and symlinks never uploaded
+PASS feedback-security mismatched and malformed records isolated from valid records
+[feedbackSync] Sent feedback fb-ipc to Feishu record fixture-record
+PASS feedback-security IPC screenshot submission query retry and duplicate failure
+[lanRemote] listening on http://127.0.0.1:64596
+[feedbackSync] Sent feedback fb-lan to Feishu record fixture-record
+PASS feedback-security authenticated LAN uses production feedback IPC handlers
+PASS feedback-security outbox directory symlink rejected
+feedback-path-security: ok (12 scenarios)
+chat-chain-contract: ok
+[lanRemote] listening on http://0.0.0.0:64617
+chat-chain-lan: ok
+model-metadata: ok (14 checks)
+model-config-v6: ok
+model-config-v8-setup: ok (45 checks)
+[lanRemote] listening on http://127.0.0.1:64626
+model-config-discard-ipc: ok (desktop notifications, authorized LAN, key cleanup and active selection)
+responses-verification-lifecycle: ok
+codex-native-cutover: ok
+deepseek-no-reasoning-bridge: ok
+deepseek-novella-consistency-cache: ok
+exact-duplicate-cleanup: ok
+narrative-pov-cleanup: ok
+native-novel-workspace: ok
+native-patch-read-after-write: ok
+native-existing-resource-update: ok
+task-ledger-resource-contract: ok
+writing-authorization-policy: ok
+PASS task-completion 5 percent tolerance and exact boundaries
+PASS task-completion large shortfall and excess change acceptance without rollback
+PASS task-completion partial target commits remain incomplete
+PASS task-completion normal model ending without a write is not a completed writing task
+PASS task-completion formal version changes invalidate commit evidence
+PASS task-completion interruption preserves saved evidence and marks partial persistence
+PASS task-completion complete ending requires independent review after objective checks pass
+PASS task-completion reading requires actual successful resource reads
+PASS task-completion review requires covered report while quality remains unevaluated
+PASS task-completion roleplay and plain text do not invent objective acceptance
+PASS task-completion persisted task result and progress agree after incomplete turn
+PASS task-completion explicit continuation inherits target and stable task identity
+PASS task-completion valid prior commits allow completion without rewriting finished content
+PASS task-completion continuation rejects completed goals and other conversations
+PASS task-completion ordinary new messages do not inherit an unrelated target
+PASS task-completion restricted selection continuation requires a fresh user selection
+PASS task-completion continuation retains the logical task original memory baseline rather than freezing unreviewed draft entries
+PASS task-completion continued evidence is invalidated when saved content changes
+PASS task-completion crash recovery retains partial saves and accurate progress
+task-completion-state: ok (19 scenarios)
+PASS writing-safety whole book scope cannot collapse to the single chapter read by the model
+PASS writing-safety report must cover every read target, including implied targets
+PASS writing-safety whole book reading also requires both chapters
+PASS writing-safety post writing review is independent of a valid formal save
+PASS writing-safety real quotes with current hashes and actual reads can be anchored
+PASS writing-safety invented quotes, nonexistent lines and missing reads are not verified
+PASS writing-safety review reads expose exact line numbers without altering original evidence
+PASS writing-safety native approval validation keeps the real reason for UI and continuation
+PASS writing-safety ordinary editing cannot delete a whole resource as a patch workaround
+PASS writing-safety timeline checks handle canonical boat durations and never assume missing data feasible
+PASS writing-safety same evidence repeated with another line notation is not independent
+PASS writing-safety malformed issues cannot silently become a clean report
+PASS writing-safety forged read content with the right hash does not prove coverage
+PASS writing-safety new reviews are not erased by an older invalidation event
+PASS writing-safety all missing addressable resources are normal not-found results
+PASS writing-safety character form preserves object relationships and extended relationship and skin fields
+PASS writing-safety distinct character IDs never share memory, and legacy memory remains readable
+PASS writing-safety negative review clauses and role driven writing preserve user intent
+PASS writing-safety requested character memories require actual current commits independently of prose and review
+PASS writing-safety a fully read source supports local review without claiming whole-source review coverage
+PASS writing-safety corrupt project metadata and world places cannot masquerade as empty canonical context
+writing-workflow-safety: ok (21 scenarios)
+PASS preparation four literal escape fragments are removed without transcribing the source or changing other bytes
+PASS preparation stale hash, absent context, ambiguous replacement and no-op are rejected
+PASS preparation retrieving an actually committed candidate is idempotent and never reports a false stale-version repair
+PASS preparation one prepared patch contains a new chapter and six lossless subjective-memory appends
+PASS preparation scope, duplicate targets and symlink mirrors cannot bypass approval boundaries
+PASS preparation preflight does not write a ledger or claim success from metadata or missing saves
+PASS preparation preflight and final assessment still reject invented quotes, wrong lines and stale report versions
+PASS preparation empty source only accepts unambiguous insertion; nonempty unanchored patches remain rejected
+PASS preparation same-batch memory requirement needs real native transaction identity, not just all resource names
+PASS preparation MCP readers wait for the host commit checkpoint and never return a pending old version
+AssertionError [ERR_ASSERTION]: Missing expected rejection.
+    at async /Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation.test.js:214:7
+    at async test (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation.test.js:18:39)
+    at async main (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-preparation.test.js:197:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: [Function (anonymous)],
+  operator: 'rejects',
+  diff: 'simple'
+}

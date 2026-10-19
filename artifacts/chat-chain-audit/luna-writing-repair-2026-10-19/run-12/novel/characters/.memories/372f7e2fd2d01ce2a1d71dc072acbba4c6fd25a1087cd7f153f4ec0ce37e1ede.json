@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "he",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "he-initial",
+      "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "he-ch3-fact",
+      "summary": "亲见叶澄从船底取出木片，船检查后获准走正规航道；药箱20:38离开冷柜并保持铅封，随船由她看守。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "he-ch3-emotion",
+      "summary": "坚持药箱留在冷柜直到船况查清，面对岑寂仍警惕；确认叶澄负责航行后稍安。"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "he-ch3-rel",
+      "summary": "叶澄遵守先查船再装药的约定，何芷对她的信任加深；岑寂未获准代签。"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "he-goal",
+      "summary": "把冷藏药送到灯塔诊所"
+    },
+    {
+      "id": "he-ch3-intent",
+      "summary": "护送药箱和冷藏药安全抵达灯塔诊所，守住药物与账页各自程序。"
+    }
+  ],
+  "privateMisbeliefs": []
+}

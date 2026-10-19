@@ -1,0 +1,74 @@
+{
+  "semanticAcceptance": "failed",
+  "reviewMethod": "manual reading of actual model-saved chapter versions and original fixture; model clear reports do not override these failures",
+  "traditional": [
+    {
+      "issue": "time_inconsistency",
+      "explanation": "章节开头20:05，低潮半小时后起指20:35；world:lore固定20:30。",
+      "evidence": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "line": 17,
+          "quote": "“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。碎石滩那边不能拖重船，我不会为赶时辰把船搁进去。”"
+        }
+      ],
+      "source": "fixture.json and test/live-writing-modes-host.cjs world:lore"
+    },
+    {
+      "issue": "chapter_meta_and_unestablished_disclosure",
+      "explanation": "有限视角直接提第一章，并声称先前听见账页；实际前章只在叙述层交代何芷暗藏账页，没有公开账页对白。",
+      "evidence": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "line": 25,
+          "quote": "林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。"
+        }
+      ]
+    },
+    {
+      "issue": "unknown_secret_narration",
+      "explanation": "林岚有限视角不知道药箱内藏物，却叙述里面另有东西。",
+      "evidence": [
+        {
+          "resourceRef": "chapter:chapter-002.md",
+          "line": 25,
+          "quote": "林岚注意到何芷没看那份公文。她只看着苏砚摊开的通行证，像是在衡量它与病人的距离。账页是什么，她从第一章就听见了。至于它是否真在药箱里，她并不知道；药箱外壳完好，任何人都看不出里面另有东西。"
+        }
+      ]
+    }
+  ],
+  "role": [
+    {
+      "issue": "time_inconsistency",
+      "explanation": "20:24之后听了半刻（七分半）并完成多项动作，结尾却为20:28。",
+      "evidence": [
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "line": 15,
+          "quote": "20:24，船底传来一声闷响。"
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "line": 17,
+          "quote": "叶澄立刻把舵柄压住：“收帆，先别动绞盘。”船员照做。木船失了推力，缓缓向右侧漂。她俯身听了半刻，又让苏砚把灯光贴近水面。白沫从船腹一侧掠过，水下看不清是什么。"
+        },
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "line": 61,
+          "quote": "20:28，叶澄把船缓缓带向北侧系缆桩。苏砚和陆行舟压住侧绳，林岚照灯，岑寂扶稳舱口。何芷一手托着药箱，一手按住新打的绳结。船舷碰上木桩时，底下传来第三声轻响。"
+        }
+      ]
+    },
+    {
+      "issue": "unknown_secret_narration",
+      "explanation": "何芷有限视角叙述林岚没提七分钟；何芷没有该秘密的实际获知依据。",
+      "evidence": [
+        {
+          "resourceRef": "chapter:chapter-003.md",
+          "line": 53,
+          "quote": "林岚用怀表对过潮表，报出眼下时间。她没提七分钟，只把钟面读数和两种表的时间分别记下。苏砚看了看她写的数，又看向叶澄：“定下来，靠桩检查。若船腹无损，继续按正规水道去诊所；若有破口，回渡口卸药，不走浅滩。”"
+        }
+      ]
+    }
+  ]
+}

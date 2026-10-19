@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "cen",
+  "name": "岑寂",
+  "role": "议事厅文书",
+  "personality": "礼貌含糊，擅用被动句",
+  "attributes": {
+    "欲望": "阻止旧账公开但不伤及病人",
+    "已知信息": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+    "隐瞒事实": "昨夜进钟楼取公文，没有改钟",
+    "关系": "试探何芷，向苏砚强调程序"
+  },
+  "relationships": [
+    {
+      "with": "lin",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "su",
+      "type": "试探何芷，向苏砚强调程序"
+    },
+    {
+      "with": "he",
+      "type": "试探何芷，向苏砚强调程序"
+    },
+    {
+      "with": "ye",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "lu",
+      "type": "认识但无私下信息共享"
+    }
+  ],
+  "aliases": [],
+  "faction": "",
+  "gender": "",
+  "age": "",
+  "sourceWork": "",
+  "originalName": "",
+  "bio": "",
+  "appearance": "",
+  "background": "",
+  "quotes": ""
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "cen",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "cen-initial",
+      "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "cen-ch3",
+      "summary": "在渡口目送叶澄载药离开；知道双印已齐，陆行舟与自己留岸，未获知账页藏处或林岚的七分钟"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "cen-em3",
+      "summary": "担心旧账公开伤及病人，选择留下向议事厅回报"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "cen-rel3",
+      "summary": "与苏砚的程序交涉未能代签，试探受阻"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "cen-goal",
+      "summary": "阻止旧账公开但不伤及病人"
+    },
+    {
+      "id": "cen-int3",
+      "summary": "向议事厅回报双印交接，并阻止旧账未经核验公开"
+    }
+  ],
+  "privateMisbeliefs": []
+}

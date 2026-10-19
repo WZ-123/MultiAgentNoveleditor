@@ -1,0 +1,392 @@
+[
+  {
+    "runId": "run-984a677e-5205-43d6-a356-fa85fbd62252",
+    "conversationId": "thread-mve4z38j-c46d2f",
+    "novelId": "novel-mve4yqn7-cp3q5f",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [
+        "character-memory:cen",
+        "character-memory:he",
+        "character-memory:lin",
+        "character-memory:lu",
+        "character-memory:su",
+        "character-memory:ye"
+      ],
+      "atomicMemoryWithChapter": true,
+      "preserveOriginalMemories": true,
+      "pointOfView": {
+        "characterRef": "character:he",
+        "name": "何芷",
+        "otherNames": [
+          "岑寂",
+          "林岚",
+          "陆行舟",
+          "苏砚",
+          "叶澄"
+        ]
+      },
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "repairAttempt": 1,
+    "reviewItemOffset": 35,
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": false,
+      "goalStatus": "incomplete",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [
+          "character-memory:cen",
+          "character-memory:he",
+          "character-memory:lin",
+          "character-memory:lu",
+          "character-memory:su",
+          "character-memory:ye"
+        ],
+        "atomicMemoryWithChapter": true,
+        "preserveOriginalMemories": true,
+        "pointOfView": {
+          "characterRef": "character:he",
+          "name": "何芷",
+          "otherNames": [
+            "岑寂",
+            "林岚",
+            "陆行舟",
+            "苏砚",
+            "叶澄"
+          ]
+        },
+        "wordCountScope": "new_writing",
+        "wordCountResourceRefs": [],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "no_changes",
+        "committedCount": 0
+      },
+      "objective": {
+        "status": "incomplete",
+        "unmet": [
+          "combined_memory_commit_missing",
+          "word_count_target_missing",
+          "word_count",
+          "no_current_commit",
+          "required_writes_missing",
+          "review_evidence_missing"
+        ]
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "new_writing",
+        "targetResourceRefs": [],
+        "readableResources": 0,
+        "bodyChineseCharacterCount": 0,
+        "hashes": [],
+        "currentSavedResourceRefs": [],
+        "observedReadResourceRefs": [
+          "timeline:all",
+          "chapter:chapter-002.md",
+          "character:lin",
+          "character:he",
+          "character:cen",
+          "character:su",
+          "character:lu",
+          "chapter:chapter-001.md",
+          "character:ye",
+          "outline:master",
+          "character-memory:lin",
+          "character-memory:ye",
+          "character-memory:he",
+          "character-memory:cen",
+          "character-memory:lu",
+          "character-memory:su",
+          "world:places",
+          "world:lore"
+        ],
+        "fullyReadResourceRefs": [],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-508e3b63-5431-4258-a0f2-58deaed49557",
+          "attemptId": "attempt-0a9d8a51-4ae5-434c-9feb-05812b39f5f3",
+          "runId": "run-984a677e-5205-43d6-a356-fa85fbd62252",
+          "reportSha256": "621aaec0f1b14a5dad6ed209d83bb3ed35f22c408ba902b012ee51b8551e6041",
+          "parsed": false,
+          "coverageClaimed": [],
+          "coverageObserved": [
+            "character:he",
+            "chapter:chapter-002.md",
+            "character:cen",
+            "character:lu",
+            "chapter:chapter-001.md",
+            "character:ye",
+            "character:su",
+            "character:lin",
+            "outline:master",
+            "character-memory:cen",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:ye",
+            "character-memory:su",
+            "character-memory:he",
+            "world:places",
+            "world:lore"
+          ],
+          "coverageHashes": [],
+          "versionCurrent": true,
+          "coverageVerified": false,
+          "evidenceVerified": false,
+          "issues": []
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "below_target",
+          "blocking": false,
+          "actual": 0,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": 1425,
+          "acceptedMaximum": 2100,
+          "withinTolerance": false,
+          "belowBy": 1500,
+          "aboveBy": 0
+        },
+        "requiredWrites": {
+          "expectedResourceRefs": [
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ],
+          "missingResourceRefs": [
+            "character-memory:cen",
+            "character-memory:he",
+            "character-memory:lin",
+            "character-memory:lu",
+            "character-memory:su",
+            "character-memory:ye"
+          ]
+        },
+        "combinedMemoryCommit": {
+          "status": "missing"
+        },
+        "pointOfView": {
+          "status": "met",
+          "focus": "何芷",
+          "risks": [],
+          "coverage": "explicit_non_focal_perception_and_thought_only"
+        },
+        "review": {
+          "status": "incomplete",
+          "expectedResourceRefs": [],
+          "missingResourceRefs": [],
+          "evidenceVerified": false,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "missing_or_invalid",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": [
+            "character",
+            "world"
+          ]
+        }
+      }
+    },
+    "savedResources": [],
+    "memoryBaselines": {
+      "character-memory:cen": {
+        "schemaVersion": 1,
+        "characterId": "cen",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "cen-initial",
+            "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "cen-goal",
+            "summary": "阻止旧账公开但不伤及病人"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:he": {
+        "schemaVersion": 1,
+        "characterId": "he",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "he-initial",
+            "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "he-goal",
+            "summary": "把冷藏药送到灯塔诊所"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lin": {
+        "schemaVersion": 1,
+        "characterId": "lin",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lin-initial",
+            "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lin-goal",
+            "summary": "查出潮钟误差，保护弟弟"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lu": {
+        "schemaVersion": 1,
+        "characterId": "lu",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lu-initial",
+            "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lu-goal",
+            "summary": "修好潮钟并洗清偷芯嫌疑"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:su": {
+        "schemaVersion": 1,
+        "characterId": "su",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "su-initial",
+            "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "su-goal",
+            "summary": "在封桥前合法完成交接"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:ye": {
+        "schemaVersion": 1,
+        "characterId": "ye",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "ye-initial",
+            "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "ye-goal",
+            "summary": "保住执照与船员"
+          }
+        ],
+        "privateMisbeliefs": []
+      }
+    },
+    "error": null
+  }
+]

@@ -1,0 +1,12 @@
+TEST_PASS actual character edit save preserves relationships with formal readback
+TEST_PASS natural roleplay prompt mounts role skill and saves memory with approval
+TEST_PASS whole review with one chapter stays incomplete
+TEST_PASS continuation retains frozen review scope and completes full read/report coverage
+TEST_PASS missing character is a normal query result and model recovers in the same turn
+TEST_PASS formal chapter save does not satisfy requested post-write review
+TEST_PASS post-write review continuation preserves formal save and completes evidence
+TEST_PASS malformed read parameters return actual recoverable query error
+TEST_PASS editing cannot propose whole-resource deletion as a patch workaround
+Error: UI probe timeout: document.querySelector('[data-testid="codex-confirmation-card"]')
+    at wait (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-workflow-ui-e2e.cjs:25:9)
+    at async /Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-workflow-ui-e2e.cjs:183:3

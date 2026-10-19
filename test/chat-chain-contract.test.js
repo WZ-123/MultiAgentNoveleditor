@@ -18,6 +18,7 @@ async function main() {
   let calls = 0;
   service.processManager = { workspacesDirectory: path.join(tmp, 'workspaces'), request: async () => ({}), stop: async () => {} };
   service._ensureProcess = async () => service.processManager;
+  service.runOneShot=async options=>{assert.equal(options.purpose,'task_intent');return {...require('./fixtures/fake-responses-server').taskIntentFixture([{text:options.text}]),modelId:'fixture'};};
   service._bindConversation = async () => 'native-thread';
   service._startNativeTurn = async () => { calls++; return { turn: { id: 'native-turn-' + calls } }; };
   await assert.rejects(service.startTurn({ runId: 'wrong', persistence: 'chat', conversationId: t.id, novelId: b.id, userMessageId: 'wrong-user', text: '改写' }), e => e.code === 'conversation_project_mismatch');

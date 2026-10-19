@@ -461,3 +461,46 @@ for (const action of ['interrupt', 'exit']) {
     });
   }
 }
+
+test('explicit approval persists the commit barrier before answering and retains prior pending commits', async () => {
+  const h = harness(); const {run,answer} = pendingApproval(h);
+  run.pendingNativeCommits = ['older-item']; run.preparationStage = {phase:'prepared',revision:7};
+  h.hooks.checkpoint = async record => {
+    assert.deepEqual(record.pendingNativeCommits,['older-item','item-1']);
+    assert.equal(run.approvedFileItems.size,0); assert.equal(h.responses.length,0);
+  };
+  await h.service.resolveConfirmation(answer);
+  assert.deepEqual(run.pendingNativeCommits,['older-item','item-1']);
+  assert.deepEqual(run.preparationStage,{phase:'prepared',revision:7});
+});
+test('decline rolls back preparation stage on checkpoint failure, then persists the rejection on retry', async () => {
+  const h = harness(); const {run,answer} = pendingApproval(h);
+  run.pendingNativeCommits = ['older-item']; run.preparationStage = {phase:'prepared',revision:7};
+  h.failOnce('checkpoint');
+  await assert.rejects(h.service.resolveConfirmation({...answer,accept:false}),/injected/);
+  assert.deepEqual(run.preparationStage,{phase:'prepared',revision:7});
+  assert.deepEqual(run.pendingNativeCommits,['older-item']);
+  await h.service.resolveConfirmation({...answer,accept:false});
+  assert.deepEqual(run.preparationStage,{phase:'rejected',revision:8});
+  assert.deepEqual(h.savedRecords.at(-1).preparationStage,run.preparationStage);
+  assert.deepEqual(run.pendingNativeCommits,['older-item']);
+});
+for (const action of ['interrupt','exit']) {
+  test(action+' during automatic approval checkpoint never installs a late approval', async () => {
+    const h = harness(); await h.service._ensureProcess(route); const {run}=pendingApproval(h);
+    h.service.pendingConfirmations.clear();
+    Object.assign(run,{workspace:{root:'/test-workspace'},nativeFileItems:new Map(),taskConstraints:{allowedWriteResourceRefs:[]},selectionState:null});
+    h.authorization={granted:true,version:1};const gate=h.pauseOnce('checkpoint');
+    const attempt=h.service._handleServerRequest('item/fileChange/requestApproval',{
+      threadId:run.threadId,turnId:run.turnId,itemId:'native-item',
+      fileChanges:[{path:'chapters/chapter-001.md',kind:{type:'update'},diff:'fixture diff'}]
+    });
+    await gate.entered;
+    assert.equal(run.approvedFileItems.size,0);
+    assert.deepEqual(h.calls.findLast(call=>call.stage==='checkpoint').payload.pendingNativeCommits,['native-item']);
+    if(action==='interrupt')await h.service.interrupt({runId:run.runId});
+    else {h.service.processManager.client.closed=true;h.service.processManager.emit('exit',new Error('simulated exit'));}
+    gate.release();assert.deepEqual(await attempt,{decision:'cancel'});
+    assert.equal(run.approvedFileItems.size,0);
+  });
+}

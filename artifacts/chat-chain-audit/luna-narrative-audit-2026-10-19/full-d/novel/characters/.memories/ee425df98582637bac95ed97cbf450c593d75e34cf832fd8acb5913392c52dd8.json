@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "ye",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "ye-initial",
+      "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "summary": "苏砚同意五分钟岸上复查；若异响仍在就取消，若无异响才走正规水道，不走碎石滩。",
+      "id": "220b3bc9-6fef-419d-b293-f7cd9c5fa20e"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "担忧异响危及船员和执照，也知道延误会让诊所继续等药。",
+      "id": "821881e9-7270-48e5-b318-e72240a90ec2"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "苏砚尊重她作为船长的安全判断，何芷也支持以具体异响作为停航条件。",
+      "id": "48eb9314-9101-47fe-8dbd-b7a11c94c329"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "ye-goal",
+      "summary": "保住执照与船员"
+    },
+    {
+      "summary": "完成五分钟复查，再依据声音作出是否启航的最终判断。",
+      "id": "d5fcdc46-fff8-4048-8bbf-fdf0b67bb49b"
+    }
+  ],
+  "privateMisbeliefs": []
+}

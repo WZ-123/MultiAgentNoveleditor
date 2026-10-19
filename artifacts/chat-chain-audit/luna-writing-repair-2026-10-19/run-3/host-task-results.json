@@ -1,0 +1,39 @@
+[
+  {
+    "runId": "run-a3ab044a-c63b-47ac-8369-a8a5aeb80267",
+    "conversationId": "thread-mve3s12b-ciwwil",
+    "novelId": "novel-mve3re86-35xvkl",
+    "status": "failed",
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [],
+      "atomicMemoryWithChapter": false,
+      "wordCountScope": "new_writing",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [],
+      "reviewScopeBound": false
+    },
+    "savedResources": [],
+    "failure": {
+      "code": "codex_login_required",
+      "message": "Codex 订阅账户不可用，请重新登录",
+      "stage": "start"
+    },
+    "error": "Codex 订阅账户不可用，请重新登录"
+  }
+]

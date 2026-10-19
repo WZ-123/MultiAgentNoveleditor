@@ -1,0 +1,859 @@
+[
+  {
+    "runId": "run-e52405f6-1989-4380-a749-8be1733246e4",
+    "conversationId": "thread-mve7vzcf-q6b0cz",
+    "modelId": "gpt-6-luna",
+    "status": "completed",
+    "taskConstraints": {
+      "operation": "review",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [],
+      "memoryUpdateRequired": false,
+      "memoryScopeBound": false,
+      "memoryParticipantCount": null,
+      "participantCharacterRefs": [],
+      "chapterWritePolicy": "any",
+      "resourceWritePolicy": "any",
+      "initialChapterResourceRefs": [],
+      "writeScopeBound": false,
+      "atomicMemoryWithChapter": false,
+      "preserveOriginalMemories": false,
+      "wordCountScope": "saved_resources",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": null,
+      "maxBodyCjk": null,
+      "wordCountToleranceRatio": 0.05,
+      "completionEvidence": [],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": true,
+      "narrativeAuditRequired": true,
+      "narrativePerspective": null,
+      "repairRequired": false,
+      "reviewScope": "observed_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [
+        "character",
+        "style",
+        "world"
+      ],
+      "reviewScopeBound": true
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": true,
+      "goalVerified": true,
+      "goalStatus": "completed",
+      "constraints": {
+        "operation": "review",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [],
+        "memoryUpdateRequired": false,
+        "memoryScopeBound": false,
+        "memoryParticipantCount": null,
+        "participantCharacterRefs": [],
+        "chapterWritePolicy": "any",
+        "resourceWritePolicy": "any",
+        "initialChapterResourceRefs": [],
+        "writeScopeBound": false,
+        "atomicMemoryWithChapter": false,
+        "preserveOriginalMemories": false,
+        "wordCountScope": "saved_resources",
+        "wordCountResourceRefs": [],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": null,
+        "maxBodyCjk": null,
+        "wordCountToleranceRatio": 0.05,
+        "completionEvidence": [],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": true,
+        "narrativeAuditRequired": true,
+        "narrativePerspective": null,
+        "repairRequired": false,
+        "reviewScope": "observed_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [
+          "character",
+          "style",
+          "world"
+        ],
+        "reviewScopeBound": true
+      },
+      "savedResources": [],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "completed"
+      },
+      "persistence": {
+        "status": "no_changes",
+        "committedCount": 0
+      },
+      "objective": {
+        "status": "met",
+        "unmet": []
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "saved_resources",
+        "targetResourceRefs": [
+          "timeline:all",
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md",
+          "style:memory",
+          "outline:master",
+          "character:cen",
+          "character:lin",
+          "character:he",
+          "character:su",
+          "character:lu",
+          "character:ye",
+          "world:places",
+          "world:lore"
+        ],
+        "readableResources": 13,
+        "bodyChineseCharacterCount": 3449,
+        "hashes": [
+          {
+            "resourceRef": "timeline:all",
+            "hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "resourceRef": "chapter:chapter-001.md",
+            "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2"
+          },
+          {
+            "resourceRef": "style:memory",
+            "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+          },
+          {
+            "resourceRef": "outline:master",
+            "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+          },
+          {
+            "resourceRef": "character:cen",
+            "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+          },
+          {
+            "resourceRef": "character:lin",
+            "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+          },
+          {
+            "resourceRef": "character:he",
+            "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+          },
+          {
+            "resourceRef": "character:su",
+            "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+          },
+          {
+            "resourceRef": "character:lu",
+            "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+          },
+          {
+            "resourceRef": "character:ye",
+            "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+          },
+          {
+            "resourceRef": "world:places",
+            "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+          },
+          {
+            "resourceRef": "world:lore",
+            "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+          }
+        ],
+        "currentSavedResourceRefs": [],
+        "observedReadResourceRefs": [
+          "timeline:all",
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md",
+          "style:memory",
+          "outline:master",
+          "character:cen",
+          "character:lin",
+          "character:he",
+          "character:su",
+          "character:lu",
+          "character:ye",
+          "world:places",
+          "world:lore"
+        ],
+        "fullyReadResourceRefs": [
+          "timeline:all",
+          "chapter:chapter-001.md",
+          "chapter:chapter-002.md",
+          "style:memory",
+          "outline:master",
+          "character:cen",
+          "character:lin",
+          "character:he",
+          "character:su",
+          "character:lu",
+          "character:ye",
+          "world:places",
+          "world:lore"
+        ],
+        "reviewRecord": {
+          "type": "review_recorded",
+          "taskId": "msg-816ee8a6-93aa-4c8d-93b2-bc912fe08d13",
+          "attemptId": "attempt-2b27f17d-d9ef-44b4-8f08-f25a3874ec28",
+          "runId": "run-e52405f6-1989-4380-a749-8be1733246e4",
+          "reportSha256": "a3296fe7a6f944e41dcf0624c2e54c56472ad5656f8e5a95ee59706552bfe076",
+          "parsed": true,
+          "coverageClaimed": [
+            "timeline:all",
+            "chapter:chapter-001.md",
+            "chapter:chapter-002.md",
+            "style:memory",
+            "outline:master",
+            "character:cen",
+            "character:lin",
+            "character:he",
+            "character:su",
+            "character:lu",
+            "character:ye",
+            "world:places",
+            "world:lore"
+          ],
+          "coverageObserved": [
+            "timeline:all",
+            "chapter:chapter-001.md",
+            "chapter:chapter-002.md",
+            "style:memory",
+            "outline:master",
+            "character:cen",
+            "character:lin",
+            "character:he",
+            "character:su",
+            "character:lu",
+            "character:ye",
+            "world:places",
+            "world:lore"
+          ],
+          "coverageHashes": [
+            {
+              "resourceRef": "timeline:all",
+              "hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+            },
+            {
+              "resourceRef": "chapter:chapter-001.md",
+              "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c"
+            },
+            {
+              "resourceRef": "chapter:chapter-002.md",
+              "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2"
+            },
+            {
+              "resourceRef": "style:memory",
+              "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839"
+            },
+            {
+              "resourceRef": "outline:master",
+              "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91"
+            },
+            {
+              "resourceRef": "character:cen",
+              "hash": "475c205c4f4780946b7a2318a80e32c3cbfbd4fcb206f782783f4bbc34d305d4"
+            },
+            {
+              "resourceRef": "character:lin",
+              "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18"
+            },
+            {
+              "resourceRef": "character:he",
+              "hash": "ad31de7e9751cce0c2df369151170b9d504a43ba1540923f3410ded2b60ffc19"
+            },
+            {
+              "resourceRef": "character:su",
+              "hash": "1184058a913bc24b35f71437aff4ae3a68a2b39b52b8adee2a0776868db3a42b"
+            },
+            {
+              "resourceRef": "character:lu",
+              "hash": "dc5428b67ec0d3cd000e214d01258a0731f7ba31285f1afaa17f77f4903d7912"
+            },
+            {
+              "resourceRef": "character:ye",
+              "hash": "37cf870ba83e55c4c3ba1437a5a06ed34dc3198e4b6f2a51977c8edae99df9ce"
+            },
+            {
+              "resourceRef": "world:places",
+              "hash": "85fff9d9e5cd2a8e5ba729b24fe75d6500718f44c2ca897dab1c0781f3105415"
+            },
+            {
+              "resourceRef": "world:lore",
+              "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c"
+            }
+          ],
+          "versionCurrent": true,
+          "narrativeAudit": {
+            "status": "checked",
+            "errors": [],
+            "issues": [],
+            "unitsRequired": 0,
+            "unitsReviewed": 0,
+            "timePointCount": 4,
+            "temporalConstraintCount": 3,
+            "knowledgeClaimCount": 5,
+            "qualityConclusion": "evidence_backed_model_extraction"
+          },
+          "invalidatedIssueIds": [],
+          "coverageVerified": true,
+          "evidenceVerified": true,
+          "issues": [
+            {
+              "issueId": "timeline:chapter-002.md:low_tide_statement",
+              "category": "timeline/world",
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "若对白紧接20:05开场，低潮半小时后约20:35，与世界设定20:30相差五分钟；对白时刻未单独标明，列为待核疑点。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L3",
+                  "quote": "20:05。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 20,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L17",
+                  "quote": "“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 807,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "world:lore",
+                  "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "bindReadVersion": true,
+                  "location": "L6",
+                  "quote": "低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 480,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "character:chapter-002.md:lin_watch_source",
+              "category": "character/continuity",
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "林岚称自己手里有怀表，但核验时由苏砚取出怀表；前章明确怀表在林岚袖口。可理解为苏砚也携表且此刻采用他的表，但最好交代所用来源以消歧。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L31",
+                  "quote": "“我手里有潮表和怀表。”她说。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 2036,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L45",
+                  "quote": "苏砚从腰袋里取出机械怀表。林岚核了表针",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 2905,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-001.md",
+                  "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "bindReadVersion": true,
+                  "location": "L3",
+                  "quote": "20:05，六人聚在旧渡口。林岚把潮表压在木箱边，机械怀表还在她袖口。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 20,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "style:chapter-002.md:paragraph_cadence",
+              "category": "style",
+              "severity": "preference",
+              "requestedSeverity": "preference",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "部分解释句（如“时间并不等于安全”）略有总结性，但总体仍维持林岚观察和当场判断，不构成视角违规；仅供编辑斟酌。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L87",
+                  "quote": "时间并不等于安全，封桥也不等于水路封闭。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 5789,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "style:memory",
+                  "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+                  "bindReadVersion": true,
+                  "location": "L1",
+                  "quote": "不要每段总结",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 162,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            }
+          ]
+        }
+      },
+      "checks": {
+        "wordCount": {
+          "status": "not_requested",
+          "blocking": false,
+          "actual": 3449,
+          "minimum": null,
+          "maximum": null,
+          "toleranceRatio": 0.05,
+          "acceptedMinimum": null,
+          "acceptedMaximum": null,
+          "withinTolerance": false,
+          "belowBy": 0,
+          "aboveBy": 0
+        },
+        "writeScope": {
+          "status": "met"
+        },
+        "narrativeAudit": {
+          "status": "checked",
+          "errors": [],
+          "issues": [],
+          "unitsRequired": 0,
+          "unitsReviewed": 0,
+          "timePointCount": 4,
+          "temporalConstraintCount": 3,
+          "knowledgeClaimCount": 5,
+          "qualityConclusion": "evidence_backed_model_extraction"
+        },
+        "review": {
+          "status": "completed",
+          "expectedResourceRefs": [
+            "timeline:all",
+            "chapter:chapter-001.md",
+            "chapter:chapter-002.md",
+            "style:memory",
+            "outline:master",
+            "character:cen",
+            "character:lin",
+            "character:he",
+            "character:su",
+            "character:lu",
+            "character:ye",
+            "world:places",
+            "world:lore"
+          ],
+          "missingResourceRefs": [],
+          "evidenceVerified": true,
+          "qualityConclusion": "not_evaluated",
+          "reportStatus": "recorded",
+          "incompleteCoverageRefs": [],
+          "unverifiedEvidence": [],
+          "missingSourceKinds": [],
+          "invalidIssueIds": []
+        },
+        "semanticReview": {
+          "status": "reported_clear",
+          "qualityConclusion": "model_reported",
+          "repairRequired": false,
+          "blockingIssues": [],
+          "reportedIssues": [
+            {
+              "issueId": "timeline:chapter-002.md:low_tide_statement",
+              "category": "timeline/world",
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "若对白紧接20:05开场，低潮半小时后约20:35，与世界设定20:30相差五分钟；对白时刻未单独标明，列为待核疑点。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L3",
+                  "quote": "20:05。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 20,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L17",
+                  "quote": "“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 807,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "world:lore",
+                  "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "bindReadVersion": true,
+                  "location": "L6",
+                  "quote": "低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 480,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "character:chapter-002.md:lin_watch_source",
+              "category": "character/continuity",
+              "severity": "suspicion",
+              "requestedSeverity": "suspicion",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "林岚称自己手里有怀表，但核验时由苏砚取出怀表；前章明确怀表在林岚袖口。可理解为苏砚也携表且此刻采用他的表，但最好交代所用来源以消歧。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L31",
+                  "quote": "“我手里有潮表和怀表。”她说。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 2036,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L45",
+                  "quote": "苏砚从腰袋里取出机械怀表。林岚核了表针",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 2905,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "chapter:chapter-001.md",
+                  "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "bindReadVersion": true,
+                  "location": "L3",
+                  "quote": "20:05，六人聚在旧渡口。林岚把潮表压在木箱边，机械怀表还在她袖口。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 20,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            },
+            {
+              "issueId": "style:chapter-002.md:paragraph_cadence",
+              "category": "style",
+              "severity": "preference",
+              "requestedSeverity": "preference",
+              "schemaValid": true,
+              "status": "open",
+              "contradiction": "部分解释句（如“时间并不等于安全”）略有总结性，但总体仍维持林岚观察和当场判断，不构成视角违规；仅供编辑斟酌。",
+              "evidence": [
+                {
+                  "resourceRef": "chapter:chapter-002.md",
+                  "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "bindReadVersion": true,
+                  "location": "L87",
+                  "quote": "时间并不等于安全，封桥也不等于水路封闭。",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 5789,
+                  "observed": true,
+                  "verified": true
+                },
+                {
+                  "resourceRef": "style:memory",
+                  "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+                  "bindReadVersion": true,
+                  "location": "L1",
+                  "quote": "不要每段总结",
+                  "versionSource": "actual_content_read",
+                  "currentHash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+                  "sourceCurrent": true,
+                  "quoteLocated": true,
+                  "quoteOffset": 162,
+                  "observed": true,
+                  "verified": true
+                }
+              ],
+              "resolution": null,
+              "evidenceComplete": true,
+              "verified": true
+            }
+          ]
+        }
+      }
+    },
+    "savedResources": [],
+    "reviewFindings": [
+      {
+        "issueId": "timeline:chapter-002.md:low_tide_statement",
+        "category": "timeline/world",
+        "severity": "suspicion",
+        "requestedSeverity": "suspicion",
+        "schemaValid": true,
+        "status": "open",
+        "contradiction": "若对白紧接20:05开场，低潮半小时后约20:35，与世界设定20:30相差五分钟；对白时刻未单独标明，列为待核疑点。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L3",
+            "quote": "20:05。",
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 20,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L17",
+            "quote": "“四十分钟，走正规水道。”叶澄蹲在船舷旁，手指摸过缆绳的湿痕，“低潮半小时后起。",
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 807,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "world:lore",
+            "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+            "bindReadVersion": true,
+            "location": "L6",
+            "quote": "低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。",
+            "versionSource": "actual_content_read",
+            "currentHash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 480,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true
+      },
+      {
+        "issueId": "character:chapter-002.md:lin_watch_source",
+        "category": "character/continuity",
+        "severity": "suspicion",
+        "requestedSeverity": "suspicion",
+        "schemaValid": true,
+        "status": "open",
+        "contradiction": "林岚称自己手里有怀表，但核验时由苏砚取出怀表；前章明确怀表在林岚袖口。可理解为苏砚也携表且此刻采用他的表，但最好交代所用来源以消歧。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L31",
+            "quote": "“我手里有潮表和怀表。”她说。",
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 2036,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L45",
+            "quote": "苏砚从腰袋里取出机械怀表。林岚核了表针",
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 2905,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "chapter:chapter-001.md",
+            "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+            "bindReadVersion": true,
+            "location": "L3",
+            "quote": "20:05，六人聚在旧渡口。林岚把潮表压在木箱边，机械怀表还在她袖口。",
+            "versionSource": "actual_content_read",
+            "currentHash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 20,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true
+      },
+      {
+        "issueId": "style:chapter-002.md:paragraph_cadence",
+        "category": "style",
+        "severity": "preference",
+        "requestedSeverity": "preference",
+        "schemaValid": true,
+        "status": "open",
+        "contradiction": "部分解释句（如“时间并不等于安全”）略有总结性，但总体仍维持林岚观察和当场判断，不构成视角违规；仅供编辑斟酌。",
+        "evidence": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "bindReadVersion": true,
+            "location": "L87",
+            "quote": "时间并不等于安全，封桥也不等于水路封闭。",
+            "versionSource": "actual_content_read",
+            "currentHash": "b6ec5bf6c311594ec7332590eacdaac335867425ff1b286de245d95440b464b2",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 5789,
+            "observed": true,
+            "verified": true
+          },
+          {
+            "resourceRef": "style:memory",
+            "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+            "bindReadVersion": true,
+            "location": "L1",
+            "quote": "不要每段总结",
+            "versionSource": "actual_content_read",
+            "currentHash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+            "sourceCurrent": true,
+            "quoteLocated": true,
+            "quoteOffset": 162,
+            "observed": true,
+            "verified": true
+          }
+        ],
+        "resolution": null,
+        "evidenceComplete": true,
+        "verified": true
+      }
+    ],
+    "text": "已完成第二章一致性审校并提交了带原文引证的报告；未修改正文或资料。\n\n主要结论：人物行为、双印程序、航线与场景时间总体符合已读取设定；林岚第三人称有限视角保持稳定，文本也保留了她对账页位置等信息的未知。报告列出两项待核疑点：叶澄所说“低潮半小时后起”若紧接20:05开场，与设定的20:30低潮时间约差五分钟；林岚提到自己有怀表，实际核验时却使用苏砚取出的怀表，和前章表在林岚袖口的描写存在来源上的歧义。另有一处总结式表达仅列为风格偏好，不是视角违规。\n\n审校报告已通过预检并记录。未发现须阻断的硬冲突；本次只检查，未作修订。"
+  }
+]

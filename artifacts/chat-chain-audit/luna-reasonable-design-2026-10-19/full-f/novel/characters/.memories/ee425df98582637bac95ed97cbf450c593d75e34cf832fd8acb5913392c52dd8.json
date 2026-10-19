@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "ye",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "ye-initial",
+      "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "bd720ed6-b0a1-43d1-aefe-47f31d4dcb95",
+      "summary": "船底有闷响；雾中无灯艇带着断绳，船按正规航道避让；航程不可缩短。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "summary": "担心执照与船员责任，庆幸何芷采纳稳船而非催行。",
+      "id": "bfae2a56-5b3c-4c50-b834-28342efb7326"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "summary": "何芷信任其操船得到印证；陆行舟没有擅碰船体。",
+      "id": "9f3dfe72-d503-41c0-9c00-446d3fe919ad"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "ye-goal",
+      "summary": "保住执照与船员"
+    },
+    {
+      "summary": "安全驶抵灯塔，之后再判断船底异响原因。",
+      "id": "e690ec52-6143-4116-ba63-3cf765c660dd"
+    }
+  ],
+  "privateMisbeliefs": []
+}

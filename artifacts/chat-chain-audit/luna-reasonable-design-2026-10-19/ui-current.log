@@ -1,0 +1,19 @@
+TEST_PASS actual character edit save preserves relationships with formal readback
+TEST_PASS natural roleplay prompt mounts role skill and saves memory with approval
+TEST_PASS whole review with one chapter stays incomplete
+TEST_PASS continuation retains frozen review scope and completes full read/report coverage
+TEST_PASS missing character is a normal query result and model recovers in the same turn
+TEST_PASS formal chapter save does not satisfy requested post-write review
+TEST_PASS post-write review continuation preserves formal save and completes evidence
+TEST_PASS malformed read parameters return actual recoverable query error
+TEST_PASS editing cannot propose whole-resource deletion as a patch workaround
+TEST_PASS prepared patch uses current mirror, native approval and formal commit; structured review is revalidated and visible
+TEST_PASS prose is not keyword-blocked; an evidence-backed required hard conflict keeps the task incomplete
+TEST_PASS continuation cannot erase known hard conflicts with an empty report
+TEST_PASS actual repair and current evidence close the original issue and finish the same task
+TEST_PASS named participant subset binds exactly two memories; staged drafts assemble before one atomic native approval
+TEST_PASS independent review findings retain time and limited-view conflicts despite empty author reports
+TEST_PASS read-only review failure stays incomplete and cannot trigger a second inference for the same version
+TEST_PASS early ending remains incomplete without hidden recovery or additional model turns
+[codex] turn_interrupted 任务范围解析已取消
+TEST_PASS stopping task scope parsing remains interrupted and cannot start the author

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "lin",
+  "name": "林岚",
+  "role": "验潮员",
+  "personality": "谨慎、重证据，短句，不轻信誓言",
+  "attributes": {
+    "欲望": "查出潮钟误差，保护弟弟",
+    "已知信息": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+    "隐瞒事实": "保留一页抄本，未告诉任何人",
+    "关系": "与苏砚合作但防备，与何芷互相尊重"
+  },
+  "relationships": [
+    {
+      "with": "su",
+      "type": "与苏砚合作但防备，与何芷互相尊重"
+    },
+    {
+      "with": "he",
+      "type": "与苏砚合作但防备，与何芷互相尊重"
+    },
+    {
+      "with": "ye",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "lu",
+      "type": "认识但无私下信息共享"
+    },
+    {
+      "with": "cen",
+      "type": "认识但无私下信息共享"
+    }
+  ],
+  "aliases": [],
+  "faction": "",
+  "gender": "",
+  "age": "",
+  "sourceWork": "",
+  "originalName": "",
+  "bio": "",
+  "appearance": "",
+  "background": "",
+  "quotes": ""
+}

@@ -10,14 +10,17 @@ function id(prefix) {
   return `${prefix}-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
 }
 
-function displayItemStatus(status) {
+function displayItemStatus(status, item) {
+  const result = item?.result?.structuredContent;
+  if (result?.exists === false) return `未找到资源：${result.resourceRef}`;
+  if (result?.ok === false) return `查询失败：${result.error?.message || result.error?.code}`;
   return ({ inProgress: '运行中', running: '运行中', completed: '已完成', failed: '失败', interrupted: '已中断', user_rejected: '用户已拒绝', declined: '未获批准' })[status] || status || '已接收';
 }
 
 function progressPhaseLabel(phase) {
   return ({
     'waiting-model': '等待模型响应', reasoning: '推理中', 'tool-running': '工具执行中', 'waiting-approval': '等待批准',
-    completed: '客观检查通过', 'goal-incomplete': '目标尚未完成', 'goal-unverified': '目标缺少验收证据', 'awaiting-review': '客观达标，内容待评阅', failed: '执行失败', interrupted: '已停止',
+    completed: '执行证据齐全', 'goal-incomplete': '目标尚未完成', 'goal-unverified': '目标缺少验收证据', 'awaiting-review': '客观达标，内容待评阅', failed: '执行失败', interrupted: '已停止',
   })[phase] || '准备中';
 }
 
@@ -94,18 +97,48 @@ function ExecutionResult({ execution }) {
   const resources = execution.savedResources || [];
   return <div data-testid="execution-result" className="mt-2 border-t border-white/10 pt-2 text-xs text-gray-400">
     <div>{({ completed: '本回合已结束', failed: '执行失败', interrupted: '已停止', finalizing: '正在保存结果' })[execution.status] || '执行中'} · {resources.length ? `已保存 ${resources.length} 项修改` : '无正式保存记录'}</div>
+    {execution.activityText && <details data-testid="task-activity"><summary>查看执行过程</summary><div className="whitespace-pre-wrap">{execution.activityText}</div></details>}
     {resources.map((r, i) => <div key={`${r.resourceRef}-${i}`} className="text-emerald-300">{r.resourceRef} · {r.mode || '已提交'}</div>)}
     {execution.error && <div className="text-rose-300">{execution.error}</div>}
+    {(execution.nativeValidationErrors || execution.taskResult?.checks?.nativeValidation?.errors || []).map((item, index) => <div key={`validation-${index}`} className="text-amber-200">补丁校验未通过：{item.message}</div>)}
     {execution.status !== 'completed' && resources.length > 0 && <div>此前保存已保留，后续内容未完成。</div>}
     {execution.taskResult?.schemaVersion === 2 ? <>
-      <div data-testid="task-objective-status">客观验收：{({ met: '检查通过', incomplete: '目标尚未完成', not_evaluated: '缺少可验证的目标或执行证据' })[execution.taskResult.objective?.status]}</div>
+      <div data-testid="task-objective-status">执行核验：{({ met: '执行证据齐全', incomplete: '目标尚未完成', not_evaluated: '未设置可验证目标' })[execution.taskResult.objective?.status]}</div>
       {execution.taskResult.checks?.wordCount?.status !== 'not_requested' && execution.taskResult.checks?.wordCount && <div data-testid="task-word-count">
         正文字数：{execution.taskResult.checks.wordCount.actual} · 目标 {execution.taskResult.checks.wordCount.minimum ?? '不限'}–{execution.taskResult.checks.wordCount.maximum ?? '不限'} · 容差 {Math.round(execution.taskResult.checks.wordCount.toleranceRatio * 100)}%
-        {execution.taskResult.checks.wordCount.status === 'met' ? ' · 达标' : ' · 超出容差，已保存内容保留'}
+        {execution.taskResult.checks.wordCount.status === 'met' ? ' · 达标' : execution.taskResult.checks.wordCount.status === 'below_target' ? ` · 尚差 ${execution.taskResult.checks.wordCount.belowBy} 字，目标尚未完成` : ` · 超出 ${execution.taskResult.checks.wordCount.aboveBy} 字，目标尚未完成`}
       </div>}
       {execution.taskResult.objective?.unmet?.some(reason => ['targets_not_saved', 'no_current_commit', 'saved_version_changed'].includes(reason)) && <div>部分目标缺少当前有效的提交证据。</div>}
+      {execution.taskResult.checks?.requiredWrites?.missingResourceRefs.length>0 && <div>尚未保存所需资料：{execution.taskResult.checks.requiredWrites.missingResourceRefs.join('、')}</div>}
+      {execution.taskResult.checks?.requiredReads?.missingResourceRefs.length>0 && <div data-testid="task-required-reads">尚未读取必需资料：{execution.taskResult.checks.requiredReads.missingResourceRefs.join('、')}</div>}
+      {execution.taskResult.constraints?.intentBinding && <details data-testid="task-intent"><summary>本次任务范围已在创作前解析</summary><div>参与角色：{execution.taskResult.constraints.participantCharacterRefs.join('、') || '由场景选择'}</div><div>叙述视角：{execution.taskResult.constraints.narrativePerspective?.mode==='limited' ? '有限视角 · '+execution.taskResult.constraints.narrativePerspective.focusCharacterRef : execution.taskResult.constraints.narrativePerspective?.mode==='omniscient' ? '全知视角' : execution.taskResult.constraints.intentBinding.perspectiveSelection==='per_character' ? '逐角色分别作答' : '由创作确定'}</div><div>必读资料：{execution.taskResult.constraints.requiredReadResourceRefs.length} 项</div></details>}
+      {execution.taskResult.checks?.memoryScope && <div data-testid="task-memory-scope">角色记忆范围：{execution.taskResult.checks.memoryScope.status==='bound'?`已绑定 ${execution.taskResult.checks.memoryScope.participantCharacterRefs.length} 位参与角色`:'尚未绑定参与角色，不能判定记忆任务完成'}</div>}
+      {execution.taskResult.checks?.semanticReview?.blockingIssues?.length>0 && <details data-testid="task-hard-issues"><summary>本任务待解决的硬冲突（{execution.taskResult.checks.semanticReview.blockingIssues.length} 项）</summary>{execution.taskResult.checks.semanticReview.blockingIssues.map(issue=><div key={issue.issueId}>{issue.issueId}：{issue.contradiction}</div>)}</details>}
+      {execution.taskResult.checks?.narrativeAudit && <details data-testid="task-narrative-audit"><summary>内容审查：{({missing:'尚未提交',failed:'只读审查失败',incomplete:'所需审查范围或报告不完整',reported:'已提交模型审查意见'})[execution.taskResult.checks.narrativeAudit.status]}</summary><div>审查资源 {execution.taskResult.checks.narrativeAudit.reviewedResourceRefs?.length || 0}/{execution.taskResult.checks.narrativeAudit.requestedResourceRefs?.length || 0} 项</div>{execution.taskResult.checks.narrativeAudit.error&&<div>{execution.taskResult.checks.narrativeAudit.error}</div>}{execution.taskResult.checks.narrativeAudit.errors?.map((error,index)=><div key={index}>{error}</div>)}{execution.taskResult.checks.narrativeAudit.limitations?.map((text,index)=><div key={'limit-'+index}>待核实：{text}</div>)}<div>引用与版本核验不代表程序证明全文无错，内容判断见审查意见。</div></details>}
       {execution.taskResult.reusedSavedResources?.length > 0 && <div>继续原任务 · 核对此前 {execution.taskResult.reusedSavedResources.length} 项保存证据</div>}
-      <div data-testid="task-content-review">内容评阅：{execution.taskResult.constraints.requiresCompleteEnding ? '完整结局待独立评阅；' : ''}人物一致性、情节和文风待评阅。</div>
+      {execution.taskResult.checks?.review && <div data-testid="task-review-status">
+        审校流程：{execution.taskResult.checks.review.status === 'completed' ? '所需资源与报告覆盖已核验，内容结论见报告。' : '尚未完成所需范围的读取或证据报告。'}
+        {execution.taskResult.checks.review.missingResourceRefs?.length > 0 && <details><summary>缺少 {execution.taskResult.checks.review.missingResourceRefs.length} 项审校证据</summary>{execution.taskResult.checks.review.missingResourceRefs.join('、')}</details>}
+        {execution.taskResult.checks.review.missingSourceKinds?.length > 0 && <div>缺少设定依据：{execution.taskResult.checks.review.missingSourceKinds.map(kind => ({ character: '人物资料', world: '世界观', style: '文风' })[kind]).join('、')}</div>}
+        {execution.taskResult.checks.review.reportStatus === 'missing_or_invalid' && <div>缺少有效的结构化审校报告。</div>}
+        {execution.taskResult.checks.review.incompleteCoverageRefs?.length>0 && <div>报告声称已覆盖，但未完整读取：{execution.taskResult.checks.review.incompleteCoverageRefs.join('、')}</div>}
+        {execution.taskResult.checks.review.unverifiedEvidence?.map((item, index) => <div key={`${item.issueId}-${index}`}>
+          {item.resourceRef} {item.location}：{({ source_changed: '引用版本已变化', quote_not_at_location: '所标行号中未找到该原文', source_not_read: '缺少该原文的实际读取记录', invalid_evidence: '证据格式或定位无效' })[item.reason]}
+        </div>)}
+        {execution.taskResult.evidence?.reviewRecord?.parsed && <details data-testid="task-review-report"><summary>查看审校报告（{execution.taskResult.evidence.reviewRecord.issues.length} 项问题）</summary>
+          <div>报告覆盖：{execution.taskResult.evidence.reviewRecord.coverageClaimed.join('、')}</div>
+          {execution.taskResult.evidence.reviewRecord.issues.map(issue => <div key={issue.issueId} className="mt-2">
+            <div>{issue.issueId} · {({hard:'硬冲突',suspicion:'可疑点',preference:'偏好'})[issue.severity]} · {issue.status === 'closed' ? '已关闭' : '待处理'}</div>
+            <div>{issue.contradiction}</div>
+            {issue.evidence.map((item,index) => <div key={index}>{item.resourceRef} {item.location} · {item.verified ? '引文已核验' : '引文未核验'}<blockquote>{item.quote}</blockquote></div>)}
+          </div>)}
+          {!execution.taskResult.evidence.reviewRecord.issues.length && <div>本次报告未列出问题。</div>}
+        </details>}
+      </div>}
+      {(execution.taskResult.constraints.requiresCompleteEnding || ['write', 'edit', 'outline'].includes(execution.taskResult.constraints.operation)) && <div data-testid="task-content-review">
+        {execution.taskResult.constraints.requiresCompleteEnding ? '完整结局待独立评阅。' : ''}
+        {execution.taskResult.checks?.review?.status === 'completed' ? '审校报告已记录；内容质量仍需独立判断。' : '未记录已完成的内容审校。'}
+      </div>}
     </> : execution.taskResult && <div>历史目标判定：{execution.taskResult.goalVerified ? '宿主检查通过；字数与内容质量未分别验收' : '尚未验证完整目标'}</div>}
   </div>;
 }
@@ -302,6 +335,8 @@ export function AiChatPanel({ editorContext, onBeforeSendMessage, onOpenModelSet
           <button onClick={onOpenModelSettings}>模型</button>
         </div>
       </div>
+      {run?.narrativeReview?.status==='running' && <div data-testid="narrative-review-running" className="border-b border-white/10 px-3 py-2 text-xs text-amber-200">自查工具正在对冻结资料执行一次只读分析。</div>}
+      {run?.taskConstraints?.intentBinding?.status==='resolving' && <div data-testid="task-intent-running" className="border-b border-white/10 px-3 py-2 text-xs text-amber-200">正在核对本次任务的角色、视角与必读资料。</div>}
       {progress && <div data-testid="writing-progress" className="border-b border-white/10 px-3 py-2 text-[10px] text-gray-400">
         {progressPhaseLabel(confirmation ? 'waiting-approval' : progress.phase)} · {chapterLabel(progress.currentResourceRef)} · 已保存 {progress.totalSavedBodyCjk || 0} 字 · 本次 {progress.runNetBodyCjk || 0} 字
         {run && <span> · {Math.max(0, Math.floor((clock - progress.startedAtMs) / 1000))}s</span>}
@@ -312,12 +347,12 @@ export function AiChatPanel({ editorContext, onBeforeSendMessage, onOpenModelSet
         {visible.map(message => <div data-testid={`codex-message-${message.role}`} key={message.id} className={`flex gap-2 ${message.role === 'user' ? 'justify-end' : ''}`}>
           {message.role === 'assistant' && <Bot size={15} className="mt-1 shrink-0 text-blue-300" />}
           <div className={`max-w-[90%] rounded-2xl px-3 py-2 text-sm leading-6 ${message.role === 'user' ? 'bg-blue-600' : 'bg-white/[0.06]'}`}>
-            {message.role === 'assistant' ? <><ChatMarkdown content={message.text || ''} /><ExecutionResult execution={message.execution} />
-              {message.toolCalls?.some(item => !['userMessage', 'agentMessage', 'reasoning'].includes(item.type)) && <details className="mt-2 text-xs text-gray-400"><summary>工具记录</summary>{message.toolCalls.filter(item => !['userMessage', 'agentMessage', 'reasoning'].includes(item.type)).map((item, i) => <div key={item.id || i}>{item.name || item.tool || item.type} · {displayItemStatus(item.status)}</div>)}</details>}
+            {message.role === 'assistant' ? <>{message.execution?.resultOrigin==='host_commit_receipt'&&<div data-testid="host-commit-receipt" className="mb-1 text-xs text-emerald-300">保存回执</div>}<ChatMarkdown content={message.text || ''} /><ExecutionResult execution={message.execution} />
+              {message.toolCalls?.some(item => !['userMessage', 'agentMessage', 'reasoning'].includes(item.type)) && <details className="mt-2 text-xs text-gray-400"><summary>工具记录</summary>{message.toolCalls.filter(item => !['userMessage', 'agentMessage', 'reasoning'].includes(item.type)).map((item, i) => <div key={item.id || i}>{item.name || item.tool || item.type} · {displayItemStatus(item.status, item)}</div>)}</details>}
             </> : <span className="whitespace-pre-wrap">{message.text}</span>}
           </div>
         </div>)}
-        {run?.items?.length > 0 && <div className="rounded border border-white/10 p-2 text-xs text-gray-400">{run.items.filter(item => !['userMessage', 'agentMessage'].includes(item.type)).slice(-8).map((item, i) => <div key={item.id || i}>{item.name || item.tool || item.type} · {displayItemStatus(item.status)}</div>)}</div>}
+        {run?.items?.length > 0 && <div className="rounded border border-white/10 p-2 text-xs text-gray-400">{run.items.filter(item => !['userMessage', 'agentMessage'].includes(item.type)).slice(-8).map((item, i) => <div key={item.id || i}>{item.name || item.tool || item.type} · {displayItemStatus(item.status, item)}</div>)}</div>}
         {run?.text && <div data-testid="codex-streaming-message" className="rounded-2xl bg-white/[0.06] p-3 text-sm"><ChatMarkdown content={run.text} /></div>}
         {run?.savedResources?.length > 0 && <ExecutionResult execution={run} />}
         {confirmation && <ConfirmationCard request={confirmation} onResolve={async (confirmationId, accept) => {

@@ -1,0 +1,639 @@
+[
+  {
+    "runId": "run-3f6cccdf-1402-4f4d-acf5-41c2664c8af3",
+    "conversationId": "thread-mvex0mv8-2bu4xs",
+    "status": "failed",
+    "text": "",
+    "items": [
+      {
+        "type": "writingSourceDelivery",
+        "origin": "host",
+        "purpose": "writing_preparation",
+        "executionRunId": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3",
+        "id": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3:world:lore",
+        "status": "completed",
+        "result": {
+          "structuredContent": {
+            "resourceRef": "world:lore",
+            "kind": "world",
+            "mode": "content",
+            "hash": "1d840b6aad84b6728ae68fa26509f29591a266edf805e35d7ead815cc8bd031c",
+            "offset": 0,
+            "content": "# 雾港世界设定\n## 地理与时间\n雾港为潮汐岛城，北岸旧渡口、中央钟楼、东侧封桥、西侧灯塔诊所。当前为秋汛第六日，阴雨、能见度不足两百米。所有时间用二十四小时制。\n旧渡口到灯塔水路四十分钟，步行绕北堤九十分钟；钟楼到渡口步行十五分钟。不存在瞬移、飞行、瞬间传信。\n封桥时间为21:00，封桥只关闭东桥，不关闭水路；渡船仍须执照和通行证。\n低潮始于20:30，碎石滩不可拖曳重船；正规航道可航行但不得缩短四十分钟。\n## 制度\n冷藏药出港须巡港队长与医师各盖一印，缺一不可。议事厅文书的公文不能代替医师签字。\n居民不允许强行搜身，须经队长立案和当事人见证；拘捕不能仅凭怀疑。\n潮钟只是公共时钟，不控制潮水、封桥和天气；校时须与机械怀表及潮表两种来源核对。\n## 技术与物资\n只有机械钟、油灯、纸张、蒸汽冷柜，无电报、手机、监控或魔法。船用手摇绞盘，不存在自动驾驶。\n药箱铅封完整，开启外箱会破坏铅封；暗格可在保持铅封时滑出，但外人看不出位置。冷藏药离开冰柜后只能保存六十分钟。\n蓝签账页只是旧账证据，不能凭一页直接定罪。证据需核对年月、页码、签章。\n## 信仰与信息边界\n灯塔守夜人相信海雾会记住名字，这是信仰而非客观超能力。\n角色私密信息不自动共享；只有在场听到或看到具体证据才能成为角色已知事实。\n第1章结束于20:05，六人刚在旧渡口集齐，所有人尚未启航。何芷未说出暗格，林岚未说出七分钟。\n"
+          }
+        }
+      },
+      {
+        "type": "writingSourceDelivery",
+        "origin": "host",
+        "purpose": "writing_preparation",
+        "executionRunId": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3",
+        "id": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3:outline:hierarchy",
+        "status": "completed",
+        "result": {
+          "structuredContent": {
+            "resourceRef": "outline:hierarchy",
+            "kind": "outline",
+            "mode": "content",
+            "hash": "afa14801b02d4436f28503d2a4c6af9af8a42e0d462735bf239d0879134291f0",
+            "offset": 0,
+            "content": "{\n  \"volumes\": [],\n  \"sections\": [],\n  \"chapters\": []\n}"
+          }
+        }
+      },
+      {
+        "type": "writingSourceDelivery",
+        "origin": "host",
+        "purpose": "writing_preparation",
+        "executionRunId": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3",
+        "id": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3:outline:master",
+        "status": "completed",
+        "result": {
+          "structuredContent": {
+            "resourceRef": "outline:master",
+            "kind": "outline",
+            "mode": "content",
+            "hash": "7e36c4d2b0d88a30c85b2752e9c71f543e23e88d6de3f0189bfd6c2a97a3ea91",
+            "offset": 0,
+            "content": "# 总纲\n六人在封桥前运送冷藏药，因时间、程序和隐藏的账页相互试探。最终依据证据达成有限信任。不得一次揭开所有秘密。\n第二章20:05—20:20，林岚视角，在渡口完成双印和是否启航的决定，不必抵达灯塔。\n第三章紧接第二章，用角色主观动机推动阻力、选择与后果。"
+          }
+        }
+      },
+      {
+        "type": "writingSourceDelivery",
+        "origin": "host",
+        "purpose": "writing_preparation",
+        "executionRunId": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3",
+        "id": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3:style:memory",
+        "status": "completed",
+        "result": {
+          "structuredContent": {
+            "resourceRef": "style:memory",
+            "kind": "style",
+            "mode": "content",
+            "hash": "7c76d0ac1289ce22ec2af937ae3ef096560769633aecd8841941fb3b2beb5839",
+            "offset": 0,
+            "content": "第三人称有限视角，一场只跟随一个焦点人物。用动作和对话呈现冲突，不给他人直接内心独白。禁用现代技术和网络词。不要每段总结，不用命运齿轮、眸光一闪等套话。场景末完成当场决定，可保留后续悬念。"
+          }
+        }
+      },
+      {
+        "type": "writingSourceDelivery",
+        "origin": "host",
+        "purpose": "writing_preparation",
+        "executionRunId": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3",
+        "id": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3:chapter:chapter-001.md",
+        "status": "completed",
+        "result": {
+          "structuredContent": {
+            "resourceRef": "chapter:chapter-001.md",
+            "kind": "chapter",
+            "mode": "content",
+            "hash": "d4fa8447125a0377f845b75a59ffda5bdef62251e972defe152f51e30a6be78c",
+            "offset": 0,
+            "content": "# 第一章 雾口\n\n20:05，六人聚在旧渡口。林岚把潮表压在木箱边，机械怀表还在她袖口。她确认潮钟慢了七分钟，却未开口。\n\n何芷将铅封完整的冷藏药箱放回冰柜，蓝签账页藏在只有她知道的暗格。苏砚摊开尚未盖印的通行证，要求先核对药单。\n\n叶澄检查船绳，提醒水路四十分钟。陆行舟抱着工具袋，不敢直视队长。岑寂带来议事厅的交接公文，没人看见他此前进过钟楼。\n\n远处钟声响起。林岚看着六人的影子，没有拿出那页抄本。"
+          }
+        }
+      },
+      {
+        "type": "writingSourceDelivery",
+        "origin": "host",
+        "purpose": "writing_preparation",
+        "executionRunId": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3",
+        "id": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3:character:lin",
+        "status": "completed",
+        "result": {
+          "structuredContent": {
+            "resourceRef": "character:lin",
+            "kind": "character",
+            "mode": "content",
+            "hash": "1323037282f1622b210209de7f477966cbdf1d671912e44b011c38c62848bd18",
+            "offset": 0,
+            "content": "{\n  \"schemaVersion\": 1,\n  \"id\": \"lin\",\n  \"name\": \"林岚\",\n  \"role\": \"验潮员\",\n  \"personality\": \"谨慎、重证据，短句，不轻信誓言\",\n  \"attributes\": {\n    \"欲望\": \"查出潮钟误差，保护弟弟\",\n    \"已知信息\": \"只知道潮钟慢了七分钟；不知道药箱暗格和密道口令\",\n    \"隐瞒事实\": \"保留一页抄本，未告诉任何人\",\n    \"关系\": \"与苏砚合作但防备，与何芷互相尊重\"\n  },\n  \"relationships\": [\n    {\n      \"with\": \"su\",\n      \"type\": \"与苏砚合作但防备，与何芷互相尊重\"\n    },\n    {\n      \"with\": \"he\",\n      \"type\": \"与苏砚合作但防备，与何芷互相尊重\"\n    },\n    {\n      \"with\": \"ye\",\n      \"type\": \"认识但无私下信息共享\"\n    },\n    {\n      \"with\": \"lu\",\n      \"type\": \"认识但无私下信息共享\"\n    },\n    {\n      \"with\": \"cen\",\n      \"type\": \"认识但无私下信息共享\"\n    }\n  ],\n  \"aliases\": [],\n  \"faction\": \"\",\n  \"gender\": \"\",\n  \"age\": \"\",\n  \"sourceWork\": \"\",\n  \"originalName\": \"\",\n  \"bio\": \"\",\n  \"appearance\": \"\",\n  \"background\": \"\",\n  \"quotes\": \"\"\n}"
+          }
+        }
+      },
+      {
+        "type": "writingSourceDelivery",
+        "origin": "host",
+        "purpose": "writing_preparation",
+        "executionRunId": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3",
+        "id": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3:character-memory:lin",
+        "status": "completed",
+        "result": {
+          "structuredContent": {
+            "resourceRef": "character-memory:lin",
+            "kind": "character-memory",
+            "mode": "content",
+            "hash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e",
+            "offset": 0,
+            "content": "{\n  \"schemaVersion\": 1,\n  \"characterId\": \"lin\",\n  \"lastUpdatedChapterRef\": \"chapter:chapter-001.md\",\n  \"factsKnown\": [\n    {\n      \"id\": \"lin-initial\",\n      \"summary\": \"只知道潮钟慢了七分钟；不知道药箱暗格和密道口令\",\n      \"sourceChapterRef\": \"chapter:chapter-001.md\"\n    }\n  ],\n  \"emotionalMemory\": [],\n  \"relationshipDeltas\": [],\n  \"unresolvedIntentions\": [\n    {\n      \"id\": \"lin-goal\",\n      \"summary\": \"查出潮钟误差，保护弟弟\"\n    }\n  ],\n  \"privateMisbeliefs\": []\n}"
+          }
+        }
+      }
+    ],
+    "savedResources": [],
+    "taskConstraints": {
+      "operation": "write",
+      "targetResourceRefs": [],
+      "requiredWriteResourceRefs": [
+        "character-memory:lin"
+      ],
+      "memoryUpdateRequired": true,
+      "memoryScopeBound": true,
+      "memoryParticipantCount": null,
+      "participantCharacterRefs": [
+        "character:lin"
+      ],
+      "participantScopeFixed": true,
+      "requiredReadResourceRefs": [
+        "character:lin",
+        "character-memory:lin",
+        "world:lore",
+        "outline:hierarchy",
+        "outline:master",
+        "style:memory",
+        "chapter:chapter-001.md"
+      ],
+      "intentBinding": {
+        "version": 2,
+        "status": "bound",
+        "modelId": "gpt-6-luna",
+        "operation": "write",
+        "operationRequestQuote": "阶段交接验证：只让林岚参与，先读取她的角色卡和主观记忆以及世界观、大纲、文风和前章。新写第2章并保存，正文1500—2000字，林岚第三人称有限视角，停留在旧渡口，写她整理潮表并决定等候。把她本场新增见闻追加到她的记忆，与正文在同一批次交我确认，保留原始记忆。",
+        "participantSelection": "specified",
+        "participantRequestQuote": "阶段交接验证：只让林岚参与，",
+        "perspectiveSelection": "limited",
+        "perspectiveRequestQuote": "林岚第三人称有限视角，",
+        "reviewAspects": []
+      },
+      "chapterWritePolicy": "any",
+      "resourceWritePolicy": "any",
+      "initialChapterResourceRefs": [
+        "chapter:chapter-001.md"
+      ],
+      "writeScopeBound": true,
+      "atomicMemoryWithChapter": true,
+      "preserveOriginalMemories": true,
+      "wordCountScope": "saved_resources",
+      "wordCountResourceRefs": [],
+      "allowedWriteResourceRefs": [],
+      "allowResourceDeletion": false,
+      "minBodyCjk": 1500,
+      "maxBodyCjk": 2000,
+      "wordCountToleranceRatio": 0,
+      "completionEvidence": [
+        "bodyChineseCharacterCount",
+        "resourceHashes"
+      ],
+      "prohibitRepetition": false,
+      "requiresCompleteEnding": false,
+      "reviewRequired": false,
+      "narrativeAuditRequired": false,
+      "narrativePerspective": {
+        "mode": "limited",
+        "focusCharacterRef": "character:lin"
+      },
+      "repairRequired": false,
+      "reviewScope": "saved_resources",
+      "reviewTargetResourceRefs": [],
+      "reviewSourceKinds": [],
+      "reviewScopeBound": false
+    },
+    "requestText": "阶段交接验证：只让林岚参与，先读取她的角色卡和主观记忆以及世界观、大纲、文风和前章。新写第2章并保存，正文1500—2000字，林岚第三人称有限视角，停留在旧渡口，写她整理潮表并决定等候。把她本场新增见闻追加到她的记忆，与正文在同一批次交我确认，保留原始记忆。",
+    "taskRequestText": "阶段交接验证：只让林岚参与，先读取她的角色卡和主观记忆以及世界观、大纲、文风和前章。新写第2章并保存，正文1500—2000字，林岚第三人称有限视角，停留在旧渡口，写她整理潮表并决定等候。把她本场新增见闻追加到她的记忆，与正文在同一批次交我确认，保留原始记忆。",
+    "modelId": "gpt-6-luna",
+    "reviewFindings": [],
+    "memoryBaselines": {
+      "character-memory:cen": {
+        "schemaVersion": 1,
+        "characterId": "cen",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "cen-initial",
+            "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "cen-goal",
+            "summary": "阻止旧账公开但不伤及病人"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:he": {
+        "schemaVersion": 1,
+        "characterId": "he",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "he-initial",
+            "summary": "仅她知道药箱暗格有蓝签账页；她尚未透露",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "he-goal",
+            "summary": "把冷藏药送到灯塔诊所"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lin": {
+        "schemaVersion": 1,
+        "characterId": "lin",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lin-initial",
+            "summary": "只知道潮钟慢了七分钟；不知道药箱暗格和密道口令",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lin-goal",
+            "summary": "查出潮钟误差，保护弟弟"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:lu": {
+        "schemaVersion": 1,
+        "characterId": "lu",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "lu-initial",
+            "summary": "知道自己没有换过钟芯；不知道慢了几分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "lu-goal",
+            "summary": "修好潮钟并洗清偷芯嫌疑"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:su": {
+        "schemaVersion": 1,
+        "characterId": "su",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "su-initial",
+            "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "su-goal",
+            "summary": "在封桥前合法完成交接"
+          }
+        ],
+        "privateMisbeliefs": []
+      },
+      "character-memory:ye": {
+        "schemaVersion": 1,
+        "characterId": "ye",
+        "lastUpdatedChapterRef": "chapter:chapter-001.md",
+        "factsKnown": [
+          {
+            "id": "ye-initial",
+            "summary": "知道低潮碎石滩危险、渡口至灯塔航程四十分钟；不知道暗格和七分钟",
+            "sourceChapterRef": "chapter:chapter-001.md"
+          }
+        ],
+        "emotionalMemory": [],
+        "relationshipDeltas": [],
+        "unresolvedIntentions": [
+          {
+            "id": "ye-goal",
+            "summary": "保住执照与船员"
+          }
+        ],
+        "privateMisbeliefs": []
+      }
+    },
+    "reviewSubmission": null,
+    "narrativeReview": null,
+    "preparationStage": {
+      "version": 1,
+      "revision": 3,
+      "phase": "failed",
+      "execution": {
+        "runId": "one-shot-e1feafb5-9f9e-4ba7-bdd1-f13127d59fe3",
+        "threadId": "01a152ff-c005-7363-a133-5a3b184836de",
+        "turnId": "01a152ff-c03d-7c60-9a0e-db919d7cf216",
+        "modelId": "gpt-6-luna",
+        "purpose": "writing_preparation"
+      },
+      "candidate": {
+        "preparationId": "ab5be346-c6c1-4a66-8906-8d6c882b4dd0",
+        "revision": 1
+      },
+      "error": {
+        "code": "preparation_word_count",
+        "message": "候选正文未达到本任务原始篇幅要求",
+        "wordCount": {
+          "status": "below_target",
+          "blocking": false,
+          "actual": 1324,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0,
+          "acceptedMinimum": 1500,
+          "acceptedMaximum": 2000,
+          "withinTolerance": false,
+          "belowBy": 176,
+          "aboveBy": 0
+        }
+      }
+    },
+    "error": "候选正文未达到本任务原始篇幅要求",
+    "failure": {
+      "code": "preparation_word_count",
+      "message": "候选正文未达到本任务原始篇幅要求",
+      "stage": "start"
+    },
+    "taskResult": {
+      "schemaVersion": 2,
+      "modelTurnCompleted": false,
+      "goalVerified": false,
+      "goalStatus": "incomplete",
+      "constraints": {
+        "operation": "write",
+        "targetResourceRefs": [],
+        "requiredWriteResourceRefs": [
+          "character-memory:lin"
+        ],
+        "memoryUpdateRequired": true,
+        "memoryScopeBound": true,
+        "memoryParticipantCount": null,
+        "participantCharacterRefs": [
+          "character:lin"
+        ],
+        "participantScopeFixed": true,
+        "requiredReadResourceRefs": [
+          "character:lin",
+          "character-memory:lin",
+          "world:lore",
+          "outline:hierarchy",
+          "outline:master",
+          "style:memory",
+          "chapter:chapter-001.md"
+        ],
+        "intentBinding": {
+          "version": 2,
+          "status": "bound",
+          "modelId": "gpt-6-luna",
+          "operation": "write",
+          "operationRequestQuote": "阶段交接验证：只让林岚参与，先读取她的角色卡和主观记忆以及世界观、大纲、文风和前章。新写第2章并保存，正文1500—2000字，林岚第三人称有限视角，停留在旧渡口，写她整理潮表并决定等候。把她本场新增见闻追加到她的记忆，与正文在同一批次交我确认，保留原始记忆。",
+          "participantSelection": "specified",
+          "participantRequestQuote": "阶段交接验证：只让林岚参与，",
+          "perspectiveSelection": "limited",
+          "perspectiveRequestQuote": "林岚第三人称有限视角，",
+          "reviewAspects": []
+        },
+        "chapterWritePolicy": "any",
+        "resourceWritePolicy": "any",
+        "initialChapterResourceRefs": [
+          "chapter:chapter-001.md"
+        ],
+        "writeScopeBound": true,
+        "atomicMemoryWithChapter": true,
+        "preserveOriginalMemories": true,
+        "wordCountScope": "saved_resources",
+        "wordCountResourceRefs": [],
+        "allowedWriteResourceRefs": [],
+        "allowResourceDeletion": false,
+        "minBodyCjk": 1500,
+        "maxBodyCjk": 2000,
+        "wordCountToleranceRatio": 0,
+        "completionEvidence": [
+          "bodyChineseCharacterCount",
+          "resourceHashes"
+        ],
+        "prohibitRepetition": false,
+        "requiresCompleteEnding": false,
+        "reviewRequired": false,
+        "narrativeAuditRequired": false,
+        "narrativePerspective": {
+          "mode": "limited",
+          "focusCharacterRef": "character:lin"
+        },
+        "repairRequired": false,
+        "reviewScope": "saved_resources",
+        "reviewTargetResourceRefs": [],
+        "reviewSourceKinds": [],
+        "reviewScopeBound": false
+      },
+      "savedResources": [],
+      "reusedSavedResources": [],
+      "continuedFromRunId": null,
+      "execution": {
+        "status": "failed"
+      },
+      "persistence": {
+        "status": "no_changes",
+        "committedCount": 0
+      },
+      "objective": {
+        "status": "incomplete",
+        "unmet": [
+          "prepared_candidate_not_committed",
+          "combined_memory_commit_missing",
+          "word_count_target_missing",
+          "word_count",
+          "no_current_commit",
+          "required_writes_missing",
+          "turn_not_completed"
+        ]
+      },
+      "contentReview": {
+        "ending": {
+          "status": "not_evaluated"
+        },
+        "plotProgression": {
+          "status": "not_evaluated"
+        },
+        "characterConsistency": {
+          "status": "not_evaluated"
+        },
+        "style": {
+          "status": "not_evaluated"
+        }
+      },
+      "evidence": {
+        "wordCountScope": "saved_resources",
+        "targetResourceRefs": [],
+        "readableResources": 0,
+        "bodyChineseCharacterCount": 0,
+        "hashes": [],
+        "currentSavedResourceRefs": [],
+        "observedReadResourceRefs": [
+          "world:lore",
+          "outline:hierarchy",
+          "outline:master",
+          "style:memory",
+          "chapter:chapter-001.md",
+          "character:lin",
+          "character-memory:lin"
+        ],
+        "fullyReadResourceRefs": []
+      },
+      "checks": {
+        "wordCount": {
+          "status": "below_target",
+          "blocking": false,
+          "actual": 0,
+          "minimum": 1500,
+          "maximum": 2000,
+          "toleranceRatio": 0,
+          "acceptedMinimum": 1500,
+          "acceptedMaximum": 2000,
+          "withinTolerance": false,
+          "belowBy": 1500,
+          "aboveBy": 0
+        },
+        "memoryScope": {
+          "status": "bound",
+          "participantCharacterRefs": [
+            "character:lin"
+          ]
+        },
+        "requiredWrites": {
+          "expectedResourceRefs": [
+            "character-memory:lin"
+          ],
+          "missingResourceRefs": [
+            "character-memory:lin"
+          ]
+        },
+        "combinedMemoryCommit": {
+          "status": "missing"
+        },
+        "preparationStage": {
+          "phase": "failed",
+          "candidate": {
+            "preparationId": "ab5be346-c6c1-4a66-8906-8d6c882b4dd0",
+            "revision": 1
+          },
+          "error": {
+            "code": "preparation_word_count",
+            "message": "候选正文未达到本任务原始篇幅要求",
+            "wordCount": {
+              "status": "below_target",
+              "blocking": false,
+              "actual": 1324,
+              "minimum": 1500,
+              "maximum": 2000,
+              "toleranceRatio": 0,
+              "acceptedMinimum": 1500,
+              "acceptedMaximum": 2000,
+              "withinTolerance": false,
+              "belowBy": 176,
+              "aboveBy": 0
+            }
+          }
+        },
+        "requiredReads": {
+          "expectedResourceRefs": [
+            "character:lin",
+            "character-memory:lin",
+            "world:lore",
+            "outline:hierarchy",
+            "outline:master",
+            "style:memory",
+            "chapter:chapter-001.md"
+          ],
+          "missingResourceRefs": []
+        },
+        "writeScope": {
+          "status": "met"
+        }
+      }
+    },
+    "writingPreparations": {
+      "ab5be346-c6c1-4a66-8906-8d6c882b4dd0": {
+        "id": "ab5be346-c6c1-4a66-8906-8d6c882b4dd0",
+        "runId": "run-3f6cccdf-1402-4f4d-acf5-41c2664c8af3",
+        "novelId": "novel-mvex0ghc-vfvbr2",
+        "createdAt": 1792393880487,
+        "changes": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "content": "# 第二章 潮表\n\n20:05。钟声散进雾里，林岚没有抬头。她把潮表从木箱边挪到膝上，先用袖口擦去纸面溅上的雨点，再将四角压平。纸边已经软了，墨线却还清楚。她不喜欢在潮湿处读表，数字一旦看错，船就可能被困在浅滩；更不喜欢让旁人替她确认，因为最后承担后果的仍是她。\n\n渡口的木桩被浪拍得发亮。六个人都在，谁也没有上船。冰柜盖严着，何芷站在旁边，手掌压住盖沿。药箱外面的铅封完整，冷气从缝里逸出一点，立刻被雾吞掉。苏砚把通行证和药单摊在木箱上，纸张被风掀起一角，他用指节压住。\n\n“药单先核对。”苏砚说，“签印齐了再走。”\n\n林岚看见他指边的印泥盒，盒盖开着。队长该盖的那一印还没有落下，医师的空栏也留在那里。议事厅公文压在通行证旁边，纸面上有正式的字样，却不能填上那两个空栏。她把这点记在心里，没有替谁催促。\n\n“潮表先对时间。”她说。\n\n她取出袖口里的机械怀表。表壳被她擦得干净，指针走得平稳。她让表盘与潮钟方向一致，等秒针走过一整圈，又看了一眼钟楼那边。雾把钟楼遮得只剩模糊的暗影。刚才那声钟响，她听得分明；怀表上的时刻却早了七分钟。她没有把这个差数说出来，只在潮表的空白处记下两项读数和核对时刻。\n\n“你又在算钟？”叶澄问。她蹲在船边检查绳结，雨水顺着她的帽檐滴到手背上。\n\n“在记。”林岚说。\n\n“水路四十分钟。绕北堤要一个半钟头。”叶澄把绳子收紧，“再拖下去，选择只会少。”\n\n林岚把潮表翻到背面。那一页记录着当天的潮汐变化，墨迹被水汽洇开一点，但低潮时刻仍可辨认：20:30。正规航道可以走，碎石滩却不能拖重船。封桥在21:00，只封东桥，不封水路；可船要有执照和通行证，不能因为桥要关，就把规矩当成多余的东西。\n\n她用指甲沿着航道线慢慢划过去。没有一条线能让水路短于四十分钟，也没有哪一处标注允许船在低潮时拖过碎石滩。她在潮表边缘写下“不可取近滩”，又把笔尖停住。雨落在纸上，她用手掌遮住字迹。\n\n陆行舟抱着工具袋站在冰柜另一侧。他的目光落在绳结上，很快又移开。林岚认识他，却不知道他此刻在想什么。她也没有问。工具袋里有什么、他为何不看人，都不是她亲眼核过的证据。\n\n岑寂带来的公文被风吹得翘起。苏砚将它按平，逐行查看药单。何芷没有开口，只将冰柜盖重新压紧。林岚看着她的手。铅封仍在原处，没有破损。至于药箱里是否另有东西，她不知道，也没有理由猜测。她知道的只有眼前这些：药箱还在冰柜里，印章未齐，船仍系在桩边。\n\n“如果现在不走呢？”苏砚问。\n\n林岚把怀表收回袖口。“先把时间对完，再决定。”\n\n“你刚才已经看过了。”\n\n“看过一次，不等于核对完。”她说，“潮钟、怀表、潮表，三处要写在一起。否则过后谁都能说自己记得不一样。”\n\n这不是拖延。至少她不许自己把它叫作拖延。她把潮表翻回正面，逐项核看潮位、时刻、航道和标记。数字没有被雨水冲掉，纸上也没有缺页。她将怀表读数抄在钟声旁，又以潮表的低潮标记作第三项参照。潮钟慢七分钟的差距仍在那里，清清楚楚；她却没有把怀里的那页抄本拿出来。那张纸不属于这张表，也不能替代眼前的核对。\n\n20:12。她在记录末尾添上时间，把潮表的折角压实。等候不是放弃启航，而是让每个人面对同一组数字。她不肯用一个含混的“来得及”换取整船人的信任，也不肯在双印未齐时把药送上水路。冷藏药离开冰柜后只有六十分钟，出发太早，手续不全；拖得太久，药也会失去保存条件。两边都不是可以轻率挑选的答案。\n\n“我留下核表。”她说，“等双印齐了，再按正规航道走。谁也别动冰柜。”\n\n叶澄看了眼她写下的时刻，没有争辩。苏砚把通行证收回手边，仍未落印。何芷守在冰柜旁。没人替林岚保证等候一定有用，但也没人能说她记录错了。\n\n她把潮表放到木箱中央，以怀表压住纸角，坐在旧渡口的矮凳上。雾墙之外，钟楼看不见了。她决定等候，直到双印齐备，或者眼前的时间与手续出现新的、可以核实的变化。",
+            "baseHash": "absent"
+          },
+          {
+            "resourceRef": "character-memory:lin",
+            "memoryAppend": {
+              "factsKnown": [
+                {
+                  "summary": "第二章在旧渡口，林岚以机械怀表、潮钟和潮表核对时刻，确认潮钟慢七分钟，并将读数与核对时间记在潮表上。",
+                  "id": "ef02db85-33e4-43f0-8143-c1f6fcf4b46a"
+                },
+                {
+                  "summary": "她从潮表确认低潮始于20:30；碎石滩不可拖曳重船，正规航道可行但不能缩短四十分钟水程；东桥21:00封闭不影响水路。",
+                  "id": "49517905-9525-4b60-94f9-1a4386fe692a"
+                },
+                {
+                  "summary": "林岚亲眼见到冷藏药箱仍在冰柜中、外部铅封完整；通行证及药单的队长和医师印章尚未齐备，船仍系在渡口。",
+                  "id": "2d9e226f-7c8b-4786-acc9-56d51cc1b1a2"
+                },
+                {
+                  "summary": "林岚决定留在旧渡口等候，待双印齐备后再按正规航道启航，并要求核表期间不要动冰柜。她没有告知他人潮钟慢七分钟，也未拿出私藏抄本。",
+                  "id": "563f4b93-bf63-405f-b2d4-cec83dab66a1"
+                }
+              ],
+              "lastUpdatedChapterRef": "chapter:chapter-002.md"
+            },
+            "baseHash": "590980fd4c0c2b8be8e6406aa8e0b32504256e3f95c4d5a9495b0faaa96d555e"
+          }
+        ],
+        "contents": {
+          "chapter:chapter-002.md": "# 第二章 潮表\n\n20:05。钟声散进雾里，林岚没有抬头。她把潮表从木箱边挪到膝上，先用袖口擦去纸面溅上的雨点，再将四角压平。纸边已经软了，墨线却还清楚。她不喜欢在潮湿处读表，数字一旦看错，船就可能被困在浅滩；更不喜欢让旁人替她确认，因为最后承担后果的仍是她。\n\n渡口的木桩被浪拍得发亮。六个人都在，谁也没有上船。冰柜盖严着，何芷站在旁边，手掌压住盖沿。药箱外面的铅封完整，冷气从缝里逸出一点，立刻被雾吞掉。苏砚把通行证和药单摊在木箱上，纸张被风掀起一角，他用指节压住。\n\n“药单先核对。”苏砚说，“签印齐了再走。”\n\n林岚看见他指边的印泥盒，盒盖开着。队长该盖的那一印还没有落下，医师的空栏也留在那里。议事厅公文压在通行证旁边，纸面上有正式的字样，却不能填上那两个空栏。她把这点记在心里，没有替谁催促。\n\n“潮表先对时间。”她说。\n\n她取出袖口里的机械怀表。表壳被她擦得干净，指针走得平稳。她让表盘与潮钟方向一致，等秒针走过一整圈，又看了一眼钟楼那边。雾把钟楼遮得只剩模糊的暗影。刚才那声钟响，她听得分明；怀表上的时刻却早了七分钟。她没有把这个差数说出来，只在潮表的空白处记下两项读数和核对时刻。\n\n“你又在算钟？”叶澄问。她蹲在船边检查绳结，雨水顺着她的帽檐滴到手背上。\n\n“在记。”林岚说。\n\n“水路四十分钟。绕北堤要一个半钟头。”叶澄把绳子收紧，“再拖下去，选择只会少。”\n\n林岚把潮表翻到背面。那一页记录着当天的潮汐变化，墨迹被水汽洇开一点，但低潮时刻仍可辨认：20:30。正规航道可以走，碎石滩却不能拖重船。封桥在21:00，只封东桥，不封水路；可船要有执照和通行证，不能因为桥要关，就把规矩当成多余的东西。\n\n她用指甲沿着航道线慢慢划过去。没有一条线能让水路短于四十分钟，也没有哪一处标注允许船在低潮时拖过碎石滩。她在潮表边缘写下“不可取近滩”，又把笔尖停住。雨落在纸上，她用手掌遮住字迹。\n\n陆行舟抱着工具袋站在冰柜另一侧。他的目光落在绳结上，很快又移开。林岚认识他，却不知道他此刻在想什么。她也没有问。工具袋里有什么、他为何不看人，都不是她亲眼核过的证据。\n\n岑寂带来的公文被风吹得翘起。苏砚将它按平，逐行查看药单。何芷没有开口，只将冰柜盖重新压紧。林岚看着她的手。铅封仍在原处，没有破损。至于药箱里是否另有东西，她不知道，也没有理由猜测。她知道的只有眼前这些：药箱还在冰柜里，印章未齐，船仍系在桩边。\n\n“如果现在不走呢？”苏砚问。\n\n林岚把怀表收回袖口。“先把时间对完，再决定。”\n\n“你刚才已经看过了。”\n\n“看过一次，不等于核对完。”她说，“潮钟、怀表、潮表，三处要写在一起。否则过后谁都能说自己记得不一样。”\n\n这不是拖延。至少她不许自己把它叫作拖延。她把潮表翻回正面，逐项核看潮位、时刻、航道和标记。数字没有被雨水冲掉，纸上也没有缺页。她将怀表读数抄在钟声旁，又以潮表的低潮标记作第三项参照。潮钟慢七分钟的差距仍在那里，清清楚楚；她却没有把怀里的那页抄本拿出来。那张纸不属于这张表，也不能替代眼前的核对。\n\n20:12。她在记录末尾添上时间，把潮表的折角压实。等候不是放弃启航，而是让每个人面对同一组数字。她不肯用一个含混的“来得及”换取整船人的信任，也不肯在双印未齐时把药送上水路。冷藏药离开冰柜后只有六十分钟，出发太早，手续不全；拖得太久，药也会失去保存条件。两边都不是可以轻率挑选的答案。\n\n“我留下核表。”她说，“等双印齐了，再按正规航道走。谁也别动冰柜。”\n\n叶澄看了眼她写下的时刻，没有争辩。苏砚把通行证收回手边，仍未落印。何芷守在冰柜旁。没人替林岚保证等候一定有用，但也没人能说她记录错了。\n\n她把潮表放到木箱中央，以怀表压住纸角，坐在旧渡口的矮凳上。雾墙之外，钟楼看不见了。她决定等候，直到双印齐备，或者眼前的时间与手续出现新的、可以核实的变化。\n",
+          "character-memory:lin": "{\n  \"schemaVersion\": 1,\n  \"characterId\": \"lin\",\n  \"lastUpdatedChapterRef\": \"chapter:chapter-002.md\",\n  \"factsKnown\": [\n    {\n      \"id\": \"lin-initial\",\n      \"summary\": \"只知道潮钟慢了七分钟；不知道药箱暗格和密道口令\",\n      \"sourceChapterRef\": \"chapter:chapter-001.md\"\n    },\n    {\n      \"summary\": \"第二章在旧渡口，林岚以机械怀表、潮钟和潮表核对时刻，确认潮钟慢七分钟，并将读数与核对时间记在潮表上。\",\n      \"id\": \"ef02db85-33e4-43f0-8143-c1f6fcf4b46a\"\n    },\n    {\n      \"summary\": \"她从潮表确认低潮始于20:30；碎石滩不可拖曳重船，正规航道可行但不能缩短四十分钟水程；东桥21:00封闭不影响水路。\",\n      \"id\": \"49517905-9525-4b60-94f9-1a4386fe692a\"\n    },\n    {\n      \"summary\": \"林岚亲眼见到冷藏药箱仍在冰柜中、外部铅封完整；通行证及药单的队长和医师印章尚未齐备，船仍系在渡口。\",\n      \"id\": \"2d9e226f-7c8b-4786-acc9-56d51cc1b1a2\"\n    },\n    {\n      \"summary\": \"林岚决定留在旧渡口等候，待双印齐备后再按正规航道启航，并要求核表期间不要动冰柜。她没有告知他人潮钟慢七分钟，也未拿出私藏抄本。\",\n      \"id\": \"563f4b93-bf63-405f-b2d4-cec83dab66a1\"\n    }\n  ],\n  \"emotionalMemory\": [],\n  \"relationshipDeltas\": [],\n  \"unresolvedIntentions\": [\n    {\n      \"id\": \"lin-goal\",\n      \"summary\": \"查出潮钟误差，保护弟弟\"\n    }\n  ],\n  \"privateMisbeliefs\": []\n}\n"
+        },
+        "expectedResources": [
+          {
+            "resourceRef": "chapter:chapter-002.md",
+            "hash": "5dd80fef05b47047defd7cb89071ce14ad6d0b2a73a547076e7f37797b5e0eac",
+            "mirrorHash": "5dd80fef05b47047defd7cb89071ce14ad6d0b2a73a547076e7f37797b5e0eac"
+          },
+          {
+            "resourceRef": "character-memory:lin",
+            "hash": "194830bdda7c1cc7382cb6747a5f27a3b4ebd6baf0b510d248d89fa90913784d",
+            "mirrorHash": "87a7b06762a9930fd73676ceb70a1001af1c8868afe1ae061c26a2aebe3469f5"
+          }
+        ],
+        "participantCharacterRefs": [
+          "character:lin"
+        ],
+        "narrativePerspective": {
+          "mode": "limited",
+          "focusCharacterRef": "character:lin"
+        },
+        "revision": 1
+      }
+    }
+  }
+]

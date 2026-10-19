@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "su",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "su-initial",
+      "summary": "知道通行证须双印；不知道慢七分钟和药箱暗格",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "su-ch3-fact",
+      "summary": "按程序记录叶澄从船底取出的木片并封袋，岑寂签名见证；20:38船载药走正规航道，苏砚留在渡口。"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "su-ch3-emotion",
+      "summary": "坚持不以怀疑限制陆行舟，也不以通行证逼叶澄启航；对岑寂签名保持审慎。"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "su-ch3-rel",
+      "summary": "岑寂配合签证物见证，建立有限程序合作；与陆行舟的防备未消。"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "su-goal",
+      "summary": "在封桥前合法完成交接"
+    },
+    {
+      "id": "su-ch3-intent",
+      "summary": "赴诊所补记木片发现并核查交接，待林岚提供可复核的钟差证据。"
+    }
+  ],
+  "privateMisbeliefs": []
+}

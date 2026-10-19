@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "characterId": "cen",
+  "lastUpdatedChapterRef": "chapter:chapter-003.md",
+  "factsKnown": [
+    {
+      "id": "cen-initial",
+      "summary": "知道议事厅今夜要收走蓝签账页；不知道藏处，不知道密道口令",
+      "sourceChapterRef": "chapter:chapter-001.md"
+    },
+    {
+      "id": "ch3-cen-fact",
+      "summary": "在船上被陆行舟当面询问昨夜进钟楼，承认取公文并否认改钟；苏砚要求其到诊所后书面记录"
+    }
+  ],
+  "emotionalMemory": [
+    {
+      "id": "ch3-cen-emotion",
+      "summary": "被当众追问后戒备加深，仍以程序措辞控制局面"
+    }
+  ],
+  "relationshipDeltas": [
+    {
+      "id": "ch3-cen-rel",
+      "summary": "与陆行舟的互疑公开化；接受苏砚记录要求但未放弃对旧账的顾虑"
+    }
+  ],
+  "unresolvedIntentions": [
+    {
+      "id": "cen-goal",
+      "summary": "阻止旧账公开但不伤及病人"
+    },
+    {
+      "id": "ch3-cen-intent",
+      "summary": "需写明取公文时间和见证人，同时应对议事厅追问账页"
+    }
+  ],
+  "privateMisbeliefs": []
+}

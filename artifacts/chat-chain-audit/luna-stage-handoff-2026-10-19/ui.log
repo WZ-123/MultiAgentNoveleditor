@@ -1,0 +1,6 @@
+TEST_PASS actual character edit save preserves relationships with formal readback
+TEST_PASS natural roleplay prompt mounts role skill and saves memory with approval
+TEST_PASS whole review with one chapter stays incomplete
+Error: UI probe timeout: [...document.querySelectorAll('[data-testid="task-objective-status"]')].at(-1)?.innerText.includes('执行证据齐全')
+    at wait (/Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-workflow-ui-e2e.cjs:25:9)
+    at async /Users/potablewater/Desktop/MultiAgentNovelAssistant/test/writing-workflow-ui-e2e.cjs:140:3
